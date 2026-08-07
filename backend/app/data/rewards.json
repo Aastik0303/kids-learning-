@@ -1,0 +1,45 @@
+{
+  "star_rules": {
+    "correct_answer": 1,
+    "complete_activity": 2,
+    "complete_stage": 5,
+    "perfect_stage": 3,
+    "streak_bonus_3": 2,
+    "streak_bonus_5": 5,
+    "daily_login": 1
+  },
+  "badges": {
+    "numbers": "Number Friend",
+    "alphabets": "Letter Listener",
+    "colours": "Colour Finder",
+    "shapes": "Shape Spotter",
+    "mixed_final": "Little Learning Explorer"
+  },
+  "milestone_badges": {
+    "first_star": {"title": "First Star", "description": "Earned your very first star.", "threshold": 1},
+    "ten_stars": {"title": "Star Collector", "description": "Collected ten shining stars.", "threshold": 10},
+    "twenty_five_stars": {"title": "Star Explorer", "description": "Reached twenty-five stars.", "threshold": 25},
+    "fifty_stars": {"title": "Superstar", "description": "Earned fifty amazing stars.", "threshold": 50},
+    "perfect_stage": {"title": "Perfect Score", "description": "Got every answer right in a stage.", "threshold": 1},
+    "practice_champion": {"title": "Practice Champion", "description": "Completed ten practice sessions.", "threshold": 10},
+    "streak_3": {"title": "Hat Trick", "description": "Got three correct answers in a row.", "threshold": 3},
+    "streak_5": {"title": "High Five", "description": "Got five correct answers in a row.", "threshold": 5},
+    "all_paths_complete": {"title": "World Traveller", "description": "Completed all four learning paths.", "threshold": 4},
+    "first_practice": {"title": "Practice Starter", "description": "Completed your first practice session.", "threshold": 1}
+  },
+  "path_milestone_rewards": {
+    "numbers_halfway": {"title": "Number Novice", "description": "Completed half the Numbers path.", "stage_threshold": 4},
+    "alphabets_halfway": {"title": "Letter Learner", "description": "Completed half the Alphabets path.", "stage_threshold": 4},
+    "colours_halfway": {"title": "Colour Curious", "description": "Completed half the Colours path.", "stage_threshold": 4},
+    "shapes_halfway": {"title": "Shape Seeker", "description": "Completed half the Shapes path.", "stage_threshold": 4}
+  },
+  "daily_rewards": {
+    "login_star": 1,
+    "max_daily_bonus": 3,
+    "consecutive_days_badge": {
+      "3_days": {"title": "Three Day Streak", "description": "Logged in three days in a row."},
+      "7_days": {"title": "Weekly Warrior", "description": "Logged in seven days in a row."},
+      "14_days": {"title": "Two Week Champion", "description": "Logged in fourteen days in a row."}
+    }
+  }
+}

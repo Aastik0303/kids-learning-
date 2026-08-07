@@ -1,0 +1,58 @@
+{
+  "stages": [
+    {
+      "stage_id": "mixed_stage_1",
+      "path_id": "mixed_final",
+      "stage_number": 1,
+      "title": "Little Explorer Review",
+      "objective": "Review numbers, letters, colours, and shapes",
+      "module_type": "quiz",
+      "difficulty": "normal",
+      "intro_message": "You have learned so much. Let us play a gentle mixed game.",
+      "passing_score": 80,
+      "star_reward": 10,
+      "next_stage": 2,
+      "activities": [
+        {"activity_id": "mixed_1_a", "type": "mixed", "prompt": "Select the three red circles.", "visual_items": ["red circle", "red circle", "red circle"], "options": ["three red circles", "two blue squares", "one yellow triangle"], "correct_answer": "three red circles", "hint": "Look for red, circle, and three.", "difficulty": "normal"},
+        {"activity_id": "mixed_1_b", "type": "mixed", "prompt": "A is for...", "visual_items": ["A"], "options": ["Apple", "Ball", "Circle"], "correct_answer": "Apple", "hint": "Apple starts with A.", "difficulty": "normal"},
+        {"activity_id": "mixed_1_c", "type": "mixed", "prompt": "How many green triangles?", "visual_items": ["green triangle", "green triangle"], "options": ["1", "2", "3"], "correct_answer": "2", "hint": "Count the green triangles.", "difficulty": "normal"}
+      ]
+    },
+    {
+      "stage_id": "mixed_stage_2",
+      "path_id": "mixed_final",
+      "stage_number": 2,
+      "title": "Cross-Domain Challenge",
+      "objective": "Combine skills across all topics",
+      "module_type": "quiz",
+      "difficulty": "normal",
+      "intro_message": "This round mixes everything together. You can do it!",
+      "passing_score": 80,
+      "star_reward": 10,
+      "next_stage": 3,
+      "activities": [
+        {"activity_id": "mixed_2_a", "type": "mixed", "prompt": "How many blue squares are here?", "visual_items": ["blue square", "blue square", "blue square", "blue square"], "options": ["3", "4", "5"], "correct_answer": "4", "hint": "Count each blue square slowly.", "difficulty": "normal"},
+        {"activity_id": "mixed_2_b", "type": "mixed", "prompt": "D is for...", "visual_items": ["D"], "options": ["Dog", "Egg", "Apple"], "correct_answer": "Dog", "hint": "Dog starts with D.", "difficulty": "normal"},
+        {"activity_id": "mixed_2_c", "type": "mixed", "prompt": "Which shape is the orange star?", "visual_items": ["orange star", "green circle", "blue triangle"], "options": ["star", "circle", "triangle"], "correct_answer": "star", "hint": "The star has pointy tips and it is orange.", "difficulty": "normal"}
+      ]
+    },
+    {
+      "stage_id": "mixed_stage_3",
+      "path_id": "mixed_final",
+      "stage_number": 3,
+      "title": "Final Capstone Quiz",
+      "objective": "Master review of all learning",
+      "module_type": "quiz",
+      "difficulty": "normal",
+      "intro_message": "The final challenge! Show everything you have learned.",
+      "passing_score": 80,
+      "star_reward": 15,
+      "next_stage": null,
+      "activities": [
+        {"activity_id": "mixed_3_a", "type": "mixed", "prompt": "How many purple rectangles?", "visual_items": ["purple rectangle", "purple rectangle", "purple rectangle", "purple rectangle", "purple rectangle"], "options": ["3", "4", "5"], "correct_answer": "5", "hint": "Count each purple rectangle one by one.", "difficulty": "normal"},
+        {"activity_id": "mixed_3_b", "type": "mixed", "prompt": "F is for...", "visual_items": ["F"], "options": ["Fish", "Ball", "Hat"], "correct_answer": "Fish", "hint": "Fish starts with F.", "difficulty": "normal"},
+        {"activity_id": "mixed_3_c", "type": "mixed", "prompt": "Which group has two yellow stars?", "visual_items": ["yellow star", "yellow star"], "options": ["two yellow stars", "three green circles", "one red square"], "correct_answer": "two yellow stars", "hint": "Look for yellow, star, and two.", "difficulty": "normal"}
+      ]
+    }
+  ]
+}

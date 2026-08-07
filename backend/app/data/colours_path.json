@@ -1,0 +1,148 @@
+{
+  "stages": [
+    {
+      "stage_id": "colours_stage_1",
+      "path_id": "colours",
+      "stage_number": 1,
+      "title": "Meet Red",
+      "objective": "Recognize red",
+      "module_type": "tutor",
+      "difficulty": "very_easy",
+      "intro_message": "Red is bright like a strawberry.",
+      "passing_score": 70,
+      "star_reward": 5,
+      "next_stage": 2,
+      "activities": [
+        {"activity_id": "colour_1_a", "type": "identify_colour", "prompt": "Which one is red?", "visual_items": ["red"], "options": ["red", "blue", "yellow"], "correct_answer": "red", "hint": "Red looks like a strawberry.", "difficulty": "very_easy"},
+        {"activity_id": "colour_1_b", "type": "match", "prompt": "A fire truck is usually...", "visual_items": ["fire truck"], "options": ["red", "blue", "green"], "correct_answer": "red", "hint": "Fire trucks are bright red.", "difficulty": "very_easy"},
+        {"activity_id": "colour_1_c", "type": "identify_colour", "prompt": "Tap the red heart.", "visual_items": ["red heart", "blue star", "yellow sun"], "options": ["red", "blue", "yellow"], "correct_answer": "red", "hint": "Hearts are often red.", "difficulty": "very_easy"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_2",
+      "path_id": "colours",
+      "stage_number": 2,
+      "title": "Red and Blue",
+      "objective": "Recognize red and blue",
+      "module_type": "activity",
+      "difficulty": "very_easy",
+      "intro_message": "Blue is calm like the sky.",
+      "passing_score": 70,
+      "star_reward": 5,
+      "next_stage": 3,
+      "activities": [
+        {"activity_id": "colour_2_a", "type": "identify_colour", "prompt": "Tap blue.", "visual_items": ["blue"], "options": ["red", "blue", "green"], "correct_answer": "blue", "hint": "Blue looks like the sky.", "difficulty": "very_easy"},
+        {"activity_id": "colour_2_b", "type": "match", "prompt": "The ocean is usually...", "visual_items": ["ocean"], "options": ["red", "blue", "yellow"], "correct_answer": "blue", "hint": "The ocean looks blue.", "difficulty": "very_easy"},
+        {"activity_id": "colour_2_c", "type": "identify_colour", "prompt": "Which colour is the berry?", "visual_items": ["strawberry"], "options": ["blue", "red", "green"], "correct_answer": "red", "hint": "Strawberries are red.", "difficulty": "very_easy"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_3",
+      "path_id": "colours",
+      "stage_number": 3,
+      "title": "Yellow and Green",
+      "objective": "Recognize yellow and green",
+      "module_type": "activity",
+      "difficulty": "easy",
+      "intro_message": "Yellow shines like the sun. Green grows like leaves.",
+      "passing_score": 75,
+      "star_reward": 5,
+      "next_stage": 4,
+      "activities": [
+        {"activity_id": "colour_3_a", "type": "identify_colour", "prompt": "Which colour is like leaves?", "visual_items": ["leaf"], "options": ["yellow", "green", "red"], "correct_answer": "green", "hint": "Leaves are often green.", "difficulty": "easy"},
+        {"activity_id": "colour_3_b", "type": "identify_colour", "prompt": "What colour is the sun?", "visual_items": ["sun"], "options": ["green", "yellow", "blue"], "correct_answer": "yellow", "hint": "The sun shines bright yellow.", "difficulty": "easy"},
+        {"activity_id": "colour_3_c", "type": "match", "prompt": "A banana is usually...", "visual_items": ["banana"], "options": ["green", "yellow", "red"], "correct_answer": "yellow", "hint": "Ripe bananas are yellow.", "difficulty": "easy"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_4",
+      "path_id": "colours",
+      "stage_number": 4,
+      "title": "Identify Colours",
+      "objective": "Choose named colours",
+      "module_type": "activity",
+      "difficulty": "easy",
+      "intro_message": "Let us find colours by name.",
+      "passing_score": 75,
+      "star_reward": 5,
+      "next_stage": 5,
+      "activities": [
+        {"activity_id": "colour_4_a", "type": "identify_colour", "prompt": "Tap yellow.", "visual_items": ["sun"], "options": ["blue", "yellow", "green"], "correct_answer": "yellow", "hint": "The sun can look yellow.", "difficulty": "easy"},
+        {"activity_id": "colour_4_b", "type": "identify_colour", "prompt": "Tap green.", "visual_items": ["frog"], "options": ["red", "blue", "green"], "correct_answer": "green", "hint": "Frogs are green.", "difficulty": "easy"},
+        {"activity_id": "colour_4_c", "type": "multiple_choice", "prompt": "Which colour do you see in the sky on a sunny day?", "visual_items": ["sky"], "options": ["blue", "red", "green"], "correct_answer": "blue", "hint": "Look up on a clear day — the sky is blue.", "difficulty": "easy"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_5",
+      "path_id": "colours",
+      "stage_number": 5,
+      "title": "Objects and Colours",
+      "objective": "Match objects with colours",
+      "module_type": "activity",
+      "difficulty": "easy",
+      "intro_message": "Objects can help us remember colours.",
+      "passing_score": 75,
+      "star_reward": 5,
+      "next_stage": 6,
+      "activities": [
+        {"activity_id": "colour_5_a", "type": "match", "prompt": "Strawberry is usually...", "visual_items": ["strawberry"], "options": ["red", "blue", "green"], "correct_answer": "red", "hint": "A strawberry is red.", "difficulty": "easy"},
+        {"activity_id": "colour_5_b", "type": "match", "prompt": "Grass is usually...", "visual_items": ["grass"], "options": ["yellow", "green", "blue"], "correct_answer": "green", "hint": "Grass grows green.", "difficulty": "easy"},
+        {"activity_id": "colour_5_c", "type": "match", "prompt": "A lemon is usually...", "visual_items": ["lemon"], "options": ["red", "green", "yellow"], "correct_answer": "yellow", "hint": "Lemons are yellow and sour.", "difficulty": "easy"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_6",
+      "path_id": "colours",
+      "stage_number": 6,
+      "title": "Meet Orange and Purple",
+      "objective": "Recognize orange and purple",
+      "module_type": "activity",
+      "difficulty": "normal",
+      "intro_message": "Two new colours join the party: orange and purple.",
+      "passing_score": 80,
+      "star_reward": 5,
+      "next_stage": 7,
+      "activities": [
+        {"activity_id": "colour_6_a", "type": "identify_colour", "prompt": "Which colour is an orange?", "visual_items": ["orange fruit"], "options": ["orange", "red", "yellow"], "correct_answer": "orange", "hint": "An orange is the colour orange.", "difficulty": "normal"},
+        {"activity_id": "colour_6_b", "type": "identify_colour", "prompt": "What colour are grapes?", "visual_items": ["grapes"], "options": ["green", "purple", "red"], "correct_answer": "purple", "hint": "Many grapes are purple.", "difficulty": "normal"},
+        {"activity_id": "colour_6_c", "type": "match", "prompt": "A carrot is usually...", "visual_items": ["carrot"], "options": ["orange", "purple", "green"], "correct_answer": "orange", "hint": "Carrots are orange.", "difficulty": "normal"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_7",
+      "path_id": "colours",
+      "stage_number": 7,
+      "title": "Mixed Colours",
+      "objective": "Review all colours together",
+      "module_type": "activity",
+      "difficulty": "normal",
+      "intro_message": "Colours can appear together. Let us find them all.",
+      "passing_score": 80,
+      "star_reward": 5,
+      "next_stage": 8,
+      "activities": [
+        {"activity_id": "colour_7_a", "type": "identify_colour", "prompt": "Tap red.", "visual_items": [], "options": ["red", "green", "yellow"], "correct_answer": "red", "hint": "Red looks like a strawberry.", "difficulty": "normal"},
+        {"activity_id": "colour_7_b", "type": "match", "prompt": "Which object is orange?", "visual_items": [], "options": ["carrot", "grape", "leaf"], "correct_answer": "carrot", "hint": "Carrots are orange.", "difficulty": "normal"},
+        {"activity_id": "colour_7_c", "type": "multiple_choice", "prompt": "What colour do you get when you mix red and blue?", "visual_items": ["paint palette"], "options": ["green", "purple", "orange"], "correct_answer": "purple", "hint": "Red and blue mixed together make purple.", "difficulty": "normal"}
+      ]
+    },
+    {
+      "stage_id": "colours_stage_8",
+      "path_id": "colours",
+      "stage_number": 8,
+      "title": "Mini Colour Quiz",
+      "objective": "Review nursery colours",
+      "module_type": "quiz",
+      "difficulty": "normal",
+      "intro_message": "A tiny colour review is ready. Show what you know.",
+      "passing_score": 80,
+      "star_reward": 8,
+      "next_stage": null,
+      "activities": [
+        {"activity_id": "colour_8_a", "type": "identify_colour", "prompt": "Which colour is the sky?", "visual_items": ["sky"], "options": ["blue", "red", "yellow"], "correct_answer": "blue", "hint": "The sky is blue.", "difficulty": "normal"},
+        {"activity_id": "colour_8_b", "type": "match", "prompt": "An eggplant is usually...", "visual_items": ["eggplant"], "options": ["purple", "orange", "green"], "correct_answer": "purple", "hint": "Eggplants are purple.", "difficulty": "normal"},
+        {"activity_id": "colour_8_c", "type": "multiple_choice", "prompt": "Which of these is NOT a colour?", "visual_items": [], "options": ["Apple", "Blue", "Green"], "correct_answer": "Apple", "hint": "Apple is a fruit, not a colour.", "difficulty": "normal"}
+      ]
+    }
+  ]
+}

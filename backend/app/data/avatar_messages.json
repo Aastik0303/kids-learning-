@@ -1,0 +1,111 @@
+{
+  "default_avatar": {
+    "name": "Pip",
+    "species": "cheerful panda",
+    "default_state": "idle",
+    "personality": "warm, patient, encouraging, playful"
+  },
+  "messages": {
+    "home": "Hello! Choose Practice or continue your adventure.",
+    "levels": "Follow the glowing step. Your next adventure is ready.",
+    "practice": "Practice time! Try one small mission at a time.",
+    "correct": "Nice work! You found it.",
+    "hint": "Good try. Look slowly and try once more.",
+    "complete": "Level complete. Wonderful work!"
+  },
+  "correct_variants": [
+    "Nice work! You found it.",
+    "Amazing! That is right.",
+    "Great job! You are a star.",
+    "Well done! You did it.",
+    "Hooray! That is correct.",
+    "Wonderful! You are so clever.",
+    "Brilliant! Keep going.",
+    "You got it! Fantastic.",
+    "Super! That was perfect.",
+    "Yay! You nailed it.",
+    "Awesome work! I am so proud.",
+    "Excellent! You are getting better and better."
+  ],
+  "hint_variants": [
+    "Good try. Look slowly and try once more.",
+    "Almost! Take another look and try again.",
+    "Not quite. Let us look at this together.",
+    "So close! Think about it one more time.",
+    "Let us try again. You can do this!",
+    "Hmm, not that one. Let us try once more.",
+    "That was a brave try! Look carefully again.",
+    "Keep going! You are getting closer."
+  ],
+  "encouragement_variants": [
+    "You are doing great! Keep it up.",
+    "I believe in you! Try once more.",
+    "Do not worry, everyone learns at their own pace.",
+    "You are so brave for trying! Let us go again.",
+    "Practice makes perfect! You are getting better.",
+    "Take your time. There is no rush.",
+    "You can do this! I am right here with you.",
+    "Every try makes you smarter!"
+  ],
+  "welcome_variants": [
+    "Hello there! Ready for an adventure?",
+    "Welcome back! I missed you.",
+    "Hi friend! Let us learn something new today.",
+    "Good to see you! What shall we explore?",
+    "Hello! Pip is here and ready to play."
+  ],
+  "practice_start": [
+    "Practice time! Let us get started.",
+    "Ready to practice? Let us try some questions.",
+    "Practice makes perfect! Here we go.",
+    "Let us sharpen those skills with some practice."
+  ],
+  "practice_complete": [
+    "Practice complete! Great effort today.",
+    "You finished practice! Well done.",
+    "All done with practice! You worked so hard.",
+    "Practice is over. You were wonderful!"
+  ],
+  "world_unlock": [
+    "A new world is ready for you to explore!",
+    "You unlocked a new place! Let us go see it.",
+    "Amazing! A brand new world just opened up.",
+    "Congratulations! A new adventure awaits."
+  ],
+  "certificate_earned": [
+    "You earned your certificate! I am so proud of you.",
+    "Amazing! Your certificate is ready. You are a star!",
+    "You did it! Your very own certificate is here."
+  ],
+  "milestone_messages": {
+    "first_star": "You earned your very first star! Keep going.",
+    "ten_stars": "Ten stars! You are a shining explorer.",
+    "twenty_five_stars": "Twenty-five stars! You are unstoppable.",
+    "fifty_stars": "Fifty stars! You are a superstar learner.",
+    "perfect_stage": "A perfect score! You got every question right.",
+    "first_badge": "Your first badge! Wear it proudly.",
+    "all_badges": "You collected all the badges! What an achievement."
+  },
+  "idle_messages": [
+    "I am here whenever you are ready.",
+    "Take your time. I will wait for you.",
+    "Tap the glowing button when you are ready.",
+    "No rush! Think about it carefully."
+  ],
+  "streak_messages": {
+    "2_correct": "Two in a row! Nice streak.",
+    "3_correct": "Three in a row! You are on fire.",
+    "5_correct": "Five in a row! Unstoppable!",
+    "all_correct": "All correct! A perfect round!"
+  },
+  "return_messages": [
+    "Welcome back! I saved your place.",
+    "You are back! Let us pick up where we left off.",
+    "Hello again! Ready to continue the adventure?"
+  ],
+  "time_of_day": {
+    "morning": "Good morning! What a great time to learn.",
+    "afternoon": "Good afternoon! Let us have some fun.",
+    "evening": "Good evening! A little learning before bedtime."
+  }
+}
