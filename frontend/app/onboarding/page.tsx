@@ -9,7 +9,7 @@ import { LargeButton } from "@/components/shared/LargeButton";
 export default function OnboardingPage() {
   const router = useRouter();
   const [name, setName] = useState("Aaru");
-  const [ageGroup, setAgeGroup] = useState("4-5");
+  const [age, setAge] = useState(4);
   const [language, setLanguage] = useState("English");
   const [avatar, setAvatar] = useState("Sun");
   const [error, setError] = useState("");
@@ -22,10 +22,11 @@ export default function OnboardingPage() {
       return;
     }
     try {
-      const child = await createChild(token, name, ageGroup, language);
+      const ageGroup = age < 2 ? "Under 2" : age === 2 ? "2 years" : age === 3 ? "3 years" : "4+ years";
+      const child = await createChild(token, name, ageGroup, language, age);
       saveChild(child);
       sessionStorage.setItem("demo_child_avatar", avatar);
-      router.push("/");
+      router.push(child.learning_mode === "toddler" ? "/toddler" : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Let us try again.");
     }
@@ -36,9 +37,11 @@ export default function OnboardingPage() {
       <form onSubmit={submit} className="grid w-full max-w-md gap-4 rounded-[2rem] bg-white p-6 shadow-soft">
         <h1 className="text-3xl font-black">Child profile</h1>
         <input className="rounded-2xl border-2 border-leaf/20 px-4 py-4 font-bold" value={name} onChange={(e) => setName(e.target.value)} />
-        <select className="rounded-2xl border-2 border-leaf/20 px-4 py-4 font-bold" value={ageGroup} onChange={(e) => setAgeGroup(e.target.value)}>
-          <option>3-4</option>
-          <option>4-5</option>
+        <select className="rounded-2xl border-2 border-leaf/20 px-4 py-4 font-bold" value={age} onChange={(e) => setAge(Number(e.target.value))}>
+          <option value={1}>Under 2</option>
+          <option value={2}>2 years</option>
+          <option value={3}>3 years</option>
+          <option value={4}>4+ years</option>
         </select>
         <select className="rounded-2xl border-2 border-leaf/20 px-4 py-4 font-bold" value={language} onChange={(e) => setLanguage(e.target.value)}>
           <option>English</option>

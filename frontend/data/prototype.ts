@@ -217,6 +217,8 @@ export function makeGuestChild(): ChildProfile {
     user_id: "guest",
     name: "Explorer",
     age_group: "Guest",
+    age: null,
+    learning_mode: "standard",
     preferred_language: "English",
     stars: 0,
     current_path: "numbers",

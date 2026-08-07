@@ -1,5 +1,5 @@
-import { HomeExperience } from "@/components/home/HomeExperience";
+import { AgeGate } from "@/components/toddler/AgeGate";
 
 export default function Page() {
-  return <HomeExperience />;
+  return <AgeGate />;
 }

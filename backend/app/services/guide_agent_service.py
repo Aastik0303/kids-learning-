@@ -24,6 +24,11 @@ normalized answer result, attempt number, age group, and visual context.
 Never ask for sensitive personal information. Never shame the child. Never use: fail, bad,
 poor, stupid, weak. Return structured JSON only."""
 
+TODDLER_SYSTEM_PROMPT = """For learning_mode toddler, you are a warm, playful nursery teacher helping a child younger than 3.
+Use maximum 1-2 very short sentences, simple vocabulary, one instruction at a time, and happy emojis.
+Never ask for personal information. Never shame. Never say wrong. Prefer: Almost! Let's try again 😊.
+Keep the child focused on the current deterministic toddler lesson."""
+
 APPROVED_GUIDE_TARGETS = {
     "home-practice",
     "start-practice",
@@ -44,6 +49,16 @@ APPROVED_GUIDE_TARGETS = {
     "open-certificate",
     "more-practice",
     "open-levels",
+    "toddler-home",
+    "toddler-module-alphabets",
+    "toddler-module-numbers",
+    "toddler-module-colours",
+    "toddler-module-shapes",
+    "toddler-activity",
+    "toddler-microphone",
+    "toddler-choices",
+    "toddler-keep-learning",
+    "toddler-practice",
 }
 
 APPROVED_GUIDE_ACTIONS: set[GuideActionType] = {
@@ -174,6 +189,9 @@ def validate_guide_request(payload: GuideRequest) -> None:
 
 def _fallback_guide(payload: GuideRequest) -> GuideResponse:
     validate_guide_request(payload)
+
+    if payload.learning_mode == "toddler" or (payload.toddler and payload.toddler.learning_mode == "toddler"):
+        return _toddler_fallback_guide(payload)
 
     message = FALLBACK
     strategy = "help"
@@ -354,6 +372,54 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
     )
 
 
+def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
+    toddler = payload.toddler
+    concept = toddler.concept if toddler and toddler.concept else payload.question.correct_answer if payload.question else ""
+    result = toddler.recent_result if toddler else None
+    target_preferences = ["toddler-activity", "toddler-microphone", "toddler-choices", "toddler-keep-learning", "toddler-practice"]
+    state = "speaking"
+    effect = "none"
+    strategy = "read_question"
+    next_event = "wait_for_child"
+
+    if payload.event in {"APP_OPENED", "HOME_OPENED"}:
+        message = "Hi little explorer! 👋 Let's learn."
+        state = "waving"
+        strategy = "welcome"
+        target_preferences = ["toddler-module-alphabets", "toddler-home"]
+    elif result in {"correct", "close"} or payload.event in {"LEVEL_ANSWER_CORRECT", "PRACTICE_ANSWER_CORRECT"}:
+        message = f"Yay! That's {concept}! ⭐" if concept else "Yay! Great job! ⭐"
+        state = "celebrating"
+        effect = "star_burst"
+        strategy = "celebrate"
+        next_event = "next_activity"
+    elif result in {"retry", "unclear"} or payload.event in {"LEVEL_ANSWER_INCORRECT", "PRACTICE_ANSWER_INCORRECT", "HINT_REQUESTED"}:
+        message = f"Almost! 😊 Let's try {concept} again." if concept else "Almost! 😊 Let's try again."
+        state = "encouraging"
+        effect = "gentle_hint"
+        strategy = "hint"
+        target_preferences = ["toddler-microphone", "toddler-choices", "toddler-activity"]
+    elif payload.event in {"LEVEL_COMPLETED", "PRACTICE_COMPLETED"}:
+        message = "Wow! You did it! 🌟"
+        state = "celebrating"
+        effect = "confetti"
+        strategy = "celebrate"
+        target_preferences = ["toddler-keep-learning", "toddler-practice"]
+    elif payload.question:
+        message = _words(payload.question.prompt, 10)
+    else:
+        message = "Look, listen, then try. 😊"
+
+    message = safe_text(_words(message, 14))
+    return GuideResponse(
+        message=message,
+        strategy=strategy,
+        avatar=_avatar(message, state=state, effect=effect, speak=True),
+        ui_action=_ui_action(payload, "highlight", target_preferences),
+        next_expected_event=next_event,
+    )
+
+
 def _payload_for_model(payload: GuideRequest) -> dict:
     return payload.model_dump(exclude_none=True)
 
@@ -412,6 +478,7 @@ def _groq_guide(payload: GuideRequest) -> GuideResponse:
         "model": settings.groq_model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": TODDLER_SYSTEM_PROMPT if payload.learning_mode == "toddler" else ""},
             {"role": "user", "content": _model_instruction(payload)},
             {"role": "user", "content": json.dumps(_payload_for_model(payload), ensure_ascii=True)},
         ],

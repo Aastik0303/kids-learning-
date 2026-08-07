@@ -64,6 +64,20 @@ class GuideProgressContext(BaseModel):
     session_stars: int = 0
 
 
+class ToddlerGuideContext(BaseModel):
+    learning_mode: str = "standard"
+    age: int | None = None
+    module: str | None = None
+    level: int | None = None
+    concept: str | None = None
+    activity_type: str | None = None
+    expected_answer: str | None = None
+    recognized_speech: str | None = None
+    attempt_count: int = 0
+    stars: int = 0
+    recent_result: str | None = None
+
+
 class GuideRequest(BaseModel):
     session_id: str | None = None
     child_id: str | None = None
@@ -73,9 +87,12 @@ class GuideRequest(BaseModel):
     screen: str
     feature: str
     age_group: str = "3-6"
+    age: int | None = None
+    learning_mode: str = "standard"
     preferred_language: str = "en"
     question: GuideQuestionContext | None = None
     progress: GuideProgressContext | None = None
+    toddler: ToddlerGuideContext | None = None
     available_actions: list[GuideActionType] = Field(default_factory=list)
     available_targets: list[str] = Field(default_factory=list)
 

@@ -21,6 +21,10 @@ export type AvatarEffect =
   | "gentle_hint"
   | "story_transition"
   | "certificate_celebration"
+  | "sparkle"
+  | "bounce"
+  | "rainbow"
+  | "pulse"
   | "none";
 
 export type AvatarPayload = {

@@ -30,6 +30,14 @@ export function saveChild(child: ChildProfile) {
   }
 }
 
+export function setChildAge(age: number, ageGroup: string): ChildProfile {
+  const child = getOrCreateGuestChild();
+  const learningMode = age < 3 ? "toddler" : "standard";
+  const updated = { ...child, age, age_group: ageGroup, learning_mode: learningMode as ChildProfile["learning_mode"] };
+  saveChild(updated);
+  return updated;
+}
+
 export function getChild(): ChildProfile | null {
   const raw = sessionStorage.getItem(CHILD_KEY);
   return raw ? (JSON.parse(raw) as ChildProfile) : null;

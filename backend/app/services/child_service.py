@@ -7,6 +7,10 @@ from app.services.mock_storage import mock_child_profiles
 CORE_PATHS = ["numbers", "alphabets", "colours", "shapes"]
 
 
+def resolve_learning_mode(age: int | None) -> str:
+    return "toddler" if age is not None and age < 3 else "standard"
+
+
 def _default_progress() -> dict[str, dict]:
     progress = {path: PathProgress(unlocked_stages=[]).model_dump() for path in CORE_PATHS + ["mixed_final"]}
     progress["numbers"] = PathProgress(unlocked_stages=[1]).model_dump()
@@ -21,6 +25,8 @@ def create_child(payload: ChildCreateRequest) -> ChildProfile:
         "user_id": user["id"],
         "name": payload.name,
         "age_group": payload.age_group,
+        "age": payload.age,
+        "learning_mode": resolve_learning_mode(payload.age),
         "preferred_language": payload.preferred_language,
         "stars": 0,
         "current_path": "numbers",
@@ -53,10 +59,11 @@ def update_child(child_id: str, payload: ChildUpdateRequest) -> ChildProfile:
     child = mock_child_profiles.get(child_id)
     if not child or child["user_id"] != user["id"]:
         raise app_error("INVALID_CHILD", "We could not find that child profile.", 404)
-    for field in ["name", "age_group", "preferred_language"]:
+    for field in ["name", "age_group", "age", "preferred_language"]:
         value = getattr(payload, field)
         if value is not None:
             child[field] = value
+    child["learning_mode"] = resolve_learning_mode(child.get("age"))
     return ChildProfile(**child)
 
 

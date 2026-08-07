@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import auth, children, companion, dev, guide, history, learning, practice, progress, speech
+from app.api import auth, children, companion, dev, guide, history, learning, practice, progress, speech, toddler
 from app.config import get_settings
 
 settings = get_settings()
@@ -45,6 +45,7 @@ app.include_router(learning.router)
 app.include_router(practice.router)
 app.include_router(progress.router)
 app.include_router(speech.router)
+app.include_router(toddler.router)
 app.include_router(guide.router)
 app.include_router(history.router)
 app.include_router(dev.router)

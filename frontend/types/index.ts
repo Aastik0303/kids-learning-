@@ -21,6 +21,8 @@ export type ChildProfile = {
   user_id: string;
   name: string;
   age_group: string;
+  age?: number | null;
+  learning_mode?: "standard" | "toddler";
   preferred_language: string;
   stars: number;
   current_path: string;
@@ -156,7 +158,22 @@ export type GuideRequest = {
   screen: string;
   feature: string;
   age_group?: string;
+  age?: number | null;
+  learning_mode?: "standard" | "toddler";
   preferred_language?: string;
+  toddler?: {
+    learning_mode: "standard" | "toddler";
+    age?: number | null;
+    module?: string | null;
+    level?: number | null;
+    concept?: string | null;
+    activity_type?: string | null;
+    expected_answer?: string | null;
+    recognized_speech?: string | null;
+    attempt_count?: number;
+    stars?: number;
+    recent_result?: string | null;
+  } | null;
   question?: GuideQuestionContext | null;
   progress?: {
     current_world?: string | null;
@@ -196,4 +213,75 @@ export type CompanionResponse = {
     route?: string;
     label?: string;
   };
+};
+
+export type LearningMode = "standard" | "toddler";
+
+export type ToddlerModule = "alphabets" | "numbers" | "colours" | "shapes";
+
+export type ToddlerActivity = {
+  activity_id: string;
+  type: "introduce" | "repeat_after_me" | "recognition" | "count_objects" | "complete";
+  prompt: string;
+  speech: string;
+  concept: string;
+  emoji: string;
+  word?: string | null;
+  visual_items: string[];
+  choices: string[];
+  answer?: string | null;
+  accepted: string[];
+};
+
+export type ToddlerLevel = {
+  id: string;
+  mode: "toddler";
+  module: ToddlerModule;
+  level: number;
+  title: string;
+  concepts: string[];
+  star_reward: number;
+  activities: ToddlerActivity[];
+};
+
+export type SpeechEvaluation = {
+  result: "correct" | "close" | "retry" | "unclear";
+  confidence: number;
+  expected: string;
+  heard: string;
+  retry: boolean;
+};
+
+export type ToddlerGuideResponse = {
+  speech: string;
+  emotion: "happy" | "encouraging" | "thinking" | "celebrate" | "gentle_retry";
+  emoji: string;
+  action: "speak" | "listen" | "repeat" | "next_activity" | "show_visual" | "give_reward" | "complete_level";
+  repeat: boolean;
+  target: string | null;
+};
+
+export type ToddlerResponse = {
+  session_id: string;
+  child_id: string;
+  module: ToddlerModule;
+  level: number;
+  activity: ToddlerActivity | null;
+  guide: ToddlerGuideResponse;
+  evaluation: SpeechEvaluation | null;
+  stars_earned: number;
+  total_stars: number;
+  attempt_count: number;
+  completed_activities: string[];
+  level_completed: boolean;
+  next_level_unlocked: boolean;
+  learned_concepts: string[];
+  avatar: import("@/components/avatar/avatar.types").AvatarPayload;
+};
+
+export type ToddlerModuleSummary = {
+  module: ToddlerModule;
+  title: string;
+  icon: string;
+  levels: number;
 };

@@ -25,12 +25,115 @@ def make_child(client: TestClient):
     return token, child.json()["child_id"]
 
 
+def make_toddler(client: TestClient):
+    auth = client.post(
+        "/auth/register",
+        json={"name": "Toddler Parent", "email": "toddler@example.com", "password": "demo1234"},
+    )
+    if auth.status_code != 200:
+        auth = client.post("/auth/login", json={"email": "toddler@example.com", "password": "demo1234"})
+    token = auth.json()["session_token"]
+    child = client.post(
+        "/children",
+        json={"session_token": token, "name": "Mira", "age_group": "2 years", "age": 2, "preferred_language": "English"},
+    )
+    return token, child.json()["child_id"]
+
+
 def test_register_login_and_create_child(client: TestClient):
     token, child_id = make_child(client)
     assert token.startswith("demo-")
     child = client.get(f"/children/{child_id}")
     assert child.status_code == 200
     assert child.json()["name"] == "Aaru"
+
+
+def test_age_mode_resolution_and_child_profile_mode(client: TestClient):
+    toddler_mode = client.post("/toddler/mode", json={"age": 2})
+    standard_mode = client.post("/toddler/mode", json={"age": 3})
+    assert toddler_mode.json()["learning_mode"] == "toddler"
+    assert standard_mode.json()["learning_mode"] == "standard"
+
+    _, child_id = make_toddler(client)
+    child = client.get(f"/children/{child_id}").json()
+    assert child["age"] == 2
+    assert child["learning_mode"] == "toddler"
+
+
+def test_toddler_correct_and_close_speech_answers_award_stars(client: TestClient):
+    _, child_id = make_toddler(client)
+    start = client.post("/toddler/start", json={"child_id": child_id, "module": "alphabets", "level": 1})
+    assert start.status_code == 200
+    session_id = start.json()["session_id"]
+
+    intro = client.post("/toddler/answer", json={"session_id": session_id, "answer": "A"})
+    assert intro.json()["evaluation"]["result"] == "correct"
+
+    repeat = client.post("/toddler/answer", json={"session_id": session_id, "recognized_speech": "ay"})
+    assert repeat.json()["evaluation"]["result"] == "correct"
+    assert repeat.json()["stars_earned"] == 1
+    assert repeat.json()["total_stars"] >= 2
+
+
+def test_toddler_retry_then_level_completion_unlocks_next_level(client: TestClient):
+    _, child_id = make_toddler(client)
+    start = client.post("/toddler/start", json={"child_id": child_id, "module": "alphabets", "level": 1})
+    session_id = start.json()["session_id"]
+    client.post("/toddler/answer", json={"session_id": session_id, "answer": "A"})
+    client.post("/toddler/answer", json={"session_id": session_id, "recognized_speech": "ay"})
+
+    retry = client.post("/toddler/answer", json={"session_id": session_id, "answer": "A"})
+    assert retry.json()["evaluation"]["result"] == "retry"
+    assert retry.json()["guide"]["target"] == "B"
+
+    client.post("/toddler/answer", json={"session_id": session_id, "answer": "B"})
+    complete = client.post("/toddler/answer", json={"session_id": session_id, "recognized_speech": "see"})
+    body = complete.json()
+    assert body["level_completed"] is True
+    assert body["next_level_unlocked"] is True
+    assert body["guide"]["action"] == "complete_level"
+
+    progress = client.get(f"/progress/{child_id}").json()["child"]["path_progress"]["toddler"]
+    assert 1 in progress["completed_stages"]
+    assert 2 in progress["unlocked_stages"]
+
+
+def test_toddler_guide_uses_safe_structured_targets(client: TestClient):
+    _, child_id = make_toddler(client)
+    response = client.post(
+        "/agent/guide",
+        json={
+            "session_id": "session_toddler",
+            "child_id": child_id,
+            "mode": "learning",
+            "event": "LEVEL_ANSWER_INCORRECT",
+            "route": "/toddler",
+            "screen": "toddler_lesson",
+            "feature": "alphabets",
+            "age": 2,
+            "learning_mode": "toddler",
+            "toddler": {
+                "learning_mode": "toddler",
+                "age": 2,
+                "module": "alphabets",
+                "level": 1,
+                "concept": "A",
+                "activity_type": "repeat_after_me",
+                "expected_answer": "A",
+                "recognized_speech": "",
+                "attempt_count": 1,
+                "stars": 1,
+                "recent_result": "unclear",
+            },
+            "available_actions": ["highlight"],
+            "available_targets": ["toddler-microphone", "toddler-choices"],
+        },
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["strategy"] == "hint"
+    assert body["ui_action"]["target"] == "toddler-microphone"
+    assert "Almost" in body["message"]
 
 
 def test_learning_wrong_hint_then_stage_completion_unlocks_next_stage(client: TestClient):
@@ -42,7 +145,7 @@ def test_learning_wrong_hint_then_stage_completion_unlocks_next_stage(client: Te
     wrong = client.post("/learning/answer", json={"session_id": session_id, "answer": "2"})
     assert wrong.json()["is_correct"] is False
     assert wrong.json()["attempt_number"] == 1
-    assert "Good try" in wrong.json()["feedback"]
+    assert "one apple" in wrong.json()["feedback"]
 
     for answer in ["1", "1", "1"]:
         result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
@@ -89,6 +192,18 @@ def test_seed_unlocks_mixed_path_and_final_unlocks_certificate(client: TestClien
     start = client.post("/learning/start", json={"child_id": child_id, "path_id": "mixed_final", "stage_number": 1})
     session_id = start.json()["session_id"]
     for answer in ["three red circles", "Apple", "2"]:
+        result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
+    assert result.json()["stage_completed"] is True
+
+    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "mixed_final", "stage_number": 2})
+    session_id = start.json()["session_id"]
+    for answer in ["4", "Dog", "star"]:
+        result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
+    assert result.json()["stage_completed"] is True
+
+    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "mixed_final", "stage_number": 3})
+    session_id = start.json()["session_id"]
+    for answer in ["5", "Fish", "two yellow stars"]:
         result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
     assert result.json()["stage_completed"] is True
 

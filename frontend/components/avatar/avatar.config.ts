@@ -42,7 +42,11 @@ export const AVATAR_EFFECT_INDEX: Record<AvatarEffect, number> = {
   reward_chest: 4,
   gentle_hint: 5,
   story_transition: 6,
-  certificate_celebration: 7
+  certificate_celebration: 7,
+  sparkle: 1,
+  bounce: 2,
+  rainbow: 7,
+  pulse: 5
 };
 
 export function tidyAvatarMessage(message: string) {
