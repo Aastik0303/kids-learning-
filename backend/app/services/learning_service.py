@@ -5,7 +5,7 @@ from uuid import uuid4
 from app.config import get_settings
 from app.schemas.child import PathProgress
 from app.schemas.learning import Activity, LearningAnswerRequest, LearningResponse, LearningStartRequest
-from app.services.answer_normalization_service import answers_match, normalize_answer
+from app.services.answer_resolution_service import AnswerResolutionContext, resolved_answers_match
 from app.services import curriculum_service
 from app.services.avatar_service import learning_avatar
 from app.services.child_service import CORE_PATHS, get_child, unlock_mixed_if_ready
@@ -24,12 +24,12 @@ CORRECT_FEEDBACK = [
     "Wonderful! Here comes another.",
     "Amazing work! Next question coming up.",
     "Superb! Let us try the next one.",
-    "You nailed it! Keep up the great work.",
+    "Nice work! Keep going.",
 ]
 
 STAGE_COMPLETE_SUCCESS = [
     "Wonderful work! This level is complete.",
-    "You finished the level! I am so proud.",
+    "You finished the level! Great effort.",
     "Level done! What an achievement.",
     "All complete! You were fantastic.",
     "Stage cleared! You are a superstar.",
@@ -39,13 +39,13 @@ STAGE_COMPLETE_NEEDS_PRACTICE = [
     "Let us practise this one a little more.",
     "You tried hard! A little more practice will help.",
     "Almost there! Let us practise and come back stronger.",
-    "Good effort! Some practice will make it perfect.",
+    "Good effort! Some practice will help.",
 ]
 
 WRONG_ATTEMPT_2 = [
     "Almost there! Let us look again with fresh eyes. ",
     "You are so close! Let us try once more. ",
-    "Not quite, but keep going! ",
+    "Almost. Keep going! ",
     "Do not worry. Let us look at this together. ",
 ]
 
@@ -132,8 +132,17 @@ def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
     child = _child_dict(session["child_id"])
     stage = curriculum_service.get_stage(session["path_id"], session["stage_number"])
     activity = stage.activities[session["activity_index"]]
-    normalized_answer = normalize_answer(payload.answer, activity.type)
-    is_correct = answers_match(payload.answer, activity.correct_answer, activity.type)
+    is_correct, resolved = resolved_answers_match(
+        AnswerResolutionContext(
+            transcript=payload.answer,
+            confidence=0.9,
+            answer_type=activity.type,
+            correct_answer=activity.correct_answer,
+            accepted_answers=[activity.correct_answer],
+            options=activity.options,
+        )
+    )
+    normalized_answer = resolved.normalized
     next_attempt_number = 0 if is_correct else session["attempt_number"] + 1
     record_attempt(
         child_id=session["child_id"],
@@ -237,7 +246,7 @@ def _complete_stage(session: dict, child: dict, stage, is_correct: bool, stars_e
 
     if session["stage_completed"]:
         if score == 100:
-            feedback = "Perfect score! Every answer was right. You are a superstar!"
+            feedback = "All correct! Every answer was right."
         else:
             feedback = random.choice(STAGE_COMPLETE_SUCCESS)
     else:

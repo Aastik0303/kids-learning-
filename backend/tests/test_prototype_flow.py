@@ -248,17 +248,36 @@ def test_voice_number_words_are_normalized_before_practice_evaluation(client: Te
     assert answer.json()["is_correct"] is True
 
 
-def test_speech_transcribe_discards_audio_and_returns_transcript(client: TestClient):
+def test_speech_normalize_resolves_browser_transcript_without_audio(client: TestClient):
     response = client.post(
-        "/speech/transcribe",
-        files={"audio": ("answer.webm", b"temporary audio", "audio/webm")},
-        data={"session_id": "session_1", "activity_id": "activity_1", "answer_type": "select_number", "transcript": "number three", "confidence": "0.94"},
+        "/speech/normalize",
+        json={
+            "session_id": "session_1",
+            "activity_id": "activity_1",
+            "answer_type": "count_objects",
+            "transcript": "tree",
+            "confidence": 0.54,
+            "correct_answer": "3",
+            "accepted_answers": ["3", "three"],
+            "options": ["2", "3", "4"],
+        },
     )
     body = response.json()
     assert response.status_code == 200
-    assert body["transcript"] == "number three"
+    assert body["raw_transcript"] == "tree"
     assert body["normalized"] == "3"
-    assert body["confidence"] == 0.94
+    assert body["resolved_answer"] == "3"
+    assert body["resolution_confidence"] >= 0.9
+
+
+def test_speech_normalize_marks_empty_transcript_ambiguous(client: TestClient):
+    response = client.post(
+        "/speech/normalize",
+        json={"activity_id": "activity_1", "answer_type": "count_objects", "transcript": "", "confidence": 0, "correct_answer": "3", "options": ["2", "3", "4"]},
+    )
+    body = response.json()
+    assert response.status_code == 200
+    assert body["ambiguous"] is True
 
 
 def test_single_guide_app_open_and_wrong_attempt_contract(client: TestClient):
@@ -296,21 +315,30 @@ def test_single_guide_app_open_and_wrong_attempt_contract(client: TestClient):
                 "activity_id": "numbers_count_3_apples_001",
                 "topic": "numbers",
                 "concept": "counting_3",
+                "learning_objective": "Count three visible apples one at a time.",
                 "prompt": "How many apples are there?",
+                "answer_type": "count_objects",
                 "options": ["2", "3", "4"],
                 "correct_answer": "3",
                 "child_answer": "2",
                 "attempt": 1,
+                "hint": "Count each apple only once.",
+                "visual_items": ["apple", "apple", "apple"],
+                "accepted_answers": ["3", "three"],
+                "recent_answers": ["2"],
             },
             "available_actions": ["show_hint", "highlight"],
             "available_targets": ["counting-object-group", "voice-answer-area"],
+            "allowed_visual_targets": ["visual-item-0", "visual-item-1", "visual-item-2"],
         },
     )
     body = wrong.json()
     assert wrong.status_code == 200
     assert body["strategy"] == "hint"
-    assert len(body["message"].split()) <= 20
+    assert len(body["message"].split()) <= 22
     assert body["ui_action"]["target"] == "counting-object-group"
+    assert body["visual_action"]["type"] == "highlight_sequence"
+    assert body["visual_action"]["targets"] == ["visual-item-0", "visual-item-1", "visual-item-2"]
 
 
 def test_guide_rejects_invalid_target(client: TestClient):
@@ -328,6 +356,25 @@ def test_guide_rejects_invalid_target(client: TestClient):
     )
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "UNSAFE_GUIDE_TARGET"
+
+
+def test_guide_rejects_invalid_visual_target(client: TestClient):
+    response = client.post(
+        "/agent/guide",
+        json={
+            "mode": "practice",
+            "event": "PRACTICE_QUESTION_LOADED",
+            "route": "/practice/numbers",
+            "screen": "practice_session",
+            "feature": "numbers_practice",
+            "question": {"activity_id": "a1", "prompt": "How many apples?", "visual_items": ["apple"]},
+            "available_actions": ["highlight"],
+            "available_targets": ["question-area"],
+            "allowed_visual_targets": ["#unsafe"],
+        },
+    )
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "UNSAFE_VISUAL_TARGET"
 
 
 def test_answer_attempt_history_is_stored_after_backend_evaluation(client: TestClient):

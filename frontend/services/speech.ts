@@ -30,6 +30,11 @@ type SpeechRecognitionEvent = {
   };
 };
 
+type BrowserSpeechResult = {
+  transcript: string;
+  confidence: number;
+};
+
 type WindowWithSpeechRecognition = Window &
   typeof globalThis & {
     SpeechRecognition?: SpeechRecognitionConstructor;
@@ -37,9 +42,12 @@ type WindowWithSpeechRecognition = Window &
   };
 
 export type SpeechTranscription = {
-  transcript: string;
-  confidence: number;
-  normalized?: string;
+  raw_transcript: string;
+  normalized: string;
+  resolved_answer: string;
+  resolution_confidence: number;
+  ambiguous: boolean;
+  matched_candidate: string | null;
 };
 
 export function canSpeak() {
@@ -94,31 +102,8 @@ function createSpeechRecognition(language = "en-US") {
   return recognition;
 }
 
-function recordAudioChunk(stream: MediaStream, timeoutMs: number) {
-  return new Promise<Blob>((resolve) => {
-    if (!("MediaRecorder" in window)) {
-      resolve(new Blob());
-      return;
-    }
-    const chunks: Blob[] = [];
-    const recorder = new MediaRecorder(stream);
-    const stopTimer = window.setTimeout(() => {
-      if (recorder.state !== "inactive") recorder.stop();
-    }, timeoutMs);
-
-    recorder.ondataavailable = (event) => {
-      if (event.data.size > 0) chunks.push(event.data);
-    };
-    recorder.onstop = () => {
-      window.clearTimeout(stopTimer);
-      resolve(new Blob(chunks, { type: recorder.mimeType || "audio/webm" }));
-    };
-    recorder.start();
-  });
-}
-
 function listenForTranscript(timeoutMs: number, language = "en-US") {
-  return new Promise<SpeechTranscription>((resolve) => {
+  return new Promise<BrowserSpeechResult>((resolve) => {
     const recognition = createSpeechRecognition(language);
     if (!recognition) {
       window.setTimeout(() => resolve({ transcript: "", confidence: 0 }), timeoutMs);
@@ -126,7 +111,7 @@ function listenForTranscript(timeoutMs: number, language = "en-US") {
     }
 
     let settled = false;
-    const finish = (result: SpeechTranscription) => {
+    const finish = (result: BrowserSpeechResult) => {
       if (settled) return;
       settled = true;
       resolve(result);
@@ -166,36 +151,132 @@ export async function captureVoiceAnswer({
   sessionId,
   activityId,
   answerType,
+  correctAnswer,
+  acceptedAnswers = [],
+  options = [],
   timeoutMs = 6500,
   language = "en-US"
 }: {
   sessionId: string;
   activityId: string;
   answerType: string;
+  correctAnswer?: string | null;
+  acceptedAnswers?: string[];
+  options?: string[];
   timeoutMs?: number;
   language?: string;
 }) {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  const transcriptPromise = listenForTranscript(timeoutMs, language);
-  const audioPromise = recordAudioChunk(stream, timeoutMs);
-  const [browserResult, audio] = await Promise.all([transcriptPromise, audioPromise]);
-  stream.getTracks().forEach((track) => track.stop());
+  const browserResult = await listenForTranscript(timeoutMs, language);
+  if (!browserResult.transcript.trim()) {
+    return localNormalizeSpeech({
+      session_id: sessionId,
+      activity_id: activityId,
+      answer_type: answerType,
+      transcript: "",
+      confidence: 0,
+      correct_answer: correctAnswer,
+      accepted_answers: acceptedAnswers,
+      options
+    });
+  }
 
-  const form = new FormData();
-  form.append("audio", audio, "answer.webm");
-  form.append("session_id", sessionId);
-  form.append("activity_id", activityId);
-  form.append("answer_type", answerType);
-  form.append("transcript", browserResult.transcript);
-  form.append("confidence", String(browserResult.confidence));
-
-  return transcribeSpeech(form);
+  return normalizeSpeech({
+    session_id: sessionId,
+    activity_id: activityId,
+    answer_type: answerType,
+    transcript: browserResult.transcript,
+    confidence: browserResult.confidence,
+    correct_answer: correctAnswer,
+    accepted_answers: acceptedAnswers,
+    options
+  }).catch(() =>
+    localNormalizeSpeech({
+      session_id: sessionId,
+      activity_id: activityId,
+      answer_type: answerType,
+      transcript: browserResult.transcript,
+      confidence: browserResult.confidence,
+      correct_answer: correctAnswer,
+      accepted_answers: acceptedAnswers,
+      options
+    })
+  );
 }
 
-export function transcribeSpeech(form: FormData) {
-  return api<SpeechTranscription>("/speech/transcribe", {
+export function normalizeSpeech(payload: {
+  session_id: string;
+  activity_id: string;
+  answer_type: string;
+  transcript: string;
+  confidence: number;
+  correct_answer?: string | null;
+  accepted_answers?: string[];
+  options?: string[];
+}) {
+  return api<SpeechTranscription>("/speech/normalize", {
     method: "POST",
-    body: form,
-    headers: {}
+    body: JSON.stringify(payload)
   });
+}
+
+const numberWords: Record<string, string> = {
+  zero: "0",
+  oh: "0",
+  one: "1",
+  won: "1",
+  two: "2",
+  too: "2",
+  to: "2",
+  three: "3",
+  tree: "3",
+  free: "3",
+  four: "4",
+  for: "4",
+  fore: "4",
+  five: "5",
+  six: "6",
+  seven: "7",
+  eight: "8",
+  ate: "8",
+  nine: "9",
+  ten: "10"
+};
+
+function cleanSpeech(text: string) {
+  return text.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function localNormalizeAnswer(transcript: string) {
+  const tokens = cleanSpeech(transcript)
+    .split(" ")
+    .filter((token) => token && !["the", "a", "an", "it", "is", "its", "number", "letter", "colour", "color", "please"].includes(token));
+  const mapped = tokens.map((token) => numberWords[token] ?? token);
+  return mapped.length === 1 ? mapped[0] : mapped.join(" ");
+}
+
+function localNormalizeSpeech(payload: {
+  session_id: string;
+  activity_id: string;
+  answer_type: string;
+  transcript: string;
+  confidence: number;
+  correct_answer?: string | null;
+  accepted_answers?: string[];
+  options?: string[];
+}): SpeechTranscription {
+  const raw = payload.transcript.trim();
+  const normalized = localNormalizeAnswer(raw);
+  const candidates = [payload.correct_answer, ...(payload.accepted_answers ?? []), ...(payload.options ?? [])]
+    .filter((candidate): candidate is string => Boolean(candidate))
+    .map((candidate) => ({ raw: candidate, normalized: localNormalizeAnswer(candidate) }));
+  const exact = candidates.find((candidate) => candidate.normalized === normalized);
+  const hasTranscript = Boolean(raw);
+  return {
+    raw_transcript: raw,
+    normalized,
+    resolved_answer: exact?.normalized ?? normalized,
+    resolution_confidence: exact ? Math.max(payload.confidence, 0.95) : payload.confidence,
+    ambiguous: !hasTranscript || (!exact && payload.confidence < 0.65),
+    matched_candidate: exact?.raw ?? null
+  };
 }

@@ -120,14 +120,20 @@ export function ToddlerLesson({
     if (!activity || !lesson || busy) return;
     setAvatar({ state: "listening", message: "I'm listening...", animationEffect: "none", durationMs: null });
     const result = await stt.startListening(lesson.session_id, activity);
-    if (!result || !result.transcript.trim()) {
+    if (!result || !result.raw_transcript.trim()) {
       const message = stt.error || "Oops! I couldn't hear you 😊 Try again!";
       setError(message);
       setAvatar({ state: "encouraging", message, speak: true, animationEffect: "gentle_hint" });
       return;
     }
-    setTranscript(result.transcript);
-    await submitAnswer(result.transcript, result.transcript);
+    if (result.ambiguous) {
+      const message = "I couldn't hear that clearly 😊 Try again!";
+      setError(message);
+      setAvatar({ state: "encouraging", message, speak: true, animationEffect: "gentle_hint" });
+      return;
+    }
+    setTranscript(result.raw_transcript);
+    await submitAnswer(result.resolved_answer || result.normalized || result.raw_transcript, result.raw_transcript);
   }
 
   const feedback = useMemo(() => {

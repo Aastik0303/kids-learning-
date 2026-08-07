@@ -2,7 +2,7 @@ from uuid import uuid4
 import random
 
 from app.schemas.practice import PracticeAnswerRequest, PracticeAnswerResponse, PracticeStartRequest, PracticeStartResponse, PracticeTopic
-from app.services.answer_normalization_service import answers_match, normalize_answer
+from app.services.answer_resolution_service import AnswerResolutionContext, resolved_answers_match
 from app.services import curriculum_service
 from app.services.avatar_service import learning_avatar
 from app.services.child_service import get_child
@@ -27,9 +27,9 @@ CORRECT_FEEDBACK = [
 INCORRECT_FEEDBACK_ATTEMPT_1 = [
     "Good try! Let us look once more.",
     "Almost! Try again carefully.",
-    "Not quite. Take another look.",
+    "Almost. Take another look.",
     "So close! Think about it once more.",
-    "That was brave! Let us try again.",
+    "Good try. Let us try again.",
 ]
 
 INCORRECT_FEEDBACK_ATTEMPT_2 = [
@@ -43,7 +43,7 @@ INCORRECT_FEEDBACK_ATTEMPT_3_PLUS = [
     "No worries! Let us look at the hint together.",
     "Take your time. The hint will help.",
     "Let us try a different way. Look at the hint.",
-    "Every try makes you smarter! Here is more help.",
+    "Each try helps us learn. Here is more help.",
 ]
 
 
@@ -162,8 +162,17 @@ def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
     if not activity:
         raise app_error("INVALID_ANSWER", "That practice question was not found.", 404)
     answer_type = activity.get("type", session["topic"])
-    normalized_answer = normalize_answer(payload.answer, answer_type)
-    is_correct = answers_match(payload.answer, activity["correct_answer"], answer_type)
+    is_correct, resolved = resolved_answers_match(
+        AnswerResolutionContext(
+            transcript=payload.answer,
+            confidence=0.9,
+            answer_type=answer_type,
+            correct_answer=activity["correct_answer"],
+            accepted_answers=[activity["correct_answer"]],
+            options=activity.get("options", []),
+        )
+    )
+    normalized_answer = resolved.normalized
     attempts = session.setdefault("attempts", {})
     attempt_number = 0 if is_correct else attempts.get(payload.activity_id, 0) + 1
     attempts[payload.activity_id] = 0 if is_correct else attempt_number

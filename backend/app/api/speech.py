@@ -1,45 +1,30 @@
-from fastapi import APIRouter, Request
-from pydantic import BaseModel
+from fastapi import APIRouter
+from pydantic import BaseModel, Field
 
-from app.services.answer_normalization_service import normalize_answer
+from app.services.answer_resolution_service import AnswerResolutionContext, AnswerResolutionResult, resolve_answer
 
 router = APIRouter(prefix="/speech", tags=["speech"])
 
 
-class SpeechTranscribeResponse(BaseModel):
-    transcript: str
+class SpeechNormalizeRequest(BaseModel):
+    transcript: str = ""
     confidence: float
-    normalized: str
+    answer_type: str = ""
+    activity_id: str | None = None
+    correct_answer: str | None = None
+    accepted_answers: list[str] = Field(default_factory=list)
+    options: list[str] = Field(default_factory=list)
 
 
-async def _payload_from_request(request: Request) -> dict:
-    content_type = request.headers.get("content-type", "")
-    if "application/json" in content_type:
-        return await request.json()
-    if "multipart/form-data" in content_type:
-        try:
-            form = await request.form()
-        except Exception:
-            return {}
-        audio = form.get("audio")
-        if hasattr(audio, "close"):
-            await audio.close()
-        return dict(form)
-    return {}
-
-
-@router.post("/transcribe", response_model=SpeechTranscribeResponse)
-async def transcribe(request: Request) -> SpeechTranscribeResponse:
-    payload = await _payload_from_request(request)
-    transcript = str(payload.get("transcript") or payload.get("browser_transcript") or "").strip()
-    confidence_value = payload.get("confidence", 0 if not transcript else 0.9)
-    try:
-        confidence = float(confidence_value)
-    except (TypeError, ValueError):
-        confidence = 0.0
-
-    return SpeechTranscribeResponse(
-        transcript=transcript,
-        confidence=max(0.0, min(1.0, confidence)),
-        normalized=normalize_answer(transcript, str(payload.get("answer_type") or "")),
+@router.post("/normalize", response_model=AnswerResolutionResult)
+async def normalize(payload: SpeechNormalizeRequest) -> AnswerResolutionResult:
+    return resolve_answer(
+        AnswerResolutionContext(
+            transcript=payload.transcript,
+            confidence=max(0.0, min(1.0, payload.confidence)),
+            answer_type=payload.answer_type,
+            correct_answer=payload.correct_answer,
+            accepted_answers=payload.accepted_answers,
+            options=payload.options,
+        )
     )

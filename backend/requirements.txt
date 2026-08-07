@@ -3,7 +3,5 @@ uvicorn[standard]
 pydantic
 pydantic-settings
 python-dotenv
-langgraph
 pytest
 httpx
-python-multipart

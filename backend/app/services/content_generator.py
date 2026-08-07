@@ -16,16 +16,16 @@ TUTOR_INTRO_TEMPLATES = [
 HINT_TEMPLATES = [
     "Good try! {hint}",
     "Almost! {hint}",
-    "Not quite, but you are close! {hint}",
+    "Almost! {hint}",
     "Let us look again. {hint}",
     "Think about it this way: {hint}",
 ]
 
 STREAK_MESSAGES = [
     "You are on a roll! Keep going.",
-    "Wow, you are getting so good at this!",
+    "Great listening! Keep going.",
     "Look at you go! Another one right.",
-    "You are on fire! Amazing work.",
+    "Nice streak! Keep going.",
 ]
 
 

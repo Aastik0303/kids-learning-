@@ -18,6 +18,22 @@ export function getProgress(childId: string) {
   return api<{ child: ChildProfile }>(`/progress/${childId}`).catch(() => ({ child: getChild() ?? makeGuestChild() }));
 }
 
+export function updateChildProfile(session_token: string | null, child: ChildProfile, updates: { age?: number; age_group?: string; preferred_language?: string; name?: string }) {
+  const learning_mode = updates.age !== undefined ? (updates.age < 3 ? "toddler" as const : "standard" as const) : child.learning_mode;
+  const localChild = { ...child, ...updates, learning_mode };
+  if (!session_token || child.child_id === "guest_child" || child.child_id.startsWith("local-child")) {
+    saveChild(localChild);
+    return Promise.resolve(localChild);
+  }
+  return api<ChildProfile>(`/children/${child.child_id}`, {
+    method: "PATCH",
+    body: JSON.stringify({ session_token, ...updates })
+  }).catch(() => {
+    saveChild(localChild);
+    return localChild;
+  });
+}
+
 export function seedChild(childId: string) {
   return api<ChildProfile>(`/dev/seed/${childId}`, { method: "POST" }).catch(() => {
     const seeded = seedFinalDemo(getChild() ?? makeGuestChild());

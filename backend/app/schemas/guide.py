@@ -43,17 +43,35 @@ GuideActionType = Literal[
     "wait_for_click",
 ]
 
+GuideVisualActionType = Literal[
+    "none",
+    "pulse",
+    "highlight",
+    "highlight_sequence",
+    "dim_others",
+    "group_objects",
+    "trace_shape",
+    "show_example",
+]
+
 
 class GuideQuestionContext(BaseModel):
     activity_id: str
     topic: str | None = None
     concept: str | None = None
+    learning_objective: str | None = None
     prompt: str
+    answer_type: str | None = None
     options: list[str] = Field(default_factory=list)
     correct_answer: str | None = None
     child_answer: str | None = None
     attempt: int = 0
     hint: str | None = None
+    visual_items: list[str] = Field(default_factory=list)
+    accepted_answers: list[str] = Field(default_factory=list)
+    recent_answers: list[str] = Field(default_factory=list)
+    example: str | None = None
+    difficulty: str | None = None
 
 
 class GuideProgressContext(BaseModel):
@@ -95,6 +113,7 @@ class GuideRequest(BaseModel):
     toddler: ToddlerGuideContext | None = None
     available_actions: list[GuideActionType] = Field(default_factory=list)
     available_targets: list[str] = Field(default_factory=list)
+    allowed_visual_targets: list[str] = Field(default_factory=list)
 
 
 class GuideUiAction(BaseModel):
@@ -102,9 +121,15 @@ class GuideUiAction(BaseModel):
     target: str | None = None
 
 
+class GuideVisualAction(BaseModel):
+    type: GuideVisualActionType = "none"
+    targets: list[str] = Field(default_factory=list)
+
+
 class GuideResponse(BaseModel):
     message: str
-    strategy: Literal["welcome", "navigation", "read_question", "hint", "re_explain", "celebrate", "help", "none"]
+    strategy: Literal["welcome", "navigation", "read_question", "visual_explanation", "hint", "re_explain", "celebrate", "help", "none"]
     avatar: AvatarPayload
     ui_action: GuideUiAction
+    visual_action: GuideVisualAction = Field(default_factory=GuideVisualAction)
     next_expected_event: str = "wait_for_child"

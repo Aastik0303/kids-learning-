@@ -141,12 +141,19 @@ export type GuideQuestionContext = {
   activity_id: string;
   topic?: string | null;
   concept?: string | null;
+  learning_objective?: string | null;
   prompt: string;
+  answer_type?: string | null;
   options: string[];
   correct_answer?: string | null;
   child_answer?: string | null;
   attempt: number;
   hint?: string | null;
+  visual_items?: string[];
+  accepted_answers?: string[];
+  recent_answers?: string[];
+  example?: string | null;
+  difficulty?: string | null;
 };
 
 export type GuideRequest = {
@@ -182,17 +189,22 @@ export type GuideRequest = {
     weak_skills?: string[];
     session_stars?: number;
   } | null;
+  allowed_visual_targets?: string[];
   available_actions: GuideActionType[];
   available_targets: string[];
 };
 
 export type GuideResponse = {
   message: string;
-  strategy: "welcome" | "navigation" | "read_question" | "hint" | "re_explain" | "celebrate" | "help" | "none";
+  strategy: "welcome" | "navigation" | "read_question" | "visual_explanation" | "hint" | "re_explain" | "celebrate" | "help" | "none";
   avatar: import("@/components/avatar/avatar.types").AvatarPayload;
   ui_action: {
     type: GuideActionType;
     target: string | null;
+  };
+  visual_action: {
+    type: "none" | "pulse" | "highlight" | "highlight_sequence" | "dim_others" | "group_objects" | "trace_shape" | "show_example";
+    targets: string[];
   };
   next_expected_event: string;
 };

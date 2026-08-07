@@ -31,13 +31,23 @@ export function activityQuestion(activity: Activity, overrides: Partial<NonNulla
     activity_id: activity.activity_id,
     topic: activity.type,
     concept: activity.type,
+    learning_objective: activity.hint,
     prompt: activity.prompt,
+    answer_type: activity.type,
     options: activity.options,
     correct_answer: activity.correct_answer,
     hint: activity.hint,
+    visual_items: activity.visual_items,
+    accepted_answers: [activity.correct_answer],
+    recent_answers: [],
+    difficulty: activity.difficulty,
     attempt: 0,
     ...overrides
   };
+}
+
+export function visualTargetsForActivity(activity: Activity) {
+  return activity.visual_items.map((_, index) => `visual-item-${index}`);
 }
 
 export function progressContext(child: ChildProfile | null, currentWorld?: string | null, currentLevel?: string | null): GuideRequest["progress"] {
@@ -80,6 +90,7 @@ function localGuide(payload: GuideRequest): GuideResponse {
     strategy: wrong ? "hint" : complete ? "celebrate" : "read_question",
     avatar: { state: wrong ? "encouraging" : complete ? "celebrating" : "speaking", message, speak: true, animationEffect: wrong ? "gentle_hint" : complete ? "confetti" : "none" },
     ui_action: { type: target ? "highlight" : "none", target },
+    visual_action: { type: "none", targets: [] },
     next_expected_event: wrong ? "answer_submitted" : "wait_for_child"
   };
 }

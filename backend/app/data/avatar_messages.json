@@ -16,36 +16,36 @@
   "correct_variants": [
     "Nice work! You found it.",
     "Amazing! That is right.",
-    "Great job! You are a star.",
+    "Great job!",
     "Well done! You did it.",
     "Hooray! That is correct.",
-    "Wonderful! You are so clever.",
+    "Wonderful work!",
     "Brilliant! Keep going.",
     "You got it! Fantastic.",
-    "Super! That was perfect.",
-    "Yay! You nailed it.",
-    "Awesome work! I am so proud.",
-    "Excellent! You are getting better and better."
+    "Super work!",
+    "Nice counting!",
+    "Awesome work!",
+    "Excellent effort."
   ],
   "hint_variants": [
     "Good try. Look slowly and try once more.",
     "Almost! Take another look and try again.",
-    "Not quite. Let us look at this together.",
+    "Almost. Let us look at this together.",
     "So close! Think about it one more time.",
     "Let us try again. You can do this!",
     "Hmm, not that one. Let us try once more.",
-    "That was a brave try! Look carefully again.",
+    "Good try. Look carefully again.",
     "Keep going! You are getting closer."
   ],
   "encouragement_variants": [
     "You are doing great! Keep it up.",
-    "I believe in you! Try once more.",
+    "Try once more.",
     "Do not worry, everyone learns at their own pace.",
-    "You are so brave for trying! Let us go again.",
-    "Practice makes perfect! You are getting better.",
+    "Good try! Let us go again.",
+    "Practice helps! You are learning.",
     "Take your time. There is no rush.",
     "You can do this! I am right here with you.",
-    "Every try makes you smarter!"
+    "Each try helps us learn."
   ],
   "welcome_variants": [
     "Hello there! Ready for an adventure?",
@@ -57,7 +57,7 @@
   "practice_start": [
     "Practice time! Let us get started.",
     "Ready to practice? Let us try some questions.",
-    "Practice makes perfect! Here we go.",
+    "Practice helps! Here we go.",
     "Let us sharpen those skills with some practice."
   ],
   "practice_complete": [
@@ -73,7 +73,7 @@
     "Congratulations! A new adventure awaits."
   ],
   "certificate_earned": [
-    "You earned your certificate! I am so proud of you.",
+    "You earned your certificate! Great work.",
     "Amazing! Your certificate is ready. You are a star!",
     "You did it! Your very own certificate is here."
   ],
@@ -82,7 +82,7 @@
     "ten_stars": "Ten stars! You are a shining explorer.",
     "twenty_five_stars": "Twenty-five stars! You are unstoppable.",
     "fifty_stars": "Fifty stars! You are a superstar learner.",
-    "perfect_stage": "A perfect score! You got every question right.",
+    "perfect_stage": "All correct! You got every question right.",
     "first_badge": "Your first badge! Wear it proudly.",
     "all_badges": "You collected all the badges! What an achievement."
   },
@@ -94,9 +94,9 @@
   ],
   "streak_messages": {
     "2_correct": "Two in a row! Nice streak.",
-    "3_correct": "Three in a row! You are on fire.",
-    "5_correct": "Five in a row! Unstoppable!",
-    "all_correct": "All correct! A perfect round!"
+    "3_correct": "Three in a row! Nice streak.",
+    "5_correct": "Five in a row! Great focus.",
+    "all_correct": "All correct! Great round."
   },
   "return_messages": [
     "Welcome back! I saved your place.",

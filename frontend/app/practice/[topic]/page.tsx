@@ -6,8 +6,9 @@ import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { VoicePracticeSession } from "@/components/practice/VoicePracticeSession";
 import { AppShell } from "@/components/shared/AppShell";
 import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
+import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { avatarForPage, avatarForPracticeResult } from "@/services/avatar";
-import { activityQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext } from "@/services/guide";
+import { activityQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
 import { answerPractice, startPractice } from "@/services/practice";
 import { getOrCreateGuestChild } from "@/services/session";
 import type { Activity } from "@/types";
@@ -28,6 +29,7 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
   const [wrongAttempts, setWrongAttempts] = useState<Record<string, number>>({});
   const [voiceState, setVoiceState] = useState<VoiceInteractionState>("idle");
   const [guideMessage, setGuideMessage] = useState("");
+  const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
   const [loading, setLoading] = useState(true);
   const { setAvatar } = useAvatar();
 
@@ -47,11 +49,13 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       question: activityQuestion(activity, { topic, concept: activity.type, attempt: wrongAttempts[activity.activity_id] ?? 0 }),
       progress: progressContext(child, topic, null),
       available_actions: ["highlight", "repeat_instruction"],
-      available_targets: [GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON]
+      available_targets: [GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
+      allowed_visual_targets: visualTargetsForActivity(activity)
     });
-    if (updateSpokenMessage) setGuideMessage(guide.message);
+    setGuideMessage(guide.message);
     setAvatar({ ...guide.avatar, speak: false });
     setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+    setVisualAction(guide.visual_action);
   }
 
   useEffect(() => {
@@ -153,15 +157,18 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
         topic,
         concept: activity.type,
         child_answer: answer,
-        attempt: nextAttempt
+        attempt: nextAttempt,
+        recent_answers: [answer]
       }),
       progress: progressContext(child, topic, null),
       available_actions: ["show_hint", "highlight", "repeat_instruction"],
-      available_targets: [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON]
+      available_targets: [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
+      allowed_visual_targets: visualTargetsForActivity(activity)
     }).then((guide) => {
       setGuideMessage(guide.message);
       setAvatar({ ...guide.avatar, speak: false });
       setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+      setVisualAction(guide.visual_action);
     });
     setBusy(false);
   }
@@ -206,6 +213,7 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
             onAnswer={choose}
             disabled={busy}
             highlightId={highlightId}
+            visualAction={visualAction}
           />
         ) : (
           <section className="surface-panel grid gap-4 rounded-[2rem] p-6 text-center">

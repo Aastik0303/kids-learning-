@@ -7,9 +7,10 @@ import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { VoiceLearningSession } from "@/components/learning/VoiceLearningSession";
 import { AppShell } from "@/components/shared/AppShell";
 import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
+import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { linearAdventurePath, pathSummaries } from "@/data/prototype";
 import { avatarForLearningResult } from "@/services/avatar";
-import { activityQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext } from "@/services/guide";
+import { activityQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
 import { answerLearning, startLearning } from "@/services/learning";
 import { getOrCreateGuestChild, saveChild } from "@/services/session";
 import { getProgress } from "@/services/child";
@@ -51,6 +52,7 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [voiceState, setVoiceState] = useState<VoiceInteractionState>("idle");
   const [guideMessage, setGuideMessage] = useState("");
+  const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
   const { setAvatar } = useAvatar();
 
   async function prepareQuestionGuide(activity: NonNullable<LearningResponse["activity"]>, sessionId: string, stored = child, updateSpokenMessage = false) {
@@ -69,11 +71,13 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
       question: activityQuestion(activity, { topic: pathId, concept: activity.type }),
       progress: progressContext(currentChild, pathId, `Level ${stageId}`),
       available_actions: ["highlight", "repeat_instruction"],
-      available_targets: [GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON]
+      available_targets: [GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
+      allowed_visual_targets: visualTargetsForActivity(activity)
     });
-    if (updateSpokenMessage) setGuideMessage(guide.message);
+    setGuideMessage(guide.message);
     setAvatar({ ...guide.avatar, speak: false });
     setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+    setVisualAction(guide.visual_action);
   }
 
   useEffect(() => {
@@ -151,15 +155,18 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
             topic: pathId,
             concept: answeredActivity.type,
             child_answer: answer,
-            attempt: next.attempt_number
+            attempt: next.attempt_number,
+            recent_answers: [answer]
           }),
           progress: progressContext(child, pathId, `Level ${stageId}`),
           available_actions: ["show_hint", "highlight", "repeat_instruction"],
-          available_targets: [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON]
+          available_targets: [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
+          allowed_visual_targets: visualTargetsForActivity(answeredActivity)
         }).then((guide) => {
           setGuideMessage(guide.message);
           setAvatar({ ...guide.avatar, speak: false });
           setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+          setVisualAction(guide.visual_action);
         });
         return;
       }
@@ -237,6 +244,7 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
             onAnswer={choose}
             disabled={busy}
             highlightId={highlightId}
+            visualAction={visualAction}
           />
         ) : null}
         {learning?.complete ? (

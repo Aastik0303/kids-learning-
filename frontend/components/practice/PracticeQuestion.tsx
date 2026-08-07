@@ -2,6 +2,7 @@
 
 import { LearningQuestion } from "@/components/learning/LearningQuestion";
 import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
+import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import type { Activity } from "@/types";
 
 export function PracticeQuestion({
@@ -12,7 +13,8 @@ export function PracticeQuestion({
   onVoiceStateChange,
   onAnswer,
   disabled,
-  highlightId
+  highlightId,
+  visualAction
 }: {
   activity: Activity;
   sessionId: string;
@@ -22,6 +24,7 @@ export function PracticeQuestion({
   onAnswer: (answer: string) => Promise<void> | void;
   disabled?: boolean;
   highlightId?: string | null;
+  visualAction?: VisualGuideAction;
 }) {
   return (
     <LearningQuestion
@@ -33,6 +36,7 @@ export function PracticeQuestion({
       onAnswer={onAnswer}
       disabled={disabled}
       highlightId={highlightId}
+      visualAction={visualAction}
     />
   );
 }

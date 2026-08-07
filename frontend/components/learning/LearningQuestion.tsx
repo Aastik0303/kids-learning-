@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
+import { VisualGuideRenderer, visualGuideClass, type VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { SpeechErrorMessage } from "@/components/voice/SpeechErrorMessage";
 import { VoiceFallbackOptions } from "@/components/voice/VoiceFallbackOptions";
 import { VoiceRecorder } from "@/components/voice/VoiceRecorder";
@@ -36,21 +37,22 @@ const visualEmoji: Record<string, string> = {
   "yellow triangle": "yellow triangle"
 };
 
-function VisualItem({ item }: { item: string }) {
+function VisualItem({ item, visualId, index, visualAction }: { item: string; visualId: string; index: number; visualAction?: VisualGuideAction }) {
   const normalized = item.toLowerCase();
   const label = visualEmoji[normalized] ?? null;
+  const visualClass = visualGuideClass(visualAction, visualId);
   if (label) {
     return (
-      <span className="grid h-20 w-20 place-items-center rounded-3xl bg-white px-2 text-center text-sm font-black capitalize text-ink shadow-soft" aria-label={item}>
+      <span data-visual-id={visualId} data-count-label={index + 1} className={`grid h-20 w-20 place-items-center rounded-3xl bg-white px-2 text-center text-sm font-black capitalize text-ink shadow-soft ${visualClass}`} aria-label={item}>
         {label}
       </span>
     );
   }
   const simple = normalized.split(" ").at(-1) ?? normalized;
   if (shapeClass[simple]) {
-    return <span className={`grid h-20 w-20 place-items-center text-xs font-black text-white shadow-soft ${shapeClass[simple]}`}>{item.includes(" ") ? item.split(" ")[0] : ""}</span>;
+    return <span data-visual-id={visualId} data-count-label={index + 1} className={`grid h-20 w-20 place-items-center text-xs font-black text-white shadow-soft ${shapeClass[simple]} ${visualClass}`}>{item.includes(" ") ? item.split(" ")[0] : ""}</span>;
   }
-  return <span className="grid min-h-20 min-w-20 place-items-center rounded-3xl bg-white px-5 text-base font-black shadow-soft">{item}</span>;
+  return <span data-visual-id={visualId} data-count-label={index + 1} className={`grid min-h-20 min-w-20 place-items-center rounded-3xl bg-white px-5 text-base font-black shadow-soft ${visualClass}`}>{item}</span>;
 }
 
 export function LearningQuestion({
@@ -62,6 +64,7 @@ export function LearningQuestion({
   onAnswer,
   disabled,
   highlightId,
+  visualAction,
   visualAnswerFallback = true
 }: {
   activity: Activity;
@@ -72,6 +75,7 @@ export function LearningQuestion({
   onAnswer: (answer: string) => Promise<void> | void;
   disabled?: boolean;
   highlightId?: string | null;
+  visualAction?: VisualGuideAction;
   visualAnswerFallback?: boolean;
 }) {
   const { setAvatar, speakMessageAsync } = useAvatar();
@@ -129,10 +133,11 @@ export function LearningQuestion({
       {activity.visual_items.length ? (
         <div data-guide-id="counting-object-group" className={`flex min-h-36 flex-wrap items-center justify-center gap-4 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-5 ${highlightId === "counting-object-group" ? "guide-glow" : ""}`}>
           {activity.visual_items.map((item, index) => (
-            <VisualItem key={`${item}-${index}`} item={item} />
+            <VisualItem key={`${item}-${index}`} item={item} index={index} visualId={`visual-item-${index}`} visualAction={visualAction} />
           ))}
         </div>
       ) : null}
+      <VisualGuideRenderer visualAction={visualAction} />
       <div data-guide-id="voice-answer-area" className={`grid gap-4 rounded-[2rem] bg-sunshine/20 p-5 text-center ${highlightId === "voice-answer-area" || highlightId === "microphone-button" ? "guide-glow" : ""}`}>
         <VoiceStateIndicator state={voiceState} />
         <VoiceRecorder

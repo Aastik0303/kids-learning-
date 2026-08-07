@@ -7,22 +7,23 @@ from pydantic import ValidationError
 
 from app.config import get_settings
 from app.schemas.avatar import AvatarPayload
-from app.schemas.guide import GuideActionType, GuideRequest, GuideResponse, GuideUiAction
+from app.schemas.guide import GuideActionType, GuideRequest, GuideResponse, GuideUiAction, GuideVisualAction, GuideVisualActionType
 from app.services.errors import app_error
 from app.services.safety_service import FALLBACK, safe_text
 
 
 SYSTEM_PROMPT = """You are the Little Learning Guide, a friendly AI companion for children aged 3-6.
-For Practice and Learning activities, the child primarily answers using voice.
-Your job is to explain the current question in very simple language, speak one instruction
-at a time, help the child understand what to answer, give a small hint after the first
-incorrect answer, re-explain using a familiar example after another incorrect answer,
-make later explanations easier and more visual, and keep responses short.
-You do NOT evaluate answers, calculate scores, change progress, award stars, unlock levels,
-or decide certificate eligibility. The backend gives you question context, the child's
-normalized answer result, attempt number, age group, and visual context.
-Never ask for sensitive personal information. Never shame the child. Never use: fail, bad,
-poor, stupid, weak. Return structured JSON only."""
+Your job is to help the child understand the current screen or learning activity.
+You receive route, screen, event, feature, age group, allowed UI actions/targets, current
+question, learning objective, visual items, child answer/result, attempts, recent answers,
+and compact progress context.
+You do NOT decide correctness, score, stars, rewards, unlocking, progress, or certificates.
+Teaching rules: do not simply repeat the question; identify what the child needs to
+understand; refer to visible objects; give one small explanation step; then ask for the
+answer; use 1-2 short sentences; use nursery words; first wrong attempt gives a small hint;
+second wrong attempt uses another familiar example; third or later makes it easier and more
+visual; address repeated mistake patterns; never shame; never ask sensitive personal info;
+use only allowed UI and visual actions. Return structured JSON only."""
 
 TODDLER_SYSTEM_PROMPT = """For learning_mode toddler, you are a warm, playful nursery teacher helping a child younger than 3.
 Use maximum 1-2 very short sentences, simple vocabulary, one instruction at a time, and happy emojis.
@@ -72,27 +73,37 @@ APPROVED_GUIDE_ACTIONS: set[GuideActionType] = {
     "wait_for_click",
 }
 
+APPROVED_VISUAL_ACTIONS: set[GuideVisualActionType] = {
+    "none",
+    "pulse",
+    "highlight",
+    "highlight_sequence",
+    "dim_others",
+    "group_objects",
+    "trace_shape",
+    "show_example",
+}
+
 STATIC_PRAISE = [
     "Great job!",
-    "Amazing!",
+    "Nice work!",
     "Well done!",
     "You got it!",
     "Hooray! That is right.",
-    "Wonderful! You are so clever.",
-    "Brilliant! Keep going.",
-    "Super! That was perfect.",
-    "Yay! You nailed it.",
-    "Awesome work!",
-    "Excellent! You are getting better.",
-    "Fantastic! I am so proud.",
+    "Great listening!",
+    "Nice counting!",
+    "Great effort!",
+    "Let's try the next one!",
+    "Super work!",
+    "Good thinking!",
 ]
 
 HINT_RESPONSES_ATTEMPT_1 = [
     "Good try! Look closely and count slowly, then say your answer.",
     "Almost! Take another careful look.",
-    "Not quite. Let us look at this together.",
+    "Almost. Let us look at this together.",
     "So close! Think about it one more time.",
-    "That was a brave try! Look carefully again.",
+    "Good try. Look carefully again.",
 ]
 
 HINT_RESPONSES_ATTEMPT_2 = [
@@ -169,6 +180,20 @@ def _ui_action(payload: GuideRequest, action_type: GuideActionType, preferred_ta
     return GuideUiAction(type=action_type, target=target)
 
 
+def _visual_action(payload: GuideRequest, action_type: GuideVisualActionType, targets: list[str] | None = None) -> GuideVisualAction:
+    if action_type not in APPROVED_VISUAL_ACTIONS:
+        return GuideVisualAction()
+    allowed = set(payload.allowed_visual_targets)
+    safe_targets = [target for target in (targets or payload.allowed_visual_targets) if target in allowed]
+    if action_type == "none" or not safe_targets:
+        return GuideVisualAction()
+    return GuideVisualAction(type=action_type, targets=safe_targets)
+
+
+def _visual_targets(payload: GuideRequest) -> list[str]:
+    return [target for target in payload.allowed_visual_targets if target.startswith("visual-item-")]
+
+
 def _approved_actions_from_request(payload: GuideRequest) -> set[GuideActionType]:
     requested = set(payload.available_actions)
     return requested & APPROVED_GUIDE_ACTIONS if requested else APPROVED_GUIDE_ACTIONS
@@ -185,6 +210,67 @@ def validate_guide_request(payload: GuideRequest) -> None:
     unsafe_actions = [action for action in payload.available_actions if action not in APPROVED_GUIDE_ACTIONS]
     if unsafe_actions:
         raise app_error("UNSAFE_GUIDE_ACTION", "Let us use a safe guide step.", 400)
+    unsafe_visual_targets = [target for target in payload.allowed_visual_targets if not target.startswith(("visual-item-", "visual-example-"))]
+    if unsafe_visual_targets:
+        raise app_error("UNSAFE_VISUAL_TARGET", "Let us use a safe visual step.", 400)
+
+
+def _question_teaching_message(payload: GuideRequest) -> tuple[str, GuideVisualAction, str]:
+    question = payload.question
+    if not question:
+        return "Look at the screen. Try one small answer.", GuideVisualAction(), "read_question"
+
+    answer_type = (question.answer_type or question.topic or "").lower()
+    visual_items = question.visual_items
+    visual_targets = _visual_targets(payload)
+    attempt = question.attempt
+
+    if answer_type in {"count_objects", "select_number"} or "count" in question.prompt.lower():
+        item_name = visual_items[0] if visual_items else "object"
+        if attempt >= 2:
+            return (
+                f"Let's count together. Touch each {item_name} as it lights up.",
+                _visual_action(payload, "show_example" if attempt >= 3 else "highlight_sequence", visual_targets),
+                "re_explain",
+            )
+        if attempt == 1:
+            return (
+                f"Count one {item_name} at a time. Do not count the same one twice.",
+                _visual_action(payload, "highlight_sequence", visual_targets),
+                "hint",
+            )
+        return (
+            f"Look at the {item_name}s. Count each one only once. How many do you see?",
+            _visual_action(payload, "highlight_sequence" if len(visual_targets) > 1 else "pulse", visual_targets),
+            "visual_explanation",
+        )
+
+    if "colour" in answer_type or "color" in answer_type:
+        return (
+            "Look at the visible colour. Match it with the same colour answer.",
+            _visual_action(payload, "highlight", visual_targets),
+            "visual_explanation" if attempt == 0 else "hint",
+        )
+
+    if "shape" in answer_type:
+        return (
+            "Look at the shape. Check if it is round or has corners.",
+            _visual_action(payload, "trace_shape", visual_targets[:1]),
+            "visual_explanation" if attempt == 0 else "hint",
+        )
+
+    if "letter" in answer_type or "alphabet" in answer_type:
+        return (
+            f"Look at the letter. Listen to its name, then choose it.",
+            _visual_action(payload, "pulse", visual_targets[:1]),
+            "visual_explanation" if attempt == 0 else "hint",
+        )
+
+    return (
+        f"Look at what is shown. {question.hint or question.prompt}",
+        _visual_action(payload, "highlight", visual_targets),
+        "visual_explanation" if attempt == 0 else "hint",
+    )
 
 
 def _fallback_guide(payload: GuideRequest) -> GuideResponse:
@@ -200,6 +286,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
     state = "speaking"
     effect = "gentle_hint"
     session_id = payload.session_id
+    visual_action = GuideVisualAction()
 
     # --- APP_OPENED / HOME_OPENED ---
     if payload.event in {"APP_OPENED", "HOME_OPENED"}:
@@ -225,7 +312,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "navigation"
         action = _ui_action(payload, "highlight", ["current-map-level", "current-level"])
         next_event = "button_clicked"
-        state = "pointing"
+        state = "speaking"
         effect = "sparkle"
 
     # --- LEVEL_OPENED ---
@@ -235,7 +322,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "navigation"
         action = _ui_action(payload, "highlight", ["current-level", "current-map-level"])
         next_event = "button_clicked"
-        state = "pointing"
+        state = "speaking"
 
     # --- PRACTICE_OPENED ---
     elif payload.event == "PRACTICE_OPENED":
@@ -248,12 +335,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
 
     # --- PRACTICE_STARTED / LEVEL_STARTED ---
     elif payload.event in {"PRACTICE_STARTED", "LEVEL_STARTED"}:
-        prompt = payload.question.prompt if payload.question else None
-        if prompt:
-            message = f"Listen carefully. {prompt} Say your answer when you are ready."
-        else:
-            message = "Let us try one little question. Say your answer after I finish."
-        strategy = "read_question"
+        message, visual_action, strategy = _question_teaching_message(payload)
         action = _ui_action(payload, "highlight", ["question-area", "voice-answer-area", "microphone-button"])
         next_event = "voice_answer_requested"
         state = "storytelling"
@@ -261,43 +343,15 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
 
     # --- QUESTION LOADED / REPEAT ---
     elif payload.event in {"PRACTICE_QUESTION_LOADED", "LEVEL_QUESTION_LOADED", "REPEAT_REQUESTED"}:
-        prompt = payload.question.prompt if payload.question else "Look at the question."
-        hint = payload.question.hint if payload.question and payload.question.hint else ""
-        if payload.event == "REPEAT_REQUESTED" and hint:
-            message = f"Let me say it again. {prompt} Remember: {hint}"
-        else:
-            message = f"Listen carefully. {prompt} Say your answer when you are ready."
-        strategy = "read_question"
+        message, visual_action, strategy = _question_teaching_message(payload)
         action = _ui_action(payload, "highlight", ["question-area", "counting-object-group", "voice-answer-area", "microphone-button"])
         next_event = "voice_answer_requested"
 
     # --- INCORRECT ANSWER ---
     elif payload.event in {"PRACTICE_ANSWER_INCORRECT", "LEVEL_ANSWER_INCORRECT", "HINT_REQUESTED"}:
-        attempt = payload.question.attempt if payload.question else 1
-        question_hint = payload.question.hint if payload.question and payload.question.hint else ""
-
-        if attempt <= 1:
-            base = _pick_hint(1, session_id)
-            message = f"{base} {question_hint}".strip() if question_hint else base
-            strategy = "hint"
-            action_type: GuideActionType = "show_hint"
-            limit = 25
-        elif attempt == 2:
-            base = _pick_hint(2, session_id)
-            message = f"{base} {question_hint}".strip() if question_hint else base
-            strategy = "re_explain"
-            action_type = "show_hint"
-            limit = 35
-        else:
-            base = _pick_hint(3, session_id)
-            if payload.progress and payload.progress.weak_skills:
-                message = f"{base} Let us practise this skill a little more."
-            else:
-                message = f"{base} {question_hint}".strip() if question_hint else base
-            strategy = "re_explain"
-            action_type = "show_hint"
-            limit = 35
-        message = _words(message, limit)
+        message, visual_action, strategy = _question_teaching_message(payload)
+        message = _words(message, 22)
+        action_type: GuideActionType = "show_hint"
         action = _ui_action(payload, action_type, ["counting-object-group", "question-area", "voice-answer-area", "microphone-button"])
         next_event = "voice_answer_requested"
         state = "encouraging"
@@ -359,7 +413,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "navigation"
         action = _ui_action(payload, "highlight", ["continue-adventure", "home-practice", "start-practice", "open-rewards", "ask-guide"])
         next_event = "button_clicked"
-        state = "pointing"
+        state = "speaking"
         effect = "pulse"
 
     message = safe_text(message)
@@ -368,6 +422,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy=strategy,
         avatar=_avatar(message, state=state, effect=effect, speak=True),
         ui_action=action,
+        visual_action=visual_action,
         next_expected_event=next_event,
     )
 
@@ -427,11 +482,14 @@ def _payload_for_model(payload: GuideRequest) -> dict:
 def _model_instruction(payload: GuideRequest) -> str:
     allowed_actions = sorted(_approved_actions_from_request(payload))
     allowed_targets = [target for target in payload.available_targets if target in APPROVED_GUIDE_TARGETS]
+    allowed_visual_targets = [target for target in payload.allowed_visual_targets if target.startswith(("visual-item-", "visual-example-"))]
     return (
         "Create one Little Learning Guide response for this event. "
-        "Return exactly one JSON object with keys: message, strategy, avatar, ui_action, next_expected_event. "
+        "Return exactly one JSON object with keys: message, strategy, avatar, ui_action, visual_action, next_expected_event. "
         f"Allowed ui_action.type values: {allowed_actions}. "
         f"Allowed ui_action.target values: {allowed_targets}; use null if no target is needed. "
+        f"Allowed visual_action.type values: {sorted(APPROVED_VISUAL_ACTIONS)}. "
+        f"Allowed visual_action.targets values: {allowed_visual_targets}. "
         "avatar must include state, message, speak, animationEffect. "
         "Do not decide if the answer is correct. Do not change score, stars, rewards, progress, unlocking, or certificates. "
         "For voice practice, explain before listening, never tell the app to listen while avatar is speaking, "
@@ -458,6 +516,11 @@ def _validate_model_response(payload: GuideRequest, raw_content: str) -> GuideRe
     if response.ui_action.target and response.ui_action.target not in payload.available_targets:
         return _fallback_guide(payload)
     if response.ui_action.target and response.ui_action.target not in APPROVED_GUIDE_TARGETS:
+        return _fallback_guide(payload)
+    if response.visual_action.type not in APPROVED_VISUAL_ACTIONS:
+        return _fallback_guide(payload)
+    allowed_visual_targets = set(payload.allowed_visual_targets)
+    if any(target not in allowed_visual_targets for target in response.visual_action.targets):
         return _fallback_guide(payload)
 
     message = safe_text(response.message)

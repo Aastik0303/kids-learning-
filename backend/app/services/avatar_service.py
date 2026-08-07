@@ -6,24 +6,24 @@ from app.schemas.avatar import AvatarPayload
 CORRECT_MESSAGES = [
     "Nice work! You found it.",
     "Amazing! That is right.",
-    "Great job! You are a star.",
+    "Great job!",
     "Well done! You did it.",
     "Hooray! That is correct.",
-    "Wonderful! You are so clever.",
-    "Brilliant! Keep going.",
-    "Super! That was perfect.",
-    "Yay! You nailed it.",
-    "Awesome work! I am so proud.",
-    "Excellent! You are getting better.",
+    "Wonderful work!",
+    "Great listening!",
+    "Super work!",
+    "Nice counting!",
+    "Awesome work!",
+    "Excellent effort.",
     "Fantastic! Here comes the next one.",
 ]
 
 HINT_MESSAGES = [
     "Good try. Look slowly and try once more.",
     "Almost! Take another careful look.",
-    "Not quite. Let us look at this together.",
+    "Almost. Let us look at this together.",
     "So close! Think about it one more time.",
-    "That was a brave try! Look carefully again.",
+    "Good try. Look carefully again.",
     "Keep going! You are getting closer.",
     "Hmm, not that one. Let us try once more.",
     "Let us try again. You can do this!",
@@ -31,9 +31,9 @@ HINT_MESSAGES = [
 
 COMPLETE_MESSAGES = [
     "Level complete. Wonderful work!",
-    "All done! You are a superstar.",
+    "All done! Nice work.",
     "You finished! What an achievement.",
-    "Stage complete! I am so proud of you.",
+    "Stage complete! Great effort.",
 ]
 
 

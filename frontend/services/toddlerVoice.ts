@@ -38,6 +38,9 @@ export function useSpeechRecognition() {
         sessionId,
         activityId: activity.activity_id,
         answerType: activity.type,
+        correctAnswer: activity.answer,
+        acceptedAnswers: activity.accepted,
+        options: activity.choices,
         timeoutMs: 5200
       });
     } catch (err) {
