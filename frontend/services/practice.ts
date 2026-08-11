@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import { localActivities, practiceCards } from "@/data/prototype";
 import { avatarForPracticeResult } from "@/services/avatar";
+import { extractContextualAnswer } from "@/services/speech";
 import type { Activity } from "@/types";
 import type { AvatarPayload } from "@/components/avatar/avatar.types";
 
@@ -38,7 +39,7 @@ export function startPractice(child_id: string, topic: string) {
   }));
 }
 
-export type PracticeAnswerResult = { is_correct: boolean; feedback: string; hint: string | null; avatar?: AvatarPayload | null };
+export type PracticeAnswerResult = { is_correct: boolean; feedback: string; hint: string | null; attempt_number?: number; question_changed?: boolean; avatar?: AvatarPayload | null };
 
 const numberWords: Record<string, string> = {
   zero: "0",
@@ -54,7 +55,9 @@ const numberWords: Record<string, string> = {
   ten: "10"
 };
 
-function normalizeLocalAnswer(answer: string) {
+function normalizeLocalAnswer(answer: string, answerType = "", options: string[] = []) {
+  const contextualAnswer = extractContextualAnswer(answer, answerType, options);
+  if (contextualAnswer) return contextualAnswer;
   const cleaned = answer.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
   const tokens = cleaned.split(" ").filter((token) => !["the", "a", "an", "it", "is", "its", "number", "letter", "colour", "color", "please"].includes(token));
   const replaced = tokens.map((token) => numberWords[token] ?? token);
@@ -63,11 +66,13 @@ function normalizeLocalAnswer(answer: string) {
 
 function localPracticeAnswer(activity_id: string, answer: string) {
   const activity = Object.values(localActivities).flat().find((item) => item.activity_id === activity_id);
-  const isCorrect = normalizeLocalAnswer(activity?.correct_answer ?? "") === normalizeLocalAnswer(answer);
+  const isCorrect = normalizeLocalAnswer(activity?.correct_answer ?? "", activity?.type, activity?.options) === normalizeLocalAnswer(answer, activity?.type, activity?.options);
   const result = {
     is_correct: Boolean(isCorrect),
     feedback: isCorrect ? "Wonderful practice. Let us try the next one." : "Good try. Let us try together.",
-    hint: isCorrect ? null : activity?.hint ?? "Look at each item slowly."
+    hint: isCorrect ? null : activity?.hint ?? "Look at each item slowly.",
+    attempt_number: 0,
+    question_changed: false
   };
   return { ...result, avatar: avatarForPracticeResult(result) };
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import type { VoiceProvider } from "@/services/speech";
+
 export type AvatarState =
   | "idle"
   | "waving"
@@ -41,10 +43,12 @@ export type AvatarContextValue = {
   effect: AvatarEffect | null;
   isSpeaking: boolean;
   muted: boolean;
+  voiceProvider: VoiceProvider;
   setAvatar: (payload: AvatarPayload) => void;
   resetAvatar: () => void;
   speakMessage: (message?: string) => void;
   speakMessageAsync: (message?: string) => Promise<void>;
   stopSpeaking: () => void;
   toggleMute: () => void;
+  toggleVoiceProvider: () => void;
 };

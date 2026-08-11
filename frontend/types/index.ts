@@ -83,6 +83,7 @@ export type LearningResponse = {
   stage_completed: boolean;
   next_stage_unlocked: boolean;
   recommended_practice: boolean;
+  question_changed: boolean;
   complete: boolean;
   avatar?: import("@/components/avatar/avatar.types").AvatarPayload | null;
 };
@@ -168,6 +169,10 @@ export type GuideRequest = {
   age?: number | null;
   learning_mode?: "standard" | "toddler";
   preferred_language?: string;
+  conversation?: Array<{
+    role: "user" | "assistant";
+    content: string;
+  }>;
   toddler?: {
     learning_mode: "standard" | "toddler";
     age?: number | null;
@@ -287,6 +292,7 @@ export type ToddlerResponse = {
   completed_activities: string[];
   level_completed: boolean;
   next_level_unlocked: boolean;
+  question_changed: boolean;
   learned_concepts: string[];
   avatar: import("@/components/avatar/avatar.types").AvatarPayload;
 };

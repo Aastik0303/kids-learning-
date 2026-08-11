@@ -1,13 +1,23 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api import auth, children, companion, dev, guide, history, learning, practice, progress, speech, toddler
 from app.config import get_settings
+from app.services.learning_memory_service import initialize_learning_memory_store
 
 settings = get_settings()
 
-app = FastAPI(title="AI Nursery Learning Platform", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    initialize_learning_memory_store()
+    yield
+
+
+app = FastAPI(title="AI Nursery Learning Platform", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

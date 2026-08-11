@@ -41,7 +41,7 @@ export function useSpeechRecognition() {
         correctAnswer: activity.answer,
         acceptedAnswers: activity.accepted,
         options: activity.choices,
-        timeoutMs: 5200
+        timeoutMs: 8000
       });
     } catch (err) {
       const permissionDenied = err instanceof DOMException && ["NotAllowedError", "PermissionDeniedError"].includes(err.name);

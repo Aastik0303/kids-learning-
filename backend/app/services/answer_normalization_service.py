@@ -38,6 +38,35 @@ INTENT_PREFIXES = {"i think it's", "i think its", "i think", "maybe it's", "mayb
 
 COLOURS = {"red", "blue", "yellow", "green", "orange", "purple", "pink", "white", "black", "brown"}
 SHAPES = {"circle", "square", "triangle", "rectangle", "star", "diamond", "oval", "heart"}
+LETTER_EXAMPLES = {
+    "apple": "a",
+    "ant": "a",
+    "ball": "b",
+    "banana": "b",
+    "cat": "c",
+    "cup": "c",
+    "dog": "d",
+    "door": "d",
+    "egg": "e",
+    "elephant": "e",
+    "fish": "f",
+    "frog": "f",
+    "goat": "g",
+    "grapes": "g",
+    "hat": "h",
+    "house": "h",
+}
+LETTER_LIKE_TYPES = {
+    "select_letter",
+    "introduce_letter",
+    "repeat_letter",
+    "recognize_letter",
+    "repeat_after_me",
+    "recognition",
+    "multiple_choice",
+    "match",
+    "mixed",
+}
 
 # Map common child speech mis-recognitions to correct terms
 SPEECH_CORRECTIONS = {
@@ -172,6 +201,10 @@ def normalize_answer(text: str, answer_type: str | None = None) -> str:
     if not cleaned:
         return ""
 
+    answer_type = (answer_type or "").lower()
+    if answer_type in LETTER_LIKE_TYPES and len(cleaned) == 1 and cleaned.isalpha():
+        return cleaned
+
     # Strip intent phrases first
     cleaned = _strip_intent_phrases(cleaned)
     if not cleaned:
@@ -184,8 +217,6 @@ def normalize_answer(text: str, answer_type: str | None = None) -> str:
 
     if not tokens:
         return ""
-
-    answer_type = (answer_type or "").lower()
 
     if len(tokens) == 1:
         # Try fuzzy matching for single-token answers
@@ -204,6 +235,14 @@ def normalize_answer(text: str, answer_type: str | None = None) -> str:
         letters = [token for token in tokens if len(token) == 1 and token.isalpha()]
         if letters:
             return letters[-1]
+
+    if answer_type in {"select_letter", "multiple_choice", "match", "mixed"}:
+        example_letters = [LETTER_EXAMPLES[token] for token in tokens if token in LETTER_EXAMPLES]
+        if example_letters:
+            explicit_letters = [token for token in tokens if len(token) == 1 and token.isalpha()]
+            if explicit_letters and explicit_letters[-1] == example_letters[-1]:
+                return explicit_letters[-1]
+            return example_letters[-1]
 
     if answer_type in {"identify_colour"}:
         colours = [_fuzzy_match_token(token, COLOURS) for token in tokens]

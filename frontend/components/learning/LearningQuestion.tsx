@@ -25,10 +25,6 @@ const visualEmoji: Record<string, string> = {
   star: "star",
   "one star": "star",
   block: "block",
-  red: "red",
-  blue: "blue",
-  yellow: "yellow",
-  green: "green",
   circle: "circle",
   square: "square",
   triangle: "triangle",
@@ -37,22 +33,35 @@ const visualEmoji: Record<string, string> = {
   "yellow triangle": "yellow triangle"
 };
 
-function VisualItem({ item, visualId, index, visualAction }: { item: string; visualId: string; index: number; visualAction?: VisualGuideAction }) {
+function VisualItem({
+  item,
+  visualId,
+  index,
+  visualAction,
+  showCountLabel
+}: {
+  item: string;
+  visualId: string;
+  index: number;
+  visualAction?: VisualGuideAction;
+  showCountLabel?: boolean;
+}) {
   const normalized = item.toLowerCase();
   const label = visualEmoji[normalized] ?? null;
   const visualClass = visualGuideClass(visualAction, visualId);
+  const countLabel = showCountLabel ? index + 1 : undefined;
   if (label) {
     return (
-      <span data-visual-id={visualId} data-count-label={index + 1} className={`grid h-20 w-20 place-items-center rounded-3xl bg-white px-2 text-center text-sm font-black capitalize text-ink shadow-soft ${visualClass}`} aria-label={item}>
+      <span data-visual-id={visualId} data-count-label={countLabel} className={`grid h-20 w-20 place-items-center rounded-3xl bg-white px-2 text-center text-sm font-black capitalize text-ink shadow-soft ${visualClass}`} aria-label={item}>
         {label}
       </span>
     );
   }
   const simple = normalized.split(" ").at(-1) ?? normalized;
   if (shapeClass[simple]) {
-    return <span data-visual-id={visualId} data-count-label={index + 1} className={`grid h-20 w-20 place-items-center text-xs font-black text-white shadow-soft ${shapeClass[simple]} ${visualClass}`}>{item.includes(" ") ? item.split(" ")[0] : ""}</span>;
+    return <span data-visual-id={visualId} data-count-label={countLabel} className={`grid h-20 w-20 place-items-center text-xs font-black text-white shadow-soft ${shapeClass[simple]} ${visualClass}`}>{item.includes(" ") ? item.split(" ")[0] : ""}</span>;
   }
-  return <span data-visual-id={visualId} data-count-label={index + 1} className={`grid min-h-20 min-w-20 place-items-center rounded-3xl bg-white px-5 text-base font-black shadow-soft ${visualClass}`}>{item}</span>;
+  return <span data-visual-id={visualId} data-count-label={countLabel} className={`grid min-h-20 min-w-20 place-items-center rounded-3xl bg-white px-5 text-base font-black shadow-soft ${visualClass}`}>{item}</span>;
 }
 
 export function LearningQuestion({
@@ -62,10 +71,13 @@ export function LearningQuestion({
   voiceState,
   onVoiceStateChange,
   onAnswer,
+  onGuideQuestion,
   disabled,
   highlightId,
   visualAction,
-  visualAnswerFallback = true
+  countGuideEnabled = false,
+  visualAnswerFallback = true,
+  showOptionsWithMicrophone = false
 }: {
   activity: Activity;
   sessionId: string;
@@ -73,16 +85,21 @@ export function LearningQuestion({
   voiceState: VoiceInteractionState;
   onVoiceStateChange: (state: VoiceInteractionState) => void;
   onAnswer: (answer: string) => Promise<void> | void;
+  onGuideQuestion?: (question: string) => Promise<void> | void;
   disabled?: boolean;
   highlightId?: string | null;
   visualAction?: VisualGuideAction;
+  countGuideEnabled?: boolean;
   visualAnswerFallback?: boolean;
+  showOptionsWithMicrophone?: boolean;
 }) {
   const { setAvatar, speakMessageAsync } = useAvatar();
   const [transcript, setTranscript] = useState("");
   const [speechError, setSpeechError] = useState("");
   const [speechFailures, setSpeechFailures] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
+  const showToddlerStyleChoices = activity.difficulty === "very_easy" || /^(introduce|repeat|recognize|recognition)/.test(activity.type);
+  const showCountLabels = countGuideEnabled || showFallback;
 
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +134,14 @@ export function LearningQuestion({
     }
   }
 
+  async function showExplanation() {
+    if (!onGuideQuestion || disabled) return;
+    setSpeechError("");
+    setShowFallback(true);
+    onVoiceStateChange("re_explaining");
+    await onGuideQuestion("I don't understand. Show me and count each item with me.");
+  }
+
   return (
     <section data-guide-id="question-area" className={`surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6 ${highlightId === "question-area" ? "guide-glow" : ""}`}>
       <div className="grid gap-4 rounded-[2rem] bg-[#f7fbff] p-4 sm:grid-cols-[7rem_1fr] sm:items-center">
@@ -133,11 +158,28 @@ export function LearningQuestion({
       {activity.visual_items.length ? (
         <div data-guide-id="counting-object-group" className={`flex min-h-36 flex-wrap items-center justify-center gap-4 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-5 ${highlightId === "counting-object-group" ? "guide-glow" : ""}`}>
           {activity.visual_items.map((item, index) => (
-            <VisualItem key={`${item}-${index}`} item={item} index={index} visualId={`visual-item-${index}`} visualAction={visualAction} />
+            <VisualItem
+              key={`${item}-${index}`}
+              item={item}
+              index={index}
+              visualId={`visual-item-${index}`}
+              visualAction={visualAction}
+              showCountLabel={showCountLabels}
+            />
           ))}
         </div>
       ) : null}
       <VisualGuideRenderer visualAction={visualAction} />
+      {onGuideQuestion ? (
+        <button
+          type="button"
+          disabled={disabled || voiceState === "speaking"}
+          onClick={showExplanation}
+          className="pressable mx-auto rounded-full bg-sky px-5 py-3 text-base font-black text-white shadow-soft disabled:opacity-50"
+        >
+          Show me &amp; explain
+        </button>
+      ) : null}
       <div data-guide-id="voice-answer-area" className={`grid gap-4 rounded-[2rem] bg-sunshine/20 p-5 text-center ${highlightId === "voice-answer-area" || highlightId === "microphone-button" ? "guide-glow" : ""}`}>
         <VoiceStateIndicator state={voiceState} />
         <VoiceRecorder
@@ -148,14 +190,15 @@ export function LearningQuestion({
           onStateChange={onVoiceStateChange}
           onTranscript={setTranscript}
           onSpeechError={handleSpeechError}
+          onGuideQuestion={onGuideQuestion}
           onVoiceAnswer={onAnswer}
         />
         <VoiceTranscriptPreview transcript={transcript} />
         <SpeechErrorMessage message={speechError} />
       </div>
-      {visualAnswerFallback && showFallback ? (
+      {visualAnswerFallback && (showOptionsWithMicrophone || showFallback || countGuideEnabled || showToddlerStyleChoices) ? (
         <div className="grid gap-3 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-4">
-          <p className="text-center text-sm font-black uppercase text-sky">Accessibility choices</p>
+          <p className="text-center text-sm font-black uppercase text-sky">Choose or say your answer</p>
           <VoiceFallbackOptions options={activity.options} disabled={disabled} onAnswer={onAnswer} />
         </div>
       ) : null}

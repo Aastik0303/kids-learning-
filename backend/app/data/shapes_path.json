@@ -13,9 +13,9 @@
       "star_reward": 5,
       "next_stage": 2,
       "activities": [
-        {"activity_id": "shape_1_a", "type": "identify_shape", "prompt": "Which shape is a circle?", "visual_items": ["circle"], "options": ["circle", "square", "triangle"], "correct_answer": "circle", "hint": "A circle is round with no corners.", "difficulty": "very_easy"},
-        {"activity_id": "shape_1_b", "type": "match", "prompt": "A ball is shaped like a...", "visual_items": ["ball"], "options": ["circle", "square", "triangle"], "correct_answer": "circle", "hint": "Balls are round like circles.", "difficulty": "very_easy"},
-        {"activity_id": "shape_1_c", "type": "identify_shape", "prompt": "Tap the round shape.", "visual_items": ["circle", "square", "triangle"], "options": ["circle", "square", "triangle"], "correct_answer": "circle", "hint": "Round means no straight sides.", "difficulty": "very_easy"}
+        {"activity_id": "shape_1_a", "type": "introduce_shape", "prompt": "Meet the circle. Say circle.", "visual_items": ["circle"], "options": ["circle", "square", "triangle"], "correct_answer": "circle", "hint": "A circle is round with no corners.", "difficulty": "very_easy"},
+        {"activity_id": "shape_1_b", "type": "repeat_shape", "prompt": "Now say circle.", "visual_items": ["circle"], "options": ["circle", "square", "triangle"], "correct_answer": "circle", "hint": "Listen to circle, then say circle.", "difficulty": "very_easy"},
+        {"activity_id": "shape_1_c", "type": "recognize_shape", "prompt": "Find the round shape.", "visual_items": ["circle", "square", "triangle"], "options": ["circle", "square", "triangle"], "correct_answer": "circle", "hint": "Round means no straight sides.", "difficulty": "very_easy"}
       ]
     },
     {

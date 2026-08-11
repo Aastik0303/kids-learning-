@@ -98,5 +98,6 @@ class ToddlerResponse(BaseModel):
     completed_activities: list[str] = Field(default_factory=list)
     level_completed: bool = False
     next_level_unlocked: bool = False
+    question_changed: bool = False
     learned_concepts: list[str] = Field(default_factory=list)
     avatar: AvatarPayload

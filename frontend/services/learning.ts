@@ -1,6 +1,7 @@
 import { api } from "@/services/api";
 import { localStages, pathSummaries } from "@/data/prototype";
 import { avatarForLearningResult } from "@/services/avatar";
+import { extractContextualAnswer } from "@/services/speech";
 import type { LearningResponse, PathSummary, Stage } from "@/types";
 import { getChild, saveChild } from "./session";
 
@@ -20,7 +21,9 @@ const numberWords: Record<string, string> = {
   ten: "10"
 };
 
-function normalizeLocalAnswer(answer: string) {
+function normalizeLocalAnswer(answer: string, answerType = "", options: string[] = []) {
+  const contextualAnswer = extractContextualAnswer(answer, answerType, options);
+  if (contextualAnswer) return contextualAnswer;
   const cleaned = answer.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
   const tokens = cleaned.split(" ").filter((token) => !["the", "a", "an", "it", "is", "its", "number", "letter", "colour", "color", "please"].includes(token));
   const replaced = tokens.map((token) => numberWords[token] ?? token);
@@ -56,6 +59,7 @@ export function startLearning(child_id: string, path_id: string, stage_number: n
       stage_completed: false,
       next_stage_unlocked: false,
       recommended_practice: false,
+      question_changed: false,
       complete: false,
       avatar: avatarForLearningResult({ is_correct: null, feedback: "", tutor_response })
     });
@@ -84,6 +88,7 @@ export function startLearning(child_id: string, path_id: string, stage_number: n
       stage_completed: false,
       next_stage_unlocked: false,
       recommended_practice: false,
+      question_changed: false,
       complete: false,
       avatar: avatarForLearningResult({ is_correct: null, feedback: "", tutor_response })
     };
@@ -99,9 +104,14 @@ export function answerLearning(session_id: string, answer: string) {
     if (!session) throw new Error("This learning session needs to be started again.");
     const stage = localStages(session.path_id).find((item) => item.stage_number === session.stage_number) ?? localStages(session.path_id)[0];
     const activity = stage.activities[session.activity_index];
-    const isCorrect = normalizeLocalAnswer(activity.correct_answer) === normalizeLocalAnswer(answer);
+    const isCorrect = normalizeLocalAnswer(activity.correct_answer, activity.type, activity.options) === normalizeLocalAnswer(answer, activity.type, activity.options);
     const attempts = isCorrect ? 0 : session.attempts + 1;
-    const nextIndex = isCorrect ? session.activity_index + 1 : session.activity_index;
+    const questionChanged = !isCorrect && attempts >= 4;
+    const nextIndex = isCorrect
+      ? session.activity_index + 1
+      : questionChanged
+        ? (session.activity_index + 1) % stage.activities.length
+        : session.activity_index;
     const complete = isCorrect && nextIndex >= stage.activities.length;
     const starsEarned = isCorrect ? (complete ? stage.star_reward : 1) : 0;
     const child = getChild();
@@ -136,8 +146,8 @@ export function answerLearning(session_id: string, answer: string) {
       });
     }
 
-    localLearningSessions.set(session_id, { ...session, activity_index: nextIndex, attempts });
-    const feedback = isCorrect ? "Wonderful! You earned stars." : "Good try. " + activity.hint;
+    localLearningSessions.set(session_id, { ...session, activity_index: nextIndex, attempts: questionChanged ? 0 : attempts });
+    const feedback = isCorrect ? "Wonderful! You earned stars." : questionChanged ? "Let's try a different question now." : "Good try. " + activity.hint;
     const tutor_response = isCorrect ? "Great effort. Let us keep going." : attempts > 1 ? "Let us use a smaller example and try again." : "Almost there. Count slowly.";
     return {
       session_id,
@@ -147,13 +157,14 @@ export function answerLearning(session_id: string, answer: string) {
       tutor_response,
       activity: complete ? null : stage.activities[nextIndex],
       is_correct: isCorrect,
-      attempt_number: attempts,
+      attempt_number: questionChanged ? 0 : attempts,
       feedback,
       stars_earned: starsEarned,
       current_score: complete ? 100 : 0,
       stage_completed: complete,
       next_stage_unlocked: complete && Boolean(stage.next_stage),
       recommended_practice: !isCorrect && attempts >= 3,
+      question_changed: questionChanged,
       complete,
       avatar: avatarForLearningResult({
         is_correct: isCorrect,

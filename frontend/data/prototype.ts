@@ -141,37 +141,97 @@ export const localActivities: Record<string, Activity[]> = {
   alphabets: [
     {
       activity_id: "alphabets_guest_01",
-      type: "identify_letter",
-      prompt: "Which letter starts apple?",
-      visual_items: ["🍎"],
+      type: "introduce_letter",
+      prompt: "Meet A. Say A.",
+      visual_items: ["A", "🍎"],
       options: ["A", "B", "C"],
       correct_answer: "A",
       hint: "Apple begins with the sound A.",
-      difficulty: "easy"
+      difficulty: "very_easy"
+    },
+    {
+      activity_id: "alphabets_guest_02",
+      type: "repeat_letter",
+      prompt: "Now say B.",
+      visual_items: ["B"],
+      options: ["A", "B", "C"],
+      correct_answer: "B",
+      hint: "Listen to B, then say B.",
+      difficulty: "very_easy"
+    },
+    {
+      activity_id: "alphabets_guest_03",
+      type: "recognize_letter",
+      prompt: "Find the letter C.",
+      visual_items: ["A", "B", "C"],
+      options: ["A", "B", "C"],
+      correct_answer: "C",
+      hint: "C is open on one side.",
+      difficulty: "very_easy"
     }
   ],
   colours: [
     {
       activity_id: "colours_guest_01",
-      type: "select_colour",
-      prompt: "Choose red.",
-      visual_items: ["🔴", "🔵", "🟡"],
+      type: "introduce_colour",
+      prompt: "Meet red. Say red.",
+      visual_items: ["red"],
       options: ["Red", "Blue", "Yellow"],
       correct_answer: "Red",
       hint: "Red looks like a strawberry.",
-      difficulty: "easy"
+      difficulty: "very_easy"
+    },
+    {
+      activity_id: "colours_guest_02",
+      type: "repeat_colour",
+      prompt: "Now say blue.",
+      visual_items: ["blue"],
+      options: ["Red", "Blue", "Yellow"],
+      correct_answer: "Blue",
+      hint: "Listen to blue, then say blue.",
+      difficulty: "very_easy"
+    },
+    {
+      activity_id: "colours_guest_03",
+      type: "recognize_colour",
+      prompt: "Find yellow.",
+      visual_items: ["red", "blue", "yellow"],
+      options: ["Red", "Blue", "Yellow"],
+      correct_answer: "Yellow",
+      hint: "Yellow shines like the sun.",
+      difficulty: "very_easy"
     }
   ],
   shapes: [
     {
       activity_id: "shapes_guest_01",
-      type: "select_shape",
-      prompt: "Choose the circle.",
-      visual_items: ["🔴", "🟦", "🔺"],
+      type: "introduce_shape",
+      prompt: "Meet the circle. Say circle.",
+      visual_items: ["circle"],
       options: ["Circle", "Square", "Triangle"],
       correct_answer: "Circle",
       hint: "A circle is round all the way around.",
-      difficulty: "easy"
+      difficulty: "very_easy"
+    },
+    {
+      activity_id: "shapes_guest_02",
+      type: "repeat_shape",
+      prompt: "Now say square.",
+      visual_items: ["square"],
+      options: ["Circle", "Square", "Triangle"],
+      correct_answer: "Square",
+      hint: "A square has four equal sides.",
+      difficulty: "very_easy"
+    },
+    {
+      activity_id: "shapes_guest_03",
+      type: "recognize_shape",
+      prompt: "Find the triangle.",
+      visual_items: ["circle", "square", "triangle"],
+      options: ["Circle", "Square", "Triangle"],
+      correct_answer: "Triangle",
+      hint: "A triangle has three sides.",
+      difficulty: "very_easy"
     }
   ],
   mixed: [

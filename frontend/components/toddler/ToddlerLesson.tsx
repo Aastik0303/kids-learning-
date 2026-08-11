@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AIAvatar } from "@/components/avatar/AIAvatar";
+import { visualGuideClass, type VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
+import { askGuideQuestion } from "@/services/guide";
+import { hasGuideSpeechIntent } from "@/services/speech";
 import { useSpeechRecognition, useTextToSpeech } from "@/services/toddlerVoice";
 import { answerToddlerLesson, startToddlerLesson } from "@/services/toddler";
+import { registerToddlerGuideContext, requestToddlerGuide, toddlerQuestionContext, toddlerStateContext } from "@/services/toddlerGuide";
 import { getChild, saveChild } from "@/services/session";
 import type { ChildProfile, ToddlerActivity, ToddlerModule, ToddlerResponse } from "@/types";
 
-function activityNeedsVoice(activity: ToddlerActivity | null) {
-  return activity?.type === "repeat_after_me";
+function activityAcceptsVoice(activity: ToddlerActivity | null) {
+  return Boolean(activity && activity.type !== "introduce" && (activity.answer || activity.accepted.length || activity.choices.length));
 }
 
 export function ToddlerLesson({
@@ -27,6 +31,10 @@ export function ToddlerLesson({
   const [busy, setBusy] = useState(true);
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState("");
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
+  const [countGuideEnabled, setCountGuideEnabled] = useState(false);
+  const answerInFlightRef = useRef(false);
   const { state, effect, isSpeaking, setAvatar } = useAvatar();
   const tts = useTextToSpeech();
   const stt = useSpeechRecognition();
@@ -34,13 +42,26 @@ export function ToddlerLesson({
   const activity = lesson?.activity ?? null;
   const canTapChoices = Boolean(activity?.choices.length);
 
+  function applyGuideVisuals(guide: Awaited<ReturnType<typeof requestToddlerGuide>>, showCountingGuide = false) {
+    const safeTargets = new Set(["toddler-activity", "toddler-microphone", "toddler-choices"]);
+    if (showCountingGuide) {
+      setHighlightId(guide.ui_action.target && safeTargets.has(guide.ui_action.target) ? guide.ui_action.target : null);
+      setVisualAction(guide.visual_action);
+      setCountGuideEnabled(true);
+      return;
+    }
+    setHighlightId(null);
+    setVisualAction(null);
+    setCountGuideEnabled(false);
+  }
+
   useEffect(() => {
     let active = true;
     setBusy(true);
     startToddlerLesson(child.child_id, module, 1).then((response) => {
       if (!active) return;
       setLesson(response);
-      setAvatar(response.avatar);
+      setAvatar({ ...response.avatar, speak: false });
       setBusy(false);
     }).catch((err) => {
       if (!active) return;
@@ -53,14 +74,31 @@ export function ToddlerLesson({
   }, [child.child_id, module, setAvatar]);
 
   useEffect(() => {
+    registerToddlerGuideContext(child, lesson);
+    return () => registerToddlerGuideContext(child, null);
+  }, [child, lesson]);
+
+  useEffect(() => {
     if (!activity || !lesson) return;
     const currentActivity = activity;
+    const currentLesson = lesson;
     let cancelled = false;
     async function guideActivity() {
       setTranscript("");
       setError("");
-      setAvatar({ state: "speaking", message: currentActivity.speech, animationEffect: "story_transition", durationMs: null });
-      await tts.speak(currentActivity.speech);
+      let spokenMessage = currentActivity.speech;
+      try {
+        const guide = await requestToddlerGuide({ child, lesson: currentLesson, event: "LEVEL_QUESTION_LOADED" });
+        spokenMessage = guide.message;
+        applyGuideVisuals(guide, false);
+        setLesson((current) => current?.activity?.activity_id === currentActivity.activity_id
+          ? { ...current, guide: { ...current.guide, speech: spokenMessage }, avatar: guide.avatar }
+          : current);
+        setAvatar({ ...guide.avatar, speak: false, durationMs: null });
+      } catch {
+        setAvatar({ state: "speaking", message: spokenMessage, speak: false, animationEffect: "story_transition", durationMs: null });
+      }
+      await tts.speak(spokenMessage);
       if (cancelled) return;
       if (currentActivity.type === "introduce") {
         window.setTimeout(() => {
@@ -69,8 +107,8 @@ export function ToddlerLesson({
         return;
       }
       setAvatar({
-        state: activityNeedsVoice(currentActivity) ? "listening" : "happy",
-        message: activityNeedsVoice(currentActivity) ? "Tap the microphone." : "Tap one big answer.",
+        state: activityAcceptsVoice(currentActivity) ? "listening" : "happy",
+        message: currentActivity.choices.length ? "Tap the microphone or one big answer." : "Tap the microphone and tell me.",
         animationEffect: "none",
         durationMs: null
       });
@@ -86,21 +124,37 @@ export function ToddlerLesson({
     try {
       const response = await startToddlerLesson(child.child_id, module, 1, practice);
       setLesson(response);
-      setAvatar(response.avatar);
+      setAvatar({ ...response.avatar, speak: false });
+      setHighlightId(null);
+      setVisualAction(null);
+      setCountGuideEnabled(false);
     } finally {
       setBusy(false);
     }
   }
 
   async function submitAnswer(answer: string, recognized = answer) {
-    if (!lesson || busy) return;
+    if (!lesson || busy || answerInFlightRef.current) return;
+    answerInFlightRef.current = true;
     setBusy(true);
     setError("");
     setAvatar({ state: "thinking", message: "Let me listen...", animationEffect: "none", durationMs: null });
     try {
       const response = await answerToddlerLesson(lesson.session_id, answer, recognized);
-      setLesson(response);
-      setAvatar(response.avatar);
+      if (response.evaluation?.retry && !response.question_changed && response.activity) {
+        const guide = await requestToddlerGuide({ child, lesson: response, event: "LEVEL_ANSWER_INCORRECT", recognizedSpeech: recognized });
+        applyGuideVisuals(guide, response.attempt_count >= 2);
+        const guidedResponse = { ...response, guide: { ...response.guide, speech: guide.message }, avatar: guide.avatar };
+        setLesson(guidedResponse);
+        setAvatar({ ...guide.avatar, speak: false, durationMs: null });
+        await tts.speak(guide.message);
+      } else {
+        setLesson(response);
+        setAvatar({ ...response.avatar, speak: false });
+        setHighlightId(null);
+        setVisualAction(null);
+        setCountGuideEnabled(false);
+      }
       const stored = getChild();
       if (stored) {
         const updated = { ...stored, stars: response.total_stars };
@@ -112,13 +166,45 @@ export function ToddlerLesson({
       setError(message);
       setAvatar({ state: "encouraging", message, speak: true, animationEffect: "gentle_hint" });
     } finally {
+      answerInFlightRef.current = false;
+      setBusy(false);
+    }
+  }
+
+  async function askToddlerGuide(question: string, forceCountingGuide = false) {
+    if (!lesson || !activity) return;
+    setBusy(true);
+    setError("");
+    setAvatar({ state: "thinking", message: "Let me help...", speak: false, animationEffect: "pulse", durationMs: null });
+    try {
+      const guide = await askGuideQuestion({
+        question,
+        route: "/toddler",
+        sessionId: lesson.session_id,
+        screen: "toddler_lesson",
+        questionContext: toddlerQuestionContext(activity, module, lesson.attempt_count, question),
+        toddlerContext: toddlerStateContext(child, lesson, question),
+        learningMode: "toddler",
+        topic: module,
+        attempt: lesson.attempt_count
+      });
+      applyGuideVisuals(guide, forceCountingGuide || lesson.attempt_count >= 2);
+      setLesson((current) => current ? { ...current, guide: { ...current.guide, speech: guide.message }, avatar: guide.avatar } : current);
+      setAvatar({ ...guide.avatar, speak: false, durationMs: null });
+      await tts.speak(guide.message);
+    } finally {
       setBusy(false);
     }
   }
 
   async function listen() {
     if (!activity || !lesson || busy) return;
+    setTranscript("");
+    setError("");
+    stt.clearError();
+    tts.stop();
     setAvatar({ state: "listening", message: "I'm listening...", animationEffect: "none", durationMs: null });
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
     const result = await stt.startListening(lesson.session_id, activity);
     if (!result || !result.raw_transcript.trim()) {
       const message = stt.error || "Oops! I couldn't hear you 😊 Try again!";
@@ -126,14 +212,16 @@ export function ToddlerLesson({
       setAvatar({ state: "encouraging", message, speak: true, animationEffect: "gentle_hint" });
       return;
     }
-    if (result.ambiguous) {
-      const message = "I couldn't hear that clearly 😊 Try again!";
-      setError(message);
-      setAvatar({ state: "encouraging", message, speak: true, animationEffect: "gentle_hint" });
+    setTranscript(result.raw_transcript);
+    if (hasGuideSpeechIntent(result.raw_transcript)) {
+      await askToddlerGuide(result.raw_transcript.trim(), true);
       return;
     }
-    setTranscript(result.raw_transcript);
     await submitAnswer(result.resolved_answer || result.normalized || result.raw_transcript, result.raw_transcript);
+  }
+
+  async function showHelp() {
+    await askToddlerGuide("I don't understand. Show me and count each item with me.", true);
   }
 
   const feedback = useMemo(() => {
@@ -175,7 +263,7 @@ export function ToddlerLesson({
         <span className="rounded-full bg-sunshine px-5 py-4 text-2xl font-black text-ink shadow-soft">⭐ {child.stars}</span>
       </div>
 
-      <div data-guide-id="toddler-activity" className="surface-panel grid gap-5 rounded-[2rem] p-5 text-center">
+      <div data-guide-id="toddler-activity" className={`surface-panel grid gap-5 rounded-[2rem] p-5 text-center ${highlightId === "toddler-activity" ? "guide-glow" : ""}`}>
         <div className="mx-auto grid w-full max-w-xl justify-items-center gap-4 rounded-[2rem] bg-[#f7fbff] p-5">
           <div className="h-36 w-36">
             <AIAvatar state={state} effect={effect} isSpeaking={isSpeaking || tts.speaking} />
@@ -191,15 +279,30 @@ export function ToddlerLesson({
             {activity.visual_items.length ? (
               <div className="flex flex-wrap justify-center gap-4">
                 {activity.visual_items.map((item, index) => (
-                  <span key={`${item}-${index}`} className="grid h-24 w-24 place-items-center rounded-[2rem] bg-white text-5xl font-black shadow-soft">{item}</span>
+                  <span
+                    key={`${item}-${index}`}
+                    data-visual-id={`visual-item-${index}`}
+                    data-count-label={countGuideEnabled ? index + 1 : undefined}
+                    className={`grid h-24 w-24 place-items-center rounded-[2rem] bg-white text-5xl font-black shadow-soft ${visualGuideClass(visualAction, `visual-item-${index}`)}`}
+                  >
+                    {item}
+                  </span>
                 ))}
               </div>
             ) : null}
+            <button
+              type="button"
+              disabled={busy || tts.speaking}
+              onClick={showHelp}
+              className="pressable rounded-full bg-sky px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-60"
+            >
+              Show me &amp; explain
+            </button>
           </div>
         ) : null}
 
-        {activityNeedsVoice(activity) ? (
-          <div data-guide-id="toddler-microphone" className="grid justify-items-center gap-3 rounded-[2rem] bg-sunshine/20 p-5">
+        {activityAcceptsVoice(activity) ? (
+          <div data-guide-id="toddler-microphone" className={`grid justify-items-center gap-3 rounded-[2rem] bg-sunshine/20 p-5 ${highlightId === "toddler-microphone" ? "guide-glow" : ""}`}>
             <button
               type="button"
               disabled={busy || tts.speaking || stt.listening}
@@ -215,7 +318,7 @@ export function ToddlerLesson({
         ) : null}
 
         {canTapChoices && activity ? (
-          <div data-guide-id="toddler-choices" className="grid gap-3 sm:grid-cols-3">
+          <div data-guide-id="toddler-choices" className={`grid gap-3 sm:grid-cols-3 ${highlightId === "toddler-choices" ? "guide-glow" : ""}`}>
             {activity.choices.map((choice) => (
               <button
                 key={choice}

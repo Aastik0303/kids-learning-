@@ -13,8 +13,8 @@
       "star_reward": 5,
       "next_stage": 2,
       "activities": [
-        {"activity_id": "numbers_1_a", "type": "multiple_choice", "prompt": "How many apples are here?", "visual_items": ["apple"], "options": ["1", "2", "3"], "correct_answer": "1", "hint": "There is just one apple.", "difficulty": "very_easy"},
-        {"activity_id": "numbers_1_b", "type": "select_number", "prompt": "Tap the number one.", "visual_items": ["number"], "options": ["1", "4", "5"], "correct_answer": "1", "hint": "Number one is written like 1.", "difficulty": "very_easy"},
+        {"activity_id": "numbers_1_a", "type": "introduce_number", "prompt": "Meet number one. Say one.", "visual_items": ["apple"], "options": ["1", "2", "3"], "correct_answer": "1", "hint": "There is just one apple.", "difficulty": "very_easy"},
+        {"activity_id": "numbers_1_b", "type": "repeat_number", "prompt": "Now say one.", "visual_items": ["1"], "options": ["1", "4", "5"], "correct_answer": "1", "hint": "Listen to one, then say one.", "difficulty": "very_easy"},
         {"activity_id": "numbers_1_c", "type": "count_objects", "prompt": "Count the star.", "visual_items": ["star"], "options": ["1", "2", "4"], "correct_answer": "1", "hint": "Touch the star once as you count.", "difficulty": "very_easy"}
       ]
     },

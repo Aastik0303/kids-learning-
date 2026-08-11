@@ -1,6 +1,6 @@
 import json
 import random
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from pydantic import ValidationError
@@ -8,12 +8,16 @@ from pydantic import ValidationError
 from app.config import get_settings
 from app.schemas.avatar import AvatarPayload
 from app.schemas.guide import GuideActionType, GuideRequest, GuideResponse, GuideUiAction, GuideVisualAction, GuideVisualActionType
+from app.services.answer_resolution_service import AnswerResolutionContext, resolve_answer
 from app.services.errors import app_error
 from app.services.safety_service import FALLBACK, safe_text
 
 
 SYSTEM_PROMPT = """You are the Little Learning Guide, a friendly AI companion for children aged 3-6.
-Your job is to help the child understand the current screen or learning activity.
+Your job is to answer age-appropriate learning questions and help the child understand the
+current screen or activity. For GUIDE_HELP_REQUESTED, answer the child's latest question
+directly and use the recent conversation when it helps. If a question is unrelated or unsafe,
+gently guide the child back to numbers, letters, colours, shapes, stories, or the learning app.
 You receive route, screen, event, feature, age group, allowed UI actions/targets, current
 question, learning objective, visual items, child answer/result, attempts, recent answers,
 and compact progress context.
@@ -23,7 +27,9 @@ understand; refer to visible objects; give one small explanation step; then ask 
 answer; use 1-2 short sentences; use nursery words; first wrong attempt gives a small hint;
 second wrong attempt uses another familiar example; third or later makes it easier and more
 visual; address repeated mistake patterns; never shame; never ask sensitive personal info;
-use only allowed UI and visual actions. Return structured JSON only."""
+use only allowed UI and visual actions. If clear speech does not fit the current question,
+say so gently and bring the child back to that question; never claim you could not hear it.
+Return structured JSON only."""
 
 TODDLER_SYSTEM_PROMPT = """For learning_mode toddler, you are a warm, playful nursery teacher helping a child younger than 3.
 Use maximum 1-2 very short sentences, simple vocabulary, one instruction at a time, and happy emojis.
@@ -161,6 +167,77 @@ def _words(text: str, limit: int) -> str:
     return " ".join(parts[:limit]).rstrip(".,!") + "."
 
 
+def _is_contextual_mismatch(payload: GuideRequest) -> bool:
+    question = payload.question
+    spoken = payload.feature.lower().strip()
+    if not question or any(phrase in spoken for phrase in ("help", "understand", "explain", "what", "why", "how", "repeat", "confused")):
+        return False
+    resolution = resolve_answer(
+        AnswerResolutionContext(
+            transcript=payload.feature,
+            confidence=0.9,
+            answer_type=question.answer_type or "",
+            correct_answer=question.correct_answer,
+            accepted_answers=question.accepted_answers,
+            options=question.options,
+        )
+    )
+    return resolution.input_kind == "unresolved"
+
+
+def _contextual_mismatch_message(payload: GuideRequest) -> str:
+    question = payload.question
+    if not question:
+        return FALLBACK
+    teaching_hint = question.hint or question.learning_objective or question.prompt
+    return _words(f"I heard you, but that does not answer this question yet. {teaching_hint}", 22)
+
+
+def _help_message(payload: GuideRequest) -> str:
+    question = payload.feature.lower().strip()
+    progress = payload.progress
+
+    if any(word in question.split() for word in {"hi", "hello", "hey"}):
+        return "Hello! What would you like to learn today?"
+    if "practice" in question:
+        return "Open Practice, then choose Numbers, Alphabets, Colours, Shapes, or Mixed Practice."
+    if any(word in question for word in {"level", "path", "stage"}):
+        return "Open Adventure and tap the bright unlocked level on your learning path."
+    if "star" in question or "reward" in question:
+        stars = progress.session_stars if progress else 0
+        return f"You have {stars} stars. Open Rewards to see your badges and prizes."
+    if "certificate" in question:
+        return "Your certificate unlocks after you complete the Mixed Final Path."
+    if "circle" in question:
+        return "A circle is round all the way around and has no corners."
+    if "square" in question:
+        return "A square has four equal sides and four corners."
+    if "triangle" in question:
+        return "A triangle has three sides and three corners."
+    if "alphabet" in question or "letter" in question:
+        return "Letters make words. Ask me about one letter, like: What sound does A make?"
+    if "number" in question or "count" in question:
+        return "I can help you count. Tell me which objects or numbers you want to count."
+    if "colour" in question or "color" in question:
+        return "I can help with colours. Ask me about a colour you see."
+    if "parent" in question or "login" in question:
+        return "Tap Parent Login at the top of the screen to open the parent area."
+    if _is_contextual_mismatch(payload):
+        return _contextual_mismatch_message(payload)
+    if payload.question:
+        teaching_hint = payload.question.hint or payload.question.learning_objective
+        asks_for_help = any(
+            phrase in question
+            for phrase in ("help", "understand", "explain", "what", "why", "how", "repeat", "confused")
+        )
+        if teaching_hint:
+            prefix = "No problem. Let's try together." if asks_for_help else "I heard you, but that does not answer this question yet."
+            return _words(f"{prefix} {teaching_hint}", 22)
+        prefix = "No problem. Let's look together." if asks_for_help else "That does not fit this question yet. Let's try this:"
+        return _words(f"{prefix} {payload.question.prompt}", 22)
+    return FALLBACK
+
+
 def _first_allowed_target(payload: GuideRequest, preferred: list[str]) -> str | None:
     supplied = [target for target in payload.available_targets if target in APPROVED_GUIDE_TARGETS]
     for target in preferred:
@@ -215,6 +292,13 @@ def validate_guide_request(payload: GuideRequest) -> None:
         raise app_error("UNSAFE_VISUAL_TARGET", "Let us use a safe visual step.", 400)
 
 
+def _is_counting_question(payload: GuideRequest) -> bool:
+    if not payload.question:
+        return False
+    answer_type = (payload.question.answer_type or payload.question.topic or "").lower()
+    return answer_type in {"count_objects", "select_number"} or "number" in answer_type or "count" in payload.question.prompt.lower()
+
+
 def _question_teaching_message(payload: GuideRequest) -> tuple[str, GuideVisualAction, str]:
     question = payload.question
     if not question:
@@ -225,19 +309,16 @@ def _question_teaching_message(payload: GuideRequest) -> tuple[str, GuideVisualA
     visual_targets = _visual_targets(payload)
     attempt = question.attempt
 
-    if answer_type in {"count_objects", "select_number"} or "count" in question.prompt.lower():
-        item_name = visual_items[0] if visual_items else "object"
-        if attempt >= 2:
+    if _is_counting_question(payload):
+        item_name = visual_items[0] if visual_items and visual_items[0].isascii() else "item"
+        if attempt >= 1 and visual_items:
+            count_words = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"]
+            count_sequence = ", ".join(count_words[index] if index < len(count_words) else str(index) for index in range(1, len(visual_items) + 1))
+            total = count_words[len(visual_items)] if len(visual_items) < len(count_words) else str(len(visual_items))
             return (
-                f"Let's count together. Touch each {item_name} as it lights up.",
+                f"Let's count together: {count_sequence}. There are {total}. Watch each {item_name} light up.",
                 _visual_action(payload, "show_example" if attempt >= 3 else "highlight_sequence", visual_targets),
-                "re_explain",
-            )
-        if attempt == 1:
-            return (
-                f"Count one {item_name} at a time. Do not count the same one twice.",
-                _visual_action(payload, "highlight_sequence", visual_targets),
-                "hint",
+                "hint" if attempt == 1 else "re_explain",
             )
         return (
             f"Look at the {item_name}s. Count each one only once. How many do you see?",
@@ -293,8 +374,14 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         greeting = _time_greeting()
         level = payload.progress.current_level if payload.progress else None
         last = payload.progress.last_completed_level if payload.progress else None
+        objective = payload.progress.last_completed_objective if payload.progress else None
+        completed_at = payload.progress.last_completed_at if payload.progress else None
         if last and level:
-            message = f"{greeting}! Welcome back! Last time you finished {last}. Tap Continue Adventure for {level}."
+            studied = objective or last
+            when = "Last time"
+            if completed_at and completed_at.date() == (datetime.now(timezone.utc) - timedelta(days=1)).date():
+                when = "Yesterday"
+            message = f"{greeting}! {when} you studied {studied} in {last}. Today, tap Continue Adventure for {level}."
         elif level:
             message = f"{greeting}! Tap Continue Adventure to start {level}."
         else:
@@ -408,11 +495,24 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
 
     # --- GUIDE_HELP_REQUESTED ---
     elif payload.event == "GUIDE_HELP_REQUESTED":
-        feature = payload.feature.replace("_", " ")
-        message = f"I am your Little Learning Guide. Tap the glowing {feature} button."
-        strategy = "navigation"
-        action = _ui_action(payload, "highlight", ["continue-adventure", "home-practice", "start-practice", "open-rewards", "ask-guide"])
-        next_event = "button_clicked"
+        message = _help_message(payload)
+        strategy = "help"
+        if payload.question:
+            teaching_payload = payload.model_copy(
+                update={"question": payload.question.model_copy(update={"attempt": max(1, payload.question.attempt)})}
+            )
+            teaching_message, visual_action, strategy = _question_teaching_message(teaching_payload)
+            if _is_counting_question(teaching_payload):
+                message = teaching_message
+            strategy = "help"
+            action = _ui_action(
+                payload,
+                "highlight",
+                ["counting-object-group", "question-area", "toddler-activity", "voice-answer-area", "toddler-choices"],
+            )
+        else:
+            action = GuideUiAction(type="none", target=None)
+        next_event = "wait_for_child"
         state = "speaking"
         effect = "pulse"
 
@@ -436,12 +536,22 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
     effect = "none"
     strategy = "read_question"
     next_event = "wait_for_child"
+    visual_action = GuideVisualAction()
 
     if payload.event in {"APP_OPENED", "HOME_OPENED"}:
         message = "Hi little explorer! 👋 Let's learn."
         state = "waving"
         strategy = "welcome"
         target_preferences = ["toddler-module-alphabets", "toddler-home"]
+    elif payload.event == "GUIDE_HELP_REQUESTED":
+        teaching_payload = payload.model_copy(
+            update={"question": payload.question.model_copy(update={"attempt": max(1, payload.question.attempt)})}
+        ) if payload.question else payload
+        teaching_message, visual_action, strategy = _question_teaching_message(teaching_payload)
+        message = teaching_message if _is_counting_question(teaching_payload) else _help_message(payload)
+        state = "speaking"
+        strategy = "help"
+        target_preferences = ["toddler-activity", "toddler-microphone", "toddler-choices"]
     elif result in {"correct", "close"} or payload.event in {"LEVEL_ANSWER_CORRECT", "PRACTICE_ANSWER_CORRECT"}:
         message = f"Yay! That's {concept}! ⭐" if concept else "Yay! Great job! ⭐"
         state = "celebrating"
@@ -449,10 +559,13 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "celebrate"
         next_event = "next_activity"
     elif result in {"retry", "unclear"} or payload.event in {"LEVEL_ANSWER_INCORRECT", "PRACTICE_ANSWER_INCORRECT", "HINT_REQUESTED"}:
-        message = f"Almost! 😊 Let's try {concept} again." if concept else "Almost! 😊 Let's try again."
+        if payload.question:
+            message, visual_action, strategy = _question_teaching_message(payload)
+        else:
+            message = f"Almost! 😊 Let's try {concept} again." if concept else "Almost! 😊 Let's try again."
+            strategy = "hint"
         state = "encouraging"
         effect = "gentle_hint"
-        strategy = "hint"
         target_preferences = ["toddler-microphone", "toddler-choices", "toddler-activity"]
     elif payload.event in {"LEVEL_COMPLETED", "PRACTICE_COMPLETED"}:
         message = "Wow! You did it! 🌟"
@@ -461,7 +574,7 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "celebrate"
         target_preferences = ["toddler-keep-learning", "toddler-practice"]
     elif payload.question:
-        message = _words(payload.question.prompt, 10)
+        message = _words(payload.question.learning_objective or payload.question.prompt, 10)
     else:
         message = "Look, listen, then try. 😊"
 
@@ -471,12 +584,13 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy=strategy,
         avatar=_avatar(message, state=state, effect=effect, speak=True),
         ui_action=_ui_action(payload, "highlight", target_preferences),
+        visual_action=visual_action,
         next_expected_event=next_event,
     )
 
 
 def _payload_for_model(payload: GuideRequest) -> dict:
-    return payload.model_dump(exclude_none=True)
+    return payload.model_dump(mode="json", exclude_none=True)
 
 
 def _model_instruction(payload: GuideRequest) -> str:
@@ -496,6 +610,10 @@ def _model_instruction(payload: GuideRequest) -> str:
         "and use the microphone or voice-answer targets when asking for an answer. "
         "Use only the supplied question and concept. Keep child-facing text short (under 25 words). "
         "When giving a hint after a wrong answer, incorporate the question's hint field if present. "
+        "For GUIDE_HELP_REQUESTED, feature is the child's latest question. Answer it directly, "
+        "using conversation and the current question for context. If feature is unrelated or nonsensical, acknowledge "
+        "that it does not answer the current question and give one relevant hint. Never call clear speech unclear. "
+        "Do not tell the child to tap a button unless they asked how to navigate. "
         "Always use warm, encouraging language. Never shame the child."
     )
 
@@ -505,6 +623,27 @@ def _validate_model_response(payload: GuideRequest, raw_content: str) -> GuideRe
         decoded = json.loads(raw_content)
     except json.JSONDecodeError:
         return _fallback_guide(payload)
+
+    if payload.event == "GUIDE_HELP_REQUESTED" and isinstance(decoded, dict):
+        raw_message = decoded.get("message")
+        if isinstance(raw_message, str) and raw_message.strip():
+            message = _contextual_mismatch_message(payload) if _is_contextual_mismatch(payload) else raw_message.strip()
+            message = safe_text(_words(message, 25))
+            teaching_payload = payload.model_copy(
+                update={"question": payload.question.model_copy(update={"attempt": max(1, payload.question.attempt)})}
+            ) if payload.question else payload
+            teaching_message, visual_action, _ = _question_teaching_message(teaching_payload)
+            if payload.question and _is_counting_question(teaching_payload) and not _is_contextual_mismatch(payload):
+                message = safe_text(_words(teaching_message, 25))
+            target_preferences = ["toddler-activity", "toddler-choices"] if payload.learning_mode == "toddler" else ["counting-object-group", "question-area"]
+            return GuideResponse(
+                message=message,
+                strategy="help",
+                avatar=_avatar(message, state="speaking", effect="pulse", speak=True),
+                ui_action=_ui_action(payload, "highlight", target_preferences),
+                visual_action=visual_action,
+                next_expected_event="wait_for_child",
+            )
 
     try:
         response = GuideResponse.model_validate(decoded)
@@ -522,6 +661,24 @@ def _validate_model_response(payload: GuideRequest, raw_content: str) -> GuideRe
     allowed_visual_targets = set(payload.allowed_visual_targets)
     if any(target not in allowed_visual_targets for target in response.visual_action.targets):
         return _fallback_guide(payload)
+
+    teaching_event = payload.event in {
+        "PRACTICE_ANSWER_INCORRECT",
+        "LEVEL_ANSWER_INCORRECT",
+        "HINT_REQUESTED",
+        "GUIDE_HELP_REQUESTED",
+    }
+    if teaching_event and payload.question and payload.allowed_visual_targets:
+        required_message, required_visual_action, _ = _question_teaching_message(payload)
+        if response.visual_action.type == "none" or not response.visual_action.targets:
+            response = response.model_copy(update={"visual_action": required_visual_action})
+        if payload.event != "GUIDE_HELP_REQUESTED":
+            response = response.model_copy(
+                update={
+                    "message": safe_text(_words(required_message, 25)),
+                    "avatar": response.avatar.model_copy(update={"message": safe_text(_words(required_message, 25))}),
+                }
+            )
 
     message = safe_text(response.message)
     return response.model_copy(
@@ -558,7 +715,7 @@ def _groq_guide(payload: GuideRequest) -> GuideResponse:
             "https://api.groq.com/openai/v1/chat/completions",
             headers=headers,
             json=body,
-            timeout=2.5,
+            timeout=6.0,
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]

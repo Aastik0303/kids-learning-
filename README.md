@@ -52,7 +52,7 @@ Backend:
 
 ```bash
 cd backend
-python -m uvicorn app.main:app --port 8088
+python -m uvicorn app.main:app --port 8008
 ```
 
 Frontend:
@@ -63,7 +63,7 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`.
+Open `http://localhost:5000`.
 
 ## Test
 

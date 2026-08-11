@@ -1,5 +1,22 @@
 import { api } from "@/services/api";
-import type { Activity, ChildProfile, GuideRequest, GuideResponse } from "@/types";
+import { getOrCreateGuestChild } from "@/services/session";
+import type { Activity, ChildProfile, GuideQuestionContext, GuideRequest, GuideResponse } from "@/types";
+
+type ActiveGuideContext = {
+  route: string;
+  sessionId?: string;
+  screen?: string;
+  topic?: string;
+  learningMode?: "standard" | "toddler";
+  question?: GuideQuestionContext | null;
+  toddler?: GuideRequest["toddler"];
+};
+
+let activeGuideContext: ActiveGuideContext | null = null;
+
+export function setActiveGuideContext(context: ActiveGuideContext | null) {
+  activeGuideContext = context;
+}
 
 export const GUIDE_TARGETS = {
   HOME_PRACTICE: "home-practice",
@@ -61,21 +78,141 @@ export function progressContext(child: ChildProfile | null, currentWorld?: strin
 }
 
 export function guideAgent(payload: GuideRequest) {
-  if (payload.child_id === "guest_child" || payload.child_id?.startsWith("local-child")) {
-    return Promise.resolve(localGuide(payload));
-  }
-
   return api<GuideResponse>("/agent/guide", {
     method: "POST",
     body: JSON.stringify(payload)
   }).catch(() => localGuide(payload));
 }
 
+export function askGuideQuestion({
+  question,
+  route,
+  conversation = [],
+  sessionId,
+  screen,
+  activity,
+  questionContext,
+  toddlerContext,
+  learningMode,
+  topic,
+  attempt = 0
+}: {
+  question: string;
+  route: string;
+  conversation?: NonNullable<GuideRequest["conversation"]>;
+  sessionId?: string;
+  screen?: string;
+  activity?: Activity;
+  questionContext?: GuideQuestionContext;
+  toddlerContext?: GuideRequest["toddler"];
+  learningMode?: "standard" | "toddler";
+  topic?: string;
+  attempt?: number;
+}) {
+  const child = getOrCreateGuestChild();
+  const activeContext = activeGuideContext?.route === route ? activeGuideContext : null;
+  const contextualQuestion = activity
+    ? activityQuestion(activity, {
+        topic: topic ?? activity.type,
+        concept: activity.type,
+        child_answer: question.trim(),
+        recent_answers: [question.trim()],
+        attempt
+      })
+    : questionContext ?? activeContext?.question ?? undefined;
+  const toddlerMode = (learningMode ?? activeContext?.learningMode ?? child.learning_mode ?? "standard") === "toddler";
+  const contextualTargets = toddlerMode
+    ? ["toddler-activity", "toddler-choices", "toddler-microphone"]
+    : [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON];
+  return guideAgent({
+    session_id: sessionId ?? activeContext?.sessionId ?? `guide_${Date.now()}`,
+    child_id: child.child_id,
+    mode: "help",
+    event: "GUIDE_HELP_REQUESTED",
+    route,
+    screen: screen ?? activeContext?.screen ?? (route === "/guide" ? "guide_help" : "learning_app"),
+    feature: question.trim(),
+    age_group: child.age_group,
+    age: child.age,
+    learning_mode: toddlerMode ? "toddler" : "standard",
+    preferred_language: child.preferred_language,
+    conversation: conversation.slice(-8),
+    toddler: toddlerContext ?? activeContext?.toddler,
+    question: contextualQuestion
+      ? { ...contextualQuestion, child_answer: question.trim(), recent_answers: [question.trim()], attempt }
+      : undefined,
+    progress: progressContext(child, topic ?? activeContext?.topic),
+    allowed_visual_targets: contextualQuestion?.visual_items?.map((_, index) => `visual-item-${index}`) ?? [],
+    available_actions: contextualQuestion ? ["highlight", "show_hint", "repeat_instruction"] : ["none"],
+    available_targets: contextualQuestion ? contextualTargets : []
+  });
+}
+
+function localTeachingStep(payload: GuideRequest) {
+  const question = payload.question;
+  const targets = payload.allowed_visual_targets ?? [];
+  if (!question) return { message: localHelpMessage(payload.feature, payload), type: "none" as const, targets: [] as string[] };
+  const answerType = (question.answer_type ?? question.topic ?? "").toLowerCase();
+  const counting = answerType.includes("count") || answerType.includes("number") || /count|how many/i.test(question.prompt);
+  if (counting) {
+    const firstItem = question.visual_items?.[0] ?? "object";
+    const item = /^[\x00-\x7F]+$/.test(firstItem) ? firstItem : "item";
+    const numberWords = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"];
+    const count = question.visual_items?.length ?? 0;
+    const sequence = Array.from({ length: count }, (_, index) => numberWords[index + 1] ?? String(index + 1)).join(", ");
+    const total = numberWords[count] ?? String(count);
+    return {
+      message: count ? `Let's count together: ${sequence}. There are ${total}. Watch each ${item} light up.` : "Let's count one item at a time.",
+      type: targets.length > 1 ? "highlight_sequence" as const : "pulse" as const,
+      targets
+    };
+  }
+  return {
+    message: `Let's look together. ${question.hint || question.learning_objective || question.prompt}`,
+    type: "highlight" as const,
+    targets
+  };
+}
+
+function localHelpMessage(question: string, payload: GuideRequest) {
+  const normalized = question.toLowerCase().trim();
+  const arithmetic = normalized.match(/(?:what is|what's|solve)?\s*(\d{1,2})\s*([+\-])\s*(\d{1,2})/);
+  if (arithmetic) {
+    const left = Number(arithmetic[1]);
+    const right = Number(arithmetic[3]);
+    const answer = arithmetic[2] === "+" ? left + right : left - right;
+    return `${left} ${arithmetic[2] === "+" ? "plus" : "minus"} ${right} is ${answer}.`;
+  }
+  if (/\b(hi|hello|hey)\b/.test(normalized)) return "Hello! What would you like to learn today?";
+  if (normalized.includes("practice")) return "Open Practice, then choose Numbers, Alphabets, Colours, Shapes, or Mixed Practice.";
+  if (normalized.includes("level") || normalized.includes("path") || normalized.includes("stage")) return "Open Adventure and tap the bright unlocked level on your learning path.";
+  if (normalized.includes("star") || normalized.includes("reward")) return `You have ${payload.progress?.session_stars ?? 0} stars. Open Rewards to see your badges and prizes.`;
+  if (normalized.includes("certificate")) return "Your certificate unlocks after you complete the Mixed Final Path.";
+  if (normalized.includes("circle")) return "A circle is round all the way around and has no corners.";
+  if (normalized.includes("square")) return "A square has four equal sides and four corners.";
+  if (normalized.includes("triangle")) return "A triangle has three sides and three corners.";
+  if (normalized.includes("alphabet") || normalized.includes("letter")) return "Letters make words. Try asking me about one letter, like: What sound does A make?";
+  if (normalized.includes("number") || normalized.includes("count")) return "I can help you count. Tell me which objects or numbers you want to count.";
+  if (normalized.includes("colour") || normalized.includes("color")) return "I can help with colours. Ask me about a colour you see.";
+  if (normalized.includes("parent") || normalized.includes("login")) return "Tap Parent Login at the top of the screen to open the parent area.";
+  if (payload.question?.hint || payload.question?.learning_objective) {
+    const asksForHelp = /\b(help|understand|explain|what|why|how|repeat|confused)\b/.test(normalized);
+    const prefix = asksForHelp ? "No problem. Let's try together." : "I heard you, but that does not answer this question yet.";
+    return `${prefix} ${payload.question.hint || payload.question.learning_objective}`;
+  }
+  if (payload.question?.prompt) return `No problem. Let's look together. ${payload.question.prompt}`;
+  return "I can help with numbers, letters, colours, shapes, and using this app. Ask me one short question.";
+}
+
 function localGuide(payload: GuideRequest): GuideResponse {
   const prompt = payload.question?.prompt;
   const wrong = payload.event.endsWith("_ANSWER_INCORRECT") || payload.event === "HINT_REQUESTED";
   const complete = payload.event.endsWith("_COMPLETED") || payload.event === "CERTIFICATE_UNLOCKED";
-  const message = wrong
+  const needsTeachingStep = Boolean(payload.question && (wrong || payload.event === "GUIDE_HELP_REQUESTED"));
+  const teachingStep = localTeachingStep(payload);
+  const message = payload.event === "GUIDE_HELP_REQUESTED"
+    ? needsTeachingStep ? teachingStep.message : localHelpMessage(payload.feature, payload)
+    : wrong
     ? payload.question?.attempt === 2
       ? "Almost there! Count one by one, then say it again."
       : "Good try! Look closely and count slowly."
@@ -90,7 +227,7 @@ function localGuide(payload: GuideRequest): GuideResponse {
     strategy: wrong ? "hint" : complete ? "celebrate" : "read_question",
     avatar: { state: wrong ? "encouraging" : complete ? "celebrating" : "speaking", message, speak: true, animationEffect: wrong ? "gentle_hint" : complete ? "confetti" : "none" },
     ui_action: { type: target ? "highlight" : "none", target },
-    visual_action: { type: "none", targets: [] },
+    visual_action: needsTeachingStep ? { type: teachingStep.type, targets: teachingStep.targets } : { type: "none", targets: [] },
     next_expected_event: wrong ? "answer_submitted" : "wait_for_child"
   };
 }

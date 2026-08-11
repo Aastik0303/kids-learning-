@@ -253,7 +253,8 @@ select:focus-visible {
   outline-style: dashed;
 }
 
-.visual-guide-example::after {
+.visual-guide-example::after,
+.visual-guide-highlight[class*="visual-guide-step-"][data-count-label]::after {
   content: attr(data-count-label);
   position: absolute;
   right: -0.65rem;
@@ -347,6 +348,7 @@ select:focus-visible {
 .world-entrance::before {
   content: "";
   position: absolute;
+  pointer-events: none;
   inset: auto -8% 0;
   height: 9rem;
   border-radius: 50% 50% 0 0;
@@ -360,6 +362,7 @@ select:focus-visible {
 .world-entrance::after {
   content: "";
   position: absolute;
+  pointer-events: none;
   right: 9%;
   top: 18%;
   width: 2.8rem;
@@ -1674,6 +1677,161 @@ select:focus-visible {
   box-shadow: 0 18px 52px rgba(37, 49, 63, 0.16);
 }
 
+.avatar-dock-open {
+  width: min(27rem, calc(100vw - 1.5rem));
+}
+
+.avatar-conversation {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  border-bottom: 1px solid rgba(37, 49, 63, 0.1);
+  padding-bottom: 0.75rem;
+}
+
+.avatar-conversation-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.avatar-conversation-header div {
+  display: grid;
+  min-width: 0;
+}
+
+.avatar-conversation-header strong {
+  font-size: 1.05rem;
+  color: var(--ink);
+}
+
+.avatar-conversation-header span {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: rgba(37, 49, 63, 0.62);
+}
+
+.avatar-chat-close {
+  border: 0;
+  background: transparent;
+  padding: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: rgba(37, 49, 63, 0.66);
+}
+
+.avatar-chat-history {
+  display: grid;
+  gap: 0.55rem;
+  max-height: min(15rem, 34vh);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.avatar-chat-message {
+  display: grid;
+  gap: 0.15rem;
+  max-width: 88%;
+  margin: 0;
+  border-radius: 1rem;
+  padding: 0.65rem 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.avatar-chat-message span {
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: rgba(37, 49, 63, 0.55);
+}
+
+.avatar-chat-user {
+  justify-self: end;
+  background: #d8f3ff;
+}
+
+.avatar-chat-assistant {
+  justify-self: start;
+  background: #eef8f2;
+}
+
+.avatar-chat-empty,
+.avatar-chat-status,
+.avatar-chat-error {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: rgba(37, 49, 63, 0.68);
+}
+
+.avatar-chat-status {
+  color: #4a90c2;
+}
+
+.avatar-chat-error {
+  border-radius: 0.8rem;
+  background: #fff0f3;
+  padding: 0.55rem 0.7rem;
+  color: #b52e50;
+}
+
+.avatar-chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.45rem;
+}
+
+.avatar-chat-form input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 2px solid rgba(47, 143, 107, 0.2);
+  border-radius: 0.8rem;
+  background: white;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--ink);
+  outline: none;
+}
+
+.avatar-chat-form input:focus {
+  border-color: #4a90c2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 194, 0.14);
+}
+
+.avatar-chat-talk,
+.avatar-chat-send {
+  min-width: 3.5rem;
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: 0.8rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.avatar-chat-talk {
+  background: #fff2bd;
+  color: var(--ink);
+}
+
+.avatar-chat-send {
+  background: #2f8f6b;
+  color: white;
+}
+
+.avatar-chat-talk:disabled,
+.avatar-chat-send:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 .avatar-stage {
   grid-row: span 2;
   position: relative;
@@ -1696,6 +1854,7 @@ select:focus-visible {
 
 .avatar-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
 }
 
@@ -1714,6 +1873,14 @@ select:focus-visible {
 .avatar-control:disabled {
   cursor: default;
   opacity: 0.45;
+}
+
+.avatar-control-wide {
+  width: auto;
+  min-width: 2.8rem;
+  padding: 0 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 900;
 }
 
 .avatar-fallback {
@@ -1958,6 +2125,24 @@ select:focus-visible {
   .avatar-control {
     width: 2.2rem;
     height: 2.2rem;
+  }
+
+  .avatar-control-wide {
+    width: auto;
+    min-width: 2.65rem;
+  }
+
+  .avatar-chat-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .avatar-chat-form input {
+    grid-column: 1 / -1;
+  }
+
+  .avatar-chat-talk,
+  .avatar-chat-send {
+    width: 100%;
   }
 }
 

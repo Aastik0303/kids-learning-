@@ -13,6 +13,7 @@ from app.services.daily_recommendation_service import WORLD_ORDER
 from app.services.content_generator import get_content_generator
 from app.services.errors import app_error
 from app.services.history_service import record_attempt
+from app.services.learning_memory_service import record_completed_lesson
 from app.services.mock_storage import mock_certificates, mock_child_profiles, mock_learning_sessions
 
 
@@ -183,6 +184,22 @@ def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
 
     session["attempt_number"] += 1
     session["correct_streak"] = 0
+    if session["attempt_number"] >= 4:
+        weak_skill = stage.objective.lower().replace(" ", "_")
+        if weak_skill not in child["weak_skills"]:
+            child["weak_skills"].append(weak_skill)
+        session["attempt_number"] = 0
+        session["activity_index"] = (session["activity_index"] + 1) % len(stage.activities)
+        return _response(
+            session,
+            stage,
+            activity=stage.activities[session["activity_index"]],
+            is_correct=False,
+            feedback="Let's try a different question now.",
+            recommended_practice=True,
+            question_changed=True,
+        )
+
     generator = get_content_generator(get_settings().llm_provider)
     if session["attempt_number"] == 1:
         feedback = generator.hint(stage, activity.hint)
@@ -238,6 +255,16 @@ def _complete_stage(session: dict, child: dict, stage, is_correct: bool, stars_e
             next_stage_unlocked = True
         else:
             _complete_path(child, stage.path_id)
+
+        record_completed_lesson(
+            child_id=session["child_id"],
+            path_id=stage.path_id,
+            stage_id=stage.stage_id,
+            stage_number=stage.stage_number,
+            title=stage.title,
+            objective=stage.objective,
+            score=score,
+        )
     else:
         weak_skill = stage.objective.lower().replace(" ", "_")
         if weak_skill not in child["weak_skills"]:
@@ -302,6 +329,7 @@ def _response(
     stage_completed: bool = False,
     next_stage_unlocked: bool = False,
     recommended_practice: bool = False,
+    question_changed: bool = False,
     complete: bool = False,
 ) -> LearningResponse:
     score = session.get("score", round((session["correct_count"] / len(stage.activities)) * 100))
@@ -320,6 +348,7 @@ def _response(
         stage_completed=stage_completed,
         next_stage_unlocked=next_stage_unlocked,
         recommended_practice=recommended_practice,
+        question_changed=question_changed,
         complete=complete,
         avatar=learning_avatar(
             is_correct=is_correct,

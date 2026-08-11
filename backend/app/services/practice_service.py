@@ -175,7 +175,8 @@ def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
     normalized_answer = resolved.normalized
     attempts = session.setdefault("attempts", {})
     attempt_number = 0 if is_correct else attempts.get(payload.activity_id, 0) + 1
-    attempts[payload.activity_id] = 0 if is_correct else attempt_number
+    question_changed = not is_correct and attempt_number >= 4
+    attempts[payload.activity_id] = 0 if is_correct or question_changed else attempt_number
 
     # Track streaks
     if is_correct:
@@ -201,6 +202,9 @@ def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
         else:
             feedback = random.choice(CORRECT_FEEDBACK)
         hint = None
+    elif question_changed:
+        feedback = "Let's try a different question now."
+        hint = None
     else:
         feedback = _pick_incorrect_feedback(attempt_number)
         hint = activity["hint"]
@@ -209,5 +213,7 @@ def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
         is_correct=is_correct,
         feedback=feedback,
         hint=hint,
+        attempt_number=0 if question_changed else attempt_number,
+        question_changed=question_changed,
         avatar=learning_avatar(is_correct=is_correct, feedback=f"{feedback} {hint or ''}".strip()),
     )

@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AVATAR_CONFIG, tidyAvatarMessage } from "./avatar.config";
 import type { AvatarContextValue, AvatarEffect, AvatarPayload, AvatarState } from "./avatar.types";
-import { speakText, speakTextAsync, stopSpeech } from "@/services/speech";
+import { getVoiceProvider, setVoiceProvider as saveVoiceProvider, speakText, speakTextAsync, stopSpeech, type VoiceProvider } from "@/services/speech";
 
 const AvatarContext = createContext<AvatarContextValue | null>(null);
 
@@ -13,6 +13,7 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
   const [effect, setEffect] = useState<AvatarEffect | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>("browser");
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageRef = useRef(message);
   const mutedRef = useRef(muted);
@@ -24,6 +25,10 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     mutedRef.current = muted;
   }, [muted]);
+
+  useEffect(() => {
+    setVoiceProvider(getVoiceProvider());
+  }, []);
 
   const clearResetTimer = useCallback(() => {
     if (resetTimer.current) {
@@ -97,11 +102,21 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
     setIsSpeaking(false);
   }, []);
 
+  const toggleVoiceProvider = useCallback(() => {
+    stopSpeech();
+    setIsSpeaking(false);
+    setVoiceProvider((current) => {
+      const next = current === "elevenlabs" ? "browser" : "elevenlabs";
+      saveVoiceProvider(next);
+      return next;
+    });
+  }, []);
+
   useEffect(() => () => clearResetTimer(), [clearResetTimer]);
 
   const value = useMemo(
-    () => ({ state, message, effect, isSpeaking, muted, setAvatar, resetAvatar, speakMessage, speakMessageAsync, stopSpeaking, toggleMute }),
-    [effect, isSpeaking, message, muted, resetAvatar, setAvatar, speakMessage, speakMessageAsync, state, stopSpeaking, toggleMute]
+    () => ({ state, message, effect, isSpeaking, muted, voiceProvider, setAvatar, resetAvatar, speakMessage, speakMessageAsync, stopSpeaking, toggleMute, toggleVoiceProvider }),
+    [effect, isSpeaking, message, muted, resetAvatar, setAvatar, speakMessage, speakMessageAsync, state, stopSpeaking, toggleMute, toggleVoiceProvider, voiceProvider]
   );
 
   return <AvatarContext.Provider value={value}>{children}</AvatarContext.Provider>;

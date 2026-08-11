@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { VoicePracticeSession } from "@/components/practice/VoicePracticeSession";
 import { AppShell } from "@/components/shared/AppShell";
 import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
 import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { avatarForPage, avatarForPracticeResult } from "@/services/avatar";
-import { activityQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
+import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
 import { answerPractice, startPractice } from "@/services/practice";
 import { getOrCreateGuestChild } from "@/services/session";
 import type { Activity } from "@/types";
@@ -30,10 +30,14 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
   const [voiceState, setVoiceState] = useState<VoiceInteractionState>("idle");
   const [guideMessage, setGuideMessage] = useState("");
   const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
+  const [countGuideEnabled, setCountGuideEnabled] = useState(false);
   const [loading, setLoading] = useState(true);
+  const guideRequestRef = useRef(0);
+  const answerInFlightRef = useRef(false);
   const { setAvatar } = useAvatar();
 
   async function explainQuestion(activity: Activity, currentSessionId: string, updateSpokenMessage = false) {
+    const requestId = ++guideRequestRef.current;
     const child = getOrCreateGuestChild();
     setVoiceState("explaining");
     const guide = await guideAgent({
@@ -52,10 +56,12 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       available_targets: [GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
       allowed_visual_targets: visualTargetsForActivity(activity)
     });
+    if (requestId !== guideRequestRef.current) return;
     setGuideMessage(guide.message);
     setAvatar({ ...guide.avatar, speak: false });
-    setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-    setVisualAction(guide.visual_action);
+    setHighlightId(null);
+    setVisualAction(null);
+    setCountGuideEnabled(false);
   }
 
   useEffect(() => {
@@ -86,16 +92,62 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
     };
   }, [setAvatar, topic]);
 
-  async function choose(answer: string) {
+  async function askCurrentGuide(question: string) {
     const activity = activities[index];
     if (!activity || busy) return;
+
+    setBusy(true);
+    setFeedback("");
+    setHint(null);
+    setVoiceState("re_explaining");
+    setAvatar({ state: "thinking", message: "Let me help with that...", animationEffect: "pulse", durationMs: null });
+    const requestId = ++guideRequestRef.current;
+    try {
+      const guide = await askGuideQuestion({
+        question,
+        route: `/practice/${topic}`,
+        sessionId,
+        screen: "practice_session",
+        activity,
+        topic,
+        attempt: wrongAttempts[activity.activity_id] ?? 0
+      });
+      if (requestId !== guideRequestRef.current) return;
+      setGuideMessage(guide.message);
+      setAvatar({ ...guide.avatar, speak: false });
+      setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+      setVisualAction(guide.visual_action);
+      setCountGuideEnabled(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function choose(answer: string) {
+    const activity = activities[index];
+    if (!activity || busy || answerInFlightRef.current) return;
+    answerInFlightRef.current = true;
+    // A late hint must never overwrite the result of a newer answer.
+    guideRequestRef.current += 1;
     setBusy(true);
     setAvatar({ state: "thinking", message: "Checking your answer...", animationEffect: "none", durationMs: null });
-    const result = await answerPractice(sessionId, activity.activity_id, answer);
+    let result;
+    try {
+      result = await answerPractice(sessionId, activity.activity_id, answer);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "I could not check that answer. Please try again.";
+      setFeedback(message);
+      setAvatar({ state: "error_fallback", message, animationEffect: "none" });
+      setBusy(false);
+      answerInFlightRef.current = false;
+      return;
+    }
     setFeedback(result.feedback);
     setHint(result.hint);
     if (result.is_correct) {
       setHighlightId(null);
+      setVisualAction(null);
+      setCountGuideEnabled(false);
       setWrongAttempts((current) => ({ ...current, [activity.activity_id]: 0 }));
       setVoiceState("correct");
       setAvatar(result.avatar ?? avatarForPracticeResult(result));
@@ -125,6 +177,7 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
         setFeedback("");
         setHint(null);
         setBusy(false);
+        answerInFlightRef.current = false;
         const nextActivity = activities[nextIndex];
         if (nextActivity) {
           setGuideMessage(localQuestionMessage(nextActivity.prompt));
@@ -136,13 +189,37 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       return;
     }
     const nextAttempt = (wrongAttempts[activity.activity_id] ?? 0) + 1;
-    setWrongAttempts((current) => ({ ...current, [activity.activity_id]: nextAttempt }));
+    const shouldChangeQuestion = (result.question_changed || nextAttempt >= 4) && activities.length > 1;
+    setWrongAttempts((current) => ({ ...current, [activity.activity_id]: shouldChangeQuestion ? 0 : nextAttempt }));
+    if (shouldChangeQuestion) {
+      const nextIndex = (index + 1) % activities.length;
+      const nextActivity = activities[nextIndex];
+      const transitionMessage = "Let's try a different question now.";
+      setFeedback(transitionMessage);
+      setHint(null);
+      setHighlightId(null);
+      setVisualAction(null);
+      setCountGuideEnabled(false);
+      setVoiceState("re_explaining");
+      setGuideMessage(transitionMessage);
+      setAvatar({ state: "encouraging", message: transitionMessage, speak: true, animationEffect: "story_transition", durationMs: null });
+      window.setTimeout(() => {
+        setIndex(nextIndex);
+        setFeedback("");
+        setGuideMessage(localQuestionMessage(nextActivity.prompt));
+        explainQuestion(nextActivity, sessionId);
+        setBusy(false);
+        answerInFlightRef.current = false;
+      }, 650);
+      return;
+    }
     setVoiceState("incorrect");
     const localHint = nextAttempt > 1 ? "Almost there! Count slowly, then say it again." : "Good try! Look closely and count slowly.";
     setVoiceState("re_explaining");
     setGuideMessage(localHint);
     setAvatar({ state: "encouraging", message: localHint, animationEffect: "gentle_hint", durationMs: null });
     const child = getOrCreateGuestChild();
+    const requestId = ++guideRequestRef.current;
     guideAgent({
       session_id: sessionId,
       child_id: child.child_id,
@@ -165,12 +242,21 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       available_targets: [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
       allowed_visual_targets: visualTargetsForActivity(activity)
     }).then((guide) => {
+      if (requestId !== guideRequestRef.current) return;
       setGuideMessage(guide.message);
       setAvatar({ ...guide.avatar, speak: false });
-      setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-      setVisualAction(guide.visual_action);
+      if (nextAttempt >= 2) {
+        setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+        setVisualAction(guide.visual_action);
+        setCountGuideEnabled(true);
+      } else {
+        setHighlightId(null);
+        setVisualAction(null);
+        setCountGuideEnabled(false);
+      }
     });
     setBusy(false);
+    answerInFlightRef.current = false;
   }
 
   const activity = activities[index];
@@ -211,9 +297,12 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
             voiceState={voiceState}
             onVoiceStateChange={setVoiceState}
             onAnswer={choose}
+            onGuideQuestion={askCurrentGuide}
             disabled={busy}
             highlightId={highlightId}
             visualAction={visualAction}
+            countGuideEnabled={countGuideEnabled}
+            showOptionsWithMicrophone={["colours", "colors", "shapes"].includes(topic.toLowerCase())}
           />
         ) : (
           <section className="surface-panel grid gap-4 rounded-[2rem] p-6 text-center">

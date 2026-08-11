@@ -31,4 +31,6 @@ class PracticeAnswerResponse(BaseModel):
     is_correct: bool
     feedback: str
     hint: str | None = None
+    attempt_number: int = 0
+    question_changed: bool = False
     avatar: AvatarPayload | None = None

@@ -133,7 +133,8 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
     { href: "/practice", label: "🎨 Practice", guideId: "start-practice" },
     { href: "/levels", label: "🗺️ Adventure", guideId: "continue-adventure" },
     { href: "/rewards", label: "🎁 Rewards", guideId: "open-rewards" },
-    { href: "/guide", label: "💡 Guide", guideId: "ask-guide" }
+    { href: "/word-coach", label: "🔤 Word Coach", guideId: "word-coach" },
+    { href: "/sentence-coach", label: "📖 Sentence Coach", guideId: "sentence-coach" }
   ];
 
   return (

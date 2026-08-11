@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { ToddlerHome } from "@/components/toddler/ToddlerHome";
 import { ToddlerLesson } from "@/components/toddler/ToddlerLesson";
+import { guideAgent, progressContext } from "@/services/guide";
 import { listToddlerModules } from "@/services/toddler";
 import { getOrCreateGuestChild } from "@/services/session";
 import type { ChildProfile, ToddlerModule, ToddlerModuleSummary } from "@/types";
@@ -14,7 +15,7 @@ export function ToddlerExperience() {
   const [child, setChild] = useState<ChildProfile | null>(null);
   const [modules, setModules] = useState<ToddlerModuleSummary[]>([]);
   const [activeModule, setActiveModule] = useState<ToddlerModule | null>(null);
-  const { setAvatar } = useAvatar();
+  const { setAvatar, voiceProvider, toggleVoiceProvider } = useAvatar();
 
   useEffect(() => {
     const stored = getOrCreateGuestChild();
@@ -24,7 +25,24 @@ export function ToddlerExperience() {
     }
     setChild(stored);
     listToddlerModules().then(setModules);
-    setAvatar({ state: "waving", message: "Hi little explorer! 👋 Let's learn ABC!", speak: true, animationEffect: "none" });
+    setAvatar({ state: "waving", message: "Getting your little lessons ready...", speak: false, animationEffect: "none" });
+    guideAgent({
+      session_id: `toddler_home_${stored.child_id}`,
+      child_id: stored.child_id,
+      mode: "welcome",
+      event: "HOME_OPENED",
+      route: "/toddler",
+      screen: "toddler_home",
+      feature: "toddler_modules",
+      age_group: stored.age_group,
+      age: stored.age,
+      learning_mode: "toddler",
+      preferred_language: stored.preferred_language,
+      toddler: { learning_mode: "toddler", age: stored.age, stars: stored.stars },
+      progress: progressContext(stored, "toddler"),
+      available_actions: ["highlight"],
+      available_targets: ["toddler-module-alphabets", "toddler-module-numbers", "toddler-module-colours", "toddler-module-shapes"]
+    }).then((guide) => setAvatar(guide.avatar));
   }, [router, setAvatar]);
 
   if (!child) {
@@ -33,6 +51,16 @@ export function ToddlerExperience() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-5 pb-8">
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={toggleVoiceProvider}
+          className="pressable rounded-full bg-white px-5 py-3 text-sm font-black text-ink shadow-soft"
+          aria-label={voiceProvider === "elevenlabs" ? "Switch to free normal browser voice" : "Switch to ElevenLabs voice"}
+        >
+          {voiceProvider === "elevenlabs" ? "Voice: ElevenLabs (paid)" : "Voice: Normal (free)"}
+        </button>
+      </div>
       {activeModule ? (
         <ToddlerLesson child={child} module={activeModule} onHome={() => setActiveModule(null)} onChildChange={setChild} />
       ) : (

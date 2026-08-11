@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { use } from "react";
 import Link from "next/link";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
@@ -10,7 +10,7 @@ import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicat
 import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { linearAdventurePath, pathSummaries } from "@/data/prototype";
 import { avatarForLearningResult } from "@/services/avatar";
-import { activityQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
+import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
 import { answerLearning, startLearning } from "@/services/learning";
 import { getOrCreateGuestChild, saveChild } from "@/services/session";
 import { getProgress } from "@/services/child";
@@ -53,9 +53,13 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
   const [voiceState, setVoiceState] = useState<VoiceInteractionState>("idle");
   const [guideMessage, setGuideMessage] = useState("");
   const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
+  const [countGuideEnabled, setCountGuideEnabled] = useState(false);
+  const guideRequestRef = useRef(0);
+  const answerInFlightRef = useRef(false);
   const { setAvatar } = useAvatar();
 
   async function prepareQuestionGuide(activity: NonNullable<LearningResponse["activity"]>, sessionId: string, stored = child, updateSpokenMessage = false) {
+    const requestId = ++guideRequestRef.current;
     const currentChild = stored ?? getOrCreateGuestChild();
     setVoiceState("explaining");
     const guide = await guideAgent({
@@ -74,10 +78,12 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
       available_targets: [GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
       allowed_visual_targets: visualTargetsForActivity(activity)
     });
+    if (requestId !== guideRequestRef.current) return;
     setGuideMessage(guide.message);
     setAvatar({ ...guide.avatar, speak: false });
-    setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-    setVisualAction(guide.visual_action);
+    setHighlightId(null);
+    setVisualAction(null);
+    setCountGuideEnabled(false);
   }
 
   useEffect(() => {
@@ -120,8 +126,41 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
       });
   }, [pathId, setAvatar, stageId]);
 
+  async function askCurrentGuide(question: string) {
+    const activity = learning?.activity;
+    if (!learning || !activity || busy) return;
+
+    setBusy(true);
+    setError("");
+    setVoiceState("re_explaining");
+    setAvatar({ state: "thinking", message: "Let me help with that...", animationEffect: "pulse", durationMs: null });
+    const requestId = ++guideRequestRef.current;
+    try {
+      const guide = await askGuideQuestion({
+        question,
+        route: `/levels/${pathId}/${stageId}`,
+        sessionId: learning.session_id,
+        screen: "learning_activity",
+        activity,
+        topic: pathId,
+        attempt: learning.attempt_number
+      });
+      if (requestId !== guideRequestRef.current) return;
+      setGuideMessage(guide.message);
+      setAvatar({ ...guide.avatar, speak: false });
+      setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+      setVisualAction(guide.visual_action);
+      setCountGuideEnabled(true);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function choose(answer: string) {
-    if (!learning) return;
+    if (!learning || busy || answerInFlightRef.current) return;
+    answerInFlightRef.current = true;
+    // Invalidate any explanation that belongs to the previous attempt.
+    guideRequestRef.current += 1;
     let delayNextQuestion = false;
     setBusy(true);
     setError("");
@@ -130,9 +169,23 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
       const answeredActivity = learning.activity;
       const next = await answerLearning(learning.session_id, answer);
       if (child) {
-        const fresh = await getProgress(child.child_id);
-        saveChild(fresh.child);
-        setChild(fresh.child);
+        // Progress refresh is supplementary. A network failure here must not
+        // leave the UI on an activity the backend has already completed.
+        void getProgress(child.child_id).then((fresh) => {
+          saveChild(fresh.child);
+          setChild(fresh.child);
+        }).catch(() => undefined);
+      }
+      if (next.is_correct === false && next.question_changed && next.activity) {
+        setLearning(next);
+        setHighlightId(null);
+        setVisualAction(null);
+        setCountGuideEnabled(false);
+        setVoiceState("re_explaining");
+        setGuideMessage(next.feedback);
+        setAvatar({ state: "encouraging", message: next.feedback, speak: true, animationEffect: "story_transition", durationMs: null });
+        await prepareQuestionGuide(next.activity, next.session_id, child);
+        return;
       }
       if (next.is_correct === false && answeredActivity) {
         setLearning(next);
@@ -141,6 +194,7 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
         setVoiceState("re_explaining");
         setGuideMessage(localHint);
         setAvatar({ state: "encouraging", message: localHint, animationEffect: "gentle_hint", durationMs: null });
+        const requestId = ++guideRequestRef.current;
         guideAgent({
           session_id: next.session_id,
           child_id: next.child_id,
@@ -163,10 +217,18 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
           available_targets: [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON],
           allowed_visual_targets: visualTargetsForActivity(answeredActivity)
         }).then((guide) => {
+          if (requestId !== guideRequestRef.current) return;
           setGuideMessage(guide.message);
           setAvatar({ ...guide.avatar, speak: false });
-          setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-          setVisualAction(guide.visual_action);
+          if (next.attempt_number >= 2) {
+            setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
+            setVisualAction(guide.visual_action);
+            setCountGuideEnabled(true);
+          } else {
+            setHighlightId(null);
+            setVisualAction(null);
+            setCountGuideEnabled(false);
+          }
         });
         return;
       }
@@ -174,6 +236,8 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
       setAvatar(next.avatar ?? avatarForLearningResult(next));
       if (next.is_correct && next.activity && !next.complete) {
         setHighlightId(null);
+        setVisualAction(null);
+        setCountGuideEnabled(false);
         delayNextQuestion = true;
         setLearning({ ...next, activity: null });
         window.setTimeout(() => {
@@ -209,6 +273,7 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Let us try again.");
     } finally {
+      answerInFlightRef.current = false;
       if (!delayNextQuestion) {
         setBusy(false);
       }
@@ -242,9 +307,12 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
             voiceState={voiceState}
             onVoiceStateChange={setVoiceState}
             onAnswer={choose}
+            onGuideQuestion={askCurrentGuide}
             disabled={busy}
             highlightId={highlightId}
             visualAction={visualAction}
+            countGuideEnabled={countGuideEnabled}
+            showOptionsWithMicrophone={["colours", "colors", "shapes"].includes(pathId.toLowerCase())}
           />
         ) : null}
         {learning?.complete ? (

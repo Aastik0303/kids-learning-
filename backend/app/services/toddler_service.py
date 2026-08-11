@@ -73,6 +73,12 @@ TODDLER_CURRICULUM: dict[str, list[ToddlerLevel]] = {
                 ToddlerActivity(activity_id="colour-intro-red", type="introduce", prompt="This is red.", speech="This is red.", concept="Red", emoji="🔴", visual_items=["🔴"]),
                 ToddlerActivity(activity_id="colour-repeat-red", type="repeat_after_me", prompt="Can you say red?", speech="Say red.", concept="Red", emoji="🎤", answer="Red", accepted=["red"]),
                 ToddlerActivity(activity_id="colour-find-red", type="recognition", prompt="Which one is red?", speech="Tap red.", concept="Red", emoji="🔴", choices=["🔴", "🟡", "🔵"], answer="🔴", accepted=["red"]),
+                ToddlerActivity(activity_id="colour-intro-yellow", type="introduce", prompt="This is yellow.", speech="Yellow shines like the sun.", concept="Yellow", emoji="🟡", visual_items=["🟡"]),
+                ToddlerActivity(activity_id="colour-repeat-yellow", type="repeat_after_me", prompt="Can you say yellow?", speech="Say yellow.", concept="Yellow", emoji="🎤", answer="Yellow", accepted=["yellow"]),
+                ToddlerActivity(activity_id="colour-find-yellow", type="recognition", prompt="Which one is yellow?", speech="Tap yellow.", concept="Yellow", emoji="🟡", choices=["🔵", "🟡", "🔴"], answer="🟡", accepted=["yellow"]),
+                ToddlerActivity(activity_id="colour-intro-blue", type="introduce", prompt="This is blue.", speech="Blue looks like the sky.", concept="Blue", emoji="🔵", visual_items=["🔵"]),
+                ToddlerActivity(activity_id="colour-repeat-blue", type="repeat_after_me", prompt="Can you say blue?", speech="Say blue.", concept="Blue", emoji="🎤", answer="Blue", accepted=["blue"]),
+                ToddlerActivity(activity_id="colour-find-blue", type="recognition", prompt="Which one is blue?", speech="Tap blue.", concept="Blue", emoji="🔵", choices=["🟡", "🔴", "🔵"], answer="🔵", accepted=["blue"]),
             ],
         )
     ],
@@ -183,6 +189,18 @@ def answer_toddler(session_id: str, answer: str, recognized_speech: str = "") ->
         )
 
     session["attempt_count"] += 1
+    if session["attempt_count"] >= 4:
+        session["attempt_count"] = 0
+        session["activity_index"] = (session["activity_index"] + 1) % len(level.activities)
+        next_activity = level.activities[session["activity_index"]]
+        return _response(
+            session,
+            level,
+            next_activity,
+            evaluation=evaluation,
+            guide=_guide("Let's try a different little question.", "encouraging", "😊", "next_activity"),
+            question_changed=True,
+        )
     retry_speech = f"Almost! 😊 Let's try {activity.concept} again."
     if session["attempt_count"] >= 2 and activity.answer:
         retry_speech = f"Let's find {activity.concept} together. 😊"
@@ -266,6 +284,7 @@ def _response(
     stars_earned: int = 0,
     level_completed: bool = False,
     next_level_unlocked: bool = False,
+    question_changed: bool = False,
 ) -> ToddlerResponse:
     child = _child(session["child_id"])
     return ToddlerResponse(
@@ -282,6 +301,7 @@ def _response(
         completed_activities=session["completed_activities"],
         level_completed=level_completed,
         next_level_unlocked=next_level_unlocked,
+        question_changed=question_changed,
         learned_concepts=session["learned_concepts"],
         avatar=_avatar(guide),
     )

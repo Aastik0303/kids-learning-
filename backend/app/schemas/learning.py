@@ -62,5 +62,6 @@ class LearningResponse(BaseModel):
     stage_completed: bool = False
     next_stage_unlocked: bool = False
     recommended_practice: bool = False
+    question_changed: bool = False
     complete: bool = False
     avatar: AvatarPayload | None = None

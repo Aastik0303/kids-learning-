@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -55,6 +56,11 @@ GuideVisualActionType = Literal[
 ]
 
 
+class GuideConversationTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=600)
+
+
 class GuideQuestionContext(BaseModel):
     activity_id: str
     topic: str | None = None
@@ -78,6 +84,9 @@ class GuideProgressContext(BaseModel):
     current_world: str | None = None
     current_level: str | None = None
     last_completed_level: str | None = None
+    last_completed_title: str | None = None
+    last_completed_objective: str | None = None
+    last_completed_at: datetime | None = None
     weak_skills: list[str] = Field(default_factory=list)
     session_stars: int = 0
 
@@ -108,6 +117,7 @@ class GuideRequest(BaseModel):
     age: int | None = None
     learning_mode: str = "standard"
     preferred_language: str = "en"
+    conversation: list[GuideConversationTurn] = Field(default_factory=list, max_length=8)
     question: GuideQuestionContext | None = None
     progress: GuideProgressContext | None = None
     toddler: ToddlerGuideContext | None = None

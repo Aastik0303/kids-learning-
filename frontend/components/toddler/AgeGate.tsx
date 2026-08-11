@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HomeExperience } from "@/components/home/HomeExperience";
-import { resolveLearningMode } from "@/services/toddler";
 import { getChild, getOrCreateGuestChild, setChildAge } from "@/services/session";
 import type { LearningMode } from "@/types";
 
@@ -31,14 +30,16 @@ export function AgeGate() {
     setMode(nextMode);
   }, [router]);
 
-  async function chooseAge(age: number, ageGroup: string) {
+  function chooseAge(age: number, ageGroup: string) {
     setBusyAge(age);
-    const response = await resolveLearningMode(age);
     setChildAge(age, ageGroup);
-    if (response.learning_mode === "toddler") {
+
+    const nextMode = age < 3 ? "toddler" : "standard";
+    if (nextMode === "toddler") {
       router.push("/toddler");
       return;
     }
+
     setMode("standard");
     setBusyAge(null);
   }

@@ -12,9 +12,12 @@ export function PracticeQuestion({
   voiceState,
   onVoiceStateChange,
   onAnswer,
+  onGuideQuestion,
   disabled,
   highlightId,
-  visualAction
+  visualAction,
+  countGuideEnabled,
+  showOptionsWithMicrophone
 }: {
   activity: Activity;
   sessionId: string;
@@ -22,9 +25,12 @@ export function PracticeQuestion({
   voiceState: VoiceInteractionState;
   onVoiceStateChange: (state: VoiceInteractionState) => void;
   onAnswer: (answer: string) => Promise<void> | void;
+  onGuideQuestion?: (question: string) => Promise<void> | void;
   disabled?: boolean;
   highlightId?: string | null;
   visualAction?: VisualGuideAction;
+  countGuideEnabled?: boolean;
+  showOptionsWithMicrophone?: boolean;
 }) {
   return (
     <LearningQuestion
@@ -34,9 +40,12 @@ export function PracticeQuestion({
       voiceState={voiceState}
       onVoiceStateChange={onVoiceStateChange}
       onAnswer={onAnswer}
+      onGuideQuestion={onGuideQuestion}
       disabled={disabled}
       highlightId={highlightId}
       visualAction={visualAction}
+      countGuideEnabled={countGuideEnabled}
+      showOptionsWithMicrophone={showOptionsWithMicrophone}
     />
   );
 }

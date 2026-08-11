@@ -1,11 +1,9 @@
 "use client";
 
-import { captureVoiceAnswer } from "@/services/speech";
+import { captureVoiceAnswer, hasGuideSpeechIntent } from "@/services/speech";
 import type { Activity } from "@/types";
 import { VoiceAnswerButton } from "./VoiceAnswerButton";
 import type { VoiceInteractionState } from "./VoiceStateIndicator";
-
-const LOW_CONFIDENCE = 0.65;
 
 export function VoiceRecorder({
   sessionId,
@@ -15,6 +13,7 @@ export function VoiceRecorder({
   onStateChange,
   onTranscript,
   onSpeechError,
+  onGuideQuestion,
   onVoiceAnswer
 }: {
   sessionId: string;
@@ -24,6 +23,7 @@ export function VoiceRecorder({
   onStateChange: (state: VoiceInteractionState) => void;
   onTranscript: (transcript: string) => void;
   onSpeechError: (message: string) => void;
+  onGuideQuestion?: (question: string) => Promise<void> | void;
   onVoiceAnswer: (answer: string) => Promise<void> | void;
 }) {
   async function record() {
@@ -47,17 +47,28 @@ export function VoiceRecorder({
 
       if (!result.raw_transcript.trim()) {
         onStateChange("speech_error");
-        onSpeechError("I did not hear an answer. Tap the microphone and try again.");
+        onSpeechError("I did not hear anything. Tap the microphone and try again.");
         return;
       }
 
-      if (result.ambiguous || (result.resolution_confidence < LOW_CONFIDENCE && !result.matched_candidate)) {
+      if (onGuideQuestion && hasGuideSpeechIntent(result.raw_transcript)) {
+        onStateChange("re_explaining");
+        await onGuideQuestion(result.raw_transcript.trim());
+        return;
+      }
+
+      // Only an explicit help request belongs to the guide. Every other
+      // non-empty transcript is an answer attempt and must reach the answer
+      // evaluator, even when speech normalization labels it unresolved.
+      answerToSubmit = result.resolved_answer || result.normalized || result.raw_transcript;
+
+      if (!answerToSubmit) {
         onStateChange("speech_error");
         onSpeechError("I did not hear that clearly. Please try again.");
         return;
       }
 
-      answerToSubmit = result.resolved_answer || result.normalized || result.raw_transcript;
+      answerToSubmit ||= result.resolved_answer || result.normalized || result.raw_transcript;
     } catch (error) {
       onStateChange("speech_error");
       const permissionDenied = error instanceof DOMException && ["NotAllowedError", "PermissionDeniedError"].includes(error.name);

@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8008";
 
 type ApiError = {
   error?: {
@@ -11,7 +11,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const controller = options.signal ? null : new AbortController();
   const timeout = controller
-    ? globalThis.setTimeout(() => controller.abort(), path.startsWith("/agent/") ? 2500 : 4500)
+    ? globalThis.setTimeout(() => controller.abort(), path.startsWith("/agent/") ? 8000 : 4500)
     : null;
   const response = await fetch(`${API_BASE}${path}`, {
     ...options,
