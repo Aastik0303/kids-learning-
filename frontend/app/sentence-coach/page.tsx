@@ -5,6 +5,7 @@ import { AIAvatar } from "@/components/avatar/AIAvatar";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { AppShell } from "@/components/shared/AppShell";
 import { sentenceLessons, spellSentenceWord } from "@/data/sentenceCoach";
+import { secondTryEncouragement } from "@/services/guide";
 import { captureVoiceAnswer, hasGuideSpeechIntent } from "@/services/speech";
 
 const SCORE_KEY = "little-learning-sentence-coach-score";
@@ -23,6 +24,7 @@ export default function SentenceCoachPage() {
   const [transcript, setTranscript] = useState("");
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [wrongAttempts, setWrongAttempts] = useState(0);
   const { state, effect, isSpeaking, setAvatar, speakMessageAsync, stopSpeaking } = useAvatar();
 
   const lesson = sentenceLessons[lessonIndex % sentenceLessons.length];
@@ -42,6 +44,7 @@ export default function SentenceCoachPage() {
     setTranscript("");
     setTypedAnswer("");
     setFeedback("");
+    setWrongAttempts(0);
     setBusy(true);
     const firstWord = lesson.words[0];
     const firstSpelling = spellSentenceWord(firstWord.text).join(", ");
@@ -121,14 +124,19 @@ export default function SentenceCoachPage() {
 
     const correct = matchedCandidate || cleanSentence(heard) === cleanSentence(lesson.sentence);
     if (!correct) {
-      const retry = `Good try. Listen: ${lesson.sentence} Now read it with me.`;
-      setFeedback(`I heard “${heard}”. Try the full sentence again.`);
+      const nextAttempt = wrongAttempts + 1;
+      setWrongAttempts(nextAttempt);
+      const retry = nextAttempt === 1
+        ? secondTryEncouragement()
+        : `Let us read it together: ${lesson.sentence}`;
+      setFeedback(nextAttempt === 1 ? retry : `I heard “${heard}”. Let us practise once, then try again.`);
       setAvatar({ state: "encouraging", message: retry, speak: false, animationEffect: "gentle_hint", durationMs: null });
       await speakMessageAsync(retry);
       return;
     }
 
     const nextScore = score + 10;
+    setWrongAttempts(0);
     setScore(nextScore);
     window.localStorage.setItem(SCORE_KEY, String(nextScore));
     const success = "Wonderful reading! Ten points. Here is a new sentence.";

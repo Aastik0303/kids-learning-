@@ -10,7 +10,7 @@ import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicat
 import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { linearAdventurePath, pathSummaries } from "@/data/prototype";
 import { avatarForLearningResult } from "@/services/avatar";
-import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
+import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, secondTryEncouragement, visualTargetsForActivity } from "@/services/guide";
 import { answerLearning, startLearning } from "@/services/learning";
 import { getOrCreateGuestChild, saveChild } from "@/services/session";
 import { getProgress } from "@/services/child";
@@ -190,7 +190,9 @@ export default function StagePage({ params }: { params: Promise<{ pathId: string
       if (next.is_correct === false && answeredActivity) {
         setLearning(next);
         setVoiceState("incorrect");
-        const localHint = next.attempt_number > 1 ? "Almost there! Count slowly, then say it again." : "Good try! Look closely and count slowly.";
+        const localHint = next.attempt_number === 1
+          ? secondTryEncouragement()
+          : "Almost there! Look carefully, then say it again.";
         setVoiceState("re_explaining");
         setGuideMessage(localHint);
         setAvatar({ state: "encouraging", message: localHint, animationEffect: "gentle_hint", durationMs: null });

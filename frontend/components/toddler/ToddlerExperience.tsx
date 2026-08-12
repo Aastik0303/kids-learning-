@@ -15,7 +15,7 @@ export function ToddlerExperience() {
   const [child, setChild] = useState<ChildProfile | null>(null);
   const [modules, setModules] = useState<ToddlerModuleSummary[]>([]);
   const [activeModule, setActiveModule] = useState<ToddlerModule | null>(null);
-  const { setAvatar, voiceProvider, toggleVoiceProvider } = useAvatar();
+  const { setAvatar } = useAvatar();
 
   useEffect(() => {
     const stored = getOrCreateGuestChild();
@@ -51,16 +51,6 @@ export function ToddlerExperience() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-6xl px-4 py-5 pb-8">
-      <div className="mb-4 flex justify-end">
-        <button
-          type="button"
-          onClick={toggleVoiceProvider}
-          className="pressable rounded-full bg-white px-5 py-3 text-sm font-black text-ink shadow-soft"
-          aria-label={voiceProvider === "elevenlabs" ? "Switch to free normal browser voice" : "Switch to ElevenLabs voice"}
-        >
-          {voiceProvider === "elevenlabs" ? "Voice: ElevenLabs (paid)" : "Voice: Normal (free)"}
-        </button>
-      </div>
       {activeModule ? (
         <ToddlerLesson child={child} module={activeModule} onHome={() => setActiveModule(null)} onChildChange={setChild} />
       ) : (

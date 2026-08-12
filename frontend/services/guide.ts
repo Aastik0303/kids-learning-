@@ -39,6 +39,19 @@ export const GUIDE_TARGETS = {
 
 const SAFE_GUIDE_TARGETS = new Set<string>(Object.values(GUIDE_TARGETS));
 
+const SECOND_TRY_ENCOURAGEMENTS = [
+  "Good try! You can do it. Give it another go!",
+  "Almost! Take your time and try once more.",
+  "Nice effort! I know you can do this.",
+  "So close! Trust yourself and try again.",
+  "Keep going! Your next try could be the one.",
+  "Great effort! Have another go when you are ready."
+];
+
+export function secondTryEncouragement() {
+  return SECOND_TRY_ENCOURAGEMENTS[Math.floor(Math.random() * SECOND_TRY_ENCOURAGEMENTS.length)];
+}
+
 export function isSafeGuideTarget(targetId: string | null | undefined) {
   return Boolean(targetId && SAFE_GUIDE_TARGETS.has(targetId));
 }
@@ -207,13 +220,16 @@ function localHelpMessage(question: string, payload: GuideRequest) {
 function localGuide(payload: GuideRequest): GuideResponse {
   const prompt = payload.question?.prompt;
   const wrong = payload.event.endsWith("_ANSWER_INCORRECT") || payload.event === "HINT_REQUESTED";
+  const secondTry = payload.event.endsWith("_ANSWER_INCORRECT") && payload.question?.attempt === 1;
   const complete = payload.event.endsWith("_COMPLETED") || payload.event === "CERTIFICATE_UNLOCKED";
-  const needsTeachingStep = Boolean(payload.question && (wrong || payload.event === "GUIDE_HELP_REQUESTED"));
+  const needsTeachingStep = Boolean(payload.question && !secondTry && (wrong || payload.event === "GUIDE_HELP_REQUESTED"));
   const teachingStep = localTeachingStep(payload);
   const message = payload.event === "GUIDE_HELP_REQUESTED"
     ? needsTeachingStep ? teachingStep.message : localHelpMessage(payload.feature, payload)
     : wrong
-    ? payload.question?.attempt === 2
+    ? secondTry
+      ? secondTryEncouragement()
+      : payload.question?.attempt === 2
       ? "Almost there! Count one by one, then say it again."
       : "Good try! Look closely and count slowly."
     : complete
@@ -221,7 +237,9 @@ function localGuide(payload: GuideRequest): GuideResponse {
       : prompt
         ? `Look carefully. ${prompt} Say your answer after I finish.`
         : "I am your Little Learning guide. Tap the glowing button.";
-  const target = payload.available_targets.find((item) => SAFE_GUIDE_TARGETS.has(item)) ?? null;
+  const target = secondTry
+    ? payload.available_targets.find((item) => item !== GUIDE_TARGETS.COUNTING_OBJECTS && SAFE_GUIDE_TARGETS.has(item)) ?? null
+    : payload.available_targets.find((item) => SAFE_GUIDE_TARGETS.has(item)) ?? null;
   return {
     message,
     strategy: wrong ? "hint" : complete ? "celebrate" : "read_question",

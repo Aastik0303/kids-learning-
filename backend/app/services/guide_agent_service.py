@@ -24,14 +24,18 @@ and compact progress context.
 You do NOT decide correctness, score, stars, rewards, unlocking, progress, or certificates.
 Teaching rules: do not simply repeat the question; identify what the child needs to
 understand; refer to visible objects; give one small explanation step; then ask for the
-answer; use 1-2 short sentences; use nursery words; first wrong attempt gives a small hint;
-second wrong attempt uses another familiar example; third or later makes it easier and more
-visual; address repeated mistake patterns; never shame; never ask sensitive personal info;
+answer; use 1-2 short sentences; use nursery words; after the first wrong answer, give only
+brief varied encouragement for the child's second try without counting items or revealing
+the answer; after the second wrong answer, give a small hint; third or later makes it easier
+and more visual; address repeated mistake patterns; never shame; never ask sensitive personal info;
 use only allowed UI and visual actions. If clear speech does not fit the current question,
 say so gently and bring the child back to that question; never claim you could not hear it.
 Return structured JSON only."""
 
 TODDLER_SYSTEM_PROMPT = """For learning_mode toddler, you are a warm, playful nursery teacher helping a child younger than 3.
+Assume the child may be pre-verbal or may communicate without speech. Never require a spoken answer.
+When tap choices are available, make tapping the primary action and speaking only an optional extra.
+After hesitation or repeated attempts, show the answer and say exactly what to tap. Do not test memory again.
 Use maximum 1-2 very short sentences, simple vocabulary, one instruction at a time, and happy emojis.
 Never ask for personal information. Never shame. Never say wrong. Prefer: Almost! Let's try again 😊.
 Keep the child focused on the current deterministic toddler lesson."""
@@ -105,11 +109,12 @@ STATIC_PRAISE = [
 ]
 
 HINT_RESPONSES_ATTEMPT_1 = [
-    "Good try! Look closely and count slowly, then say your answer.",
-    "Almost! Take another careful look.",
-    "Almost. Let us look at this together.",
-    "So close! Think about it one more time.",
-    "Good try. Look carefully again.",
+    "Good try! You can do it. Give it another go!",
+    "Almost! Take your time and try once more.",
+    "Nice effort! I know you can do this.",
+    "So close! Trust yourself and try again.",
+    "Keep going! Your next try could be the one.",
+    "Great effort! Have another go when you are ready.",
 ]
 
 HINT_RESPONSES_ATTEMPT_2 = [
@@ -135,7 +140,7 @@ def _pick_praise(session_id: str | None = None) -> str:
     return random.choice(STATIC_PRAISE)
 
 
-def _pick_hint(attempt: int, session_id: str | None = None) -> str:
+def _pick_hint(attempt: int) -> str:
     """Pick an attempt-aware hint message with variety."""
     if attempt <= 1:
         pool = HINT_RESPONSES_ATTEMPT_1
@@ -143,10 +148,16 @@ def _pick_hint(attempt: int, session_id: str | None = None) -> str:
         pool = HINT_RESPONSES_ATTEMPT_2
     else:
         pool = HINT_RESPONSES_ATTEMPT_3_PLUS
-    if session_id:
-        rng = random.Random(f"hint:{session_id}:{attempt}")
-        return rng.choice(pool)
     return random.choice(pool)
+
+
+def _is_second_try_encouragement(payload: GuideRequest) -> bool:
+    """The first wrong answer opens the child's second try."""
+    return bool(
+        payload.event in {"PRACTICE_ANSWER_INCORRECT", "LEVEL_ANSWER_INCORRECT"}
+        and payload.question
+        and payload.question.attempt == 1
+    )
 
 
 def _time_greeting() -> str:
@@ -436,10 +447,17 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
 
     # --- INCORRECT ANSWER ---
     elif payload.event in {"PRACTICE_ANSWER_INCORRECT", "LEVEL_ANSWER_INCORRECT", "HINT_REQUESTED"}:
-        message, visual_action, strategy = _question_teaching_message(payload)
-        message = _words(message, 22)
+        if _is_second_try_encouragement(payload):
+            message = _pick_hint(1)
+            visual_action = GuideVisualAction()
+            strategy = "hint"
+            preferred_targets = ["question-area", "voice-answer-area", "microphone-button"]
+        else:
+            message, visual_action, strategy = _question_teaching_message(payload)
+            message = _words(message, 22)
+            preferred_targets = ["counting-object-group", "question-area", "voice-answer-area", "microphone-button"]
         action_type: GuideActionType = "show_hint"
-        action = _ui_action(payload, action_type, ["counting-object-group", "question-area", "voice-answer-area", "microphone-button"])
+        action = _ui_action(payload, action_type, preferred_targets)
         next_event = "voice_answer_requested"
         state = "encouraging"
         effect = "gentle_hint"
@@ -531,7 +549,9 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
     toddler = payload.toddler
     concept = toddler.concept if toddler and toddler.concept else payload.question.correct_answer if payload.question else ""
     result = toddler.recent_result if toddler else None
-    target_preferences = ["toddler-activity", "toddler-microphone", "toddler-choices", "toddler-keep-learning", "toddler-practice"]
+    activity_type = toddler.activity_type if toddler else payload.question.answer_type if payload.question else ""
+    attempt_count = toddler.attempt_count if toddler else payload.question.attempt if payload.question else 0
+    target_preferences = ["toddler-activity", "toddler-choices", "toddler-microphone", "toddler-keep-learning", "toddler-practice"]
     state = "speaking"
     effect = "none"
     strategy = "read_question"
@@ -548,10 +568,10 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
             update={"question": payload.question.model_copy(update={"attempt": max(1, payload.question.attempt)})}
         ) if payload.question else payload
         teaching_message, visual_action, strategy = _question_teaching_message(teaching_payload)
-        message = teaching_message if _is_counting_question(teaching_payload) else _help_message(payload)
+        message = teaching_message if _is_counting_question(teaching_payload) else f"Here it is. Tap {concept}." if concept else _help_message(payload)
         state = "speaking"
         strategy = "help"
-        target_preferences = ["toddler-activity", "toddler-microphone", "toddler-choices"]
+        target_preferences = ["toddler-choices", "toddler-activity", "toddler-microphone"]
     elif result in {"correct", "close"} or payload.event in {"LEVEL_ANSWER_CORRECT", "PRACTICE_ANSWER_CORRECT"}:
         message = f"Yay! That's {concept}! ⭐" if concept else "Yay! Great job! ⭐"
         state = "celebrating"
@@ -559,14 +579,20 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "celebrate"
         next_event = "next_activity"
     elif result in {"retry", "unclear"} or payload.event in {"LEVEL_ANSWER_INCORRECT", "PRACTICE_ANSWER_INCORRECT", "HINT_REQUESTED"}:
-        if payload.question:
+        if activity_type == "repeat_after_me" and concept:
+            message = f"Tap {concept}. You can say it too."
+            strategy = "re_explain" if attempt_count >= 2 else "hint"
+        elif attempt_count >= 2 and concept:
+            message = f"Here it is. Tap {concept}."
+            strategy = "re_explain"
+        elif payload.question:
             message, visual_action, strategy = _question_teaching_message(payload)
         else:
             message = f"Almost! 😊 Let's try {concept} again." if concept else "Almost! 😊 Let's try again."
             strategy = "hint"
         state = "encouraging"
         effect = "gentle_hint"
-        target_preferences = ["toddler-microphone", "toddler-choices", "toddler-activity"]
+        target_preferences = ["toddler-choices", "toddler-activity", "toddler-microphone"]
     elif payload.event in {"LEVEL_COMPLETED", "PRACTICE_COMPLETED"}:
         message = "Wow! You did it! 🌟"
         state = "celebrating"
@@ -574,7 +600,14 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "celebrate"
         target_preferences = ["toddler-keep-learning", "toddler-practice"]
     elif payload.question:
-        message = _words(payload.question.learning_objective or payload.question.prompt, 10)
+        if activity_type == "repeat_after_me" and concept:
+            message = f"Tap {concept}. You can say it too."
+            target_preferences = ["toddler-choices", "toddler-activity", "toddler-microphone"]
+        elif activity_type == "recognition" and concept:
+            message = f"Tap {concept}."
+            target_preferences = ["toddler-choices", "toddler-activity"]
+        else:
+            message = _words(payload.question.learning_objective or payload.question.prompt, 10)
     else:
         message = "Look, listen, then try. 😊"
 
@@ -668,7 +701,21 @@ def _validate_model_response(payload: GuideRequest, raw_content: str) -> GuideRe
         "HINT_REQUESTED",
         "GUIDE_HELP_REQUESTED",
     }
-    if teaching_event and payload.question and payload.allowed_visual_targets:
+    if _is_second_try_encouragement(payload):
+        message = safe_text(_words(_pick_hint(1), 25))
+        response = response.model_copy(
+            update={
+                "message": message,
+                "strategy": "hint",
+                "avatar": response.avatar.model_copy(
+                    update={"state": "encouraging", "message": message, "animationEffect": "gentle_hint"}
+                ),
+                "ui_action": _ui_action(payload, "show_hint", ["question-area", "voice-answer-area", "microphone-button"]),
+                "visual_action": GuideVisualAction(),
+                "next_expected_event": "voice_answer_requested",
+            }
+        )
+    elif teaching_event and payload.question and payload.allowed_visual_targets:
         required_message, required_visual_action, _ = _question_teaching_message(payload)
         if response.visual_action.type == "none" or not response.visual_action.targets:
             response = response.model_copy(update={"visual_action": required_visual_action})

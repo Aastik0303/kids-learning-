@@ -16,6 +16,17 @@ function activityAcceptsVoice(activity: ToddlerActivity | null) {
   return Boolean(activity && activity.type !== "introduce" && (activity.answer || activity.accepted.length || activity.choices.length));
 }
 
+function tapOptionsFor(activity: ToddlerActivity | null) {
+  if (!activity || activity.type === "introduce") return [];
+  if (activity.choices.length) return activity.choices;
+  const answer = activity.answer ?? activity.concept;
+  return answer ? [answer] : [];
+}
+
+function tapAnswerFor(activity: ToddlerActivity | null) {
+  return activity?.answer ?? activity?.concept ?? null;
+}
+
 export function ToddlerLesson({
   child,
   module,
@@ -34,13 +45,14 @@ export function ToddlerLesson({
   const [highlightId, setHighlightId] = useState<string | null>(null);
   const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
   const [countGuideEnabled, setCountGuideEnabled] = useState(false);
+  const [hintAnswer, setHintAnswer] = useState<string | null>(null);
   const answerInFlightRef = useRef(false);
   const { state, effect, isSpeaking, setAvatar } = useAvatar();
   const tts = useTextToSpeech();
   const stt = useSpeechRecognition();
 
   const activity = lesson?.activity ?? null;
-  const canTapChoices = Boolean(activity?.choices.length);
+  const tapOptions = tapOptionsFor(activity);
 
   function applyGuideVisuals(guide: Awaited<ReturnType<typeof requestToddlerGuide>>, showCountingGuide = false) {
     const safeTargets = new Set(["toddler-activity", "toddler-microphone", "toddler-choices"]);
@@ -83,9 +95,11 @@ export function ToddlerLesson({
     const currentActivity = activity;
     const currentLesson = lesson;
     let cancelled = false;
+    let nudgeTimer: number | null = null;
     async function guideActivity() {
       setTranscript("");
       setError("");
+      setHintAnswer(null);
       let spokenMessage = currentActivity.speech;
       try {
         const guide = await requestToddlerGuide({ child, lesson: currentLesson, event: "LEVEL_QUESTION_LOADED" });
@@ -108,14 +122,25 @@ export function ToddlerLesson({
       }
       setAvatar({
         state: activityAcceptsVoice(currentActivity) ? "listening" : "happy",
-        message: currentActivity.choices.length ? "Tap the microphone or one big answer." : "Tap the microphone and tell me.",
+        message: tapOptionsFor(currentActivity).length ? "Tap one. You can talk too." : "Look and listen.",
         animationEffect: "none",
         durationMs: null
       });
+      nudgeTimer = window.setTimeout(() => {
+        if (cancelled) return;
+        setHintAnswer(tapAnswerFor(currentActivity));
+        setAvatar({
+          state: "encouraging",
+          message: "Tap the glowing answer.",
+          animationEffect: "gentle_hint",
+          durationMs: null
+        });
+      }, 8000);
     }
     guideActivity();
     return () => {
       cancelled = true;
+      if (nudgeTimer !== null) window.clearTimeout(nudgeTimer);
     };
   }, [activity?.activity_id]);
 
@@ -128,6 +153,7 @@ export function ToddlerLesson({
       setHighlightId(null);
       setVisualAction(null);
       setCountGuideEnabled(false);
+      setHintAnswer(null);
     } finally {
       setBusy(false);
     }
@@ -138,6 +164,7 @@ export function ToddlerLesson({
     answerInFlightRef.current = true;
     setBusy(true);
     setError("");
+    setHintAnswer(null);
     setAvatar({ state: "thinking", message: "Let me listen...", animationEffect: "none", durationMs: null });
     try {
       const response = await answerToddlerLesson(lesson.session_id, answer, recognized);
@@ -147,6 +174,7 @@ export function ToddlerLesson({
         const guidedResponse = { ...response, guide: { ...response.guide, speech: guide.message }, avatar: guide.avatar };
         setLesson(guidedResponse);
         setAvatar({ ...guide.avatar, speak: false, durationMs: null });
+        if (response.attempt_count >= 2) setHintAnswer(tapAnswerFor(response.activity));
         await tts.speak(guide.message);
       } else {
         setLesson(response);
@@ -207,9 +235,9 @@ export function ToddlerLesson({
     await new Promise((resolve) => window.setTimeout(resolve, 150));
     const result = await stt.startListening(lesson.session_id, activity);
     if (!result || !result.raw_transcript.trim()) {
-      const message = stt.error || "Oops! I couldn't hear you 😊 Try again!";
-      setError(message);
-      setAvatar({ state: "encouraging", message, speak: true, animationEffect: "gentle_hint" });
+      setError("");
+      setHintAnswer(tapAnswerFor(activity));
+      setAvatar({ state: "encouraging", message: "That's okay. Tap the glowing answer.", speak: true, animationEffect: "gentle_hint" });
       return;
     }
     setTranscript(result.raw_transcript);
@@ -221,6 +249,7 @@ export function ToddlerLesson({
   }
 
   async function showHelp() {
+    setHintAnswer(tapAnswerFor(activity));
     await askToddlerGuide("I don't understand. Show me and count each item with me.", true);
   }
 
@@ -296,40 +325,42 @@ export function ToddlerLesson({
               onClick={showHelp}
               className="pressable rounded-full bg-sky px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-60"
             >
-              Show me &amp; explain
+              Show me
             </button>
           </div>
         ) : null}
 
-        {activityAcceptsVoice(activity) ? (
-          <div data-guide-id="toddler-microphone" className={`grid justify-items-center gap-3 rounded-[2rem] bg-sunshine/20 p-5 ${highlightId === "toddler-microphone" ? "guide-glow" : ""}`}>
-            <button
-              type="button"
-              disabled={busy || tts.speaking || stt.listening}
-              onClick={listen}
-              className={`pressable grid h-36 w-36 place-items-center rounded-full text-4xl font-black shadow-soft ${stt.listening ? "bg-sky text-white" : "bg-leaf text-white"} disabled:opacity-60`}
-              aria-label="Speak"
-            >
-              🎤
-            </button>
-            <p className="text-2xl font-black text-ink">{stt.listening ? "Listening..." : "Your turn!"}</p>
-            {transcript ? <p className="rounded-full bg-white px-4 py-3 text-xl font-black text-ink shadow-soft">{transcript}</p> : null}
-          </div>
-        ) : null}
-
-        {canTapChoices && activity ? (
+        {tapOptions.length > 0 && activity ? (
           <div data-guide-id="toddler-choices" className={`grid gap-3 sm:grid-cols-3 ${highlightId === "toddler-choices" ? "guide-glow" : ""}`}>
-            {activity.choices.map((choice) => (
+            <p className="text-3xl font-black text-ink sm:col-span-3">Tap one</p>
+            {tapOptions.map((choice) => (
               <button
                 key={choice}
                 type="button"
                 disabled={busy || tts.speaking}
                 onClick={() => submitAnswer(choice)}
-                className="pressable min-h-36 rounded-[2rem] bg-white p-5 text-6xl font-black text-ink shadow-soft disabled:opacity-60"
+                className={`pressable min-h-40 rounded-[2rem] bg-white p-5 text-6xl font-black text-ink shadow-soft disabled:opacity-60 ${tapOptions.length === 1 ? "sm:col-span-3" : ""} ${hintAnswer === choice ? "guide-glow ring-8 ring-sunshine" : ""}`}
+                aria-label={`Choose ${choice === activity.answer ? activity.concept : choice}`}
               >
                 {choice}
               </button>
             ))}
+          </div>
+        ) : null}
+
+        {activityAcceptsVoice(activity) && stt.available ? (
+          <div data-guide-id="toddler-microphone" className={`grid justify-items-center gap-3 rounded-[2rem] bg-sunshine/20 p-5 ${highlightId === "toddler-microphone" ? "guide-glow" : ""}`}>
+            <button
+              type="button"
+              disabled={busy || tts.speaking || stt.listening}
+              onClick={listen}
+              className={`pressable grid h-24 w-24 place-items-center rounded-full text-4xl font-black shadow-soft ${stt.listening ? "bg-sky text-white" : "bg-leaf text-white"} disabled:opacity-60`}
+              aria-label="Speak"
+            >
+              🎤
+            </button>
+            <p className="text-xl font-black text-ink">{stt.listening ? "Listening..." : "Talk (optional)"}</p>
+            {transcript ? <p className="rounded-full bg-white px-4 py-3 text-xl font-black text-ink shadow-soft">{transcript}</p> : null}
           </div>
         ) : null}
 

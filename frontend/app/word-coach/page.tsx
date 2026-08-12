@@ -5,6 +5,7 @@ import { AIAvatar } from "@/components/avatar/AIAvatar";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { AppShell } from "@/components/shared/AppShell";
 import { coachWords, spellWord } from "@/data/wordCoach";
+import { secondTryEncouragement } from "@/services/guide";
 import { captureVoiceAnswer, hasGuideSpeechIntent } from "@/services/speech";
 
 const SCORE_KEY = "little-learning-word-coach-score";
@@ -28,6 +29,7 @@ export default function WordCoachPage() {
   const [transcript, setTranscript] = useState("");
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [wrongAttempts, setWrongAttempts] = useState(0);
   const { state, effect, isSpeaking, setAvatar, speakMessageAsync, stopSpeaking } = useAvatar();
 
   const currentWord = coachWords[wordIndex % coachWords.length];
@@ -46,6 +48,7 @@ export default function WordCoachPage() {
     setTranscript("");
     setTypedAnswer("");
     setFeedback("");
+    setWrongAttempts(0);
     setAvatar({ state: "storytelling", message: lesson, speak: false, animationEffect: "story_transition", durationMs: null });
     speakMessageAsync(lesson).then(() => {
       if (cancelled) return;
@@ -87,14 +90,19 @@ export default function WordCoachPage() {
     }
 
     if (!matchesWord(heard, resolvedAnswer, currentWord.word)) {
-      const retry = `Good try. Listen again: ${currentWord.word}. ${spelling}. Now say ${currentWord.word}.`;
-      setFeedback(`I heard “${heard}”. Try ${currentWord.word} again.`);
+      const nextAttempt = wrongAttempts + 1;
+      setWrongAttempts(nextAttempt);
+      const retry = nextAttempt === 1
+        ? secondTryEncouragement()
+        : `Let us practise it together: ${currentWord.word}. ${spelling}.`;
+      setFeedback(nextAttempt === 1 ? retry : `I heard “${heard}”. Let us practise once, then try again.`);
       setAvatar({ state: "encouraging", message: retry, speak: false, animationEffect: "gentle_hint", durationMs: null });
       await speakMessageAsync(retry);
       return;
     }
 
     const nextScore = score + 10;
+    setWrongAttempts(0);
     setScore(nextScore);
     window.localStorage.setItem(SCORE_KEY, String(nextScore));
     const success = `Yes! ${currentWord.word} is correct. Ten points!`;

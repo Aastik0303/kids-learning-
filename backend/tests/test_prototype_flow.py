@@ -223,7 +223,7 @@ def test_toddler_colour_curriculum_teaches_red_yellow_and_blue(client: TestClien
     assert {activity["type"] for activity in activities} >= {"introduce", "repeat_after_me", "recognition"}
 
 
-def test_toddler_guide_uses_safe_structured_targets(client: TestClient):
+def test_toddler_guide_prefers_tap_for_preverbal_children(client: TestClient):
     _, child_id = make_toddler(client)
     response = client.post(
         "/agent/guide",
@@ -257,8 +257,9 @@ def test_toddler_guide_uses_safe_structured_targets(client: TestClient):
     body = response.json()
     assert response.status_code == 200
     assert body["strategy"] == "hint"
-    assert body["ui_action"]["target"] == "toddler-microphone"
-    assert "Almost" in body["message"]
+    assert body["ui_action"]["target"] == "toddler-choices"
+    assert "Tap A" in body["message"]
+    assert "can say" in body["message"]
 
 
 def test_toddler_ai_help_uses_the_current_activity_context():
@@ -665,9 +666,10 @@ def test_single_guide_app_open_and_wrong_attempt_contract(client: TestClient):
     assert wrong.status_code == 200
     assert body["strategy"] == "hint"
     assert len(body["message"].split()) <= 22
-    assert body["ui_action"]["target"] == "counting-object-group"
-    assert body["visual_action"]["type"] == "highlight_sequence"
-    assert body["visual_action"]["targets"] == ["visual-item-0", "visual-item-1", "visual-item-2"]
+    assert body["ui_action"]["target"] == "voice-answer-area"
+    assert "count" not in body["message"].lower()
+    assert "one, two, three" not in body["message"].lower()
+    assert body["visual_action"] == {"type": "none", "targets": []}
 
 
 def test_guide_rejects_invalid_target(client: TestClient):

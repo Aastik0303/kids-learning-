@@ -8,7 +8,7 @@ import { AppShell } from "@/components/shared/AppShell";
 import type { VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
 import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { avatarForPage, avatarForPracticeResult } from "@/services/avatar";
-import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, visualTargetsForActivity } from "@/services/guide";
+import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, secondTryEncouragement, visualTargetsForActivity } from "@/services/guide";
 import { answerPractice, startPractice } from "@/services/practice";
 import { getOrCreateGuestChild } from "@/services/session";
 import type { Activity } from "@/types";
@@ -214,7 +214,9 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       return;
     }
     setVoiceState("incorrect");
-    const localHint = nextAttempt > 1 ? "Almost there! Count slowly, then say it again." : "Good try! Look closely and count slowly.";
+    const localHint = nextAttempt === 1
+      ? secondTryEncouragement()
+      : "Almost there! Look carefully, then say it again.";
     setVoiceState("re_explaining");
     setGuideMessage(localHint);
     setAvatar({ state: "encouraging", message: localHint, animationEffect: "gentle_hint", durationMs: null });
