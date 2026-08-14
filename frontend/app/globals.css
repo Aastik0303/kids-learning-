@@ -13,6 +13,56 @@
   --sun: #f5b84b;
   --berry: #d94f70;
   --lavender: #8b7bd8;
+
+  /* ---------------------------------------------------------------
+   * Fluid type scale (OP-06 §2). Defined once here; tailwind.config.ts
+   * maps text-fluid-* onto these same vars, so there is one scale and
+   * no per-component magic numbers.
+   * Each step interpolates from its 320px value to its 1440px value.
+   * --------------------------------------------------------------- */
+  --step--2: clamp(0.75rem, 0.71rem + 0.20vw, 0.875rem);
+  --step--1: clamp(0.875rem, 0.83rem + 0.22vw, 1rem);
+  --step-0: clamp(1rem, 0.95rem + 0.27vw, 1.125rem);
+  --step-1: clamp(1.125rem, 1.02rem + 0.54vw, 1.4rem);
+  --step-2: clamp(1.375rem, 1.18rem + 0.98vw, 1.875rem);
+  --step-3: clamp(1.75rem, 1.39rem + 1.79vw, 2.625rem);
+  --step-4: clamp(2.25rem, 1.71rem + 2.68vw, 3.5rem);
+
+  /* Fluid spacing scale — same interpolation model. */
+  --space-1: clamp(0.25rem, 0.22rem + 0.13vw, 0.375rem);
+  --space-2: clamp(0.5rem, 0.44rem + 0.27vw, 0.625rem);
+  --space-3: clamp(0.75rem, 0.64rem + 0.54vw, 1rem);
+  --space-4: clamp(1rem, 0.82rem + 0.89vw, 1.5rem);
+  --space-5: clamp(1.5rem, 1.14rem + 1.79vw, 2.25rem);
+  --space-6: clamp(2rem, 1.46rem + 2.68vw, 3.25rem);
+
+  /* Touch-target floors per surface (OP-06 §2). Fixed, not fluid — a
+   * 3-year-old's fingertip does not shrink on a small screen. */
+  --touch-toddler: 96px;
+  --touch-child: 64px;
+  --touch-parent: 44px;
+  --touch-gap-toddler: 16px;
+  --touch-gap-child: 12px;
+  --touch-gap-parent: 8px;
+
+  /* Safe-area insets, normalised so every fixed element can add them
+   * without repeating the env() fallback dance. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+
+  /* Published by AvatarDock via a ResizeObserver — the real, measured height
+   * of the fixed dock. Starts at 0 so the first paint reserves nothing rather
+   * than guessing; the observer fires before paint in practice. */
+  --dock-height: 0px;
+}
+
+/* Reserve exactly as much room as the dock actually occupies, plus the home
+ * indicator. This replaces a hard-coded pb-36 (144px) that silently went
+ * wrong the moment the dock reflowed to two rows. */
+.app-shell-main {
+  padding-bottom: calc(var(--dock-height) + var(--safe-bottom) + 1rem);
 }
 
 * {
@@ -33,7 +83,14 @@ body {
   text-rendering: geometricPrecision;
 }
 
+/* Decorative sky layer — a sun, three clouds and two bird layers.
+ * It is pure decoration and must never cost a phone a frame, so it is OFF by
+ * default and only switched on at md: and above under
+ * `prefers-reduced-motion: no-preference` (OP-06 §2). Gating in CSS rather
+ * than JS keeps the server-rendered markup stable — a JS gate would
+ * hydration-mismatch on first paint. */
 .day-sky-backdrop {
+  display: none;
   position: fixed;
   inset: 0;
   z-index: 0;
@@ -42,6 +99,12 @@ body {
     radial-gradient(circle at 82% 12%, rgba(255, 235, 146, 0.75) 0 5rem, transparent 5.2rem),
     linear-gradient(180deg, #bfeaff 0%, #eaf8ff 42%, #f3fbef 100%);
   pointer-events: none;
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .day-sky-backdrop {
+    display: block;
+  }
 }
 
 .day-sun {
@@ -140,12 +203,23 @@ body {
   min-height: 100vh;
 }
 
+/* Second decorative layer: drifting clouds and a fly-by bird. Same rule as
+ * the backdrop above — decoration is off on phones and under reduced motion,
+ * both of which are also where these infinite animations cost the most. */
 body::before,
 body::after {
   content: "";
+  display: none;
   position: fixed;
   pointer-events: none;
   z-index: -1;
+}
+
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  body::before,
+  body::after {
+    display: block;
+  }
 }
 
 body::before {
@@ -564,31 +638,38 @@ select:focus-visible {
   min-width: 0;
   border: 0;
   border-radius: 0;
-  min-height: 80rem;
-  padding: 2rem clamp(1rem, 3vw, 2rem) 3rem;
+  min-height: 0;
+  padding: 1rem 0.55rem 1.5rem;
   background: transparent;
   box-shadow: none;
   contain: layout paint style;
 }
 
+/* Phone: the winding illustrated road collapses to a single straight spine
+ * running down the left, beside the nodes. The full meandering road is a
+ * large-screen affordance only — see the lg: block. */
 .map-road {
   position: absolute;
-  left: 50%;
-  top: 10rem;
-  bottom: 7rem;
+  left: 2.9rem;
+  top: 7rem;
+  bottom: 5rem;
   z-index: -1;
-  width: min(28rem, 58vw);
-  transform: translateX(-50%);
+  width: 0.7rem;
+  transform: none;
+  border-radius: 999px;
   opacity: 0.78;
-  background:
-    radial-gradient(ellipse at 25% 7%, transparent 0 7.5rem, rgba(245, 184, 75, 0.78) 7.65rem 8.25rem, transparent 8.4rem),
-    radial-gradient(ellipse at 74% 19%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
-    radial-gradient(ellipse at 24% 33%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
-    radial-gradient(ellipse at 76% 47%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
-    radial-gradient(ellipse at 24% 61%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
-    radial-gradient(ellipse at 76% 75%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
-    radial-gradient(ellipse at 35% 90%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem);
-  filter: drop-shadow(0 8px 0 rgba(255, 255, 255, 0.5));
+  background: rgba(245, 184, 75, 0.72);
+}
+
+/* Purely decorative map scenery — river, drifting clouds, sparkles and the
+ * per-world decor. Off by default: on a phone they cost paint budget and are
+ * the main source of horizontal overflow (the river alone is 22rem wide and
+ * offset -8rem past the right edge). Restored at lg:. */
+.map-river,
+.map-sparkles,
+.map-cloud,
+.world-decor {
+  display: none;
 }
 
 .map-river {
@@ -646,6 +727,9 @@ select:focus-visible {
   animation: sparkle-pulse 3.8s ease-in-out infinite;
 }
 
+/* backdrop-filter is deliberately absent here: blur+saturate over a moving
+ * gradient is one of the most expensive things a mid-tier Android phone can
+ * be asked to paint. It is added back at md: where there is budget for it. */
 .start-village,
 .world-header,
 .world-ceremony,
@@ -653,7 +737,6 @@ select:focus-visible {
   border: 1px solid rgba(255, 255, 255, 0.66);
   background: rgba(255, 255, 255, 0.58);
   box-shadow: 0 20px 56px rgba(37, 49, 63, 0.13);
-  backdrop-filter: blur(14px) saturate(1.12);
 }
 
 .start-village {
@@ -661,18 +744,23 @@ select:focus-visible {
   z-index: 4;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   max-width: 32rem;
   width: min(100%, 32rem);
-  margin: 0 auto 2rem;
-  border-radius: 2rem;
-  padding: 1rem;
+  margin: 0 auto 1rem;
+  border-radius: 1.35rem;
+  padding: 0.8rem;
+}
+
+.start-village h2 {
+  font-size: var(--step-2);
 }
 
 .village-house {
   position: relative;
-  width: 5.25rem;
-  height: 4.4rem;
+  flex: 0 0 auto;
+  width: 4.2rem;
+  height: 3.65rem;
   border-radius: 1rem;
   background: #fff2bd;
   box-shadow: inset 0 -1rem 0 rgba(37, 49, 63, 0.08);
@@ -681,10 +769,10 @@ select:focus-visible {
 .village-house::before {
   content: "";
   position: absolute;
-  left: 0.65rem;
-  top: -1.15rem;
-  width: 3.95rem;
-  height: 3.95rem;
+  left: 0.55rem;
+  top: -0.85rem;
+  width: 3.1rem;
+  height: 3.1rem;
   border-radius: 0.8rem;
   background: #d94f70;
   transform: rotate(45deg);
@@ -705,25 +793,24 @@ select:focus-visible {
   position: relative;
   z-index: 3;
   display: grid;
-  gap: 1.25rem;
+  gap: 0.85rem;
   max-width: 60rem;
   width: 100%;
   min-width: 0;
-  margin: 0 auto 2.4rem;
-  border-radius: 2rem;
-  padding: clamp(1rem, 3vw, 1.5rem);
+  margin: 0 auto 1.2rem;
+  border-radius: 1.25rem;
+  padding: 0.55rem 0;
   contain: layout paint style;
-  content-visibility: auto;
-  contain-intrinsic-size: auto 58rem;
+  content-visibility: visible;
 }
 
 .world-section::before {
   content: "";
   position: absolute;
-  inset: 4rem 6% 2rem;
+  inset: 3.5rem 0.1rem 1.2rem;
   z-index: -1;
-  border-radius: 52% 48% 45% 55%;
-  opacity: 0.72;
+  border-radius: 1.5rem;
+  opacity: 0.86;
   filter: blur(0.2px);
 }
 
@@ -754,23 +841,33 @@ select:focus-visible {
 .world-header {
   position: relative;
   z-index: 3;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  border-radius: 2rem;
-  padding: 1.25rem;
+  display: grid;
+  align-items: stretch;
+  gap: 0.8rem;
+  border-radius: 1.25rem;
+  padding: 0.95rem;
+}
+
+.world-header h2 {
+  font-size: var(--step-3);
+}
+
+.world-header p {
+  font-size: var(--step-0);
+  line-height: 1.32;
 }
 
 .world-reward {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
   gap: 0.25rem;
-  min-width: 9rem;
-  border-radius: 1.5rem;
+  width: 100%;
+  min-width: 0;
+  border-radius: 1rem;
   background: rgba(255, 255, 255, 0.66);
-  padding: 1rem;
-  text-align: center;
+  padding: 0.75rem 0.9rem;
+  text-align: left;
   box-shadow: inset 0 0 0 1px rgba(37, 49, 63, 0.06);
 }
 
@@ -781,7 +878,7 @@ select:focus-visible {
 }
 
 .world-reward strong {
-  font-size: 1.35rem;
+  font-size: var(--step-1);
   font-weight: 900;
   color: var(--ink);
 }
@@ -790,54 +887,57 @@ select:focus-visible {
   position: relative;
   z-index: 2;
   display: grid;
-  gap: 0.7rem;
-  padding: 1rem 0.25rem;
+  gap: 0.45rem;
+  padding: 0.55rem 0.2rem 0.55rem 0;
   min-width: 0;
 }
 
+/* Phone: the spine sits at a fixed left offset, aligned with the collapsed
+ * .map-road. It only centres itself once nodes alternate left/right at lg:. */
 .world-stage-path::before {
   content: "";
   position: absolute;
-  left: 50%;
+  left: 2.9rem;
   top: 0;
   bottom: 0;
   z-index: -1;
-  width: 0.75rem;
+  width: 0.55rem;
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(245, 184, 75, 0.72), rgba(92, 198, 158, 0.66), rgba(139, 123, 216, 0.52));
-  transform: translateX(-50%);
-  box-shadow: 0 0 0 0.35rem rgba(255, 255, 255, 0.5);
+  transform: none;
+  box-shadow: 0 0 0 0.22rem rgba(255, 255, 255, 0.58);
 }
 
+/* Phone: every node is a full-width row. The alternating left/right zigzag
+ * that the illustrated road implies only works once there is width for it. */
 .map-node-row {
   position: relative;
   display: flex;
-  min-height: 7.3rem;
+  justify-content: stretch;
+  min-height: 5.8rem;
   min-width: 0;
+  padding: 0;
 }
 
-.node-left {
-  justify-content: flex-start;
-  padding-left: clamp(0rem, 5vw, 5rem);
-}
-
+.node-left,
 .node-right {
-  justify-content: flex-end;
-  padding-right: clamp(0rem, 5vw, 5rem);
+  justify-content: stretch;
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .map-level-node {
   position: relative;
   display: grid;
-  grid-template-columns: 5.75rem minmax(0, 1fr);
+  grid-template-columns: 4.8rem minmax(0, 1fr);
   align-items: center;
-  gap: 0.75rem;
-  min-height: 6.4rem;
-  width: min(19rem, 100%);
+  gap: 0.55rem;
+  min-height: 5.35rem;
+  width: 100%;
   max-width: 100%;
   border: 0;
-  border-radius: 999px;
-  padding: 0.45rem 1.05rem 0.45rem 0.45rem;
+  border-radius: 1.35rem;
+  padding: 0.42rem 0.65rem 0.42rem 0.42rem;
   text-align: left;
   text-decoration: none;
   box-shadow: 0 18px 46px rgba(37, 49, 63, 0.16);
@@ -856,11 +956,11 @@ select:focus-visible {
   position: relative;
   display: grid;
   place-items: center;
-  width: 5.5rem;
-  height: 5.5rem;
+  width: 4.55rem;
+  height: 4.55rem;
   border-radius: 999px;
-  border: 0.4rem solid rgba(255, 255, 255, 0.9);
-  font-size: 2rem;
+  border: 0.32rem solid rgba(255, 255, 255, 0.9);
+  font-size: 1.6rem;
   font-weight: 900;
   line-height: 1;
   box-shadow: inset 0 -0.6rem 0 rgba(37, 49, 63, 0.09), 0 12px 28px rgba(37, 49, 63, 0.16);
@@ -873,7 +973,7 @@ select:focus-visible {
 }
 
 .node-copy strong {
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -882,8 +982,9 @@ select:focus-visible {
 .node-copy small {
   margin-top: 0.22rem;
   overflow-wrap: anywhere;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 900;
+  line-height: 1.08;
 }
 
 .node-current {
@@ -916,12 +1017,15 @@ select:focus-visible {
   background: linear-gradient(135deg, #fff2bd, #f5b84b);
 }
 
+/* Phone: upcoming and locked nodes stay full width and unscaled. Shrinking
+ * them is a large-screen depth cue; on a phone it just makes an already
+ * small tap target smaller. */
 .node-upcoming {
-  max-width: min(15rem, 74vw);
+  max-width: 100%;
   background: rgba(255, 255, 255, 0.46);
   color: rgba(37, 49, 63, 0.54);
   opacity: 0.78;
-  transform: scale(0.88);
+  transform: none;
 }
 
 .node-upcoming .node-symbol {
@@ -929,11 +1033,11 @@ select:focus-visible {
 }
 
 .node-locked {
-  max-width: min(14rem, 70vw);
+  max-width: 100%;
   background: rgba(255, 255, 255, 0.42);
   color: rgba(37, 49, 63, 0.42);
   opacity: 0.62;
-  transform: scale(0.82);
+  transform: none;
 }
 
 .node-locked .node-symbol {
@@ -944,7 +1048,7 @@ select:focus-visible {
 .node-locked .node-symbol::before {
   content: "";
   position: absolute;
-  top: 1.75rem;
+  top: 1.45rem;
   width: 1.55rem;
   height: 1.35rem;
   border-radius: 0.28rem;
@@ -954,7 +1058,7 @@ select:focus-visible {
 .node-locked .node-symbol::after {
   content: "";
   position: absolute;
-  top: 1.08rem;
+  top: 0.92rem;
   width: 1.8rem;
   height: 1.5rem;
   border: 0.28rem solid rgba(37, 49, 63, 0.45);
@@ -964,12 +1068,12 @@ select:focus-visible {
 
 .tap-arrow {
   position: absolute;
-  top: -1.4rem;
-  left: 50%;
-  width: 2.5rem;
-  height: 2.5rem;
-  border-right: 0.55rem solid #d94f70;
-  border-bottom: 0.55rem solid #d94f70;
+  top: -0.65rem;
+  left: 2.9rem;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-right: 0.4rem solid #d94f70;
+  border-bottom: 0.4rem solid #d94f70;
   transform: translateX(-50%) rotate(45deg);
   animation: arrow-drop 1.05s ease-in-out infinite;
   filter: drop-shadow(0 8px 10px rgba(217, 79, 112, 0.22));
@@ -980,17 +1084,24 @@ select:focus-visible {
   z-index: 3;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  width: 100%;
   max-width: 34rem;
   margin: 0 auto;
-  border-radius: 2rem;
-  padding: 1rem;
+  border-radius: 1.25rem;
+  padding: 0.8rem;
+}
+
+.world-ceremony .text-2xl {
+  font-size: var(--step-1);
+  line-height: 1.15;
 }
 
 .ceremony-crown {
   position: relative;
-  width: 5rem;
-  height: 3.3rem;
+  flex: 0 0 auto;
+  width: 4rem;
+  height: 2.8rem;
   border-radius: 0.7rem;
   background: #f5b84b;
   box-shadow: inset 0 -0.65rem 0 rgba(37, 49, 63, 0.1);
@@ -1018,18 +1129,23 @@ select:focus-visible {
   z-index: 4;
   display: grid;
   justify-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
   max-width: 42rem;
-  margin: 2rem auto 0;
-  border-radius: 2rem;
-  padding: 2rem;
+  margin: 1rem auto 0;
+  border-radius: 1.25rem;
+  padding: 1rem;
   text-align: center;
+}
+
+.graduation-castle h2 {
+  font-size: var(--step-3);
+  line-height: 1;
 }
 
 .graduation-castle::before {
   content: "";
-  width: 13rem;
-  height: 10rem;
+  width: 9rem;
+  height: 7rem;
   border-radius: 1.5rem 1.5rem 0.8rem 0.8rem;
   background:
     linear-gradient(90deg, #8b7bd8 0 1.8rem, transparent 1.8rem calc(100% - 1.8rem), #8b7bd8 calc(100% - 1.8rem)),
@@ -1226,30 +1342,147 @@ select:focus-visible {
   animation-delay: -2.1s;
 }
 
-@media (max-width: 900px) {
+/* =====================================================================
+ * Adventure map — progressive enhancement from the phone base above.
+ *
+ * These were previously two `max-width` blocks (900px and 640px) holding
+ * the phone values while the base held desktop. That is now inverted: the
+ * base IS the phone layout and these `min-width` blocks add room back as
+ * the viewport grows. Breakpoints match tailwind.config.ts `screens`.
+ * ===================================================================== */
+
+/* md — tablet portrait upward. Panels regain their glass treatment and
+ * padding, but nodes stay in a single column. */
+@media (min-width: 768px) {
+  .start-village,
+  .world-header,
+  .world-ceremony,
+  .graduation-castle {
+    backdrop-filter: blur(14px) saturate(1.12);
+  }
+
   .adventure-map {
-    border-radius: 0;
+    min-height: 80rem;
     padding: 1.25rem 0.85rem 2rem;
   }
 
+  .start-village {
+    gap: 1rem;
+    margin: 0 auto 2rem;
+    border-radius: 2rem;
+    padding: 1rem;
+  }
+
+  .village-house {
+    width: 5.25rem;
+    height: 4.4rem;
+  }
+
+  .village-house::before {
+    left: 0.65rem;
+    top: -1.15rem;
+    width: 3.95rem;
+    height: 3.95rem;
+  }
+
   .world-section {
+    gap: 1.25rem;
+    margin: 0 auto 2.4rem;
+    border-radius: 2rem;
     padding: 0.9rem;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 58rem;
+  }
+
+  .world-section::before {
+    inset: 4rem 6% 2rem;
+    border-radius: 52% 48% 45% 55%;
+    opacity: 0.72;
   }
 
   .world-header {
+    display: flex;
+    flex-wrap: wrap;
     align-items: stretch;
+    justify-content: space-between;
+    gap: 1rem;
+    border-radius: 2rem;
+    padding: 1.25rem;
   }
 
   .world-reward {
+    grid-template-columns: none;
     min-width: 7.8rem;
+    width: auto;
+    border-radius: 1.5rem;
+    padding: 1rem;
+    text-align: center;
   }
 
-  .node-left {
-    padding-left: clamp(0rem, 2vw, 1.5rem);
+  .world-stage-path {
+    gap: 0.7rem;
+    padding: 1rem 0.25rem;
   }
 
-  .node-right {
-    padding-right: clamp(0rem, 2vw, 1.5rem);
+  .map-node-row {
+    min-height: 7.3rem;
+  }
+
+  .map-level-node {
+    grid-template-columns: 5.75rem minmax(0, 1fr);
+    gap: 0.75rem;
+    min-height: 6.4rem;
+    width: min(19rem, 100%);
+    border-radius: 999px;
+    padding: 0.45rem 1.05rem 0.45rem 0.45rem;
+  }
+
+  .node-symbol {
+    width: 5.5rem;
+    height: 5.5rem;
+    border-width: 0.4rem;
+    font-size: 2rem;
+  }
+
+  .node-copy strong {
+    font-size: 0.78rem;
+  }
+
+  .node-copy small {
+    font-size: 1rem;
+    line-height: 1.05;
+  }
+
+  .node-locked .node-symbol::before {
+    top: 1.75rem;
+  }
+
+  .node-locked .node-symbol::after {
+    top: 1.08rem;
+  }
+
+  .world-ceremony {
+    gap: 1rem;
+    width: auto;
+    border-radius: 2rem;
+    padding: 1rem;
+  }
+
+  .ceremony-crown {
+    width: 5rem;
+    height: 3.3rem;
+  }
+
+  .graduation-castle {
+    gap: 1rem;
+    margin: 2rem auto 0;
+    border-radius: 2rem;
+    padding: 2rem;
+  }
+
+  .graduation-castle::before {
+    width: 13rem;
+    height: 10rem;
   }
 
   .decor-piece {
@@ -1257,212 +1490,89 @@ select:focus-visible {
   }
 }
 
-@media (max-width: 640px) {
-  body {
-    background-attachment: scroll;
-  }
-
+/* lg — desktop and tablet landscape. The illustrated meandering road, the
+ * alternating left/right node zigzag and the decorative scenery all return;
+ * there is finally width to read them. */
+@media (min-width: 1024px) {
   .adventure-map {
-    min-height: 0;
-    padding: 1rem 0.55rem 1.5rem;
-    border-radius: 0;
-    background: transparent;
+    padding: 2rem clamp(1rem, 3vw, 2rem) 3rem;
   }
 
   .map-road {
-    left: 2.9rem;
-    top: 7rem;
-    bottom: 5rem;
-    width: 0.7rem;
-    transform: none;
-    border-radius: 999px;
-    background: rgba(245, 184, 75, 0.72);
+    left: 50%;
+    top: 10rem;
+    bottom: 7rem;
+    width: min(28rem, 58vw);
+    transform: translateX(-50%);
+    border-radius: 0;
+    background:
+      radial-gradient(ellipse at 25% 7%, transparent 0 7.5rem, rgba(245, 184, 75, 0.78) 7.65rem 8.25rem, transparent 8.4rem),
+      radial-gradient(ellipse at 74% 19%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
+      radial-gradient(ellipse at 24% 33%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
+      radial-gradient(ellipse at 76% 47%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
+      radial-gradient(ellipse at 24% 61%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
+      radial-gradient(ellipse at 76% 75%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem),
+      radial-gradient(ellipse at 35% 90%, transparent 0 8rem, rgba(245, 184, 75, 0.78) 8.15rem 8.75rem, transparent 8.9rem);
+    filter: drop-shadow(0 8px 0 rgba(255, 255, 255, 0.5));
   }
 
   .map-river,
   .map-sparkles,
   .map-cloud,
   .world-decor {
-    display: none;
-  }
-
-  .start-village {
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-    border-radius: 1.35rem;
-    padding: 0.8rem;
-    backdrop-filter: none;
-  }
-
-  .start-village h2 {
-    font-size: 1.55rem;
-  }
-
-  .village-house {
-    width: 4.2rem;
-    height: 3.65rem;
-    flex: 0 0 auto;
-  }
-
-  .village-house::before {
-    left: 0.55rem;
-    top: -0.85rem;
-    width: 3.1rem;
-    height: 3.1rem;
+    display: block;
   }
 
   .world-section {
-    gap: 0.85rem;
-    margin-bottom: 1.2rem;
-    padding: 0.55rem 0;
-    border-radius: 1.25rem;
-    content-visibility: visible;
-  }
-
-  .world-section::before {
-    inset: 3.5rem 0.1rem 1.2rem;
-    border-radius: 1.5rem;
-    opacity: 0.86;
+    padding: clamp(1rem, 3vw, 1.5rem);
   }
 
   .world-header {
-    display: grid;
-    gap: 0.8rem;
-    border-radius: 1.25rem;
-    padding: 0.95rem;
-    backdrop-filter: none;
-  }
-
-  .world-header h2 {
-    font-size: clamp(2rem, 9.5vw, 2.8rem);
-  }
-
-  .world-header p {
-    font-size: 1rem;
-    line-height: 1.32;
+    align-items: flex-end;
   }
 
   .world-reward {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    width: 100%;
-    min-width: 0;
-    border-radius: 1rem;
-    padding: 0.75rem 0.9rem;
-    text-align: left;
-  }
-
-  .world-reward strong {
-    font-size: 1.1rem;
-  }
-
-  .world-stage-path {
-    gap: 0.45rem;
-    padding: 0.55rem 0.2rem 0.55rem 0;
+    min-width: 9rem;
   }
 
   .world-stage-path::before {
-    left: 2.9rem;
-    width: 0.55rem;
-    box-shadow: 0 0 0 0.22rem rgba(255, 255, 255, 0.58);
+    left: 50%;
+    width: 0.75rem;
+    transform: translateX(-50%);
+    box-shadow: 0 0 0 0.35rem rgba(255, 255, 255, 0.5);
   }
 
   .map-node-row {
-    min-height: 5.8rem;
-    justify-content: stretch;
-    padding: 0;
+    justify-content: flex-start;
   }
 
-  .node-left,
+  .node-left {
+    justify-content: flex-start;
+    padding-left: clamp(0rem, 5vw, 5rem);
+  }
+
   .node-right {
-    justify-content: stretch;
-    padding-left: 0;
-    padding-right: 0;
+    justify-content: flex-end;
+    padding-right: clamp(0rem, 5vw, 5rem);
   }
 
-  .map-level-node {
-    grid-template-columns: 4.8rem minmax(0, 1fr);
-    gap: 0.55rem;
-    width: 100%;
-    min-height: 5.35rem;
-    border-radius: 1.35rem;
-    padding: 0.42rem 0.65rem 0.42rem 0.42rem;
+  .node-upcoming {
+    max-width: min(15rem, 74vw);
+    transform: scale(0.88);
   }
 
-  .node-symbol {
-    width: 4.55rem;
-    height: 4.55rem;
-    border-width: 0.32rem;
-    font-size: 1.6rem;
-  }
-
-  .node-copy strong {
-    font-size: 0.72rem;
-  }
-
-  .node-copy small {
-    font-size: 0.95rem;
-    line-height: 1.08;
-  }
-
-  .node-upcoming,
   .node-locked {
-    max-width: 100%;
-    transform: none;
-  }
-
-  .node-locked .node-symbol::before {
-    top: 1.45rem;
-  }
-
-  .node-locked .node-symbol::after {
-    top: 0.92rem;
+    max-width: min(14rem, 70vw);
+    transform: scale(0.82);
   }
 
   .tap-arrow {
-    left: 2.9rem;
-    top: -0.65rem;
-    width: 1.55rem;
-    height: 1.55rem;
-    border-right-width: 0.4rem;
-    border-bottom-width: 0.4rem;
-  }
-
-  .world-ceremony {
-    width: 100%;
-    gap: 0.75rem;
-    border-radius: 1.25rem;
-    padding: 0.8rem;
-    backdrop-filter: none;
-  }
-
-  .ceremony-crown {
-    width: 4rem;
-    height: 2.8rem;
-    flex: 0 0 auto;
-  }
-
-  .world-ceremony .text-2xl {
-    font-size: 1.25rem;
-    line-height: 1.15;
-  }
-
-  .graduation-castle {
-    gap: 0.75rem;
-    margin-top: 1rem;
-    border-radius: 1.25rem;
-    padding: 1rem;
-    backdrop-filter: none;
-  }
-
-  .graduation-castle::before {
-    width: 9rem;
-    height: 7rem;
-  }
-
-  .graduation-castle h2 {
-    font-size: 2rem;
-    line-height: 1;
+    top: -1.4rem;
+    left: 50%;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-right-width: 0.55rem;
+    border-bottom-width: 0.55rem;
   }
 }
 
@@ -1660,25 +1770,156 @@ select:focus-visible {
   border-bottom: 3.5rem solid #2f8f6b;
 }
 
+/* Mobile-first: on a phone the dock spans the width, sitting clear of the
+ * home indicator via --safe-bottom. From md: it detaches and docks to the
+ * right. Every inset adds the matching safe-area value so nothing lands under
+ * a notch, a rounded corner or the home indicator. */
 .avatar-dock {
   position: fixed;
-  right: clamp(0.75rem, 2vw, 1.5rem);
-  bottom: clamp(0.75rem, 2vw, 1.5rem);
+  left: calc(0.75rem + var(--safe-left));
+  right: calc(0.75rem + var(--safe-right));
+  bottom: calc(0.75rem + var(--safe-bottom));
   z-index: 45;
   display: grid;
-  width: min(20rem, calc(100vw - 1.5rem));
-  grid-template-columns: 5.25rem 1fr;
+  width: auto;
+  grid-template-columns: 4.4rem 1fr;
   gap: 0.75rem;
   align-items: end;
   border: 1px solid rgba(37, 49, 63, 0.08);
-  border-radius: 1.75rem;
+  border-radius: 1.4rem;
   background: rgba(255, 255, 255, 0.94);
-  padding: 0.75rem;
+  padding: 0.58rem;
   box-shadow: 0 18px 52px rgba(37, 49, 63, 0.16);
 }
 
-.avatar-dock-open {
-  width: min(27rem, calc(100vw - 1.5rem));
+/* ---------------------------------------------------------------------
+ * Collapsed FAB — the phone default.
+ *
+ * A permanently mounted panel is the wrong shape on a phone: it will always
+ * compete with the page for the same space. Collapsed, the guide is a single
+ * 64px circle in the corner and nothing else — no message bubble, no control
+ * row — so it cannot cover content no matter how long the guide's sentence is.
+ * --------------------------------------------------------------------- */
+.avatar-dock[data-expanded="false"] {
+  left: auto;
+  right: calc(0.75rem + var(--safe-right));
+  bottom: calc(0.75rem + var(--safe-bottom));
+  width: var(--touch-child);
+  height: var(--touch-child);
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-radius: 999px;
+  padding: 0;
+  overflow: visible;
+}
+
+.avatar-dock[data-expanded="false"] .avatar-stage {
+  grid-row: auto;
+  width: var(--touch-child);
+  height: var(--touch-child);
+}
+
+.avatar-dock[data-expanded="false"] :is(.avatar-message, .avatar-controls, .avatar-conversation) {
+  display: none;
+}
+
+/* The face is a button at every size; it must not look like one. */
+.avatar-face-button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+
+/* Speaking while collapsed — a transient toast above the FAB instead of a
+ * permanent bubble. */
+.avatar-fab-toast {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  width: max-content;
+  max-width: min(16rem, calc(100vw - 2rem));
+  margin: 0;
+  border-radius: 1rem;
+  background: rgba(37, 49, 63, 0.92);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--step--2);
+  font-weight: 800;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+/* Expanded — a bottom sheet, above the backdrop. */
+.avatar-dock[data-expanded="true"] {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 60;
+  width: auto;
+  height: auto;
+  grid-template-columns: 4.4rem 1fr;
+  gap: 0.75rem;
+  border-radius: 1.5rem 1.5rem 0 0;
+  padding: 0.75rem calc(0.75rem + var(--safe-right)) calc(0.75rem + var(--safe-bottom)) calc(0.75rem + var(--safe-left));
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.avatar-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  background: rgba(37, 49, 63, 0.45);
+}
+
+/* ---------------------------------------------------------------------
+ * md and above — the original dock, unchanged.
+ *
+ * These selectors carry [data-expanded] so they match the specificity of the
+ * FAB rules above and win on source order; plain `.avatar-dock` would lose to
+ * `.avatar-dock[data-expanded="false"]` and the dock would stay a FAB on
+ * desktop.
+ * --------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .avatar-dock[data-expanded] {
+    left: auto;
+    right: calc(clamp(0.75rem, 2vw, 1.5rem) + var(--safe-right));
+    bottom: calc(clamp(0.75rem, 2vw, 1.5rem) + var(--safe-bottom));
+    z-index: 45;
+    width: min(20rem, calc(100vw - 1.5rem - var(--safe-left) - var(--safe-right)));
+    height: auto;
+    grid-template-columns: 5.25rem 1fr;
+    gap: 0.75rem;
+    border-radius: 1.75rem;
+    padding: 0.75rem;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .avatar-dock[data-expanded] .avatar-stage {
+    grid-row: span 2;
+    width: 5.25rem;
+    height: 5.25rem;
+  }
+
+  .avatar-dock[data-expanded] :is(.avatar-message, .avatar-controls, .avatar-conversation) {
+    display: grid;
+  }
+
+  .avatar-dock[data-expanded] .avatar-controls {
+    display: flex;
+  }
+
+  .avatar-dock-open[data-expanded] {
+    width: min(27rem, calc(100vw - 1.5rem - var(--safe-left) - var(--safe-right)));
+  }
+
+  .avatar-sheet-backdrop,
+  .avatar-fab-toast {
+    display: none;
+  }
 }
 
 .avatar-conversation {
@@ -1780,13 +2021,16 @@ select:focus-visible {
   color: #b52e50;
 }
 
+/* Phone first: the input takes its own row above the two buttons, which then
+ * share the row full-width. From md: all three sit on one line. */
 .avatar-chat-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.45rem;
 }
 
 .avatar-chat-form input {
+  grid-column: 1 / -1;
   width: 100%;
   min-width: 0;
   min-height: 2.75rem;
@@ -1807,6 +2051,7 @@ select:focus-visible {
 
 .avatar-chat-talk,
 .avatar-chat-send {
+  width: 100%;
   min-width: 3.5rem;
   min-height: 2.75rem;
   border: 0;
@@ -1835,27 +2080,40 @@ select:focus-visible {
 .avatar-stage {
   grid-row: span 2;
   position: relative;
-  width: 5.25rem;
-  height: 5.25rem;
+  width: 4.4rem;
+  height: 4.4rem;
   overflow: visible;
 }
 
 .avatar-message {
-  min-height: 3.25rem;
+  min-height: 2.75rem;
   align-content: center;
   border-radius: 1.25rem;
   background: #eef8f2;
-  padding: 0.75rem 0.9rem;
-  font-size: 0.9rem;
+  padding: 0.62rem 0.75rem;
+  font-size: var(--step--1);
   font-weight: 900;
   line-height: 1.2;
   color: var(--ink);
 }
 
+/* Phone: a single non-wrapping row that scrolls sideways if the labels
+ * outrun the width. Wrapping is what grew the dock to a second row and let it
+ * swallow the page; a scroll keeps its height fixed and predictable. */
 .avatar-controls {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.avatar-controls::-webkit-scrollbar {
+  display: none;
+}
+
+.avatar-controls > * {
+  flex: 0 0 auto;
 }
 
 .avatar-control {
@@ -2100,49 +2358,158 @@ select:focus-visible {
   }
 }
 
-@media (max-width: 640px) {
-  .avatar-dock {
-    left: 0.75rem;
-    right: 0.75rem;
-    bottom: 0.75rem;
-    width: auto;
-    grid-template-columns: 4.4rem 1fr;
-    border-radius: 1.4rem;
-    padding: 0.58rem;
-  }
-
+/* Avatar dock — phone values now live in the base rules above; this block
+ * only adds back what a larger screen affords. The dock itself detaches and
+ * docks right in the md: block near .avatar-dock. */
+@media (min-width: 768px) {
   .avatar-stage {
-    width: 4.4rem;
-    height: 4.4rem;
+    width: 5.25rem;
+    height: 5.25rem;
   }
 
   .avatar-message {
-    min-height: 2.75rem;
-    padding: 0.62rem 0.75rem;
-    font-size: 0.82rem;
-  }
-
-  .avatar-control {
-    width: 2.2rem;
-    height: 2.2rem;
+    min-height: 3.25rem;
+    padding: 0.75rem 0.9rem;
+    font-size: var(--step-0);
   }
 
   .avatar-control-wide {
-    width: auto;
-    min-width: 2.65rem;
+    min-width: 2.8rem;
   }
 
   .avatar-chat-form {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
   .avatar-chat-form input {
-    grid-column: 1 / -1;
+    grid-column: auto;
   }
 
   .avatar-chat-talk,
   .avatar-chat-send {
-    width: 100%;
+    width: auto;
+  }
+}
+
+/* =====================================================================
+ * Touch targets (OP-06 §2)
+ *
+ * Enforced by surface, not by component, so a control cannot fall below the
+ * floor by being written somewhere new. Mark a subtree with data-surface and
+ * every interactive descendant inherits the floor:
+ *
+ *   toddler (under 3)  96x96, gap 16
+ *   child   (3+)       64x64, gap 12
+ *   parent             44x44, gap 8
+ *
+ * `min-width` is deliberately paired with `min-height` — a 64px-tall control
+ * 20px wide is still a miss for a 3-year-old.
+ * ===================================================================== */
+
+/* Surfaces nest: the header, the guide dock and the parent drawer all render
+ * INSIDE the child shell. Only the OUTER surface carries exclusions, listing
+ * the surfaces that can appear within it — that makes the nearest
+ * data-surface ancestor win.
+ *
+ * Do NOT add the reverse exclusions to the inner rules. `[data-surface=parent]
+ * ...:not([data-surface=child] *)` looks symmetrical but excludes itself,
+ * because the drawer really is a descendant of the child shell, and the
+ * control then matches no rule at all.
+ *
+ * WHAT EACH FLOOR IS FOR:
+ *   child (64px)  answer options, the microphone — things a child taps to
+ *                 LEARN. Never weaken this one.
+ *   chrome (44px) navigation and guide-dock furniture, tapped mostly by a
+ *                 parent. Forcing these to 64px is what pushed the nav to
+ *                 three rows and grew the fixed dock to ~250px, covering the
+ *                 page beneath it.
+ *   parent (44px) the parent drawer and parent routes.
+ */
+[data-surface="child"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="parent"] *):not([data-surface="toddler"] *):not([data-surface="chrome"] *) {
+  min-height: var(--touch-child);
+  min-width: var(--touch-child);
+}
+
+[data-surface="toddler"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="parent"] *):not([data-surface="chrome"] *) {
+  min-height: var(--touch-toddler);
+  min-width: var(--touch-toddler);
+}
+
+[data-surface="parent"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="chrome"] *) {
+  min-height: var(--touch-parent);
+  min-width: var(--touch-parent);
+}
+
+[data-surface="chrome"] :is(button, summary, select, [role="button"], a[href]) {
+  min-height: var(--touch-parent);
+  min-width: var(--touch-parent);
+}
+
+/* Inline links inside running prose are reading, not tapping — exempting
+ * them keeps sentences from being blown apart into 64px-tall word blocks. */
+[data-surface] :is(p, li, label, small) a[href] {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Gaps between adjacent controls, so two 64px targets cannot sit flush and
+ * read as one. */
+[data-surface="child"] :is(.avatar-controls, .touch-row):not([data-surface="parent"] *):not([data-surface="toddler"] *):not([data-surface="chrome"] *) {
+  gap: var(--touch-gap-child);
+}
+
+[data-surface="toddler"] :is(.avatar-controls, .touch-row):not([data-surface="parent"] *):not([data-surface="chrome"] *) {
+  gap: var(--touch-gap-toddler);
+}
+
+[data-surface="parent"] :is(.avatar-controls, .touch-row):not([data-surface="chrome"] *) {
+  gap: var(--touch-gap-parent);
+}
+
+[data-surface="chrome"] :is(.avatar-controls, .touch-row) {
+  gap: var(--touch-gap-parent);
+}
+
+/* =====================================================================
+ * Landscape activity layout (OP-06 §2)
+ *
+ * On a phone held sideways there is width but almost no height. A single
+ * column pushes the answers below the fold, and a child who scrolls
+ * mid-question loses their place and then loses the thread. So: question
+ * left, answers right, both above the fold.
+ *
+ * Keyed on `short` (max-height:480px) AND landscape — a tablet in landscape
+ * has the height for the normal stacked layout and keeps it.
+ * ===================================================================== */
+
+@media (orientation: landscape) and (max-height: 480px) {
+  .activity-shell {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-content: start;
+    gap: var(--space-3);
+  }
+
+  .activity-primary {
+    grid-column: 1;
+  }
+
+  .activity-answers {
+    grid-column: 2;
+    align-self: start;
+  }
+
+  /* The dock would cover half the answers at this height — shrink it to the
+   * guide face alone and let the answer column own the space. */
+  .avatar-dock {
+    left: auto;
+    right: calc(0.5rem + var(--safe-right));
+    width: auto;
+    grid-template-columns: 3.4rem 1fr;
+  }
+
+  .avatar-stage {
+    width: 3.4rem;
+    height: 3.4rem;
   }
 }
 

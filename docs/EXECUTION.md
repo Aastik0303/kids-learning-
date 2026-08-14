@@ -38,6 +38,8 @@ Not by phase number — by what they cost you if left alone.
 | 5 | 🟠 High | **Token in `sessionStorage`, and never actually sent.** No `Authorization` header exists. | `frontend/services/session.ts`, `services/api.ts` |
 | 6 | 🟠 High | **Rewards and certificates never call the backend.** Stars come from client state. | `frontend/app/rewards/page.tsx` |
 | 7 | 🟠 High | **No idempotency.** A retried answer on a flaky connection double-counts. | everywhere |
+| 7b | 🟠 High | **A pre-literate child cannot operate the app unaided.** Text labels, multiple choices per screen, no auto-spoken instruction, no idle recovery. The actual user is 3–5 and cannot read. | child surface, everywhere |
+| 7c | 🟠 High | **Entry flow ignores who you are.** `app/page.tsx` renders the age picker for everyone, logged in or not; login has no redirect at all; age routing is guessed from `sessionStorage`. | `app/page.tsx`, `components/toddler/AgeGate.tsx`, `app/login/page.tsx` |
 | 8 | 🟡 Medium | **Desktop-first CSS with two conflicting breakpoint systems** — CSS uses 640/900, Tailwind uses its defaults. | `app/globals.css` (2,172 lines), `tailwind.config.ts` |
 | 9 | 🟡 Medium | **No versioned API.** 20 prototype routes, none under `/api/v1`. | all of `backend/app/api/` |
 | 10 | 🔵 Hygiene | **CRLF line endings** have marked 121 files as modified with 15,118 identical insertions and deletions. | repo-wide |
@@ -80,6 +82,8 @@ into a fresh session. **One step per session. Never two.**
 | 9 | Web: server-authoritative sessions | `frontend-architecture.md` FE Phase 4 | Step 8 | **#1, #7** |
 | 10 | Backend: mastery, recommendations, rewards, unlocks | `backend-architecture.md` Phase 5 | Step 8 | #6 |
 | 11 | Web: mastery bands, reasons, server rewards | `frontend-architecture.md` FE Phase 5 | Step 10 | **#6** |
+| 11a | **Entry flow: login → adventure, logout → home, age → toddler** | `ops/OP-03-entry-flow.md` | Step 5 | **#7c** |
+| 11b | **AI navigation for children who cannot read** | `ops/OP-04-ai-navigation.md` | Steps 11a, 16 | **#7b** |
 | 12 | Web: shared UI foundation from the reference | `upgrade-plan.md` W4a | Step 3 | — |
 | 13 | Web: one activity renderer + 8 activity types | `upgrade-plan.md` W4b | Steps 9, 12 | — |
 | 14 | Web: missing screens (guest home, parent gate, recap…) | `upgrade-plan.md` W4c | Step 12 | — |
@@ -296,6 +300,23 @@ These hold for every step in the list.
 | `frontend-architecture.md` | Web target design + 9 phase prompts |
 | `frontend-audit.md` | Web baseline (FE Phase 0 output) |
 | `upgrade-plan.md` | Responsive (W2), study plan (W3), reference-porting (W4) |
+| **`ops/`** | **Per-operation deep dives — six self-contained runnable files** |
 
-If any two disagree, `EXECUTION.md` wins on **ordering and scope**; the architecture docs
-win on **design detail**.
+### The `ops/` folder
+
+Six operations, each a single self-contained file with its own design, acceptance criteria
+and prompt. These expand what the table above summarises in one row, and they add design
+that was not previously specified anywhere — entry routing, AI navigation, learner profiles.
+
+| File | Operation |
+|---|---|
+| `ops/OP-01-database.md` | Advanced PostgreSQL — all 19 tables, connection design, transaction order |
+| `ops/OP-02-authentication.md` | Auth, sessions, the web refresh cookie, parental consent |
+| `ops/OP-03-entry-flow.md` | Login → adventure · logout → home · age → toddler presentation |
+| `ops/OP-04-ai-navigation.md` | AI drives the UI for pre-literate children; idle escalation ladder |
+| `ops/OP-05-ai-tracking.md` | Learner profiles + the deterministic daily study plan |
+| `ops/OP-06-responsive.md` | Full mobile responsiveness |
+
+If any two documents disagree: `EXECUTION.md` wins on **ordering and scope**, the `ops/`
+files win on **design detail for their operation**, and the architecture docs win everywhere
+else.

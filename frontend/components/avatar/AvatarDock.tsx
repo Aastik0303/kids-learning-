@@ -26,11 +26,80 @@ export function AvatarDock() {
   const [listening, setListening] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  const dockRef = useRef<HTMLElement>(null);
+  // Below md the dock is a collapsed FAB; this opens it into a bottom sheet.
+  // At md and above the dock is always fully shown and this is inert.
+  const [expanded, setExpanded] = useState(false);
   const hidden = hiddenRoutes.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   useEffect(() => {
     if (assistantOpen) inputRef.current?.focus();
   }, [assistantOpen]);
+
+  // Publish the dock's real height so AppShell can reserve exactly that much
+  // room. A hard-coded padding goes stale the moment the dock reflows — which
+  // is precisely how the dock ended up covering page content.
+  useEffect(() => {
+    const node = dockRef.current;
+    if (!node) return;
+    const publish = () => {
+      document.documentElement.style.setProperty("--dock-height", `${Math.round(node.getBoundingClientRect().height)}px`);
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(node);
+    window.addEventListener("resize", publish);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", publish);
+      document.documentElement.style.removeProperty("--dock-height");
+    };
+  }, [hidden]);
+
+  // Collapse the sheet again once there is room for the full dock, so the
+  // page cannot be left with a stale scroll lock after a rotate.
+  useEffect(() => {
+    const wide = window.matchMedia("(min-width: 768px)");
+    const sync = () => {
+      if (wide.matches) setExpanded(false);
+    };
+    sync();
+    wide.addEventListener("change", sync);
+    return () => wide.removeEventListener("change", sync);
+  }, []);
+
+  // Scroll lock while the sheet is open.
+  useEffect(() => {
+    if (!expanded) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [expanded]);
+
+  useEffect(() => {
+    if (!expanded) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setExpanded(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [expanded]);
+
+  /**
+   * The avatar face is the FAB below md and a plain portrait above it, so one
+   * AIAvatar instance serves both and we never mount two Rive canvases.
+   * Reading the breakpoint at click time (not render time) keeps this out of
+   * hydration entirely.
+   */
+  function onFaceClick() {
+    if (window.matchMedia("(min-width: 768px)").matches) {
+      setAssistantOpen((current) => !current);
+    } else {
+      setExpanded((current) => !current);
+    }
+  }
 
   async function ask(nextQuestion: string) {
     const cleanQuestion = nextQuestion.trim();
@@ -85,7 +154,24 @@ export function AvatarDock() {
   if (hidden) return null;
 
   return (
-    <aside className={`avatar-dock no-print ${assistantOpen ? "avatar-dock-open" : ""}`} aria-label="AI learning guide">
+    <>
+      {/* Sheet backdrop — below md only (CSS-gated). Tapping it closes.
+          NOTE: the page behind is scroll-locked and covered, but not truly
+          `inert`: the dock renders inside AppShell's <main>, so marking that
+          inert would disable the dock too. Making it genuinely inert needs the
+          dock portaled out of <main>, which is OP-03 route-group work. */}
+      {expanded ? (
+        <div className="avatar-sheet-backdrop no-print" onClick={() => setExpanded(false)} aria-hidden="true" />
+      ) : null}
+      <aside
+        ref={dockRef}
+        data-surface="chrome"
+        data-expanded={expanded ? "true" : "false"}
+        role={expanded ? "dialog" : undefined}
+        aria-modal={expanded ? true : undefined}
+        className={`avatar-dock no-print ${assistantOpen ? "avatar-dock-open" : ""}`}
+        aria-label="AI learning guide"
+      >
       {assistantOpen ? (
         <section className="avatar-conversation" aria-label="Conversation with AI guide">
           <div className="avatar-conversation-header">
@@ -133,9 +219,18 @@ export function AvatarDock() {
           ) : null}
         </section>
       ) : null}
-      <div className="avatar-stage">
+      <button
+        type="button"
+        className="avatar-stage avatar-face-button pressable"
+        onClick={onFaceClick}
+        aria-expanded={expanded}
+        aria-label={expanded ? "Close the AI guide" : "Open the AI guide"}
+      >
         <AIAvatar state={state} effect={effect} isSpeaking={isSpeaking} />
-      </div>
+      </button>
+      {/* Speaking while collapsed: a brief toast above the FAB, rather than a
+          permanently mounted bubble competing with the page. */}
+      {isSpeaking && !expanded ? <p className="avatar-fab-toast" aria-hidden="true">{message}</p> : null}
       <AvatarMessage message={message} />
       <AvatarControls
         muted={muted}
@@ -148,6 +243,7 @@ export function AvatarDock() {
         onAsk={() => setAssistantOpen((current) => !current)}
         onVoiceProviderChange={toggleVoiceProvider}
       />
-    </aside>
+      </aside>
+    </>
   );
 }

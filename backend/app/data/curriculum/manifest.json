@@ -1,0 +1,1115 @@
+{
+  "version": "2026-27",
+  "source": "CBSE Updated Syllabus 2026-27 (Play Group, Nursery, LKG, UKG)",
+  "notes": [
+    "Hindi removed from Nursery per product decision. Play Group and LKG never had Hindi.",
+    "UKG retains its Language (Hindi) subject as published — flag if this should also be removed.",
+    "Age bands are the product's, not the PDF's: the Play Group PDF states 2.5-3.5 years; this manifest uses 2-3 to make the four bands contiguous.",
+    "This file is the curriculum TAXONOMY only. Activities and questions are authored per topic from these subtopics."
+  ],
+  "experience_modes": {
+    "early": {
+      "applies_to": ["playgroup", "nursery"],
+      "touch_target_px": 96,
+      "max_choices_per_screen": 2,
+      "text_density": "none",
+      "voice": "always",
+      "idle_thresholds_seconds": [12, 25, 40, 60, 80]
+    },
+    "standard": {
+      "applies_to": ["lkg", "ukg"],
+      "touch_target_px": 64,
+      "max_choices_per_screen": 4,
+      "text_density": "short_words",
+      "voice": "always",
+      "idle_thresholds_seconds": [8, 18, 30, 45, 60]
+    }
+  },
+  "classes": [
+    {
+      "class_id": "playgroup",
+      "code": "PG",
+      "title": "Play Group",
+      "subtitle": "Pre-Nursery",
+      "min_age": 2,
+      "max_age": 3,
+      "experience_mode": "early",
+      "sort_order": 1,
+      "pedagogy": "Fully play-based, oral and activity-driven. No formal written examination; assessment is through observation.",
+      "subjects": [
+        {
+          "subject_id": "pg_maths",
+          "title": "Basic Mathematics",
+          "note": "Pre-Number Concepts",
+          "sort_order": 1,
+          "topics": [
+            {
+              "topic_id": "pg_maths_colours",
+              "title": "Colours",
+              "sort_order": 1,
+              "subtopics": [
+                "Red, Yellow, Blue",
+                "Green, Black, White",
+                "Identify colours of objects around us",
+                "Sorting objects by colour"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_shapes",
+              "title": "Shapes",
+              "sort_order": 2,
+              "subtopics": ["Circle", "Square", "Triangle", "Matching same shapes"]
+            },
+            {
+              "topic_id": "pg_maths_numbers_1_5",
+              "title": "Numbers 1 to 5",
+              "sort_order": 3,
+              "subtopics": [
+                "Oral counting 1-5 (rote)",
+                "Number recognition 1-5",
+                "Counting objects up to 5",
+                "Finger counting and number rhymes"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_prenumber",
+              "title": "Pre-Number Concepts",
+              "sort_order": 4,
+              "subtopics": [
+                "Big and Small",
+                "Tall and Short",
+                "Long and Short",
+                "Heavy and Light",
+                "More and Less"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_positions",
+              "title": "Positions",
+              "sort_order": 5,
+              "subtopics": ["In and Out", "Up and Down", "Open and Close", "Front and Back"]
+            },
+            {
+              "topic_id": "pg_maths_matching",
+              "title": "Matching & Sorting",
+              "sort_order": 6,
+              "subtopics": ["Same and Different", "Match the pair", "Sort by colour and size"]
+            }
+          ]
+        },
+        {
+          "subject_id": "pg_english",
+          "title": "English",
+          "note": "Oral & Pre-Writing",
+          "sort_order": 2,
+          "topics": [
+            {
+              "topic_id": "pg_eng_strokes",
+              "title": "Pre-Writing Strokes",
+              "sort_order": 1,
+              "subtopics": [
+                "Free scribbling and crayon grip",
+                "Standing line",
+                "Sleeping line",
+                "Slanting lines",
+                "Curves and circles",
+                "Joining dots"
+              ]
+            },
+            {
+              "topic_id": "pg_eng_capitals_a_e",
+              "title": "Capital Letters (A-E)",
+              "sort_order": 2,
+              "subtopics": [
+                "Oral identification",
+                "Sound of the letter",
+                "One object related to each letter",
+                "Tracing on sand tray / slate"
+              ]
+            },
+            {
+              "topic_id": "pg_eng_listening",
+              "title": "Listening & Speaking",
+              "sort_order": 3,
+              "subtopics": [
+                "Greetings - Good Morning, Thank You, Sorry, Please",
+                "Answering own name and age",
+                "Naming familiar objects",
+                "Following simple one-step instructions"
+              ]
+            },
+            {
+              "topic_id": "pg_eng_rhymes",
+              "title": "Rhymes & Stories",
+              "sort_order": 4,
+              "subtopics": [
+                "10-12 simple action rhymes",
+                "Picture story listening",
+                "Animal and bird sounds",
+                "Puppet play and enactment"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "pg_ga",
+          "title": "General Awareness",
+          "sort_order": 3,
+          "topics": [
+            {
+              "topic_id": "pg_ga_myself",
+              "title": "About Myself",
+              "sort_order": 1,
+              "subtopics": [
+                "My name",
+                "My body parts - eyes, ears, nose, mouth, hands, legs",
+                "My family members"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_school",
+              "title": "My School",
+              "sort_order": 2,
+              "subtopics": ["My teacher and friends", "My classroom", "My school bag and bottle"]
+            },
+            {
+              "topic_id": "pg_ga_things",
+              "title": "Things Around Us",
+              "sort_order": 3,
+              "subtopics": [
+                "Fruits - apple, banana, mango",
+                "Vegetables - potato, tomato, carrot",
+                "Animals - cat, dog, cow",
+                "Birds - crow, parrot"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_transport",
+              "title": "Transport",
+              "sort_order": 4,
+              "subtopics": ["Car, Bus, Cycle", "Aeroplane, Train, Boat"]
+            },
+            {
+              "topic_id": "pg_ga_habits",
+              "title": "Good Habits",
+              "sort_order": 5,
+              "subtopics": [
+                "Washing hands",
+                "Brushing teeth",
+                "Using the dustbin",
+                "Saying Thank You and Sorry"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "pg_evs",
+          "title": "Environmental Science",
+          "sort_order": 4,
+          "topics": [
+            {
+              "topic_id": "pg_evs_all",
+              "title": "My World",
+              "sort_order": 1,
+              "subtopics": [
+                "Myself and my body",
+                "My family and my home",
+                "Simple good habits and cleanliness",
+                "Nature walk - trees, flowers, sun, moon, water",
+                "Domestic animals and their sounds",
+                "Day and Night"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "pg_art",
+          "title": "Art, Music & Motor Skills",
+          "sort_order": 5,
+          "topics": [
+            {
+              "topic_id": "pg_art_fine",
+              "title": "Fine Motor Skills",
+              "sort_order": 1,
+              "subtopics": [
+                "Crumpling and tearing paper",
+                "Thumb and finger printing",
+                "Beading and threading",
+                "Clay and dough moulding",
+                "Colouring inside big pictures"
+              ]
+            },
+            {
+              "topic_id": "pg_art_gross",
+              "title": "Gross Motor Skills",
+              "sort_order": 2,
+              "subtopics": [
+                "Running, jumping, hopping",
+                "Ball throwing and catching",
+                "Balancing on a line",
+                "Free play with slides and swings"
+              ]
+            },
+            {
+              "topic_id": "pg_art_music",
+              "title": "Music & Movement",
+              "sort_order": 3,
+              "subtopics": [
+                "Action songs with claps",
+                "Dance and free movement",
+                "Rhythm with simple instruments"
+              ]
+            },
+            {
+              "topic_id": "pg_art_celebrations",
+              "title": "Celebrations",
+              "sort_order": 4,
+              "subtopics": ["Birthdays", "Festivals - Diwali, Holi, Christmas", "Independence Day"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_id": "nursery",
+      "code": "NUR",
+      "title": "Nursery",
+      "min_age": 3,
+      "max_age": 4,
+      "experience_mode": "early",
+      "sort_order": 2,
+      "pedagogy": "Activity-based with the beginning of guided writing. Assessment is continuous and observation-based.",
+      "removed_subjects": ["Hindi (Oral Introduction)"],
+      "subjects": [
+        {
+          "subject_id": "nur_maths",
+          "title": "Basic Mathematics",
+          "sort_order": 1,
+          "topics": [
+            {
+              "topic_id": "nur_maths_shapes",
+              "title": "Shapes",
+              "sort_order": 1,
+              "subtopics": [
+                "Circle, Square, Triangle, Rectangle",
+                "Oval and Star",
+                "Matching and tracing shapes",
+                "Objects of each shape around us"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_colours",
+              "title": "Colours",
+              "sort_order": 2,
+              "subtopics": [
+                "Primary colours - Red, Yellow, Blue",
+                "Green, Orange, Purple, Brown, Pink, Black, White",
+                "Colour matching and sorting"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_count_5",
+              "title": "Count to 5",
+              "sort_order": 3,
+              "subtopics": [
+                "Learn to count (up to 5)",
+                "Count dots, shapes and objects (up to 5)",
+                "Number recognition 1-5",
+                "Writing numbers 1-5 with tracing"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_count_10",
+              "title": "Count to 10",
+              "sort_order": 4,
+              "subtopics": [
+                "Oral counting 1-20",
+                "Number recognition 1-10",
+                "Count objects up to 10",
+                "Match number with quantity",
+                "Writing numbers 1-10",
+                "Missing numbers (1-10)"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_comparing",
+              "title": "Comparing",
+              "sort_order": 5,
+              "subtopics": ["More and Fewer", "Compare groups by counting", "Equal groups"]
+            },
+            {
+              "topic_id": "nur_maths_positions",
+              "title": "Positions",
+              "sort_order": 6,
+              "subtopics": [
+                "Inside and Outside",
+                "Above and Below",
+                "Top and Bottom",
+                "Near and Far",
+                "Front and Behind"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_classify",
+              "title": "Classify & Sort",
+              "sort_order": 7,
+              "subtopics": [
+                "Same and Different",
+                "Sort by colour",
+                "Sort by shape",
+                "Sort by size",
+                "Simple patterns (AB pattern)"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_size",
+              "title": "Size & Measurement",
+              "sort_order": 8,
+              "subtopics": [
+                "Big and Small",
+                "Tall and Short",
+                "Long and Short",
+                "Heavy and Light",
+                "Full and Empty"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_readiness",
+              "title": "Pre-Number Readiness",
+              "sort_order": 9,
+              "subtopics": ["Number rhymes", "Before and After (1-10)", "Concept of Zero"]
+            }
+          ]
+        },
+        {
+          "subject_id": "nur_english",
+          "title": "English",
+          "sort_order": 2,
+          "topics": [
+            {
+              "topic_id": "nur_eng_strokes",
+              "title": "Pre-Writing Strokes",
+              "sort_order": 1,
+              "subtopics": [
+                "Standing line",
+                "Sleeping line",
+                "Left slanting line",
+                "Right slanting line",
+                "Left curve and Right curve",
+                "Up curve and Down curve",
+                "Zig-zag lines and loops"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_capitals",
+              "title": "Capital Letters (A-Z)",
+              "sort_order": 2,
+              "subtopics": [
+                "Identification",
+                "Tracing and writing",
+                "Sound of each letter",
+                "One object related to each letter",
+                "Missing letters"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_smalls",
+              "title": "Small Letters (a-z)",
+              "sort_order": 3,
+              "subtopics": [
+                "Oral identification",
+                "Introduction to writing (a-j)",
+                "Matching capital with small letters"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_phonetics",
+              "title": "Phonetics",
+              "sort_order": 4,
+              "subtopics": [
+                "Sound of letters (a-z)",
+                "Beginning sound of objects",
+                "Vowels and consonants (oral)",
+                "Rhyming words"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_listening",
+              "title": "Listening & Speaking",
+              "sort_order": 5,
+              "subtopics": [
+                "Greetings and polite words",
+                "Self-introduction - name, age, parents' names",
+                "Simple conversation with teacher and friends",
+                "Answering picture-based questions"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_rhymes",
+              "title": "Rhymes & Stories",
+              "sort_order": 6,
+              "subtopics": [
+                "15-20 action rhymes",
+                "Storytelling and retelling with pictures",
+                "Enactment, flashcards and worksheets"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "nur_ga",
+          "title": "General Awareness",
+          "sort_order": 3,
+          "topics": [
+            {
+              "topic_id": "nur_ga_myself",
+              "title": "About Myself",
+              "sort_order": 1,
+              "subtopics": [
+                "Myself",
+                "My body parts and five senses",
+                "My family",
+                "My birthday",
+                "My home",
+                "My school"
+              ]
+            },
+            {
+              "topic_id": "nur_ga_habits",
+              "title": "Good Habits & Manners",
+              "sort_order": 2,
+              "subtopics": [
+                "Cleanliness and hygiene",
+                "Healthy and junk food",
+                "Magic words - Please, Sorry, Thank You, Excuse Me"
+              ]
+            },
+            {
+              "topic_id": "nur_ga_safety",
+              "title": "Safety",
+              "sort_order": 3,
+              "subtopics": ["At home", "On the road", "At the playground"]
+            },
+            {
+              "topic_id": "nur_ga_helpers",
+              "title": "People Who Help Us",
+              "sort_order": 4,
+              "subtopics": ["Doctor", "Teacher", "Policeman", "Postman", "Farmer"]
+            },
+            {
+              "topic_id": "nur_ga_transport",
+              "title": "Transport",
+              "sort_order": 5,
+              "subtopics": ["Road", "Rail", "Air", "Water"]
+            },
+            {
+              "topic_id": "nur_ga_animals",
+              "title": "Animals",
+              "sort_order": 6,
+              "subtopics": [
+                "Wild animals",
+                "Domestic animals",
+                "Pet animals",
+                "Water animals",
+                "Birds and their sounds"
+              ]
+            },
+            {
+              "topic_id": "nur_ga_seasons",
+              "title": "Seasons & Festivals",
+              "sort_order": 7,
+              "subtopics": [
+                "Summer, Winter, Rainy",
+                "Days of the week (oral)",
+                "National festivals and major festivals"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "nur_evs",
+          "title": "Environmental Science",
+          "sort_order": 4,
+          "topics": [
+            {
+              "topic_id": "nur_evs_all",
+              "title": "My Environment",
+              "sort_order": 1,
+              "subtopics": [
+                "Good habits and manners",
+                "Parts of the body and sense organs",
+                "Living and non-living things",
+                "Plants around us - parts of a plant",
+                "Introduction to traffic rules and safety",
+                "Air, water and the sun - why we need them",
+                "Project - collecting leaves, flowers and seeds"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "nur_art",
+          "title": "Art, Music & Motor Skills",
+          "sort_order": 5,
+          "topics": [
+            {
+              "topic_id": "nur_art_fine",
+              "title": "Fine Motor Skills",
+              "sort_order": 1,
+              "subtopics": [
+                "Colouring within outlines",
+                "Paper tearing, crumpling and pasting",
+                "Thumb, finger and vegetable printing",
+                "Clay modelling and beading",
+                "Correct pencil grip"
+              ]
+            },
+            {
+              "topic_id": "nur_art_gross",
+              "title": "Gross Motor Skills",
+              "sort_order": 2,
+              "subtopics": [
+                "Running, jumping, hopping and balancing",
+                "Ball games",
+                "Simple races and free play"
+              ]
+            },
+            {
+              "topic_id": "nur_art_music",
+              "title": "Music & Movement",
+              "sort_order": 3,
+              "subtopics": ["Action songs and dance", "Rhythm and clapping patterns", "Group singing"]
+            },
+            {
+              "topic_id": "nur_art_showtell",
+              "title": "Show & Tell",
+              "sort_order": 4,
+              "subtopics": [
+                "Speaking about a favourite object",
+                "Fancy dress and role play",
+                "Celebrating festivals and special days"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_id": "lkg",
+      "code": "LKG",
+      "title": "LKG",
+      "subtitle": "Lower Kindergarten",
+      "min_age": 4,
+      "max_age": 5,
+      "experience_mode": "standard",
+      "sort_order": 3,
+      "subjects": [
+        {
+          "subject_id": "lkg_maths",
+          "title": "Basic Mathematics",
+          "sort_order": 1,
+          "topics": [
+            {
+              "topic_id": "lkg_maths_shapes",
+              "title": "Shapes",
+              "sort_order": 1,
+              "subtopics": [
+                "Identify Circles, Squares and Triangles",
+                "Identify Squares and Rectangles"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_count_3",
+              "title": "Count to 3",
+              "sort_order": 2,
+              "subtopics": [
+                "Learn to Count (up to 3)",
+                "Count Dots (up to 3)",
+                "Count Shapes (up to 3)",
+                "Count Objects (up to 3)",
+                "Count on Ten Frames (up to 3)",
+                "Show Numbers on Ten Frames (up to 3)"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_count_5",
+              "title": "Count to 5",
+              "sort_order": 3,
+              "subtopics": [
+                "Learn to Count (up to 5)",
+                "Count Dots (up to 5)",
+                "Count Shapes (up to 5)",
+                "Count Objects (up to 5)",
+                "Count On Ten Frames (up to 5)",
+                "Show Numbers on Ten Frames (up to 5)",
+                "Represent Numbers (up to 5)"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_count_10",
+              "title": "Count to 10",
+              "sort_order": 4,
+              "subtopics": [
+                "Learn to Count (up to 10)",
+                "Count Dots (up to 10)",
+                "Count Shapes (up to 10)",
+                "Count Objects (up to 10)",
+                "Count On Ten Frames (up to 10)",
+                "Show Numbers on Ten Frames (up to 10)",
+                "Represent Numbers (up to 10)"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_comparing",
+              "title": "Comparing",
+              "sort_order": 5,
+              "subtopics": [
+                "Are There Enough?",
+                "Compare Groups (Fewer or More)",
+                "Fewer and More - Compare by Counting",
+                "Compare in a Mixed Group"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_positions",
+              "title": "Positions",
+              "sort_order": 6,
+              "subtopics": [
+                "Inside and Outside",
+                "Above and Below",
+                "Beside and Next To",
+                "Left and Right",
+                "Left, Middle and Right",
+                "Top and Bottom",
+                "Top, Middle and Bottom"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_classify",
+              "title": "Classify",
+              "sort_order": 7,
+              "subtopics": [
+                "Same",
+                "Different",
+                "Same and Different",
+                "Classify Shapes by Colour",
+                "Classify and Sort by Colour",
+                "Classify and Sort by Shape"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_size",
+              "title": "Size",
+              "sort_order": 8,
+              "subtopics": [
+                "Long and Short",
+                "Tall and Short",
+                "Light and Heavy",
+                "Wide and Narrow"
+              ]
+            },
+            {
+              "topic_id": "lkg_maths_money",
+              "title": "Money",
+              "sort_order": 9,
+              "subtopics": ["Coin Values", "Count 1-Rupee Coins"]
+            }
+          ]
+        },
+        {
+          "subject_id": "lkg_english",
+          "title": "English",
+          "sort_order": 2,
+          "topics": [
+            {
+              "topic_id": "lkg_eng_strokes",
+              "title": "Pre-Writing Strokes",
+              "sort_order": 1,
+              "subtopics": [
+                "Standing Line",
+                "Sleeping Line",
+                "Left Slanting Line",
+                "Right Slanting Line",
+                "Left Curve",
+                "Right Curve",
+                "Up Curve",
+                "Down Curve"
+              ]
+            },
+            {
+              "topic_id": "lkg_eng_capitals",
+              "title": "Capital Letters (A-Z)",
+              "sort_order": 2,
+              "subtopics": ["Identification", "Writing", "Objects Related to Each Letter"]
+            },
+            {
+              "topic_id": "lkg_eng_smalls",
+              "title": "Small Letters (a-z)",
+              "sort_order": 3,
+              "subtopics": [
+                "Identification",
+                "Writing",
+                "Objects Related to Each Letter",
+                "Matching Capital and Small",
+                "Vowels and Consonants",
+                "Phonic Drill",
+                "Vowel Words",
+                "Rhyming Words to Improve Listening Skills"
+              ]
+            },
+            {
+              "topic_id": "lkg_eng_phonetics",
+              "title": "Phonetics",
+              "sort_order": 4,
+              "subtopics": [
+                "Sound of Letters",
+                "Objects Related to Letters",
+                "Vowels and Consonants",
+                "Vowel Words",
+                "Article a/an",
+                "This-That and These-Those",
+                "One-Many",
+                "Positions",
+                "Rhyming Words",
+                "Genie Board, Flashcards, Oral Interaction, Written Work, Worksheets, Storytelling and Enactment"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "lkg_ga",
+          "title": "General Awareness",
+          "sort_order": 3,
+          "topics": [
+            {
+              "topic_id": "lkg_ga_myself",
+              "title": "About Myself",
+              "sort_order": 1,
+              "subtopics": [
+                "Myself",
+                "My Body Parts",
+                "My Family",
+                "My Birthday",
+                "My Home",
+                "My School"
+              ]
+            },
+            {
+              "topic_id": "lkg_ga_safety",
+              "title": "Safety",
+              "sort_order": 2,
+              "subtopics": ["At Home", "On the Road", "At the Playground"]
+            },
+            {
+              "topic_id": "lkg_ga_helpers",
+              "title": "People Who Help Us",
+              "sort_order": 3,
+              "subtopics": ["Doctor", "Teacher", "Policeman", "Postman", "Carpenter", "Farmer"]
+            },
+            {
+              "topic_id": "lkg_ga_transport",
+              "title": "Transport",
+              "sort_order": 4,
+              "subtopics": ["Road", "Rail", "Air"]
+            },
+            {
+              "topic_id": "lkg_ga_seasons",
+              "title": "Seasons",
+              "sort_order": 5,
+              "subtopics": ["Summer", "Winter", "Rainy"]
+            },
+            {
+              "topic_id": "lkg_ga_animals",
+              "title": "Animals",
+              "sort_order": 6,
+              "subtopics": ["Wild", "Domestic", "Water", "Pet"]
+            }
+          ]
+        },
+        {
+          "subject_id": "lkg_evs",
+          "title": "Environmental Science",
+          "sort_order": 4,
+          "topics": [
+            {
+              "topic_id": "lkg_evs_all",
+              "title": "My Environment",
+              "sort_order": 1,
+              "subtopics": [
+                "Good habits and manners",
+                "Project on collecting a few living and non-living things",
+                "Introduction to traffic rules and safety",
+                "Parts of the body"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "class_id": "ukg",
+      "code": "UKG",
+      "title": "UKG",
+      "subtitle": "Upper Kindergarten / KG2",
+      "min_age": 5,
+      "max_age": 6,
+      "experience_mode": "standard",
+      "sort_order": 4,
+      "subjects": [
+        {
+          "subject_id": "ukg_maths",
+          "title": "Mathematics",
+          "sort_order": 1,
+          "topics": [
+            {
+              "topic_id": "ukg_maths_premaths",
+              "title": "Pre-Maths Concepts",
+              "sort_order": 1,
+              "subtopics": [
+                "Big-Small",
+                "Front-Back",
+                "Full-Empty",
+                "Heavy-Light",
+                "In-Out",
+                "More-Less",
+                "Right-Left",
+                "Same-Different",
+                "Tall-Short",
+                "Thick-Thin",
+                "Top-Bottom"
+              ]
+            },
+            {
+              "topic_id": "ukg_maths_numbers",
+              "title": "Numbers (1-200)",
+              "sort_order": 2,
+              "subtopics": [
+                "Count and Write, Colour and Match",
+                "Forward and Backward Counting (1-50)",
+                "Before, After, Between Number (1-100)",
+                "Number Names (1-50)",
+                "Skip Counting 2 & 5",
+                "Writing"
+              ]
+            },
+            {
+              "topic_id": "ukg_maths_addsub",
+              "title": "Addition & Subtraction",
+              "sort_order": 3,
+              "subtopics": [
+                "Picture Addition",
+                "Picture Subtraction",
+                "Simple Addition & Subtraction Using Objects",
+                "1 digit Addition",
+                "1 digit Subtraction",
+                "Addition and Subtraction Without Objects or Pictures",
+                "Putting Signs like '>', '<' and '='"
+              ]
+            },
+            {
+              "topic_id": "ukg_maths_shapes",
+              "title": "Shapes",
+              "sort_order": 4,
+              "subtopics": [
+                "Circle",
+                "Diamond",
+                "Oval",
+                "Rectangle",
+                "Semi-Circle",
+                "Square",
+                "Triangle"
+              ]
+            },
+            {
+              "topic_id": "ukg_maths_colours",
+              "title": "Colours",
+              "sort_order": 5,
+              "subtopics": [
+                "Black, White, Pink (Shades - Light & Dark)",
+                "Orange, Green, Purple (Shades - Light & Dark)",
+                "Red, Yellow, Blue (Shades - Light & Dark)"
+              ]
+            },
+            {
+              "topic_id": "ukg_maths_money_time",
+              "title": "Money & Time",
+              "sort_order": 6,
+              "subtopics": ["Money", "Time"]
+            }
+          ]
+        },
+        {
+          "subject_id": "ukg_english",
+          "title": "English Language",
+          "sort_order": 2,
+          "topics": [
+            {
+              "topic_id": "ukg_eng_letters",
+              "title": "Letters (Aa-Zz)",
+              "sort_order": 1,
+              "subtopics": [
+                "Identification",
+                "Sound of Letters",
+                "Objects Related to Letters",
+                "Vowels and Consonants"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_grammar",
+              "title": "Early Grammar",
+              "sort_order": 2,
+              "subtopics": [
+                "Article (A/An)",
+                "One-Many",
+                "Positions",
+                "This-That & These-Those",
+                "Use of 'in', 'on' and 'under' in sentences"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_words",
+              "title": "Words & Rhyming",
+              "sort_order": 3,
+              "subtopics": ["Vowel Words", "Rhyming Words"]
+            },
+            {
+              "topic_id": "ukg_eng_reading",
+              "title": "Reading & Conversation",
+              "sort_order": 4,
+              "subtopics": [
+                "Reading words and sentences",
+                "Having social conversations",
+                "Picture composition",
+                "Making sentences with certain words or structure",
+                "Revision of the English language basics"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_methods",
+              "title": "Activities",
+              "sort_order": 5,
+              "subtopics": [
+                "Genie Board, Flashcards, Oral Interaction, Written Work, Worksheets, Storytelling and Enactment"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "ukg_ga",
+          "title": "General Awareness",
+          "sort_order": 3,
+          "topics": [
+            {
+              "topic_id": "ukg_ga_myself",
+              "title": "Myself",
+              "sort_order": 1,
+              "subtopics": [
+                "Parts of Body",
+                "Sense Organs",
+                "My Home",
+                "My Family",
+                "My School",
+                "Seasons - Summer, Rainy, Winter"
+              ]
+            },
+            {
+              "topic_id": "ukg_ga_transport",
+              "title": "Transport",
+              "sort_order": 2,
+              "subtopics": ["Land", "Water", "Air"]
+            },
+            {
+              "topic_id": "ukg_ga_animals",
+              "title": "Animals",
+              "sort_order": 3,
+              "subtopics": [
+                "Wild Animals",
+                "Domestic Animals",
+                "Pet Animals",
+                "Farm Animals",
+                "Water Animals",
+                "Animals and Their Sounds",
+                "Animals and Their Young Ones"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "ukg_evs",
+          "title": "Environmental Science",
+          "sort_order": 4,
+          "topics": [
+            {
+              "topic_id": "ukg_evs_all",
+              "title": "My Environment",
+              "sort_order": 1,
+              "subtopics": [
+                "A visit to a police station or post office",
+                "Introduction to air, water, and sound pollution",
+                "Introduction to traffic rules and safety",
+                "Project on collecting a few living and non-living things",
+                "All types of transport and demonstration of vehicles"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "ukg_language",
+          "title": "Language (Hindi)",
+          "sort_order": 5,
+          "retained_note": "Published UKG syllabus includes a Language subject. Removal was requested for Nursery and Play Group only. Confirm whether UKG should also drop it.",
+          "topics": [
+            {
+              "topic_id": "ukg_lang_swar",
+              "title": "स्वर (अ - अः)",
+              "sort_order": 1,
+              "subtopics": ["Identification of vowels", "Sound of each vowel"]
+            },
+            {
+              "topic_id": "ukg_lang_vyanjan",
+              "title": "व्यंजन (क - ज्ञ)",
+              "sort_order": 2,
+              "subtopics": ["Identification of consonants", "Related pictures and words"]
+            },
+            {
+              "topic_id": "ukg_lang_matra",
+              "title": "मात्राओं का ज्ञान",
+              "sort_order": 3,
+              "subtopics": [
+                "मात्राओं का ज्ञान (अ - अः)",
+                "व्यंजन (क-ज्ञ) पर मात्राएँ लगाना",
+                "एक मात्रा हर व्यंजन पर",
+                "दो मात्रा (अ, आ)"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "ukg_rhymes",
+          "title": "Rhymes",
+          "sort_order": 6,
+          "topics": [
+            {
+              "topic_id": "ukg_rhymes_all",
+              "title": "UKG Rhymes",
+              "sort_order": 1,
+              "subtopics": [
+                "Rabbits, Rabbits (1, 2, 3)",
+                "All About Me",
+                "Thank You God",
+                "The Peapod",
+                "Little Me",
+                "The Cherry Tree",
+                "My Balloon",
+                "The Clown",
+                "This Is the Sun",
+                "Colours of the Rainbow",
+                "Indian Song"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

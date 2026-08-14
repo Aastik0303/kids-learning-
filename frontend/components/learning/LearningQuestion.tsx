@@ -143,8 +143,8 @@ export function LearningQuestion({
   }
 
   return (
-    <section data-guide-id="question-area" className={`surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6 ${highlightId === "question-area" ? "guide-glow" : ""}`}>
-      <div className="grid gap-4 rounded-[2rem] bg-[#f7fbff] p-4 sm:grid-cols-[7rem_1fr] sm:items-center">
+    <section data-guide-id="question-area" className={`activity-shell surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6 ${highlightId === "question-area" ? "guide-glow" : ""}`}>
+      <div className="activity-primary grid gap-4 rounded-[2rem] bg-[#f7fbff] p-4 sm:grid-cols-[7rem_1fr] sm:items-center">
         <div className="mascot-face min-h-28 rounded-[1.75rem]" />
         <div>
           <p className="text-sm font-black uppercase text-sky">Mini mission</p>
@@ -180,7 +180,7 @@ export function LearningQuestion({
           Show me &amp; explain
         </button>
       ) : null}
-      <div data-guide-id="voice-answer-area" className={`grid gap-4 rounded-[2rem] bg-sunshine/20 p-5 text-center ${highlightId === "voice-answer-area" || highlightId === "microphone-button" ? "guide-glow" : ""}`}>
+      <div data-guide-id="voice-answer-area" className={`activity-answers grid gap-4 rounded-[2rem] bg-sunshine/20 p-5 text-center ${highlightId === "voice-answer-area" || highlightId === "microphone-button" ? "guide-glow" : ""}`}>
         <VoiceStateIndicator state={voiceState} />
         <VoiceRecorder
           sessionId={sessionId}
@@ -197,7 +197,7 @@ export function LearningQuestion({
         <SpeechErrorMessage message={speechError} />
       </div>
       {visualAnswerFallback && (showOptionsWithMicrophone || showFallback || countGuideEnabled || showToddlerStyleChoices) ? (
-        <div className="grid gap-3 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-4">
+        <div className="activity-answers grid gap-3 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-4">
           <p className="text-center text-sm font-black uppercase text-sky">Choose or say your answer</p>
           <VoiceFallbackOptions options={activity.options} disabled={disabled} onAnswer={onAnswer} />
         </div>

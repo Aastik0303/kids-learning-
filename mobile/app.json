@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "Learn Kids",
+    "slug": "learn-kids",
+    "scheme": "learnkids",
+    "version": "1.0.0",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.learnkids.app",
+      "requireFullScreen": false,
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "Learn Kids listens when your child answers a question out loud.",
+        "NSSpeechRecognitionUsageDescription": "Learn Kids turns your child's spoken answer into text so the lesson can respond."
+      }
+    },
+    "android": {
+      "package": "com.learnkids.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-secure-store",
+      "expo-localization",
+      "expo-splash-screen",
+      "expo-audio",
+      [
+        "@jamsch/expo-speech-recognition",
+        {
+          "microphonePermission": "Learn Kids listens when your child answers a question out loud.",
+          "speechRecognitionPermission": "Learn Kids turns your child's spoken answer into text so the lesson can respond.",
+          "androidSpeechServicePackages": [
+            "com.google.android.googlequicksearchbox"
+          ]
+        }
+      ],
+      "expo-asset"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://localhost:8008"
+    }
+  }
+}

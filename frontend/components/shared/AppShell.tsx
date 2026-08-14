@@ -28,7 +28,10 @@ function ParentDrawer({
   return (
     <div className="fixed inset-0 z-50 bg-ink/35 backdrop-blur-sm" role="dialog" aria-modal="true">
       <button className="absolute inset-0 h-full w-full cursor-default" aria-label="Close parent profile" onClick={onClose} />
-      <aside className="absolute right-0 top-0 grid h-full w-full max-w-md content-start gap-4 overflow-y-auto bg-[#fbfcf6] p-5 shadow-soft sm:rounded-l-[2rem]">
+      <aside
+        data-surface="parent"
+        className="absolute right-0 top-0 grid h-full w-full max-w-md content-start gap-4 overflow-y-auto bg-[#fbfcf6] p-5 shadow-soft sm:rounded-l-[2rem]"
+      >
         <div className="surface-panel flex items-center justify-between gap-3 rounded-[2rem] p-4">
           <div>
             <p className="text-sm font-black uppercase text-leaf">Parent Profile</p>
@@ -138,8 +141,16 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
   ];
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pb-36 pt-4 sm:px-6 sm:pb-6">
-      <header className="nav-shell no-print sticky top-3 z-40 mb-5 rounded-[2rem] px-4 py-3 backdrop-blur">
+    // data-surface drives the touch-target floors in globals.css. This shell
+    // wraps the child-facing routes, so the 64px learning floor applies inside
+    // it — except within nested surfaces: the header and the guide dock mark
+    // themselves "chrome" (44px) and the parent drawer marks itself "parent".
+    //
+    // Bottom padding is NOT a fixed pb-36 any more. The dock measures itself
+    // and publishes --dock-height, so the reserved space always matches the
+    // real dock instead of a guess that goes stale the moment it reflows.
+    <main data-surface="child" className="app-shell-main mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pt-4 sm:px-6">
+      <header data-surface="chrome" className="nav-shell no-print sticky top-3 z-40 mb-5 rounded-[2rem] px-4 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-3 text-xl font-black text-ink">
             <span className="grid h-12 w-12 place-items-center rounded-2xl bg-leaf text-white shadow-soft">LL</span>
@@ -148,7 +159,11 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
               <span className="text-xs font-black uppercase text-ink/45">Nursery Studio</span>
             </span>
           </Link>
-          <nav className="flex flex-wrap items-center gap-2 text-sm font-black">
+          {/* Desktop chrome only. A pre-literate child does not navigate by a
+              six-item text menu — they are led by the guide and the adventure
+              screen (docs/ops/OP-03-entry-flow.md §5). Below md these six pills
+              wrapped to three rows and filled the entire first screen. */}
+          <nav className="hidden flex-wrap items-center gap-2 text-sm font-black md:flex">
             {navItems.map((item) => {
               const active = item.href === "/" ? pathname === "/" || pathname === "/home" : pathname.startsWith(item.href);
               return (
