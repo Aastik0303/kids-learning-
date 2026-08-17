@@ -1,0 +1,3490 @@
+{
+  "class_id": "playgroup",
+  "title": "Play Group",
+  "subtitle": "Pre-Nursery",
+  "emoji": "🧸",
+  "min_age": 2,
+  "max_age": 3,
+  "experience_mode": "early",
+  "version": "2026-27",
+  "source": "CBSE Play Group (Pre-Nursery) Syllabus 2026-27",
+  "pedagogy": "Fully play-based, oral and activity-driven. No formal written examination; assessment is through observation.",
+  "design_note": "At 2-3 a child cannot read at all. The emoji IS the question — text is for the parent looking over the shoulder. Never more than 2 choices per screen.",
+  "delivery_legend": {
+    "digital": "Fully teachable on screen. The engine serves these.",
+    "parent_guided": "Physical-world learning. The app shows the parent an activity card and records completion — it does NOT fake a tap question for it.",
+    "hybrid": "Screen introduces it, a physical action completes it."
+  },
+  "emoji_map": {
+    "red_swatch": "🟥",
+    "yellow_swatch": "🟨",
+    "blue_swatch": "🟦",
+    "green_swatch": "🟩",
+    "black_swatch": "⬛",
+    "white_swatch": "⬜",
+    "circle": "⭕",
+    "square": "🟦",
+    "triangle": "🔺",
+    "apple": "🍎",
+    "banana": "🍌",
+    "mango": "🥭",
+    "potato": "🥔",
+    "tomato": "🍅",
+    "carrot": "🥕",
+    "cat": "🐱",
+    "dog": "🐶",
+    "cow": "🐄",
+    "crow": "🐦",
+    "parrot": "🦜",
+    "duck": "🦆",
+    "car": "🚗",
+    "bus": "🚌",
+    "cycle": "🚲",
+    "aeroplane": "✈️",
+    "train": "🚂",
+    "boat": "⛵",
+    "ball": "⚽",
+    "star": "⭐",
+    "balloon": "🎈",
+    "flower": "🌸",
+    "sun": "☀️",
+    "moon": "🌙",
+    "tree": "🌳",
+    "water": "💧",
+    "elephant": "🐘",
+    "mouse": "🐭",
+    "egg": "🥚",
+    "hand": "✋",
+    "eyes": "👀",
+    "ears": "👂",
+    "nose": "👃",
+    "mouth": "👄",
+    "legs": "🦵",
+    "family": "👨‍👩‍👧",
+    "teacher": "👩‍🏫",
+    "friends": "🧒",
+    "classroom": "🏫",
+    "schoolbag": "🎒",
+    "bottle": "🍼",
+    "dustbin": "🗑️",
+    "toothbrush": "🪥",
+    "soap": "🧼",
+    "big_ball": "🏀",
+    "small_ball": "⚾",
+    "long_pencil": "✏️",
+    "short_pencil": "🖊️",
+    "heavy_rock": "🪨",
+    "light_feather": "🪶",
+    "box": "📦",
+    "door": "🚪",
+    "clay": "🧱",
+    "paper": "📄",
+    "drum": "🥁",
+    "cake": "🎂",
+    "diya": "🪔",
+    "colours": "🎨",
+    "flag": "🇮🇳",
+    "gift": "🎁",
+    "slide": "🛝",
+    "swing": "🎠"
+  },
+  "subjects": [
+    {
+      "subject_id": "pg_maths",
+      "title": "Basic Mathematics",
+      "note": "Pre-Number Concepts",
+      "emoji": "🔢",
+      "sort_order": 1,
+      "topics": [
+        {
+          "topic_id": "pg_maths_colours",
+          "title": "Colours",
+          "emoji": "🎨",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Recognise red, yellow, blue, green, black and white; sort by colour",
+          "intro_message": "Look at all the pretty colours! 🎨",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_co_1",
+              "type": "introduce",
+              "emoji": "🟥",
+              "skill_id": "colour_red",
+              "prompt": "This is red! 🟥 Red like an apple. 🍎",
+              "visual_items": [
+                "red_swatch",
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say red with me.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_co_2",
+              "type": "select_colour",
+              "emoji": "🟥",
+              "skill_id": "colour_red",
+              "prompt": "Tap the red one! 🟥",
+              "visual_items": [
+                "red_swatch",
+                "blue_swatch"
+              ],
+              "options": [
+                "red",
+                "blue"
+              ],
+              "option_emojis": [
+                "🟥",
+                "🟦"
+              ],
+              "correct_answer": "red",
+              "hint": "Red like a tomato 🍅",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_co_3",
+              "type": "select_colour",
+              "emoji": "🟨",
+              "skill_id": "colour_yellow",
+              "prompt": "Tap the yellow one! 🟨",
+              "visual_items": [
+                "yellow_swatch",
+                "blue_swatch"
+              ],
+              "options": [
+                "yellow",
+                "blue"
+              ],
+              "option_emojis": [
+                "🟨",
+                "🟦"
+              ],
+              "correct_answer": "yellow",
+              "hint": "Yellow like the sun ☀️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_co_4",
+              "type": "select_colour",
+              "emoji": "🟦",
+              "skill_id": "colour_blue",
+              "prompt": "Tap the blue one! 🟦",
+              "visual_items": [
+                "blue_swatch",
+                "red_swatch"
+              ],
+              "options": [
+                "blue",
+                "red"
+              ],
+              "option_emojis": [
+                "🟦",
+                "🟥"
+              ],
+              "correct_answer": "blue",
+              "hint": "Blue like water 💧",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_co_5",
+              "type": "select_colour",
+              "emoji": "🟩",
+              "skill_id": "colour_green",
+              "prompt": "Tap the green one! 🟩",
+              "visual_items": [
+                "green_swatch",
+                "red_swatch"
+              ],
+              "options": [
+                "green",
+                "red"
+              ],
+              "option_emojis": [
+                "🟩",
+                "🟥"
+              ],
+              "correct_answer": "green",
+              "hint": "Green like a tree 🌳",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_co_6",
+              "type": "identify_colour",
+              "emoji": "🍌",
+              "skill_id": "colour_in_objects",
+              "prompt": "What colour is the banana? 🍌",
+              "visual_items": [
+                "banana"
+              ],
+              "options": [
+                "yellow",
+                "blue"
+              ],
+              "option_emojis": [
+                "🟨",
+                "🟦"
+              ],
+              "correct_answer": "yellow",
+              "hint": "Bananas are yellow.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_co_7",
+              "type": "match",
+              "emoji": "🧺",
+              "skill_id": "sort_by_colour",
+              "prompt": "Which one is red like this? 🟥",
+              "visual_items": [
+                "red_swatch"
+              ],
+              "options": [
+                "apple",
+                "banana"
+              ],
+              "option_emojis": [
+                "🍎",
+                "🍌"
+              ],
+              "correct_answer": "apple",
+              "hint": "Apples are red 🍎",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_shapes",
+          "title": "Shapes",
+          "emoji": "🔺",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Recognise circle, square and triangle; match same shapes",
+          "intro_message": "Let us find shapes! ⭕ 🟦 🔺",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_sh_1",
+              "type": "introduce",
+              "emoji": "⭕",
+              "skill_id": "shape_circle",
+              "prompt": "This is a circle! ⭕ Round like a ball. ⚽",
+              "visual_items": [
+                "circle",
+                "ball"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Round and round.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_sh_2",
+              "type": "select_shape",
+              "emoji": "⭕",
+              "skill_id": "shape_circle",
+              "prompt": "Tap the circle! ⭕",
+              "visual_items": [
+                "circle",
+                "triangle"
+              ],
+              "options": [
+                "circle",
+                "triangle"
+              ],
+              "option_emojis": [
+                "⭕",
+                "🔺"
+              ],
+              "correct_answer": "circle",
+              "hint": "The round one.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_sh_3",
+              "type": "select_shape",
+              "emoji": "🟦",
+              "skill_id": "shape_square",
+              "prompt": "Tap the square! 🟦",
+              "visual_items": [
+                "square",
+                "circle"
+              ],
+              "options": [
+                "square",
+                "circle"
+              ],
+              "option_emojis": [
+                "🟦",
+                "⭕"
+              ],
+              "correct_answer": "square",
+              "hint": "It has four sides.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_sh_4",
+              "type": "select_shape",
+              "emoji": "🔺",
+              "skill_id": "shape_triangle",
+              "prompt": "Tap the triangle! 🔺",
+              "visual_items": [
+                "triangle",
+                "circle"
+              ],
+              "options": [
+                "triangle",
+                "circle"
+              ],
+              "option_emojis": [
+                "🔺",
+                "⭕"
+              ],
+              "correct_answer": "triangle",
+              "hint": "It has a pointy top.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_sh_5",
+              "type": "match",
+              "emoji": "🧩",
+              "skill_id": "match_shapes",
+              "prompt": "Find the one that matches! ⭕",
+              "visual_items": [
+                "circle"
+              ],
+              "options": [
+                "circle",
+                "square"
+              ],
+              "option_emojis": [
+                "⭕",
+                "🟦"
+              ],
+              "correct_answer": "circle",
+              "hint": "Look for the same shape.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_numbers",
+          "title": "Numbers 1 to 5",
+          "emoji": "5️⃣",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Oral counting 1-5, number recognition, counting objects, finger counting",
+          "intro_message": "Let us count on our fingers! ✋",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_nm_1",
+              "type": "introduce",
+              "emoji": "1️⃣",
+              "skill_id": "number_1",
+              "prompt": "This is one! 1️⃣ One sun. ☀️",
+              "visual_items": [
+                "sun"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Just one.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_nm_2",
+              "type": "count_objects",
+              "emoji": "🎈",
+              "skill_id": "count_to_2",
+              "prompt": "How many balloons? 🎈🎈",
+              "visual_items": [
+                "balloon",
+                "balloon"
+              ],
+              "options": [
+                "1",
+                "2"
+              ],
+              "option_emojis": [
+                "1️⃣",
+                "2️⃣"
+              ],
+              "correct_answer": "2",
+              "hint": "One, two.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_nm_3",
+              "type": "count_objects",
+              "emoji": "⭐",
+              "skill_id": "count_to_3",
+              "prompt": "How many stars? ⭐⭐⭐",
+              "visual_items": [
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [
+                "2",
+                "3"
+              ],
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣"
+              ],
+              "correct_answer": "3",
+              "hint": "One, two, three.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_nm_4",
+              "type": "count_objects",
+              "emoji": "🍎",
+              "skill_id": "count_to_5",
+              "prompt": "How many apples? 🍎🍎🍎🍎",
+              "visual_items": [
+                "apple",
+                "apple",
+                "apple",
+                "apple"
+              ],
+              "options": [
+                "3",
+                "4"
+              ],
+              "option_emojis": [
+                "3️⃣",
+                "4️⃣"
+              ],
+              "correct_answer": "4",
+              "hint": "Touch each apple as you count.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_nm_5",
+              "type": "count_objects",
+              "emoji": "✋",
+              "skill_id": "count_to_5",
+              "prompt": "How many fingers? ✋",
+              "visual_items": [
+                "hand"
+              ],
+              "options": [
+                "4",
+                "5"
+              ],
+              "option_emojis": [
+                "4️⃣",
+                "5️⃣"
+              ],
+              "correct_answer": "5",
+              "hint": "One hand has five fingers.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_nm_6",
+              "type": "select_number",
+              "emoji": "2️⃣",
+              "skill_id": "number_recognition_1_5",
+              "prompt": "Tap the number 2! 2️⃣",
+              "visual_items": [
+                "1",
+                "2"
+              ],
+              "options": [
+                "1",
+                "2"
+              ],
+              "option_emojis": [
+                "1️⃣",
+                "2️⃣"
+              ],
+              "correct_answer": "2",
+              "hint": "Two comes after one.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_nm_7",
+              "type": "story_listen",
+              "emoji": "🎵",
+              "skill_id": "number_rhymes",
+              "prompt": "Sing with me: One, two, buckle my shoe! 👞",
+              "visual_items": [
+                "shoe"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Clap along!",
+              "difficulty": "very_easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_prenumber",
+          "title": "Pre-Number Concepts",
+          "emoji": "⚖️",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Big/small, tall/short, long/short, heavy/light, more/less",
+          "intro_message": "Some things are big, some are small! 🐘 🐭",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_pn_1",
+              "type": "multiple_choice",
+              "emoji": "🐘",
+              "skill_id": "big_small",
+              "prompt": "Which one is BIG? 🐘 or 🐭",
+              "visual_items": [
+                "elephant",
+                "mouse"
+              ],
+              "options": [
+                "elephant",
+                "mouse"
+              ],
+              "option_emojis": [
+                "🐘",
+                "🐭"
+              ],
+              "correct_answer": "elephant",
+              "hint": "The elephant is very big!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_pn_2",
+              "type": "multiple_choice",
+              "emoji": "🐭",
+              "skill_id": "big_small",
+              "prompt": "Which one is SMALL? 🐭 or 🐘",
+              "visual_items": [
+                "mouse",
+                "elephant"
+              ],
+              "options": [
+                "mouse",
+                "elephant"
+              ],
+              "option_emojis": [
+                "🐭",
+                "🐘"
+              ],
+              "correct_answer": "mouse",
+              "hint": "The little one.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_pn_3",
+              "type": "multiple_choice",
+              "emoji": "🌳",
+              "skill_id": "tall_short",
+              "prompt": "Which one is TALL? 🌳 or 🌸",
+              "visual_items": [
+                "tree",
+                "flower"
+              ],
+              "options": [
+                "tree",
+                "flower"
+              ],
+              "option_emojis": [
+                "🌳",
+                "🌸"
+              ],
+              "correct_answer": "tree",
+              "hint": "It reaches up high.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_pn_4",
+              "type": "multiple_choice",
+              "emoji": "🪨",
+              "skill_id": "heavy_light",
+              "prompt": "Which one is HEAVY? 🪨 or 🪶",
+              "visual_items": [
+                "heavy_rock",
+                "light_feather"
+              ],
+              "options": [
+                "rock",
+                "feather"
+              ],
+              "option_emojis": [
+                "🪨",
+                "🪶"
+              ],
+              "correct_answer": "rock",
+              "hint": "Hard to pick up.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_pn_5",
+              "type": "multiple_choice",
+              "emoji": "🍎",
+              "skill_id": "more_less",
+              "prompt": "Which side has MORE? 🍎🍎🍎 or 🍎",
+              "visual_items": [
+                "apple",
+                "apple",
+                "apple",
+                "apple"
+              ],
+              "options": [
+                "three apples",
+                "one apple"
+              ],
+              "option_emojis": [
+                "🍎🍎🍎",
+                "🍎"
+              ],
+              "correct_answer": "three apples",
+              "hint": "More means a bigger pile.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_positions",
+          "title": "Positions",
+          "emoji": "📦",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "In/out, up/down, open/close, front/back",
+          "intro_message": "Where is it? Let us look! 👀",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_ps_1",
+              "type": "multiple_choice",
+              "emoji": "📦",
+              "skill_id": "in_out",
+              "prompt": "Is the cat IN or OUT of the box? 🐱📦",
+              "visual_items": [
+                "cat",
+                "box"
+              ],
+              "options": [
+                "in",
+                "out"
+              ],
+              "option_emojis": [
+                "📥",
+                "📤"
+              ],
+              "correct_answer": "in",
+              "hint": "The cat is inside.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ps_2",
+              "type": "multiple_choice",
+              "emoji": "⬆️",
+              "skill_id": "up_down",
+              "prompt": "Is the balloon UP or DOWN? 🎈",
+              "visual_items": [
+                "balloon"
+              ],
+              "options": [
+                "up",
+                "down"
+              ],
+              "option_emojis": [
+                "▫️",
+                "▫️"
+              ],
+              "correct_answer": "up",
+              "hint": "Balloons float up!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ps_3",
+              "type": "multiple_choice",
+              "emoji": "🚪",
+              "skill_id": "open_close",
+              "prompt": "Is the door OPEN or CLOSED? 🚪",
+              "visual_items": [
+                "door"
+              ],
+              "options": [
+                "open",
+                "closed"
+              ],
+              "option_emojis": [
+                "🔓",
+                "🔒"
+              ],
+              "correct_answer": "open",
+              "hint": "Can we walk through?",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_ps_4",
+              "type": "multiple_choice",
+              "emoji": "🚗",
+              "skill_id": "front_back",
+              "prompt": "Which car is in FRONT? 🚗🚙",
+              "visual_items": [
+                "car",
+                "car"
+              ],
+              "options": [
+                "first car",
+                "second car"
+              ],
+              "option_emojis": [
+                "🚗",
+                "🚙"
+              ],
+              "correct_answer": "first car",
+              "hint": "The one leading the way.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_matching",
+          "title": "Matching & Sorting",
+          "emoji": "🧩",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Same and different, match the pair, sort by colour and size",
+          "intro_message": "Let us find the matching pairs! 🧩",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_mt_1",
+              "type": "match",
+              "emoji": "🐱",
+              "skill_id": "match_pair",
+              "prompt": "Find the one that matches! 🐱",
+              "visual_items": [
+                "cat"
+              ],
+              "options": [
+                "cat",
+                "dog"
+              ],
+              "option_emojis": [
+                "🐱",
+                "🐶"
+              ],
+              "correct_answer": "cat",
+              "hint": "Look for the same one.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_mt_2",
+              "type": "multiple_choice",
+              "emoji": "🔍",
+              "skill_id": "same_different",
+              "prompt": "Which one is DIFFERENT? 🍎 🍎 🍌",
+              "visual_items": [
+                "apple",
+                "apple",
+                "banana"
+              ],
+              "options": [
+                "apple",
+                "banana"
+              ],
+              "option_emojis": [
+                "🍎",
+                "🍌"
+              ],
+              "correct_answer": "banana",
+              "hint": "Two are the same.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_mt_3",
+              "type": "match",
+              "emoji": "🎨",
+              "skill_id": "sort_by_colour",
+              "prompt": "Which one is the same colour? 🟩",
+              "visual_items": [
+                "green_swatch"
+              ],
+              "options": [
+                "tree",
+                "apple"
+              ],
+              "option_emojis": [
+                "🌳",
+                "🍎"
+              ],
+              "correct_answer": "tree",
+              "hint": "Green like grass.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_mt_4",
+              "type": "match",
+              "emoji": "📏",
+              "skill_id": "sort_by_size",
+              "prompt": "Which ball is the BIG one? 🏀 or ⚾",
+              "visual_items": [
+                "big_ball",
+                "small_ball"
+              ],
+              "options": [
+                "big ball",
+                "small ball"
+              ],
+              "option_emojis": [
+                "🏀",
+                "⚾"
+              ],
+              "correct_answer": "big ball",
+              "hint": "The larger one.",
+              "difficulty": "easy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "subject_id": "pg_english",
+      "title": "English",
+      "note": "Oral & Pre-Writing",
+      "emoji": "🔤",
+      "sort_order": 2,
+      "topics": [
+        {
+          "topic_id": "pg_eng_strokes",
+          "title": "Pre-Writing Strokes",
+          "emoji": "✏️",
+          "sort_order": 1,
+          "delivery": "hybrid",
+          "objective": "Crayon grip, scribbling, standing/sleeping/slanting lines, curves, joining dots",
+          "intro_message": "Let us draw lines! ✏️",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_st_1",
+              "type": "trace",
+              "emoji": "🖍️",
+              "skill_id": "free_scribble",
+              "prompt": "Scribble anywhere you like! 🖍️",
+              "visual_items": [
+                "blank_canvas"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "There is no wrong way!",
+              "difficulty": "very_easy",
+              "trace_target": "free",
+              "min_accuracy": 0.0
+            },
+            {
+              "activity_id": "pg_st_2",
+              "type": "trace",
+              "emoji": "⬇️",
+              "skill_id": "stroke_standing",
+              "prompt": "Draw a line going down! ⬇️",
+              "visual_items": [
+                "standing_line_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Top to bottom.",
+              "difficulty": "very_easy",
+              "trace_target": "standing_line",
+              "min_accuracy": 0.4
+            },
+            {
+              "activity_id": "pg_st_3",
+              "type": "trace",
+              "emoji": "➡️",
+              "skill_id": "stroke_sleeping",
+              "prompt": "Draw a line going across! ➡️",
+              "visual_items": [
+                "sleeping_line_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Left to right.",
+              "difficulty": "very_easy",
+              "trace_target": "sleeping_line",
+              "min_accuracy": 0.4
+            },
+            {
+              "activity_id": "pg_st_4",
+              "type": "trace",
+              "emoji": "⭕",
+              "skill_id": "stroke_circle",
+              "prompt": "Draw a big circle! ⭕",
+              "visual_items": [
+                "circle_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Go all the way around.",
+              "difficulty": "easy",
+              "trace_target": "circle",
+              "min_accuracy": 0.4
+            },
+            {
+              "activity_id": "pg_st_5",
+              "type": "parent_activity",
+              "emoji": "🖍️",
+              "skill_id": "crayon_grip",
+              "prompt": "Hold a fat crayon and scribble on paper! 🖍️📄",
+              "visual_items": [
+                "clay",
+                "paper"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Use your whole hand.",
+              "difficulty": "very_easy",
+              "parent_note": "Fat crayons suit small hands. Do not correct the grip yet — at two, the goal is enjoying the mark-making."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_eng_letters",
+          "title": "Capital Letters (A-E)",
+          "emoji": "🅰️",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Oral identification and sound of A to E, one object per letter",
+          "intro_message": "Let us meet our first letters! 🅰️",
+          "star_reward": 5,
+          "letter_object_map": {
+            "A": "apple 🍎",
+            "B": "ball ⚽",
+            "C": "cat 🐱",
+            "D": "dog 🐶",
+            "E": "egg 🥚"
+          },
+          "activities": [
+            {
+              "activity_id": "pg_lt_A1",
+              "type": "introduce",
+              "emoji": "🍎",
+              "skill_id": "letter_A",
+              "prompt": "This is A! 🅰️ A for apple. 🍎",
+              "visual_items": [
+                "letter_A",
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say 'aa' with me.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_lt_A2",
+              "type": "select_letter",
+              "emoji": "🅰️",
+              "skill_id": "letter_A",
+              "prompt": "Tap the letter A! 🅰️",
+              "visual_items": [
+                "A",
+                "B"
+              ],
+              "options": [
+                "A",
+                "B"
+              ],
+              "option_emojis": [
+                "▫️",
+                "▫️"
+              ],
+              "correct_answer": "A",
+              "hint": "A looks like a tent ⛺",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_lt_B1",
+              "type": "introduce",
+              "emoji": "⚽",
+              "skill_id": "letter_B",
+              "prompt": "This is B! 🅱️ B for ball. ⚽",
+              "visual_items": [
+                "letter_B",
+                "ball"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say 'buh' with me.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_lt_B2",
+              "type": "multiple_choice",
+              "emoji": "⚽",
+              "skill_id": "letter_B_object",
+              "prompt": "Which one starts with B? ⚽ or 🍎",
+              "visual_items": [
+                "ball",
+                "apple"
+              ],
+              "options": [
+                "ball",
+                "apple"
+              ],
+              "option_emojis": [
+                "⚽",
+                "🍎"
+              ],
+              "correct_answer": "ball",
+              "hint": "B for ball.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_lt_C1",
+              "type": "introduce",
+              "emoji": "🐱",
+              "skill_id": "letter_C",
+              "prompt": "This is C! C for cat. 🐱",
+              "visual_items": [
+                "letter_C",
+                "cat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say 'kuh' with me.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_lt_D1",
+              "type": "introduce",
+              "emoji": "🐶",
+              "skill_id": "letter_D",
+              "prompt": "This is D! D for dog. 🐶",
+              "visual_items": [
+                "letter_D",
+                "dog"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say 'duh' with me.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_lt_E1",
+              "type": "introduce",
+              "emoji": "🥚",
+              "skill_id": "letter_E",
+              "prompt": "This is E! E for egg. 🥚",
+              "visual_items": [
+                "letter_E",
+                "egg"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say 'eh' with me.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_lt_E2",
+              "type": "parent_activity",
+              "emoji": "🏖️",
+              "skill_id": "letter_tracing_sand",
+              "prompt": "Draw the letter A in sand or on a slate! 🅰️",
+              "visual_items": [
+                "letter_A"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Use one finger.",
+              "difficulty": "easy",
+              "parent_note": "A tray of atta or rice works well. Touching the shape teaches it faster than looking at it."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_eng_listening",
+          "title": "Listening & Speaking",
+          "emoji": "👂",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Greetings, own name and age, naming objects, one-step instructions",
+          "intro_message": "Let us talk together! 💬",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_ls_1",
+              "type": "voice_repeat",
+              "emoji": "☀️",
+              "skill_id": "greeting_morning",
+              "prompt": "Say: Good morning! ☀️",
+              "visual_items": [
+                "sun"
+              ],
+              "options": [],
+              "correct_answer": "good morning",
+              "hint": "Say it with a big smile 😊",
+              "difficulty": "very_easy",
+              "accept": [
+                "good morning",
+                "morning",
+                "gud morning"
+              ],
+              "min_similarity": 0.6
+            },
+            {
+              "activity_id": "pg_ls_2",
+              "type": "voice_repeat",
+              "emoji": "🙏",
+              "skill_id": "greeting_thanks",
+              "prompt": "Say: Thank you! 🙏",
+              "visual_items": [
+                "gift"
+              ],
+              "options": [],
+              "correct_answer": "thank you",
+              "hint": "A magic word! ✨",
+              "difficulty": "very_easy",
+              "accept": [
+                "thank you",
+                "thanks",
+                "thank u"
+              ],
+              "min_similarity": 0.6
+            },
+            {
+              "activity_id": "pg_ls_3",
+              "type": "voice_repeat",
+              "emoji": "🧒",
+              "skill_id": "own_name",
+              "prompt": "What is your name? Say it out loud! 🧒",
+              "visual_items": [
+                "child_avatar"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say your name.",
+              "difficulty": "very_easy",
+              "open_ended": true
+            },
+            {
+              "activity_id": "pg_ls_4",
+              "type": "multiple_choice",
+              "emoji": "🐱",
+              "skill_id": "naming_objects",
+              "prompt": "What is this? 🐱",
+              "visual_items": [
+                "cat"
+              ],
+              "options": [
+                "cat",
+                "dog"
+              ],
+              "option_emojis": [
+                "🐱",
+                "🐶"
+              ],
+              "correct_answer": "cat",
+              "hint": "It says meow!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ls_5",
+              "type": "parent_activity",
+              "emoji": "👏",
+              "skill_id": "one_step_instructions",
+              "prompt": "Do what I say: Clap your hands! 👏",
+              "visual_items": [
+                "hand"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Listen first, then do it.",
+              "difficulty": "easy",
+              "parent_note": "Give one instruction at a time. Two-step instructions come later — at two, one is plenty."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_eng_rhymes",
+          "title": "Rhymes & Stories",
+          "emoji": "🎵",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "10-12 action rhymes, picture stories, animal and bird sounds",
+          "intro_message": "Story time! Listen carefully. 📖",
+          "star_reward": 5,
+          "rhyme_list": [
+            "Twinkle Twinkle Little Star ⭐",
+            "Baa Baa Black Sheep 🐑",
+            "Rain Rain Go Away 🌧️",
+            "Johnny Johnny Yes Papa 👦",
+            "One Two Buckle My Shoe 👞",
+            "Humpty Dumpty 🥚",
+            "Row Row Row Your Boat ⛵",
+            "Old MacDonald Had a Farm 🚜",
+            "Head Shoulders Knees and Toes 🦶",
+            "Five Little Ducks 🦆",
+            "Incy Wincy Spider 🕷️",
+            "Wheels on the Bus 🚌"
+          ],
+          "activities": [
+            {
+              "activity_id": "pg_rh_1",
+              "type": "story_listen",
+              "emoji": "⭐",
+              "skill_id": "rhyme_listening",
+              "prompt": "Sing with me: Twinkle Twinkle Little Star! ⭐",
+              "visual_items": [
+                "star",
+                "moon"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Open and close your hands like twinkling stars ✨",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_rh_2",
+              "type": "story_listen",
+              "emoji": "🚌",
+              "skill_id": "rhyme_listening",
+              "prompt": "Sing with me: The Wheels on the Bus! 🚌",
+              "visual_items": [
+                "bus"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Roll your hands round and round.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_rh_3",
+              "type": "multiple_choice",
+              "emoji": "🐄",
+              "skill_id": "animal_sounds",
+              "prompt": "Which animal says MOO? 🐄 or 🐱",
+              "visual_items": [
+                "cow",
+                "cat"
+              ],
+              "options": [
+                "cow",
+                "cat"
+              ],
+              "option_emojis": [
+                "🐄",
+                "🐱"
+              ],
+              "correct_answer": "cow",
+              "hint": "Moooo!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_rh_4",
+              "type": "multiple_choice",
+              "emoji": "🦆",
+              "skill_id": "animal_sounds",
+              "prompt": "Which animal says QUACK? 🦆 or 🐶",
+              "visual_items": [
+                "duck",
+                "dog"
+              ],
+              "options": [
+                "duck",
+                "dog"
+              ],
+              "option_emojis": [
+                "🦆",
+                "🐶"
+              ],
+              "correct_answer": "duck",
+              "hint": "Quack quack!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_rh_5",
+              "type": "story_listen",
+              "emoji": "📖",
+              "skill_id": "picture_story",
+              "prompt": "Here is a story about a little duck! 🦆",
+              "visual_items": [
+                "duck",
+                "water"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Look at the pictures as I read.",
+              "difficulty": "easy"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "subject_id": "pg_ga",
+      "title": "General Awareness",
+      "emoji": "🌍",
+      "sort_order": 3,
+      "topics": [
+        {
+          "topic_id": "pg_ga_colors_1",
+          "title": "Colours: Red, Blue, Yellow",
+          "emoji": "🌈",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Meet red, blue and yellow, and find each one",
+          "intro_message": "Look around! The world is full of colours. 🌈",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gcol1_1",
+              "type": "introduce",
+              "skill_id": "ga_colour_red",
+              "prompt": "This is red. 🟥 Red like an apple. 🍎",
+              "visual_items": [
+                "red",
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Red like a tomato. 🍅",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol1_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_red",
+              "prompt": "Tap the red one! 🟥",
+              "visual_items": [
+                "red",
+                "blue"
+              ],
+              "options": [
+                "red",
+                "blue"
+              ],
+              "correct_answer": "red",
+              "hint": "Red like a tomato. 🍅",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol1_3",
+              "type": "introduce",
+              "skill_id": "ga_colour_blue",
+              "prompt": "This is blue. 🟦 Blue like water. 💧",
+              "visual_items": [
+                "blue",
+                "water"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Blue like the sky.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol1_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_blue",
+              "prompt": "Tap the blue one! 🟦",
+              "visual_items": [
+                "blue",
+                "red"
+              ],
+              "options": [
+                "blue",
+                "red"
+              ],
+              "correct_answer": "blue",
+              "hint": "Blue like the sky.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol1_5",
+              "type": "introduce",
+              "skill_id": "ga_colour_yellow",
+              "prompt": "This is yellow. 🟨 Yellow like the sun. ☀️",
+              "visual_items": [
+                "yellow",
+                "sun"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Yellow like a banana. 🍌",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol1_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_yellow",
+              "prompt": "Tap the yellow one! 🟨",
+              "visual_items": [
+                "yellow",
+                "blue"
+              ],
+              "options": [
+                "yellow",
+                "blue"
+              ],
+              "correct_answer": "yellow",
+              "hint": "Yellow like a banana. 🍌",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol1_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_red",
+              "prompt": "Which one is red? 🍎 or 🍌",
+              "visual_items": [
+                "apple",
+                "banana"
+              ],
+              "options": [
+                "apple",
+                "banana"
+              ],
+              "correct_answer": "apple",
+              "hint": "An apple is red.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gcol1_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_yellow",
+              "prompt": "Which one is yellow? ☀️ or 💧",
+              "visual_items": [
+                "sun",
+                "water"
+              ],
+              "options": [
+                "sun",
+                "water"
+              ],
+              "correct_answer": "sun",
+              "hint": "The sun shines yellow.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gcol1_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_blue",
+              "prompt": "Which one is blue? 💧 or 🍎",
+              "visual_items": [
+                "water",
+                "apple"
+              ],
+              "options": [
+                "water",
+                "apple"
+              ],
+              "correct_answer": "water",
+              "hint": "Water looks blue.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_colors_2",
+          "title": "Colours: Green, Orange, Purple",
+          "emoji": "🟩",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Meet green, orange and purple, and find each one",
+          "intro_message": "Three more colours to meet! 🟩 🟧 🟣",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gcol2_1",
+              "type": "introduce",
+              "skill_id": "ga_colour_green",
+              "prompt": "This is green. 🟩 Green like a leaf. 🍃",
+              "visual_items": [
+                "green",
+                "leaf"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Green like a tree. 🌳",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol2_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_green",
+              "prompt": "Tap the green one! 🟩",
+              "visual_items": [
+                "green",
+                "red"
+              ],
+              "options": [
+                "green",
+                "red"
+              ],
+              "correct_answer": "green",
+              "hint": "Green like a tree. 🌳",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol2_3",
+              "type": "introduce",
+              "skill_id": "ga_colour_orange",
+              "prompt": "This is orange. 🟠 Orange like an orange fruit. 🍊",
+              "visual_items": [
+                "orange",
+                "orangefruit"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Orange like a carrot. 🥕",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol2_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_orange",
+              "prompt": "Tap the orange one! 🟠",
+              "visual_items": [
+                "orange",
+                "green"
+              ],
+              "options": [
+                "orange",
+                "green"
+              ],
+              "correct_answer": "orange",
+              "hint": "Orange like a carrot. 🥕",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol2_5",
+              "type": "introduce",
+              "skill_id": "ga_colour_purple",
+              "prompt": "This is purple. 🟣 Purple like grapes. 🍇",
+              "visual_items": [
+                "purple",
+                "grapes"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Purple like a jamun.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol2_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_purple",
+              "prompt": "Tap the purple one! 🟣",
+              "visual_items": [
+                "purple",
+                "yellow"
+              ],
+              "options": [
+                "purple",
+                "yellow"
+              ],
+              "correct_answer": "purple",
+              "hint": "Purple like a jamun.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol2_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_green",
+              "prompt": "Which one is green? 🍃 or 🍎",
+              "visual_items": [
+                "leaf",
+                "apple"
+              ],
+              "options": [
+                "leaf",
+                "apple"
+              ],
+              "correct_answer": "leaf",
+              "hint": "Leaves are green.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gcol2_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_purple",
+              "prompt": "Which one is purple? 🍇 or 🍌",
+              "visual_items": [
+                "grapes",
+                "banana"
+              ],
+              "options": [
+                "grapes",
+                "banana"
+              ],
+              "correct_answer": "grapes",
+              "hint": "Grapes are purple.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gcol2_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_orange",
+              "prompt": "Which one is orange? 🥕 or 🥛",
+              "visual_items": [
+                "carrot",
+                "milk"
+              ],
+              "options": [
+                "carrot",
+                "milk"
+              ],
+              "correct_answer": "carrot",
+              "hint": "A carrot is orange.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_colors_3",
+          "title": "Colours: Pink, Black, White",
+          "emoji": "🌸",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Meet pink, black and white, and find each one",
+          "intro_message": "The last three colours. You are doing so well! 🌸",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gcol3_1",
+              "type": "introduce",
+              "skill_id": "ga_colour_pink",
+              "prompt": "This is pink. 🌸 Pink like a flower. 🌸",
+              "visual_items": [
+                "pink",
+                "flower"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Pink is a soft, light colour.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol3_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_pink",
+              "prompt": "Tap the pink one! 🌸",
+              "visual_items": [
+                "pink",
+                "black"
+              ],
+              "options": [
+                "pink",
+                "black"
+              ],
+              "correct_answer": "pink",
+              "hint": "Pink is a soft, light colour.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol3_3",
+              "type": "introduce",
+              "skill_id": "ga_colour_black",
+              "prompt": "This is black. ⚫ Black like the night sky. 🌙",
+              "visual_items": [
+                "black",
+                "night"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Black like a crow. 🐦‍⬛",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol3_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_black",
+              "prompt": "Tap the black one! ⚫",
+              "visual_items": [
+                "black",
+                "white"
+              ],
+              "options": [
+                "black",
+                "white"
+              ],
+              "correct_answer": "black",
+              "hint": "Black like a crow. 🐦‍⬛",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol3_5",
+              "type": "introduce",
+              "skill_id": "ga_colour_white",
+              "prompt": "This is white. ⚪ White like milk. 🥛",
+              "visual_items": [
+                "white",
+                "milk"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "White like a cloud. ☁️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol3_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_white",
+              "prompt": "Tap the white one! ⚪",
+              "visual_items": [
+                "white",
+                "black"
+              ],
+              "options": [
+                "white",
+                "black"
+              ],
+              "correct_answer": "white",
+              "hint": "White like a cloud. ☁️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gcol3_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_white",
+              "prompt": "Which one is white? 🥛 or 🍇",
+              "visual_items": [
+                "milk",
+                "grapes"
+              ],
+              "options": [
+                "milk",
+                "grapes"
+              ],
+              "correct_answer": "milk",
+              "hint": "Milk is white.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gcol3_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_pink",
+              "prompt": "Which one is pink? 🌸 or 🍃",
+              "visual_items": [
+                "flower",
+                "leaf"
+              ],
+              "options": [
+                "flower",
+                "leaf"
+              ],
+              "correct_answer": "flower",
+              "hint": "This flower is pink.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gcol3_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_colour_black",
+              "prompt": "Which one is black? 🐦‍⬛ or 🦜",
+              "visual_items": [
+                "crow",
+                "parrot"
+              ],
+              "options": [
+                "crow",
+                "parrot"
+              ],
+              "correct_answer": "crow",
+              "hint": "The crow is black.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_animals_1",
+          "title": "Farm Animals: Cow, Dog, Cat",
+          "emoji": "🐄",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Meet the cow, the dog and the cat, and know their sounds",
+          "intro_message": "Let us meet the animals who live near our home! 🐄",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gan1_1",
+              "type": "introduce",
+              "skill_id": "ga_animal_cow",
+              "prompt": "This is a cow. 🐄 The cow says moo.",
+              "visual_items": [
+                "cow"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Moo, moo!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan1_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_cow",
+              "prompt": "Tap the cow! 🐄",
+              "visual_items": [
+                "cow",
+                "cat"
+              ],
+              "options": [
+                "cow",
+                "cat"
+              ],
+              "correct_answer": "cow",
+              "hint": "Moo, moo!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan1_3",
+              "type": "introduce",
+              "skill_id": "ga_animal_dog",
+              "prompt": "This is a dog. 🐶 The dog says bow-wow.",
+              "visual_items": [
+                "dog"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Bow-wow!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan1_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_dog",
+              "prompt": "Tap the dog! 🐶",
+              "visual_items": [
+                "dog",
+                "cow"
+              ],
+              "options": [
+                "dog",
+                "cow"
+              ],
+              "correct_answer": "dog",
+              "hint": "Bow-wow!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan1_5",
+              "type": "introduce",
+              "skill_id": "ga_animal_cat",
+              "prompt": "This is a cat. 🐱 The cat says meow.",
+              "visual_items": [
+                "cat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Meow, meow!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan1_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_cat",
+              "prompt": "Tap the cat! 🐱",
+              "visual_items": [
+                "cat",
+                "dog"
+              ],
+              "options": [
+                "cat",
+                "dog"
+              ],
+              "correct_answer": "cat",
+              "hint": "Meow, meow!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan1_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_sound",
+              "prompt": "Who says moo? 🐄 or 🐶",
+              "visual_items": [
+                "cow",
+                "dog"
+              ],
+              "options": [
+                "cow",
+                "dog"
+              ],
+              "correct_answer": "cow",
+              "hint": "Moo, moo!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan1_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_sound",
+              "prompt": "Who says meow? 🐱 or 🐄",
+              "visual_items": [
+                "cat",
+                "cow"
+              ],
+              "options": [
+                "cat",
+                "cow"
+              ],
+              "correct_answer": "cat",
+              "hint": "Meow, meow!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan1_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_cow",
+              "prompt": "Which animal gives us milk? 🐄 or 🐱",
+              "visual_items": [
+                "cow",
+                "cat"
+              ],
+              "options": [
+                "cow",
+                "cat"
+              ],
+              "correct_answer": "cow",
+              "hint": "The cow gives us milk. 🥛",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_animals_2",
+          "title": "Farm Animals: Horse, Goat, Sheep",
+          "emoji": "🐴",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "Meet the horse, the goat and the sheep",
+          "intro_message": "More farm friends are waiting for you! 🐴",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gan2_1",
+              "type": "introduce",
+              "skill_id": "ga_animal_horse",
+              "prompt": "This is a horse. 🐴 The horse runs very fast.",
+              "visual_items": [
+                "horse"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "We can ride on a horse.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan2_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_horse",
+              "prompt": "Tap the horse! 🐴",
+              "visual_items": [
+                "horse",
+                "goat"
+              ],
+              "options": [
+                "horse",
+                "goat"
+              ],
+              "correct_answer": "horse",
+              "hint": "We can ride on a horse.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan2_3",
+              "type": "introduce",
+              "skill_id": "ga_animal_goat",
+              "prompt": "This is a goat. 🐐 The goat says maa.",
+              "visual_items": [
+                "goat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Maa, maa!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan2_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_goat",
+              "prompt": "Tap the goat! 🐐",
+              "visual_items": [
+                "goat",
+                "horse"
+              ],
+              "options": [
+                "goat",
+                "horse"
+              ],
+              "correct_answer": "goat",
+              "hint": "Maa, maa!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan2_5",
+              "type": "introduce",
+              "skill_id": "ga_animal_sheep",
+              "prompt": "This is a sheep. 🐑 The sheep is soft and woolly.",
+              "visual_items": [
+                "sheep"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Soft like a fluffy cloud.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan2_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_sheep",
+              "prompt": "Tap the sheep! 🐑",
+              "visual_items": [
+                "sheep",
+                "goat"
+              ],
+              "options": [
+                "sheep",
+                "goat"
+              ],
+              "correct_answer": "sheep",
+              "hint": "Soft like a fluffy cloud.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan2_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_sound",
+              "prompt": "Who says maa? 🐐 or 🐴",
+              "visual_items": [
+                "goat",
+                "horse"
+              ],
+              "options": [
+                "goat",
+                "horse"
+              ],
+              "correct_answer": "goat",
+              "hint": "Maa, maa!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan2_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_horse",
+              "prompt": "Which animal can we ride? 🐴 or 🐑",
+              "visual_items": [
+                "horse",
+                "sheep"
+              ],
+              "options": [
+                "horse",
+                "sheep"
+              ],
+              "correct_answer": "horse",
+              "hint": "We ride on a horse.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan2_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_sheep",
+              "prompt": "Which animal gives us soft wool? 🐑 or 🐐",
+              "visual_items": [
+                "sheep",
+                "goat"
+              ],
+              "options": [
+                "sheep",
+                "goat"
+              ],
+              "correct_answer": "sheep",
+              "hint": "Our sweaters come from sheep wool. 🧥",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_animals_3",
+          "title": "Wild Animals: Lion, Tiger, Elephant",
+          "emoji": "🦁",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Meet the lion, the tiger and the elephant of the jungle",
+          "intro_message": "Now let us go to the jungle! 🦁",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gan3_1",
+              "type": "introduce",
+              "skill_id": "ga_animal_lion",
+              "prompt": "This is a lion. 🦁 The lion roars very loudly.",
+              "visual_items": [
+                "lion"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Roar!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan3_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_lion",
+              "prompt": "Tap the lion! 🦁",
+              "visual_items": [
+                "lion",
+                "cow"
+              ],
+              "options": [
+                "lion",
+                "cow"
+              ],
+              "correct_answer": "lion",
+              "hint": "Roar!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan3_3",
+              "type": "introduce",
+              "skill_id": "ga_animal_tiger",
+              "prompt": "This is a tiger. 🐯 The tiger has black stripes.",
+              "visual_items": [
+                "tiger"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Look for the stripes.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan3_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_tiger",
+              "prompt": "Tap the tiger! 🐯",
+              "visual_items": [
+                "tiger",
+                "lion"
+              ],
+              "options": [
+                "tiger",
+                "lion"
+              ],
+              "correct_answer": "tiger",
+              "hint": "Look for the stripes.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan3_5",
+              "type": "introduce",
+              "skill_id": "ga_animal_elephant",
+              "prompt": "This is an elephant. 🐘 It has a long trunk.",
+              "visual_items": [
+                "elephant"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "The biggest animal of all.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan3_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_elephant",
+              "prompt": "Tap the elephant! 🐘",
+              "visual_items": [
+                "elephant",
+                "cat"
+              ],
+              "options": [
+                "elephant",
+                "cat"
+              ],
+              "correct_answer": "elephant",
+              "hint": "The biggest animal of all.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan3_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_lion",
+              "prompt": "Who roars in the jungle? 🦁 or 🐐",
+              "visual_items": [
+                "lion",
+                "goat"
+              ],
+              "options": [
+                "lion",
+                "goat"
+              ],
+              "correct_answer": "lion",
+              "hint": "Roar! The lion is the king.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan3_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_elephant",
+              "prompt": "Which animal has a long trunk? 🐘 or 🐯",
+              "visual_items": [
+                "elephant",
+                "tiger"
+              ],
+              "options": [
+                "elephant",
+                "tiger"
+              ],
+              "correct_answer": "elephant",
+              "hint": "It drinks water with its trunk.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan3_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_tiger",
+              "prompt": "Which animal has stripes? 🐯 or 🐄",
+              "visual_items": [
+                "tiger",
+                "cow"
+              ],
+              "options": [
+                "tiger",
+                "cow"
+              ],
+              "correct_answer": "tiger",
+              "hint": "The tiger wears stripes.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_animals_4",
+          "title": "Wild Animals: Monkey, Bear, Giraffe",
+          "emoji": "🐵",
+          "sort_order": 7,
+          "delivery": "digital",
+          "objective": "Meet the monkey, the bear and the giraffe",
+          "intro_message": "Three more jungle friends! 🐵",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gan4_1",
+              "type": "introduce",
+              "skill_id": "ga_animal_monkey",
+              "prompt": "This is a monkey. 🐵 It loves bananas. 🍌",
+              "visual_items": [
+                "monkey",
+                "banana"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "It jumps from tree to tree.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan4_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_monkey",
+              "prompt": "Tap the monkey! 🐵",
+              "visual_items": [
+                "monkey",
+                "bear"
+              ],
+              "options": [
+                "monkey",
+                "bear"
+              ],
+              "correct_answer": "monkey",
+              "hint": "It jumps from tree to tree.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan4_3",
+              "type": "introduce",
+              "skill_id": "ga_animal_bear",
+              "prompt": "This is a bear. 🐻 The bear is big and furry.",
+              "visual_items": [
+                "bear"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "It loves sweet honey.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan4_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_bear",
+              "prompt": "Tap the bear! 🐻",
+              "visual_items": [
+                "bear",
+                "monkey"
+              ],
+              "options": [
+                "bear",
+                "monkey"
+              ],
+              "correct_answer": "bear",
+              "hint": "It loves sweet honey.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan4_5",
+              "type": "introduce",
+              "skill_id": "ga_animal_giraffe",
+              "prompt": "This is a giraffe. 🦒 It has a very long neck.",
+              "visual_items": [
+                "giraffe"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "The tallest animal of all.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan4_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_giraffe",
+              "prompt": "Tap the giraffe! 🦒",
+              "visual_items": [
+                "giraffe",
+                "bear"
+              ],
+              "options": [
+                "giraffe",
+                "bear"
+              ],
+              "correct_answer": "giraffe",
+              "hint": "The tallest animal of all.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gan4_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_monkey",
+              "prompt": "Who loves bananas? 🐵 or 🐻",
+              "visual_items": [
+                "monkey",
+                "bear"
+              ],
+              "options": [
+                "monkey",
+                "bear"
+              ],
+              "correct_answer": "monkey",
+              "hint": "The monkey loves bananas. 🍌",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan4_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_giraffe",
+              "prompt": "Which animal has a very long neck? 🦒 or 🐵",
+              "visual_items": [
+                "giraffe",
+                "monkey"
+              ],
+              "options": [
+                "giraffe",
+                "monkey"
+              ],
+              "correct_answer": "giraffe",
+              "hint": "It can eat the top leaves.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gan4_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_animal_bear",
+              "prompt": "Which animal is big and furry? 🐻 or 🦒",
+              "visual_items": [
+                "bear",
+                "giraffe"
+              ],
+              "options": [
+                "bear",
+                "giraffe"
+              ],
+              "correct_answer": "bear",
+              "hint": "The bear is big and furry.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_fruits_1",
+          "title": "Fruits: Apple, Banana, Mango",
+          "emoji": "🍎",
+          "sort_order": 8,
+          "delivery": "digital",
+          "objective": "Meet the apple, the banana and the mango",
+          "intro_message": "Yummy! Let us meet some fruits. 🍎",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gfr1_1",
+              "type": "introduce",
+              "skill_id": "ga_fruit_apple",
+              "prompt": "This is an apple. 🍎 It is red and sweet.",
+              "visual_items": [
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Red and round.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr1_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_apple",
+              "prompt": "Tap the apple! 🍎",
+              "visual_items": [
+                "apple",
+                "banana"
+              ],
+              "options": [
+                "apple",
+                "banana"
+              ],
+              "correct_answer": "apple",
+              "hint": "Red and round.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr1_3",
+              "type": "introduce",
+              "skill_id": "ga_fruit_banana",
+              "prompt": "This is a banana. 🍌 It is long and yellow.",
+              "visual_items": [
+                "banana"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Long and yellow.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr1_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_banana",
+              "prompt": "Tap the banana! 🍌",
+              "visual_items": [
+                "banana",
+                "apple"
+              ],
+              "options": [
+                "banana",
+                "apple"
+              ],
+              "correct_answer": "banana",
+              "hint": "Long and yellow.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr1_5",
+              "type": "introduce",
+              "skill_id": "ga_fruit_mango",
+              "prompt": "This is a mango. 🥭 It is sweet and juicy.",
+              "visual_items": [
+                "mango"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "The king of fruits.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr1_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_mango",
+              "prompt": "Tap the mango! 🥭",
+              "visual_items": [
+                "mango",
+                "banana"
+              ],
+              "options": [
+                "mango",
+                "banana"
+              ],
+              "correct_answer": "mango",
+              "hint": "The king of fruits.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr1_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_banana",
+              "prompt": "Which fruit is long and yellow? 🍌 or 🍎",
+              "visual_items": [
+                "banana",
+                "apple"
+              ],
+              "options": [
+                "banana",
+                "apple"
+              ],
+              "correct_answer": "banana",
+              "hint": "The banana is long.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gfr1_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_apple",
+              "prompt": "Which fruit is red? 🍎 or 🥭",
+              "visual_items": [
+                "apple",
+                "mango"
+              ],
+              "options": [
+                "apple",
+                "mango"
+              ],
+              "correct_answer": "apple",
+              "hint": "The apple is red.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gfr1_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_mango",
+              "prompt": "Which one can we eat? 🥭 or 🚗",
+              "visual_items": [
+                "mango",
+                "car"
+              ],
+              "options": [
+                "mango",
+                "car"
+              ],
+              "correct_answer": "mango",
+              "hint": "We eat fruits, not cars!",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_fruits_2",
+          "title": "Fruits: Orange, Grapes, Watermelon",
+          "emoji": "🍉",
+          "sort_order": 9,
+          "delivery": "digital",
+          "objective": "Meet the orange, the grapes and the watermelon",
+          "intro_message": "Three more juicy fruits! 🍉",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gfr2_1",
+              "type": "introduce",
+              "skill_id": "ga_fruit_orangefruit",
+              "prompt": "This is an orange. 🍊 It is round and juicy.",
+              "visual_items": [
+                "orangefruit"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Round and orange.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr2_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_orangefruit",
+              "prompt": "Tap the orange! 🍊",
+              "visual_items": [
+                "orangefruit",
+                "grapes"
+              ],
+              "options": [
+                "orangefruit",
+                "grapes"
+              ],
+              "correct_answer": "orangefruit",
+              "hint": "Round and orange.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr2_3",
+              "type": "introduce",
+              "skill_id": "ga_fruit_grapes",
+              "prompt": "These are grapes. 🍇 They are small and sweet.",
+              "visual_items": [
+                "grapes"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Many small ones together.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr2_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_grapes",
+              "prompt": "Tap the grapes! 🍇",
+              "visual_items": [
+                "grapes",
+                "watermelon"
+              ],
+              "options": [
+                "grapes",
+                "watermelon"
+              ],
+              "correct_answer": "grapes",
+              "hint": "Many small ones together.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr2_5",
+              "type": "introduce",
+              "skill_id": "ga_fruit_watermelon",
+              "prompt": "This is a watermelon. 🍉 It is big, red and juicy.",
+              "visual_items": [
+                "watermelon"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Big and green outside.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr2_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_watermelon",
+              "prompt": "Tap the watermelon! 🍉",
+              "visual_items": [
+                "watermelon",
+                "orangefruit"
+              ],
+              "options": [
+                "watermelon",
+                "orangefruit"
+              ],
+              "correct_answer": "watermelon",
+              "hint": "Big and green outside.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gfr2_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_watermelon",
+              "prompt": "Which fruit is the biggest? 🍉 or 🍇",
+              "visual_items": [
+                "watermelon",
+                "grapes"
+              ],
+              "options": [
+                "watermelon",
+                "grapes"
+              ],
+              "correct_answer": "watermelon",
+              "hint": "The watermelon is very big.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gfr2_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_grapes",
+              "prompt": "Which fruit is small and purple? 🍇 or 🍊",
+              "visual_items": [
+                "grapes",
+                "orangefruit"
+              ],
+              "options": [
+                "grapes",
+                "orangefruit"
+              ],
+              "correct_answer": "grapes",
+              "hint": "Grapes are small and purple.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gfr2_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_fruit_orange",
+              "prompt": "Which fruit is round and orange? 🍊 or 🍉",
+              "visual_items": [
+                "orangefruit",
+                "watermelon"
+              ],
+              "options": [
+                "orangefruit",
+                "watermelon"
+              ],
+              "correct_answer": "orangefruit",
+              "hint": "The orange is orange!",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_vegetables_1",
+          "title": "Vegetables: Potato, Tomato, Carrot",
+          "emoji": "🥕",
+          "sort_order": 10,
+          "delivery": "digital",
+          "objective": "Meet the potato, the tomato and the carrot",
+          "intro_message": "Let us look inside the vegetable basket! 🧺",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gvg1_1",
+              "type": "introduce",
+              "skill_id": "ga_vegetable_potato",
+              "prompt": "This is a potato. 🥔 We make yummy chips from it.",
+              "visual_items": [
+                "potato"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Brown and round.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg1_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_potato",
+              "prompt": "Tap the potato! 🥔",
+              "visual_items": [
+                "potato",
+                "tomato"
+              ],
+              "options": [
+                "potato",
+                "tomato"
+              ],
+              "correct_answer": "potato",
+              "hint": "Brown and round.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg1_3",
+              "type": "introduce",
+              "skill_id": "ga_vegetable_tomato",
+              "prompt": "This is a tomato. 🍅 It is round and red.",
+              "visual_items": [
+                "tomato"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Red and juicy.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg1_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_tomato",
+              "prompt": "Tap the tomato! 🍅",
+              "visual_items": [
+                "tomato",
+                "potato"
+              ],
+              "options": [
+                "tomato",
+                "potato"
+              ],
+              "correct_answer": "tomato",
+              "hint": "Red and juicy.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg1_5",
+              "type": "introduce",
+              "skill_id": "ga_vegetable_carrot",
+              "prompt": "This is a carrot. 🥕 It is orange and crunchy.",
+              "visual_items": [
+                "carrot"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Long and orange.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg1_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_carrot",
+              "prompt": "Tap the carrot! 🥕",
+              "visual_items": [
+                "carrot",
+                "tomato"
+              ],
+              "options": [
+                "carrot",
+                "tomato"
+              ],
+              "correct_answer": "carrot",
+              "hint": "Long and orange.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg1_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_tomato",
+              "prompt": "Which one is red? 🍅 or 🥔",
+              "visual_items": [
+                "tomato",
+                "potato"
+              ],
+              "options": [
+                "tomato",
+                "potato"
+              ],
+              "correct_answer": "tomato",
+              "hint": "The tomato is red.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gvg1_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_carrot",
+              "prompt": "The rabbit loves this one. 🐰 Which is the carrot? 🥕 or 🥔",
+              "visual_items": [
+                "carrot",
+                "potato"
+              ],
+              "options": [
+                "carrot",
+                "potato"
+              ],
+              "correct_answer": "carrot",
+              "hint": "The carrot is orange.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gvg1_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_potato",
+              "prompt": "Which one is a vegetable? 🥔 or 🍎",
+              "visual_items": [
+                "potato",
+                "apple"
+              ],
+              "options": [
+                "potato",
+                "apple"
+              ],
+              "correct_answer": "potato",
+              "hint": "The apple is a fruit.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_vegetables_2",
+          "title": "Vegetables: Peas, Onion, Spinach",
+          "emoji": "🥬",
+          "sort_order": 11,
+          "delivery": "digital",
+          "objective": "Meet the peas, the onion and the spinach",
+          "intro_message": "Three more vegetables from the basket! 🥬",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gvg2_1",
+              "type": "introduce",
+              "skill_id": "ga_vegetable_peas",
+              "prompt": "These are peas. 🫛 Small green balls in a pod.",
+              "visual_items": [
+                "peas"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Small and green.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg2_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_peas",
+              "prompt": "Tap the peas! 🫛",
+              "visual_items": [
+                "peas",
+                "onion"
+              ],
+              "options": [
+                "peas",
+                "onion"
+              ],
+              "correct_answer": "peas",
+              "hint": "Small and green.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg2_3",
+              "type": "introduce",
+              "skill_id": "ga_vegetable_onion",
+              "prompt": "This is an onion. 🧅 It makes our eyes water.",
+              "visual_items": [
+                "onion"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "It has many layers.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg2_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_onion",
+              "prompt": "Tap the onion! 🧅",
+              "visual_items": [
+                "onion",
+                "peas"
+              ],
+              "options": [
+                "onion",
+                "peas"
+              ],
+              "correct_answer": "onion",
+              "hint": "It has many layers.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg2_5",
+              "type": "introduce",
+              "skill_id": "ga_vegetable_spinach",
+              "prompt": "This is spinach. 🥬 Green leaves that make us strong.",
+              "visual_items": [
+                "spinach"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Big green leaves.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg2_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_spinach",
+              "prompt": "Tap the spinach! 🥬",
+              "visual_items": [
+                "spinach",
+                "onion"
+              ],
+              "options": [
+                "spinach",
+                "onion"
+              ],
+              "correct_answer": "spinach",
+              "hint": "Big green leaves.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gvg2_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_spinach",
+              "prompt": "Which one is green and leafy? 🥬 or 🧅",
+              "visual_items": [
+                "spinach",
+                "onion"
+              ],
+              "options": [
+                "spinach",
+                "onion"
+              ],
+              "correct_answer": "spinach",
+              "hint": "Spinach makes us strong.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gvg2_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_onion",
+              "prompt": "Which one makes our eyes water? 🧅 or 🫛",
+              "visual_items": [
+                "onion",
+                "peas"
+              ],
+              "options": [
+                "onion",
+                "peas"
+              ],
+              "correct_answer": "onion",
+              "hint": "The onion does!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gvg2_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_vegetable_peas",
+              "prompt": "Which one is small and green? 🫛 or 🧅",
+              "visual_items": [
+                "peas",
+                "onion"
+              ],
+              "options": [
+                "peas",
+                "onion"
+              ],
+              "correct_answer": "peas",
+              "hint": "Peas are small and green.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_transport_1",
+          "title": "Transport: Car, Bus, Train",
+          "emoji": "🚗",
+          "sort_order": 12,
+          "delivery": "digital",
+          "objective": "Meet the car, the bus and the train",
+          "intro_message": "Vroom vroom! Let us go for a ride. 🚗",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gtr1_1",
+              "type": "introduce",
+              "skill_id": "ga_transport_car",
+              "prompt": "This is a car. 🚗 It goes on the road.",
+              "visual_items": [
+                "car"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "It has four wheels.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr1_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_car",
+              "prompt": "Tap the car! 🚗",
+              "visual_items": [
+                "car",
+                "boat"
+              ],
+              "options": [
+                "car",
+                "boat"
+              ],
+              "correct_answer": "car",
+              "hint": "It has four wheels.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr1_3",
+              "type": "introduce",
+              "skill_id": "ga_transport_bus",
+              "prompt": "This is a bus. 🚌 It takes many children to school.",
+              "visual_items": [
+                "bus"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Big, with many seats.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr1_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_bus",
+              "prompt": "Tap the bus! 🚌",
+              "visual_items": [
+                "bus",
+                "car"
+              ],
+              "options": [
+                "bus",
+                "car"
+              ],
+              "correct_answer": "bus",
+              "hint": "Big, with many seats.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr1_5",
+              "type": "introduce",
+              "skill_id": "ga_transport_train",
+              "prompt": "This is a train. 🚂 It says chhuk chhuk on the track.",
+              "visual_items": [
+                "train"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Chhuk chhuk!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr1_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_train",
+              "prompt": "Tap the train! 🚂",
+              "visual_items": [
+                "train",
+                "bus"
+              ],
+              "options": [
+                "train",
+                "bus"
+              ],
+              "correct_answer": "train",
+              "hint": "Chhuk chhuk!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr1_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_train",
+              "prompt": "Which one says chhuk chhuk? 🚂 or 🚗",
+              "visual_items": [
+                "train",
+                "car"
+              ],
+              "options": [
+                "train",
+                "car"
+              ],
+              "correct_answer": "train",
+              "hint": "The train runs on a track.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gtr1_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_bus",
+              "prompt": "Which one takes us to school? 🚌 or 🚂",
+              "visual_items": [
+                "bus",
+                "train"
+              ],
+              "options": [
+                "bus",
+                "train"
+              ],
+              "correct_answer": "bus",
+              "hint": "The school bus!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gtr1_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_car",
+              "prompt": "Which one is small and goes on the road? 🚗 or 🚌",
+              "visual_items": [
+                "car",
+                "bus"
+              ],
+              "options": [
+                "car",
+                "bus"
+              ],
+              "correct_answer": "car",
+              "hint": "The car is smaller than the bus.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_transport_2",
+          "title": "Transport: Bicycle, Aeroplane, Boat",
+          "emoji": "✈️",
+          "sort_order": 13,
+          "delivery": "digital",
+          "objective": "Meet the bicycle, the aeroplane and the boat",
+          "intro_message": "On the road, in the sky and on the water! ✈️",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gtr2_1",
+              "type": "introduce",
+              "skill_id": "ga_transport_bicycle",
+              "prompt": "This is a bicycle. 🚲 It has two wheels to pedal.",
+              "visual_items": [
+                "bicycle"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "We pedal with our feet.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr2_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_bicycle",
+              "prompt": "Tap the bicycle! 🚲",
+              "visual_items": [
+                "bicycle",
+                "boat"
+              ],
+              "options": [
+                "bicycle",
+                "boat"
+              ],
+              "correct_answer": "bicycle",
+              "hint": "We pedal with our feet.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr2_3",
+              "type": "introduce",
+              "skill_id": "ga_transport_aeroplane",
+              "prompt": "This is an aeroplane. ✈️ It flies high in the sky.",
+              "visual_items": [
+                "aeroplane"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Up in the clouds. ☁️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr2_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_aeroplane",
+              "prompt": "Tap the aeroplane! ✈️",
+              "visual_items": [
+                "aeroplane",
+                "bicycle"
+              ],
+              "options": [
+                "aeroplane",
+                "bicycle"
+              ],
+              "correct_answer": "aeroplane",
+              "hint": "Up in the clouds. ☁️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr2_5",
+              "type": "introduce",
+              "skill_id": "ga_transport_boat",
+              "prompt": "This is a boat. ⛵ It goes on the water.",
+              "visual_items": [
+                "boat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "It floats. 💧",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr2_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_boat",
+              "prompt": "Tap the boat! ⛵",
+              "visual_items": [
+                "boat",
+                "aeroplane"
+              ],
+              "options": [
+                "boat",
+                "aeroplane"
+              ],
+              "correct_answer": "boat",
+              "hint": "It floats. 💧",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gtr2_7",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_air",
+              "prompt": "Which one flies in the sky? ✈️ or ⛵",
+              "visual_items": [
+                "aeroplane",
+                "boat"
+              ],
+              "options": [
+                "aeroplane",
+                "boat"
+              ],
+              "correct_answer": "aeroplane",
+              "hint": "Up, up in the sky!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gtr2_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_water",
+              "prompt": "Which one goes on the water? ⛵ or 🚲",
+              "visual_items": [
+                "boat",
+                "bicycle"
+              ],
+              "options": [
+                "boat",
+                "bicycle"
+              ],
+              "correct_answer": "boat",
+              "hint": "It floats on water. 💧",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gtr2_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_transport_cycle",
+              "prompt": "Which one has two wheels to pedal? 🚲 or ✈️",
+              "visual_items": [
+                "bicycle",
+                "aeroplane"
+              ],
+              "options": [
+                "bicycle",
+                "aeroplane"
+              ],
+              "correct_answer": "bicycle",
+              "hint": "We pedal a bicycle.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_weather",
+          "title": "Weather",
+          "emoji": "☀️",
+          "sort_order": 14,
+          "delivery": "digital",
+          "objective": "Meet sunny, rainy, cloudy and windy days",
+          "intro_message": "Look outside! How is the weather today? ☀️",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_gwe_1",
+              "type": "introduce",
+              "skill_id": "ga_weather_sunny",
+              "prompt": "It is sunny. ☀️ The sun is bright and warm.",
+              "visual_items": [
+                "sunny"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "The sun is shining.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_2",
+              "type": "multiple_choice",
+              "skill_id": "ga_weather_sunny",
+              "prompt": "Tap the sunny day! ☀️",
+              "visual_items": [
+                "sunny",
+                "rainy"
+              ],
+              "options": [
+                "sunny",
+                "rainy"
+              ],
+              "correct_answer": "sunny",
+              "hint": "The sun is shining.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_3",
+              "type": "introduce",
+              "skill_id": "ga_weather_rainy",
+              "prompt": "It is rainy. 🌧️ Rain drops fall down.",
+              "visual_items": [
+                "rainy"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Pitter patter, rain drops.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_4",
+              "type": "multiple_choice",
+              "skill_id": "ga_weather_rainy",
+              "prompt": "Tap the rainy day! 🌧️",
+              "visual_items": [
+                "rainy",
+                "sunny"
+              ],
+              "options": [
+                "rainy",
+                "sunny"
+              ],
+              "correct_answer": "rainy",
+              "hint": "Pitter patter, rain drops.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_5",
+              "type": "introduce",
+              "skill_id": "ga_weather_cloudy",
+              "prompt": "It is cloudy. ☁️ Big clouds cover the sun.",
+              "visual_items": [
+                "cloudy"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Soft white clouds.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_6",
+              "type": "multiple_choice",
+              "skill_id": "ga_weather_cloudy",
+              "prompt": "Tap the cloudy day! ☁️",
+              "visual_items": [
+                "cloudy",
+                "rainy"
+              ],
+              "options": [
+                "cloudy",
+                "rainy"
+              ],
+              "correct_answer": "cloudy",
+              "hint": "Soft white clouds.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_7",
+              "type": "introduce",
+              "skill_id": "ga_weather_windy",
+              "prompt": "It is windy. 💨 The wind blows the leaves.",
+              "visual_items": [
+                "windy"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "The wind blows and blows.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_8",
+              "type": "multiple_choice",
+              "skill_id": "ga_weather_windy",
+              "prompt": "Tap the windy day! 💨",
+              "visual_items": [
+                "windy",
+                "sunny"
+              ],
+              "options": [
+                "windy",
+                "sunny"
+              ],
+              "correct_answer": "windy",
+              "hint": "The wind blows and blows.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_gwe_9",
+              "type": "multiple_choice",
+              "skill_id": "ga_weather_rainy",
+              "prompt": "We need an umbrella. ☂️ Which day is rainy? 🌧️ or ☀️",
+              "visual_items": [
+                "rainy",
+                "sunny"
+              ],
+              "options": [
+                "rainy",
+                "sunny"
+              ],
+              "correct_answer": "rainy",
+              "hint": "We open an umbrella in the rain.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_gwe_10",
+              "type": "multiple_choice",
+              "skill_id": "ga_weather_sunny",
+              "prompt": "Which day is bright and warm? ☀️ or ☁️",
+              "visual_items": [
+                "sunny",
+                "cloudy"
+              ],
+              "options": [
+                "sunny",
+                "cloudy"
+              ],
+              "correct_answer": "sunny",
+              "hint": "The sun makes it warm.",
+              "difficulty": "easy"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

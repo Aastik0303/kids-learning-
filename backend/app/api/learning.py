@@ -1,24 +1,9 @@
 from fastapi import APIRouter
 
-from app.schemas.learning import LearningAnswerRequest, LearningResponse, LearningStartRequest, PathSummary, Stage
-from app.services import curriculum_service, learning_service
+from app.schemas.learning import LearningAnswerRequest, LearningResponse, LearningStartRequest
+from app.services import learning_service
 
 router = APIRouter(prefix="/learning", tags=["learning"])
-
-
-@router.get("/paths", response_model=list[PathSummary])
-async def list_paths() -> list[PathSummary]:
-    return curriculum_service.list_paths()
-
-
-@router.get("/paths/{path_id}")
-async def get_path(path_id: str) -> dict:
-    return curriculum_service.get_path(path_id)
-
-
-@router.get("/paths/{path_id}/stages", response_model=list[Stage])
-async def get_stages(path_id: str) -> list[Stage]:
-    return curriculum_service.get_stages(path_id)
 
 
 @router.post("/start", response_model=LearningResponse)

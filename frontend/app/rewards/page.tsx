@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { AppShell } from "@/components/shared/AppShell";
 import { avatarForPage } from "@/services/avatar";
-import { getOrCreateGuestChild } from "@/services/session";
+import { getChild } from "@/services/session";
 import type { ChildProfile } from "@/types";
 
 export default function RewardsPage() {
@@ -12,7 +12,7 @@ export default function RewardsPage() {
   const { setAvatar } = useAvatar();
 
   useEffect(() => {
-    setChild(getOrCreateGuestChild());
+    setChild(getChild());
     setAvatar(avatarForPage("rewards"));
   }, [setAvatar]);
 

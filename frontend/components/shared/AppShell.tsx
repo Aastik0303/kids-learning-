@@ -4,23 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AvatarDock } from "@/components/avatar/AvatarDock";
-import { pathAccents, pathSummaries } from "@/data/prototype";
-import { clearSession, getOrCreateGuestChild, getUser, isGuestSession } from "@/services/session";
-import type { ChildProfile, User } from "@/types";
+import { useActiveChild } from "@/lib/useActiveChild";
+import { getClassForChild } from "@/services/curriculum";
+import { clearSession, getUser, isGuestSession } from "@/services/session";
+import type { ChildProfile, ClassDetail, User } from "@/types";
 
-function progressPercent(child: ChildProfile, pathId: string) {
-  const progress = child.path_progress[pathId];
-  const total = pathSummaries.find((path) => path.path_id === pathId)?.total_stages ?? 8;
-  return Math.round(((progress?.completed_stages.length ?? 0) / total) * 100);
+function progressPercent(child: ChildProfile, subjectId: string, topicCount: number) {
+  const done = child.subject_progress?.[subjectId]?.completed_topics.length ?? 0;
+  return topicCount ? Math.round((done / topicCount) * 100) : 0;
 }
 
 function ParentDrawer({
   child,
+  detail,
   user,
   guest,
   onClose
 }: {
   child: ChildProfile | null;
+  detail: ClassDetail | null;
   user: User | null;
   guest: boolean;
   onClose: () => void;
@@ -60,7 +62,7 @@ function ParentDrawer({
             <div className="lift-card rounded-[2rem] p-5">
               <p className="font-black text-leaf">Child profile</p>
               <h3 className="mt-1 text-3xl font-black text-ink">{child.name}</h3>
-              <p className="mt-2 font-bold text-ink/70">Age Group: {child.age_group}</p>
+              <p className="mt-2 font-bold text-ink/70">Class: {detail?.title ?? child.class_id}</p>
               <p className="font-bold text-ink/70">Language: {child.preferred_language}</p>
             </div>
 
@@ -77,12 +79,13 @@ function ParentDrawer({
 
             <section className="lift-card grid gap-3 rounded-[2rem] p-5">
               <h3 className="text-2xl font-black text-ink">Learning Progress</h3>
-              {["numbers", "alphabets", "colours", "shapes"].map((pathId) => {
-                const percent = progressPercent(child, pathId);
+              {/* Subject names come from the manifest, never from a local list. */}
+              {(detail?.subjects ?? []).map((subject) => {
+                const percent = progressPercent(child, subject.subject_id, subject.topic_count);
                 return (
-                  <div key={pathId} className="grid gap-2">
+                  <div key={subject.subject_id} className="grid gap-2">
                     <div className="flex items-center justify-between gap-3 font-black">
-                      <span>{pathAccents[pathId].label}</span>
+                      <span>{subject.title}</span>
                       <span>{percent}%</span>
                     </div>
                     <div className="progress-track">
@@ -92,6 +95,13 @@ function ParentDrawer({
                 );
               })}
             </section>
+
+            <Link
+              className="pressable rounded-3xl bg-white px-5 py-4 text-center text-xl font-black text-ink shadow-soft"
+              href="/parent/profile"
+            >
+              Class &amp; profile settings
+            </Link>
 
             <button
               className="pressable rounded-3xl bg-ink px-5 py-4 text-xl font-black text-white shadow-soft"
@@ -103,22 +113,66 @@ function ParentDrawer({
               Logout
             </button>
           </div>
-        ) : null}
+        ) : (
+          // Signed in, but no child loaded yet. Without this branch the drawer
+          // opened completely empty, which read as a broken screen rather than
+          // "there is nothing here yet".
+          <div className="grid gap-4">
+            <div className="lift-card rounded-[2rem] p-5">
+              <h3 className="text-2xl font-black text-ink">No child profile yet</h3>
+              <p className="mt-2 font-bold text-ink/70">
+                Add a child to see their class, subjects and progress here.
+              </p>
+            </div>
+            <Link
+              className="pressable rounded-3xl bg-leaf px-5 py-4 text-center text-xl font-black text-white shadow-soft"
+              href="/onboarding"
+            >
+              Add a child
+            </Link>
+            <button
+              className="pressable rounded-3xl bg-ink px-5 py-4 text-xl font-black text-white shadow-soft"
+              onClick={() => {
+                clearSession();
+                window.location.href = "/";
+              }}
+            >
+              Logout
+            </button>
+          </div>
+        )}
       </aside>
     </div>
   );
 }
 
-export function AppShell({ children, title = "Little Learning" }: { children: React.ReactNode; title?: string }) {
+export function AppShell({ children, title = "Saksham IQ" }: { children: React.ReactNode; title?: string }) {
   const pathname = usePathname();
-  const [child, setChild] = useState<ChildProfile | null>(null);
+  // The shell shares one source of truth with the pages inside it, so the
+  // header, the drawer and the page can never disagree about who is signed in.
+  const { child } = useActiveChild();
+  const [detail, setDetail] = useState<ClassDetail | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [guest, setGuest] = useState(true);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+
+  // A popover that outlives the screen it was opened on is a bug a child will
+  // find in seconds, so it closes with the route.
+  useEffect(() => {
+    setMoreOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!child) {
+      setDetail(null);
+      return;
+    }
+    getClassForChild(child.child_id).then(setDetail).catch(() => setDetail(null));
+  }, [child]);
 
   useEffect(() => {
     const sync = () => {
-      setChild(getOrCreateGuestChild());
       setUser(getUser());
       setGuest(isGuestSession());
     };
@@ -131,14 +185,24 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
     };
   }, []);
 
+  // `primary` rides the phone's bottom bar; the rest live behind its More
+  // button. All six stay in the desktop row exactly as before.
   const navItems = [
-    { href: "/", label: "🏠 Home", guideId: "go-home" },
-    { href: "/practice", label: "🎨 Practice", guideId: "start-practice" },
-    { href: "/levels", label: "🗺️ Adventure", guideId: "continue-adventure" },
-    { href: "/rewards", label: "🎁 Rewards", guideId: "open-rewards" },
-    { href: "/word-coach", label: "🔤 Word Coach", guideId: "word-coach" },
-    { href: "/sentence-coach", label: "📖 Sentence Coach", guideId: "sentence-coach" }
+    { href: "/", label: "🏠 Home", icon: "🏠", short: "Home", guideId: "go-home", primary: true },
+    { href: "/practice", label: "🎨 Practice", icon: "🎨", short: "Practice", guideId: "start-practice", primary: true },
+    { href: "/adventure", label: "🗺️ Adventure", icon: "🗺️", short: "Adventure", guideId: "continue-adventure", primary: true },
+    { href: "/rewards", label: "🎁 Rewards", icon: "🎁", short: "Rewards", guideId: "open-rewards", primary: true },
+    { href: "/word-coach", label: "🔤 Word Coach", icon: "🔤", short: "Words", guideId: "word-coach", primary: false },
+    { href: "/sentence-coach", label: "📖 Sentence Coach", icon: "📖", short: "Sentences", guideId: "sentence-coach", primary: false }
   ];
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" || pathname === "/home" : pathname.startsWith(href);
+
+  // The touch-target floor follows the class's experience mode: `early`
+  // (Play Group, Nursery) raises learning controls to 96px, `standard` keeps
+  // them at 64px. Both come from the manifest, not from an age test here.
+  const surface = detail?.experience.mode_id === "early" ? "early" : "child";
 
   return (
     // data-surface drives the touch-target floors in globals.css. This shell
@@ -149,11 +213,11 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
     // Bottom padding is NOT a fixed pb-36 any more. The dock measures itself
     // and publishes --dock-height, so the reserved space always matches the
     // real dock instead of a guess that goes stale the moment it reflows.
-    <main data-surface="child" className="app-shell-main mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pt-4 sm:px-6">
+    <main data-surface={surface} data-experience-mode={detail?.experience.mode_id ?? "standard"} className="app-shell-main mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pt-4 sm:px-6">
       <header data-surface="chrome" className="nav-shell no-print sticky top-3 z-40 mb-5 rounded-[2rem] px-4 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-3 text-xl font-black text-ink">
-            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-leaf text-white shadow-soft">LL</span>
+            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-leaf text-white shadow-soft">SI</span>
             <span className="grid leading-tight">
               <span>{title}</span>
               <span className="text-xs font-black uppercase text-ink/45">Nursery Studio</span>
@@ -165,7 +229,7 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
               wrapped to three rows and filled the entire first screen. */}
           <nav className="hidden flex-wrap items-center gap-2 text-sm font-black md:flex">
             {navItems.map((item) => {
-              const active = item.href === "/" ? pathname === "/" || pathname === "/home" : pathname.startsWith(item.href);
+              const active = isActive(item.href);
               return (
                 <Link
                   key={item.href}
@@ -193,7 +257,65 @@ export function AppShell({ children, title = "Little Learning" }: { children: Re
       </header>
       {children}
       <AvatarDock />
-      {drawerOpen ? <ParentDrawer child={child} user={user} guest={guest} onClose={() => setDrawerOpen(false)} /> : null}
+
+      {/* Phone navigation. The header row is desktop-only, which left a phone
+          with no way to reach Practice, Rewards or the coaches from anywhere
+          but the home screen. This is a thumb-reachable bar instead of a menu:
+          four pictures a child can aim at, with the two coaches behind More so
+          the row stays wide enough to hit. It is chrome, so it keeps the 44px
+          floor rather than the learning floor, and the guide dock is lifted by
+          its height in globals.css so the two never sit on top of each other. */}
+      <nav data-surface="chrome" className="mobile-tabs no-print" aria-label="Main navigation">
+        {navItems
+          .filter((item) => item.primary)
+          .map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              data-guide-id={item.guideId}
+              data-active={isActive(item.href) ? "true" : undefined}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              className="mobile-tab"
+            >
+              <span aria-hidden className="mobile-tab-icon">
+                {item.icon}
+              </span>
+              <span className="mobile-tab-label">{item.short}</span>
+            </Link>
+          ))}
+
+        <button
+          type="button"
+          onClick={() => setMoreOpen((open) => !open)}
+          aria-expanded={moreOpen}
+          data-active={moreOpen ? "true" : undefined}
+          className="mobile-tab"
+        >
+          <span aria-hidden className="mobile-tab-icon">
+            {moreOpen ? "✕" : "✨"}
+          </span>
+          <span className="mobile-tab-label">More</span>
+        </button>
+
+        {moreOpen ? (
+          <div className="mobile-more">
+            {navItems
+              .filter((item) => !item.primary)
+              .map((item) => (
+                <Link key={item.href} href={item.href} data-guide-id={item.guideId} onClick={() => setMoreOpen(false)}>
+                  {item.label}
+                </Link>
+              ))}
+            {guest ? (
+              <Link href="/signup" onClick={() => setMoreOpen(false)}>
+                ✍️ Sign Up
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
+      </nav>
+
+      {drawerOpen ? <ParentDrawer child={child} detail={detail} user={user} guest={guest} onClose={() => setDrawerOpen(false)} /> : null}
     </main>
   );
 }

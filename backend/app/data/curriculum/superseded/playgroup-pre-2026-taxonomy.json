@@ -1,0 +1,940 @@
+{
+  "class_id": "playgroup",
+  "title": "Play Group",
+  "subtitle": "Pre-Nursery",
+  "emoji": "🧸",
+  "min_age": 2,
+  "max_age": 3,
+  "experience_mode": "early",
+  "version": "2026-27",
+  "source": "CBSE Play Group (Pre-Nursery) Syllabus 2026-27",
+  "pedagogy": "Fully play-based, oral and activity-driven. No formal written examination; assessment is through observation.",
+  "design_note": "At 2-3 a child cannot read at all. The emoji IS the question — text is for the parent looking over the shoulder. Never more than 2 choices per screen.",
+  "delivery_legend": {
+    "digital": "Fully teachable on screen. The engine serves these.",
+    "parent_guided": "Physical-world learning. The app shows the parent an activity card and records completion — it does NOT fake a tap question for it.",
+    "hybrid": "Screen introduces it, a physical action completes it."
+  },
+  "emoji_map": {
+    "red_swatch": "🟥",
+    "yellow_swatch": "🟨",
+    "blue_swatch": "🟦",
+    "green_swatch": "🟩",
+    "black_swatch": "⬛",
+    "white_swatch": "⬜",
+    "circle": "⭕",
+    "square": "🟦",
+    "triangle": "🔺",
+    "apple": "🍎",
+    "banana": "🍌",
+    "mango": "🥭",
+    "potato": "🥔",
+    "tomato": "🍅",
+    "carrot": "🥕",
+    "cat": "🐱",
+    "dog": "🐶",
+    "cow": "🐄",
+    "crow": "🐦",
+    "parrot": "🦜",
+    "duck": "🦆",
+    "car": "🚗",
+    "bus": "🚌",
+    "cycle": "🚲",
+    "aeroplane": "✈️",
+    "train": "🚂",
+    "boat": "⛵",
+    "ball": "⚽",
+    "star": "⭐",
+    "balloon": "🎈",
+    "flower": "🌸",
+    "sun": "☀️",
+    "moon": "🌙",
+    "tree": "🌳",
+    "water": "💧",
+    "elephant": "🐘",
+    "mouse": "🐭",
+    "egg": "🥚",
+    "hand": "✋",
+    "eyes": "👀",
+    "ears": "👂",
+    "nose": "👃",
+    "mouth": "👄",
+    "legs": "🦵",
+    "family": "👨‍👩‍👧",
+    "teacher": "👩‍🏫",
+    "friends": "🧒",
+    "classroom": "🏫",
+    "schoolbag": "🎒",
+    "bottle": "🍼",
+    "dustbin": "🗑️",
+    "toothbrush": "🪥",
+    "soap": "🧼",
+    "big_ball": "🏀",
+    "small_ball": "⚾",
+    "long_pencil": "✏️",
+    "short_pencil": "🖊️",
+    "heavy_rock": "🪨",
+    "light_feather": "🪶",
+    "box": "📦",
+    "door": "🚪",
+    "clay": "🧱",
+    "paper": "📄",
+    "drum": "🥁",
+    "cake": "🎂",
+    "diya": "🪔",
+    "colours": "🎨",
+    "flag": "🇮🇳",
+    "gift": "🎁",
+    "slide": "🛝",
+    "swing": "🎠"
+  },
+  "parked_note": "Play Group activities orphaned by the 2026-27 re-taxonomy of this class. The topic_ids and subject_ids here no longer exist in manifest.json. This directory is outside the loader's activities/*.json glob, so nothing here is served; re-home a topic by moving it back into activities/playgroup.json under a topic_id the manifest declares.",
+  "subjects": [
+    {
+      "subject_id": "pg_ga",
+      "title": "General Awareness",
+      "emoji": "🌍",
+      "sort_order": 3,
+      "topics": [
+        {
+          "topic_id": "pg_ga_myself",
+          "title": "About Myself",
+          "emoji": "🧒",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "My name, my body parts, my family members",
+          "intro_message": "Let us learn about you! 🧒",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_ms_1",
+              "type": "multiple_choice",
+              "emoji": "👀",
+              "skill_id": "body_eyes",
+              "prompt": "Which one do we SEE with? 👀 or 👂",
+              "visual_items": [
+                "eyes",
+                "ears"
+              ],
+              "options": [
+                "eyes",
+                "ears"
+              ],
+              "option_emojis": [
+                "👀",
+                "👂"
+              ],
+              "correct_answer": "eyes",
+              "hint": "Point to your eyes!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ms_2",
+              "type": "multiple_choice",
+              "emoji": "👂",
+              "skill_id": "body_ears",
+              "prompt": "Which one do we HEAR with? 👂 or 👃",
+              "visual_items": [
+                "ears",
+                "nose"
+              ],
+              "options": [
+                "ears",
+                "nose"
+              ],
+              "option_emojis": [
+                "👂",
+                "👃"
+              ],
+              "correct_answer": "ears",
+              "hint": "Touch your ears!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ms_3",
+              "type": "multiple_choice",
+              "emoji": "👃",
+              "skill_id": "body_nose",
+              "prompt": "Which one do we SMELL with? 👃 or 👄",
+              "visual_items": [
+                "nose",
+                "mouth"
+              ],
+              "options": [
+                "nose",
+                "mouth"
+              ],
+              "option_emojis": [
+                "👃",
+                "👄"
+              ],
+              "correct_answer": "nose",
+              "hint": "Take a big sniff!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ms_4",
+              "type": "multiple_choice",
+              "emoji": "🦵",
+              "skill_id": "body_legs",
+              "prompt": "Which one do we WALK with? 🦵 or ✋",
+              "visual_items": [
+                "legs",
+                "hand"
+              ],
+              "options": [
+                "legs",
+                "hands"
+              ],
+              "option_emojis": [
+                "🦵",
+                "✋"
+              ],
+              "correct_answer": "legs",
+              "hint": "Stamp your feet!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ms_5",
+              "type": "parent_activity",
+              "emoji": "👨‍👩‍👧",
+              "skill_id": "family_members",
+              "prompt": "Point to Mummy and Papa in a family photo! 👨‍👩‍👧",
+              "visual_items": [
+                "family"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Say their names out loud.",
+              "difficulty": "easy",
+              "parent_note": "Use a real family photo. Naming people they love is the fastest vocabulary a two-year-old builds."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_school",
+          "title": "My School",
+          "emoji": "🏫",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "My teacher and friends, my classroom, my bag and bottle",
+          "intro_message": "School is a happy place! 🏫",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_sc_1",
+              "type": "multiple_choice",
+              "emoji": "🎒",
+              "skill_id": "school_things",
+              "prompt": "What do we carry to school? 🎒 or 🍼",
+              "visual_items": [
+                "schoolbag",
+                "bottle"
+              ],
+              "options": [
+                "schoolbag",
+                "bottle"
+              ],
+              "option_emojis": [
+                "🎒",
+                "🍼"
+              ],
+              "correct_answer": "schoolbag",
+              "hint": "It goes on your back!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_sc_2",
+              "type": "multiple_choice",
+              "emoji": "👩‍🏫",
+              "skill_id": "school_people",
+              "prompt": "Who teaches us at school? 👩‍🏫 or 🧒",
+              "visual_items": [
+                "teacher",
+                "friends"
+              ],
+              "options": [
+                "teacher",
+                "friend"
+              ],
+              "option_emojis": [
+                "👩‍🏫",
+                "🧒"
+              ],
+              "correct_answer": "teacher",
+              "hint": "They help us learn.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_sc_3",
+              "type": "multiple_choice",
+              "emoji": "🍼",
+              "skill_id": "school_things",
+              "prompt": "What do we drink water from? 🍼 or 🎒",
+              "visual_items": [
+                "bottle",
+                "schoolbag"
+              ],
+              "options": [
+                "bottle",
+                "schoolbag"
+              ],
+              "option_emojis": [
+                "🍼",
+                "🎒"
+              ],
+              "correct_answer": "bottle",
+              "hint": "It holds your water.",
+              "difficulty": "very_easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_things",
+          "title": "Things Around Us",
+          "emoji": "🍎",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Fruits, vegetables, animals and birds",
+          "intro_message": "Look at all the things around us! 🌍",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_th_1",
+              "type": "multiple_choice",
+              "emoji": "🍎",
+              "skill_id": "fruits",
+              "prompt": "Which one is a fruit? 🍎 or 🥕",
+              "visual_items": [
+                "apple",
+                "carrot"
+              ],
+              "options": [
+                "apple",
+                "carrot"
+              ],
+              "option_emojis": [
+                "🍎",
+                "🥕"
+              ],
+              "correct_answer": "apple",
+              "hint": "Sweet and juicy!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_th_2",
+              "type": "multiple_choice",
+              "emoji": "🍌",
+              "skill_id": "fruits",
+              "prompt": "Which one is a banana? 🍌 or 🥭",
+              "visual_items": [
+                "banana",
+                "mango"
+              ],
+              "options": [
+                "banana",
+                "mango"
+              ],
+              "option_emojis": [
+                "🍌",
+                "🥭"
+              ],
+              "correct_answer": "banana",
+              "hint": "Long and yellow!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_th_3",
+              "type": "multiple_choice",
+              "emoji": "🥕",
+              "skill_id": "vegetables",
+              "prompt": "Which one is a carrot? 🥕 or 🍅",
+              "visual_items": [
+                "carrot",
+                "tomato"
+              ],
+              "options": [
+                "carrot",
+                "tomato"
+              ],
+              "option_emojis": [
+                "🥕",
+                "🍅"
+              ],
+              "correct_answer": "carrot",
+              "hint": "Orange and long!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_th_4",
+              "type": "multiple_choice",
+              "emoji": "🐄",
+              "skill_id": "animals",
+              "prompt": "Which animal gives us milk? 🐄 or 🐱",
+              "visual_items": [
+                "cow",
+                "cat"
+              ],
+              "options": [
+                "cow",
+                "cat"
+              ],
+              "option_emojis": [
+                "🐄",
+                "🐱"
+              ],
+              "correct_answer": "cow",
+              "hint": "It says moo!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_th_5",
+              "type": "multiple_choice",
+              "emoji": "🦜",
+              "skill_id": "birds",
+              "prompt": "Which one is a bird? 🦜 or 🐶",
+              "visual_items": [
+                "parrot",
+                "dog"
+              ],
+              "options": [
+                "parrot",
+                "dog"
+              ],
+              "option_emojis": [
+                "🦜",
+                "🐶"
+              ],
+              "correct_answer": "parrot",
+              "hint": "Birds can fly!",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_ga_habits",
+          "title": "Good Habits",
+          "emoji": "🧼",
+          "sort_order": 5,
+          "delivery": "hybrid",
+          "objective": "Washing hands, brushing teeth, using the dustbin, saying thank you and sorry",
+          "intro_message": "Good habits keep us happy and healthy! 😊",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_hb_1",
+              "type": "multiple_choice",
+              "emoji": "🧼",
+              "skill_id": "washing_hands",
+              "prompt": "What do we use to wash our hands? 🧼 or 🎈",
+              "visual_items": [
+                "soap",
+                "balloon"
+              ],
+              "options": [
+                "soap",
+                "balloon"
+              ],
+              "option_emojis": [
+                "🧼",
+                "🎈"
+              ],
+              "correct_answer": "soap",
+              "hint": "It makes bubbles!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_hb_2",
+              "type": "multiple_choice",
+              "emoji": "🪥",
+              "skill_id": "brushing_teeth",
+              "prompt": "What do we brush our teeth with? 🪥 or 🥄",
+              "visual_items": [
+                "toothbrush",
+                "spoon"
+              ],
+              "options": [
+                "toothbrush",
+                "spoon"
+              ],
+              "option_emojis": [
+                "🪥",
+                "🥄"
+              ],
+              "correct_answer": "toothbrush",
+              "hint": "Brush brush brush!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_hb_3",
+              "type": "multiple_choice",
+              "emoji": "🗑️",
+              "skill_id": "using_dustbin",
+              "prompt": "Where do we throw rubbish? 🗑️ or 🛏️",
+              "visual_items": [
+                "dustbin",
+                "bed"
+              ],
+              "options": [
+                "dustbin",
+                "bed"
+              ],
+              "option_emojis": [
+                "▫️",
+                "▫️"
+              ],
+              "correct_answer": "dustbin",
+              "hint": "Keep our home clean!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_hb_4",
+              "type": "parent_activity",
+              "emoji": "🙏",
+              "skill_id": "magic_words",
+              "prompt": "Practise saying Thank You and Sorry today! 🙏",
+              "visual_items": [
+                "gift"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Magic words make people smile 😊",
+              "difficulty": "easy",
+              "parent_note": "Model it yourself first — say thank you to the child. At two they copy far more than they follow instructions."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "subject_id": "pg_evs",
+      "title": "Environmental Science",
+      "emoji": "🌱",
+      "sort_order": 4,
+      "topics": [
+        {
+          "topic_id": "pg_evs_myworld",
+          "title": "My World",
+          "emoji": "🏡",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Myself, my family and home, cleanliness, nature, animals, day and night",
+          "intro_message": "Let us explore the world around us! 🌍",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_ev_1",
+              "type": "multiple_choice",
+              "emoji": "☀️",
+              "skill_id": "day_night",
+              "prompt": "What do we see in the DAY? ☀️ or 🌙",
+              "visual_items": [
+                "sun",
+                "moon"
+              ],
+              "options": [
+                "sun",
+                "moon"
+              ],
+              "option_emojis": [
+                "▫️",
+                "🌙"
+              ],
+              "correct_answer": "sun",
+              "hint": "It is bright and warm!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ev_2",
+              "type": "multiple_choice",
+              "emoji": "🌙",
+              "skill_id": "day_night",
+              "prompt": "What do we see at NIGHT? 🌙 or ☀️",
+              "visual_items": [
+                "moon",
+                "sun"
+              ],
+              "options": [
+                "moon",
+                "sun"
+              ],
+              "option_emojis": [
+                "🌙",
+                "▫️"
+              ],
+              "correct_answer": "moon",
+              "hint": "When it is dark 🌟",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ev_3",
+              "type": "multiple_choice",
+              "emoji": "🌳",
+              "skill_id": "nature",
+              "prompt": "Which one grows in the garden? 🌳 or 🚗",
+              "visual_items": [
+                "tree",
+                "car"
+              ],
+              "options": [
+                "tree",
+                "car"
+              ],
+              "option_emojis": [
+                "🌳",
+                "🚗"
+              ],
+              "correct_answer": "tree",
+              "hint": "It is tall and green!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_ev_4",
+              "type": "multiple_choice",
+              "emoji": "🐶",
+              "skill_id": "domestic_animal_sounds",
+              "prompt": "Which animal says BOW-WOW? 🐶 or 🦜",
+              "visual_items": [
+                "dog",
+                "parrot"
+              ],
+              "options": [
+                "dog",
+                "parrot"
+              ],
+              "option_emojis": [
+                "🐶",
+                "🦜"
+              ],
+              "correct_answer": "dog",
+              "hint": "Woof woof!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ev_5",
+              "type": "parent_activity",
+              "emoji": "🚶",
+              "skill_id": "nature_walk",
+              "prompt": "Go for a nature walk and find a leaf, a flower and a stone! 🍃🌸🪨",
+              "visual_items": [
+                "tree",
+                "flower"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Look down and look up!",
+              "difficulty": "easy",
+              "parent_note": "Ten minutes outside is enough. Name everything you both see — naming is the whole lesson at this age."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "subject_id": "pg_art",
+      "title": "Art, Music & Motor Skills",
+      "emoji": "🎨",
+      "sort_order": 5,
+      "topics": [
+        {
+          "topic_id": "pg_art_fine",
+          "title": "Fine Motor Skills",
+          "emoji": "✋",
+          "sort_order": 1,
+          "delivery": "parent_guided",
+          "objective": "Crumpling and tearing paper, finger printing, beading, clay, colouring",
+          "intro_message": "Let us make things with our hands! ✋",
+          "star_reward": 5,
+          "note": "A screen cannot build hand strength. These are parent activity cards; the app records completion and celebrates, but asks no tap questions.",
+          "activities": [
+            {
+              "activity_id": "pg_fm_1",
+              "type": "parent_activity",
+              "emoji": "📄",
+              "skill_id": "paper_tearing",
+              "prompt": "Tear paper into small pieces! 📄✋",
+              "visual_items": [
+                "paper"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Use both hands.",
+              "difficulty": "very_easy",
+              "parent_note": "Old newspaper is perfect. Tearing builds exactly the finger muscles needed later for a pencil."
+            },
+            {
+              "activity_id": "pg_fm_2",
+              "type": "parent_activity",
+              "emoji": "🎨",
+              "skill_id": "finger_printing",
+              "prompt": "Dip your thumb in paint and make dots! 👍🎨",
+              "visual_items": [
+                "colours"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Press and lift.",
+              "difficulty": "easy",
+              "parent_note": "Turn the thumbprints into caterpillars or flowers afterwards."
+            },
+            {
+              "activity_id": "pg_fm_3",
+              "type": "parent_activity",
+              "emoji": "🧱",
+              "skill_id": "clay_moulding",
+              "prompt": "Squeeze and roll the dough! 🧱✋",
+              "visual_items": [
+                "clay"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Make a ball, then a snake 🐍",
+              "difficulty": "easy",
+              "parent_note": "Atta dough works fine. Squeezing is the exercise — the shape does not matter."
+            },
+            {
+              "activity_id": "pg_fm_4",
+              "type": "parent_activity",
+              "emoji": "📿",
+              "skill_id": "beading",
+              "prompt": "Thread big beads onto a string! 📿",
+              "visual_items": [
+                "beads"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One bead at a time.",
+              "difficulty": "medium",
+              "parent_note": "Use large beads and a stiff lace. Supervise closely — small beads are a choking risk at this age."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_art_gross",
+          "title": "Gross Motor Skills",
+          "emoji": "🏃",
+          "sort_order": 2,
+          "delivery": "parent_guided",
+          "objective": "Running, jumping, hopping, ball throwing and catching, balancing, free play",
+          "intro_message": "Time to move your whole body! 🏃",
+          "star_reward": 5,
+          "note": "A screen cannot teach ball-catching. These are parent activity cards; the app records completion and celebrates, but asks no tap questions.",
+          "activities": [
+            {
+              "activity_id": "pg_gm_1",
+              "type": "parent_activity",
+              "emoji": "🐰",
+              "skill_id": "jumping",
+              "prompt": "Jump like a bunny! 🐰 Five big jumps!",
+              "visual_items": [
+                "rabbit"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Bend your knees and push up!",
+              "difficulty": "easy",
+              "parent_note": "Count out loud together. Five is plenty at two."
+            },
+            {
+              "activity_id": "pg_gm_2",
+              "type": "parent_activity",
+              "emoji": "⚽",
+              "skill_id": "ball_throwing",
+              "prompt": "Roll the ball to a grown-up! ⚽",
+              "visual_items": [
+                "ball"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Push it with both hands.",
+              "difficulty": "easy",
+              "parent_note": "Rolling comes before throwing, and throwing before catching. Do not skip ahead."
+            },
+            {
+              "activity_id": "pg_gm_3",
+              "type": "parent_activity",
+              "emoji": "🛝",
+              "skill_id": "free_play",
+              "prompt": "Play on the slide and the swing! 🛝🎠",
+              "visual_items": [
+                "slide",
+                "swing"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Wait for your turn!",
+              "difficulty": "easy",
+              "parent_note": "Free play is real learning at this age, not a break from it."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_art_music",
+          "title": "Music & Movement",
+          "emoji": "🎵",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Action songs with claps, dance and free movement, rhythm with instruments",
+          "intro_message": "Let us sing and dance! 💃",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_mu_1",
+              "type": "story_listen",
+              "emoji": "👏",
+              "skill_id": "action_songs",
+              "prompt": "If you're happy and you know it, clap your hands! 👏",
+              "visual_items": [
+                "hand"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Clap along with me!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_mu_2",
+              "type": "story_listen",
+              "emoji": "🦶",
+              "skill_id": "action_songs",
+              "prompt": "Head, shoulders, knees and toes! Touch each one! 🦶",
+              "visual_items": [
+                "child_avatar"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch as we sing!",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_mu_3",
+              "type": "multiple_choice",
+              "emoji": "🥁",
+              "skill_id": "rhythm",
+              "prompt": "Clap, clap, clap... what comes next? 👏👏👏",
+              "visual_items": [
+                "drum"
+              ],
+              "options": [
+                "clap",
+                "stop"
+              ],
+              "option_emojis": [
+                "👏",
+                "✋"
+              ],
+              "correct_answer": "clap",
+              "hint": "Keep the beat going!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_mu_4",
+              "type": "parent_activity",
+              "emoji": "💃",
+              "skill_id": "free_dance",
+              "prompt": "Put on music and dance any way you like! 💃🎵",
+              "visual_items": [
+                "drum"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "There is no wrong way to dance!",
+              "difficulty": "very_easy",
+              "parent_note": "Dance with them, not at them. Copying a grown-up having fun is the lesson."
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_art_celebrations",
+          "title": "Celebrations",
+          "emoji": "🎉",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Birthdays, Diwali, Holi, Christmas, Independence Day",
+          "intro_message": "Let us celebrate together! 🎉",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "pg_ce_1",
+              "type": "multiple_choice",
+              "emoji": "🎂",
+              "skill_id": "birthday",
+              "prompt": "What do we cut on a birthday? 🎂 or 📚",
+              "visual_items": [
+                "cake",
+                "book"
+              ],
+              "options": [
+                "cake",
+                "book"
+              ],
+              "option_emojis": [
+                "🎂",
+                "📚"
+              ],
+              "correct_answer": "cake",
+              "hint": "It has candles on it! 🕯️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_ce_2",
+              "type": "multiple_choice",
+              "emoji": "🪔",
+              "skill_id": "festival_diwali",
+              "prompt": "Which festival has lights and diyas? 🪔",
+              "visual_items": [
+                "diya"
+              ],
+              "options": [
+                "Diwali",
+                "Holi"
+              ],
+              "option_emojis": [
+                "🪔",
+                "🎨"
+              ],
+              "correct_answer": "Diwali",
+              "hint": "The festival of lights! ✨",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_ce_3",
+              "type": "multiple_choice",
+              "emoji": "🎨",
+              "skill_id": "festival_holi",
+              "prompt": "Which festival has lots of colours? 🎨",
+              "visual_items": [
+                "colours"
+              ],
+              "options": [
+                "Holi",
+                "Diwali"
+              ],
+              "option_emojis": [
+                "🎨",
+                "🪔"
+              ],
+              "correct_answer": "Holi",
+              "hint": "The festival of colours!",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_ce_4",
+              "type": "story_listen",
+              "emoji": "🇮🇳",
+              "skill_id": "independence_day",
+              "prompt": "On Independence Day we wave our flag! 🇮🇳",
+              "visual_items": [
+                "flag"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Orange, white and green!",
+              "difficulty": "easy"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

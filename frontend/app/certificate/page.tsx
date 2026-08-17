@@ -5,7 +5,7 @@ import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { AppShell } from "@/components/shared/AppShell";
 import { CertificateCard } from "@/components/rewards/CertificateCard";
 import { api } from "@/services/api";
-import { getOrCreateGuestChild } from "@/services/session";
+import { getChild } from "@/services/session";
 
 type Certificate = {
   unlocked: boolean;
@@ -25,18 +25,11 @@ export default function CertificatePage() {
       message: "The final treasure opens when every world is complete.",
       animationEffect: "certificate_celebration"
     });
-    const child = getOrCreateGuestChild();
+    const child = getChild();
+    if (!child) return;
     api<Certificate>(`/progress/${child.child_id}/certificate`)
       .then(setCertificate)
-      .catch(() =>
-        setCertificate({
-          unlocked: child.certificate_unlocked,
-          certificate_id: child.certificate_unlocked ? `cert_local_${child.child_id}` : null,
-          child_name: child.certificate_unlocked ? child.name : null,
-          completion_date: child.certificate_unlocked ? new Date().toISOString().slice(0, 10) : null,
-          stars_earned: child.stars
-        })
-      );
+      .catch(() => setCertificate(null));
   }, [setAvatar]);
 
   return (
@@ -47,8 +40,8 @@ export default function CertificatePage() {
             <div className="treasure-chest mt-8" />
             <div className="relative z-10">
               <p className="text-sm font-black uppercase text-leaf">Final celebration</p>
-              <h1 className="mt-2 text-5xl font-black text-ink">Magic Castle Complete</h1>
-              <p className="mt-3 text-xl font-bold text-ink/70">The treasure opens and your certificate is ready.</p>
+              <h1 className="mt-2 text-5xl font-black text-ink">Curriculum Complete</h1>
+              <p className="mt-3 text-xl font-bold text-ink/70">Every topic in your class is complete.</p>
             </div>
           </section>
           <CertificateCard childName={certificate.child_name} certificateId={certificate.certificate_id} completionDate={certificate.completion_date} stars={certificate.stars_earned} />
@@ -60,7 +53,7 @@ export default function CertificatePage() {
         <section className="surface-panel mx-auto grid max-w-2xl justify-items-center gap-5 rounded-[2rem] p-6 text-center">
           <div className="treasure-chest opacity-70" />
           <h1 className="text-4xl font-black text-ink">Certificate treasure is waiting</h1>
-          <p className="text-xl font-bold text-ink/70">Complete the Magic Castle final world to open it.</p>
+          <p className="text-xl font-bold text-ink/70">Finish every topic in your class to open it.</p>
         </section>
       )}
     </AppShell>

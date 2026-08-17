@@ -8,12 +8,13 @@ from pydantic import ValidationError
 from app.config import get_settings
 from app.schemas.avatar import AvatarPayload
 from app.schemas.guide import GuideActionType, GuideRequest, GuideResponse, GuideUiAction, GuideVisualAction, GuideVisualActionType
+from app.services import curriculum_service
 from app.services.answer_resolution_service import AnswerResolutionContext, resolve_answer
 from app.services.errors import app_error
 from app.services.safety_service import FALLBACK, safe_text
 
 
-SYSTEM_PROMPT = """You are the Little Learning Guide, a friendly AI companion for children aged 3-6.
+SYSTEM_PROMPT = """You are the Saksham IQ Guide, a friendly AI companion for children aged 3-6.
 Your job is to answer age-appropriate learning questions and help the child understand the
 current screen or activity. For GUIDE_HELP_REQUESTED, answer the child's latest question
 directly and use the recent conversation when it helps. If a question is unrelated or unsafe,
@@ -32,13 +33,13 @@ use only allowed UI and visual actions. If clear speech does not fit the current
 say so gently and bring the child back to that question; never claim you could not hear it.
 Return structured JSON only."""
 
-TODDLER_SYSTEM_PROMPT = """For learning_mode toddler, you are a warm, playful nursery teacher helping a child younger than 3.
+EARLY_MODE_SYSTEM_PROMPT = """For experience_mode early (Play Group and Nursery), you are a warm, playful nursery teacher.
 Assume the child may be pre-verbal or may communicate without speech. Never require a spoken answer.
 When tap choices are available, make tapping the primary action and speaking only an optional extra.
 After hesitation or repeated attempts, show the answer and say exactly what to tap. Do not test memory again.
 Use maximum 1-2 very short sentences, simple vocabulary, one instruction at a time, and happy emojis.
 Never ask for personal information. Never shame. Never say wrong. Prefer: Almost! Let's try again 😊.
-Keep the child focused on the current deterministic toddler lesson."""
+Keep the child focused on the current deterministic topic."""
 
 APPROVED_GUIDE_TARGETS = {
     "home-practice",
@@ -59,17 +60,11 @@ APPROVED_GUIDE_TARGETS = {
     "parent-profile",
     "open-certificate",
     "more-practice",
-    "open-levels",
-    "toddler-home",
-    "toddler-module-alphabets",
-    "toddler-module-numbers",
-    "toddler-module-colours",
-    "toddler-module-shapes",
-    "toddler-activity",
-    "toddler-microphone",
-    "toddler-choices",
-    "toddler-keep-learning",
-    "toddler-practice",
+    "open-subjects",
+    "adventure-home",
+    "subject-card",
+    "topic-card",
+    "activity-area",
 }
 
 APPROVED_GUIDE_ACTIONS: set[GuideActionType] = {
@@ -131,17 +126,74 @@ HINT_RESPONSES_ATTEMPT_3_PLUS = [
     "Let us try a different way. Look at the picture carefully.",
 ]
 
+# A Hindi lesson is answered in Hindi, including when no model is configured.
+# The subject declares its language in the manifest; nothing here names a subject.
+HINDI_PRAISE = [
+    "बहुत बढ़िया!",
+    "शाबाश!",
+    "एकदम सही!",
+    "वाह! तुमने कर दिखाया।",
+    "बहुत अच्छे! अगला करें?",
+    "क्या बात है!",
+]
 
-def _pick_praise(session_id: str | None = None) -> str:
+HINDI_HINTS_ATTEMPT_1 = [
+    "अच्छी कोशिश! एक बार और करो।",
+    "लगभग सही! आराम से एक बार और।",
+    "तुम कर सकते हो! फिर से कोशिश करो।",
+]
+
+HINDI_HINTS_ATTEMPT_2_PLUS = [
+    "चलो साथ में देखते हैं। ध्यान से सुनो।",
+    "कोई बात नहीं! धीरे-धीरे करते हैं।",
+    "मैं तुम्हारी मदद करता हूँ। तस्वीर देखो।",
+]
+
+HINDI_SYSTEM_PROMPT = """The current lesson is a Hindi lesson (oral introduction, ages 3-4).
+Reply in simple spoken Hindi, written in Devanagari, in one or two very short sentences.
+Use the words a nursery child hears at home. Do not switch to English, do not transliterate
+into Roman letters, and do not ask the child to write anything: this year Hindi is spoken and
+listened to only. If the child answers in Roman letters, that still counts as Hindi."""
+
+
+def _lesson_language(payload: GuideRequest) -> str:
+    """The language the current lesson is taught in.
+
+    Read from the curriculum, never from the client: a subject declares its
+    language in the manifest, so a Hindi lesson is answered in Hindi without
+    anything here knowing a subject id. Falls back to English whenever the
+    current lesson cannot be identified.
+    """
+    progress = payload.progress
+    subject_id = progress.current_subject if progress else None
+    if subject_id:
+        subject = curriculum_service._curriculum().get_subject(subject_id)
+        if subject:
+            return subject.language
+    topic_id = (progress.current_topic if progress else None) or (
+        payload.question.topic if payload.question else None
+    )
+    if topic_id:
+        topic = curriculum_service._curriculum().get_topic(topic_id)
+        if topic:
+            return topic.language
+    return "en"
+
+
+def _pick_praise(session_id: str | None = None, language: str = "en") -> str:
     """Pick a varied praise message. Uses session_id as seed for consistency within a session."""
+    pool = HINDI_PRAISE if language == "hi" else STATIC_PRAISE
     if session_id:
         rng = random.Random(f"praise:{session_id}:{datetime.now(timezone.utc).minute}")
-        return rng.choice(STATIC_PRAISE)
-    return random.choice(STATIC_PRAISE)
+        return rng.choice(pool)
+    return random.choice(pool)
 
 
-def _pick_hint(attempt: int) -> str:
+def _pick_hint(attempt: int, language: str = "en") -> str:
     """Pick an attempt-aware hint message with variety."""
+    if language == "hi":
+        pool = HINDI_HINTS_ATTEMPT_1 if attempt <= 1 else HINDI_HINTS_ATTEMPT_2_PLUS
+        return random.choice(pool)
     if attempt <= 1:
         pool = HINT_RESPONSES_ATTEMPT_1
     elif attempt == 2:
@@ -154,7 +206,7 @@ def _pick_hint(attempt: int) -> str:
 def _is_second_try_encouragement(payload: GuideRequest) -> bool:
     """The first wrong answer opens the child's second try."""
     return bool(
-        payload.event in {"PRACTICE_ANSWER_INCORRECT", "LEVEL_ANSWER_INCORRECT"}
+        payload.event in {"PRACTICE_ANSWER_INCORRECT", "TOPIC_ANSWER_INCORRECT"}
         and payload.question
         and payload.question.attempt == 1
     )
@@ -211,14 +263,14 @@ def _help_message(payload: GuideRequest) -> str:
     if any(word in question.split() for word in {"hi", "hello", "hey"}):
         return "Hello! What would you like to learn today?"
     if "practice" in question:
-        return "Open Practice, then choose Numbers, Alphabets, Colours, Shapes, or Mixed Practice."
-    if any(word in question for word in {"level", "path", "stage"}):
-        return "Open Adventure and tap the bright unlocked level on your learning path."
+        return "Open Practice, then choose one of your subjects."
+    if any(word in question for word in {"topic", "subject", "lesson"}):
+        return "Open Adventure, choose a subject, and tap the bright unlocked topic."
     if "star" in question or "reward" in question:
         stars = progress.session_stars if progress else 0
         return f"You have {stars} stars. Open Rewards to see your badges and prizes."
     if "certificate" in question:
-        return "Your certificate unlocks after you complete the Mixed Final Path."
+        return "Your certificate unlocks after you finish every topic in your class."
     if "circle" in question:
         return "A circle is round all the way around and has no corners."
     if "square" in question:
@@ -368,8 +420,8 @@ def _question_teaching_message(payload: GuideRequest) -> tuple[str, GuideVisualA
 def _fallback_guide(payload: GuideRequest) -> GuideResponse:
     validate_guide_request(payload)
 
-    if payload.learning_mode == "toddler" or (payload.toddler and payload.toddler.learning_mode == "toddler"):
-        return _toddler_fallback_guide(payload)
+    if payload.experience_mode == "early":
+        return _early_mode_guide(payload)
 
     message = FALLBACK
     strategy = "help"
@@ -383,56 +435,58 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
     # --- APP_OPENED / HOME_OPENED ---
     if payload.event in {"APP_OPENED", "HOME_OPENED"}:
         greeting = _time_greeting()
-        level = payload.progress.current_level if payload.progress else None
-        last = payload.progress.last_completed_level if payload.progress else None
-        objective = payload.progress.last_completed_objective if payload.progress else None
+        topic = payload.progress.current_topic if payload.progress else None
+        last = payload.progress.last_completed_topic if payload.progress else None
         completed_at = payload.progress.last_completed_at if payload.progress else None
-        if last and level:
-            studied = objective or last
+        if last and topic:
             when = "Last time"
             if completed_at and completed_at.date() == (datetime.now(timezone.utc) - timedelta(days=1)).date():
                 when = "Yesterday"
-            message = f"{greeting}! {when} you studied {studied} in {last}. Today, tap Continue Adventure for {level}."
-        elif level:
-            message = f"{greeting}! Tap Continue Adventure to start {level}."
+            message = f"{greeting}! {when} you finished {last}. Today, tap Continue Adventure for {topic}."
+        elif topic:
+            message = f"{greeting}! Tap Continue Adventure to start {topic}."
         else:
             message = f"{greeting}! Tap Continue Adventure to begin."
         strategy = "welcome"
-        action = _ui_action(payload, "highlight", ["continue-adventure", "current-level", "home-practice", "start-practice"])
+        action = _ui_action(payload, "highlight", ["continue-adventure", "topic-card", "home-practice", "start-practice"])
         next_event = "button_clicked"
         state = "waving"
         effect = "sparkle"
 
     # --- ADVENTURE_OPENED ---
     elif payload.event == "ADVENTURE_OPENED":
-        world = payload.progress.current_world if payload.progress else "your adventure"
-        message = f"Welcome to {world}! Follow the path and tap the glowing level."
+        subject = payload.progress.current_subject if payload.progress else None
+        message = (
+            f"Here is {subject}! Tap the glowing topic to begin."
+            if subject
+            else "Here are your subjects! Tap one to begin."
+        )
         strategy = "navigation"
-        action = _ui_action(payload, "highlight", ["current-map-level", "current-level"])
+        action = _ui_action(payload, "highlight", ["subject-card", "topic-card", "current-map-level"])
         next_event = "button_clicked"
         state = "speaking"
         effect = "sparkle"
 
-    # --- LEVEL_OPENED ---
-    elif payload.event == "LEVEL_OPENED":
-        level = payload.progress.current_level if payload.progress else "this level"
-        message = f"Here is {level}. Tap to start when you are ready."
+    # --- TOPIC_OPENED ---
+    elif payload.event == "TOPIC_OPENED":
+        topic = payload.progress.current_topic if payload.progress else "this topic"
+        message = f"Here is {topic}. Tap to start when you are ready."
         strategy = "navigation"
-        action = _ui_action(payload, "highlight", ["current-level", "current-map-level"])
+        action = _ui_action(payload, "highlight", ["topic-card", "current-map-level"])
         next_event = "button_clicked"
         state = "speaking"
 
     # --- PRACTICE_OPENED ---
     elif payload.event == "PRACTICE_OPENED":
-        message = "Practice time! Pick a topic you want to work on."
+        message = "Practice time! Pick a subject you want to work on."
         strategy = "navigation"
         action = _ui_action(payload, "highlight", ["start-practice", "home-practice"])
         next_event = "button_clicked"
         state = "speaking"
         effect = "bounce"
 
-    # --- PRACTICE_STARTED / LEVEL_STARTED ---
-    elif payload.event in {"PRACTICE_STARTED", "LEVEL_STARTED"}:
+    # --- PRACTICE_STARTED / TOPIC_STARTED ---
+    elif payload.event in {"PRACTICE_STARTED", "TOPIC_STARTED"}:
         message, visual_action, strategy = _question_teaching_message(payload)
         action = _ui_action(payload, "highlight", ["question-area", "voice-answer-area", "microphone-button"])
         next_event = "voice_answer_requested"
@@ -440,15 +494,15 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         effect = "story_transition"
 
     # --- QUESTION LOADED / REPEAT ---
-    elif payload.event in {"PRACTICE_QUESTION_LOADED", "LEVEL_QUESTION_LOADED", "REPEAT_REQUESTED"}:
+    elif payload.event in {"PRACTICE_QUESTION_LOADED", "TOPIC_QUESTION_LOADED", "REPEAT_REQUESTED"}:
         message, visual_action, strategy = _question_teaching_message(payload)
         action = _ui_action(payload, "highlight", ["question-area", "counting-object-group", "voice-answer-area", "microphone-button"])
         next_event = "voice_answer_requested"
 
     # --- INCORRECT ANSWER ---
-    elif payload.event in {"PRACTICE_ANSWER_INCORRECT", "LEVEL_ANSWER_INCORRECT", "HINT_REQUESTED"}:
+    elif payload.event in {"PRACTICE_ANSWER_INCORRECT", "TOPIC_ANSWER_INCORRECT", "HINT_REQUESTED"}:
         if _is_second_try_encouragement(payload):
-            message = _pick_hint(1)
+            message = _pick_hint(1, _lesson_language(payload))
             visual_action = GuideVisualAction()
             strategy = "hint"
             preferred_targets = ["question-area", "voice-answer-area", "microphone-button"]
@@ -463,8 +517,8 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         effect = "gentle_hint"
 
     # --- CORRECT ANSWER ---
-    elif payload.event in {"PRACTICE_ANSWER_CORRECT", "LEVEL_ANSWER_CORRECT"}:
-        message = _pick_praise(session_id)
+    elif payload.event in {"PRACTICE_ANSWER_CORRECT", "TOPIC_ANSWER_CORRECT"}:
+        message = _pick_praise(session_id, _lesson_language(payload))
         strategy = "none"
         action = GuideUiAction(type="none", target=None)
         next_event = "next_question_loaded"
@@ -472,26 +526,26 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
         effect = "star_burst"
 
     # --- COMPLETION EVENTS ---
-    elif payload.event in {"PRACTICE_COMPLETED", "LEVEL_COMPLETED", "WORLD_UNLOCKED", "CERTIFICATE_UNLOCKED", "WORLD_COMPLETED"}:
+    elif payload.event in {"PRACTICE_COMPLETED", "TOPIC_COMPLETED", "TOPIC_UNLOCKED", "CERTIFICATE_UNLOCKED", "SUBJECT_COMPLETED"}:
         if payload.event == "PRACTICE_COMPLETED":
-            message = "Practice complete! You worked so hard. Tap Levels or try more practice."
-            action = _ui_action(payload, "highlight", ["open-levels", "more-practice", "continue-adventure"])
+            message = "Practice complete! You worked so hard. Tap Subjects or try more practice."
+            action = _ui_action(payload, "highlight", ["open-subjects", "more-practice", "continue-adventure"])
         elif payload.event == "CERTIFICATE_UNLOCKED":
-            message = "Your certificate is ready! You are a Little Learning Explorer. Tap to open it."
+            message = "Your certificate is ready! You are a Saksham IQ Explorer. Tap to open it."
             action = _ui_action(payload, "highlight", ["open-certificate"])
             effect = "rainbow"
-        elif payload.event == "WORLD_COMPLETED":
-            world = payload.progress.current_world if payload.progress else "this world"
-            message = f"You completed {world}! A new world is waiting for you."
-            action = _ui_action(payload, "highlight", ["continue-adventure", "open-levels"])
+        elif payload.event == "SUBJECT_COMPLETED":
+            subject = payload.progress.current_subject if payload.progress else "this subject"
+            message = f"You completed {subject}! Another subject is waiting for you."
+            action = _ui_action(payload, "highlight", ["continue-adventure", "open-subjects"])
             effect = "confetti"
-        elif payload.event == "WORLD_UNLOCKED":
-            message = "A new world just opened! Tap Continue Adventure to explore."
-            action = _ui_action(payload, "highlight", ["continue-adventure", "current-level", "open-levels"])
+        elif payload.event == "TOPIC_UNLOCKED":
+            message = "A new topic just opened! Tap Continue Adventure to explore."
+            action = _ui_action(payload, "highlight", ["continue-adventure", "topic-card", "open-subjects"])
             effect = "confetti"
         else:
-            message = "Wonderful work! Tap Continue Adventure for the next level."
-            action = _ui_action(payload, "highlight", ["continue-adventure", "current-level", "open-levels"])
+            message = "Wonderful work! Tap Continue Adventure for the next topic."
+            action = _ui_action(payload, "highlight", ["continue-adventure", "topic-card", "open-subjects"])
         strategy = "celebrate"
         next_event = "button_clicked"
         state = "celebrating"
@@ -526,7 +580,7 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
             action = _ui_action(
                 payload,
                 "highlight",
-                ["counting-object-group", "question-area", "toddler-activity", "voice-answer-area", "toddler-choices"],
+                ["counting-object-group", "question-area", "activity-area", "voice-answer-area", "answer-options"],
             )
         else:
             action = GuideUiAction(type="none", target=None)
@@ -545,13 +599,17 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
     )
 
 
-def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
-    toddler = payload.toddler
-    concept = toddler.concept if toddler and toddler.concept else payload.question.correct_answer if payload.question else ""
-    result = toddler.recent_result if toddler else None
-    activity_type = toddler.activity_type if toddler else payload.question.answer_type if payload.question else ""
-    attempt_count = toddler.attempt_count if toddler else payload.question.attempt if payload.question else 0
-    target_preferences = ["toddler-activity", "toddler-choices", "toddler-microphone", "toddler-keep-learning", "toddler-practice"]
+def _early_mode_guide(payload: GuideRequest) -> GuideResponse:
+    """Guidance for Play Group and Nursery.
+
+    `early` mode assumes the child may be pre-verbal: tapping is always the
+    primary action and speaking is optional. Copy stays under 14 words.
+    """
+    question = payload.question
+    concept = question.correct_answer if question else ""
+    activity_type = (question.answer_type if question else "") or ""
+    attempt_count = question.attempt if question else 0
+    target_preferences = ["activity-area", "answer-options", "microphone-button", "continue-adventure", "start-practice"]
     state = "speaking"
     effect = "none"
     strategy = "read_question"
@@ -562,52 +620,57 @@ def _toddler_fallback_guide(payload: GuideRequest) -> GuideResponse:
         message = "Hi little explorer! 👋 Let's learn."
         state = "waving"
         strategy = "welcome"
-        target_preferences = ["toddler-module-alphabets", "toddler-home"]
+        target_preferences = ["continue-adventure", "subject-card", "adventure-home"]
+    elif payload.event in {"ADVENTURE_OPENED", "TOPIC_OPENED"}:
+        message = "Tap a picture to start. 😊"
+        strategy = "navigation"
+        target_preferences = ["subject-card", "topic-card", "adventure-home"]
     elif payload.event == "GUIDE_HELP_REQUESTED":
         teaching_payload = payload.model_copy(
-            update={"question": payload.question.model_copy(update={"attempt": max(1, payload.question.attempt)})}
-        ) if payload.question else payload
+            update={"question": question.model_copy(update={"attempt": max(1, question.attempt)})}
+        ) if question else payload
         teaching_message, visual_action, strategy = _question_teaching_message(teaching_payload)
         message = teaching_message if _is_counting_question(teaching_payload) else f"Here it is. Tap {concept}." if concept else _help_message(payload)
         state = "speaking"
         strategy = "help"
-        target_preferences = ["toddler-choices", "toddler-activity", "toddler-microphone"]
-    elif result in {"correct", "close"} or payload.event in {"LEVEL_ANSWER_CORRECT", "PRACTICE_ANSWER_CORRECT"}:
+        target_preferences = ["answer-options", "activity-area", "microphone-button"]
+    elif payload.event in {"TOPIC_ANSWER_CORRECT", "PRACTICE_ANSWER_CORRECT"}:
         message = f"Yay! That's {concept}! ⭐" if concept else "Yay! Great job! ⭐"
         state = "celebrating"
         effect = "star_burst"
         strategy = "celebrate"
         next_event = "next_activity"
-    elif result in {"retry", "unclear"} or payload.event in {"LEVEL_ANSWER_INCORRECT", "PRACTICE_ANSWER_INCORRECT", "HINT_REQUESTED"}:
-        if activity_type == "repeat_after_me" and concept:
+    elif payload.event in {"TOPIC_ANSWER_INCORRECT", "PRACTICE_ANSWER_INCORRECT", "HINT_REQUESTED"}:
+        # After two tries, stop testing and simply show the answer.
+        if activity_type.startswith("repeat_") and concept:
             message = f"Tap {concept}. You can say it too."
             strategy = "re_explain" if attempt_count >= 2 else "hint"
         elif attempt_count >= 2 and concept:
             message = f"Here it is. Tap {concept}."
             strategy = "re_explain"
-        elif payload.question:
+        elif question:
             message, visual_action, strategy = _question_teaching_message(payload)
         else:
             message = f"Almost! 😊 Let's try {concept} again." if concept else "Almost! 😊 Let's try again."
             strategy = "hint"
         state = "encouraging"
         effect = "gentle_hint"
-        target_preferences = ["toddler-choices", "toddler-activity", "toddler-microphone"]
-    elif payload.event in {"LEVEL_COMPLETED", "PRACTICE_COMPLETED"}:
+        target_preferences = ["answer-options", "activity-area", "microphone-button"]
+    elif payload.event in {"TOPIC_COMPLETED", "PRACTICE_COMPLETED", "SUBJECT_COMPLETED"}:
         message = "Wow! You did it! 🌟"
         state = "celebrating"
         effect = "confetti"
         strategy = "celebrate"
-        target_preferences = ["toddler-keep-learning", "toddler-practice"]
-    elif payload.question:
-        if activity_type == "repeat_after_me" and concept:
+        target_preferences = ["continue-adventure", "start-practice"]
+    elif question:
+        if activity_type.startswith("repeat_") and concept:
             message = f"Tap {concept}. You can say it too."
-            target_preferences = ["toddler-choices", "toddler-activity", "toddler-microphone"]
-        elif activity_type == "recognition" and concept:
+            target_preferences = ["answer-options", "activity-area", "microphone-button"]
+        elif activity_type.startswith(("identify_", "recognize_", "select_")) and concept:
             message = f"Tap {concept}."
-            target_preferences = ["toddler-choices", "toddler-activity"]
+            target_preferences = ["answer-options", "activity-area"]
         else:
-            message = _words(payload.question.learning_objective or payload.question.prompt, 10)
+            message = _words(question.learning_objective or question.prompt, 10)
     else:
         message = "Look, listen, then try. 😊"
 
@@ -631,7 +694,7 @@ def _model_instruction(payload: GuideRequest) -> str:
     allowed_targets = [target for target in payload.available_targets if target in APPROVED_GUIDE_TARGETS]
     allowed_visual_targets = [target for target in payload.allowed_visual_targets if target.startswith(("visual-item-", "visual-example-"))]
     return (
-        "Create one Little Learning Guide response for this event. "
+        "Create one Saksham IQ Guide response for this event. "
         "Return exactly one JSON object with keys: message, strategy, avatar, ui_action, visual_action, next_expected_event. "
         f"Allowed ui_action.type values: {allowed_actions}. "
         f"Allowed ui_action.target values: {allowed_targets}; use null if no target is needed. "
@@ -668,7 +731,11 @@ def _validate_model_response(payload: GuideRequest, raw_content: str) -> GuideRe
             teaching_message, visual_action, _ = _question_teaching_message(teaching_payload)
             if payload.question and _is_counting_question(teaching_payload) and not _is_contextual_mismatch(payload):
                 message = safe_text(_words(teaching_message, 25))
-            target_preferences = ["toddler-activity", "toddler-choices"] if payload.learning_mode == "toddler" else ["counting-object-group", "question-area"]
+            target_preferences = (
+                ["activity-area", "answer-options"]
+                if payload.experience_mode == "early"
+                else ["counting-object-group", "question-area"]
+            )
             return GuideResponse(
                 message=message,
                 strategy="help",
@@ -697,12 +764,12 @@ def _validate_model_response(payload: GuideRequest, raw_content: str) -> GuideRe
 
     teaching_event = payload.event in {
         "PRACTICE_ANSWER_INCORRECT",
-        "LEVEL_ANSWER_INCORRECT",
+        "TOPIC_ANSWER_INCORRECT",
         "HINT_REQUESTED",
         "GUIDE_HELP_REQUESTED",
     }
     if _is_second_try_encouragement(payload):
-        message = safe_text(_words(_pick_hint(1), 25))
+        message = safe_text(_words(_pick_hint(1, _lesson_language(payload)), 25))
         response = response.model_copy(
             update={
                 "message": message,
@@ -745,7 +812,10 @@ def _groq_guide(payload: GuideRequest) -> GuideResponse:
         "model": settings.groq_model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "system", "content": TODDLER_SYSTEM_PROMPT if payload.learning_mode == "toddler" else ""},
+            {"role": "system", "content": EARLY_MODE_SYSTEM_PROMPT if payload.experience_mode == "early" else ""},
+            # A Hindi lesson is answered in Hindi. The language comes from the
+            # subject in the manifest, not from anything the client sends.
+            {"role": "system", "content": HINDI_SYSTEM_PROMPT if _lesson_language(payload) == "hi" else ""},
             {"role": "user", "content": _model_instruction(payload)},
             {"role": "user", "content": json.dumps(_payload_for_model(payload), ensure_ascii=True)},
         ],

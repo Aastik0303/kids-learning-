@@ -1,0 +1,2803 @@
+{
+  "class_id": "ukg",
+  "title": "UKG",
+  "subtitle": "Upper Kindergarten / KG2",
+  "min_age": 5,
+  "max_age": 6,
+  "experience_mode": "standard",
+  "version": "2026-27",
+  "source": "CBSE UKG Syllabus 2026-27",
+  "delivery_legend": {
+    "digital": "Fully teachable on screen. The engine serves these.",
+    "parent_guided": "Physical-world learning. The app shows the parent an activity card and records completion — it does NOT fake a tap question for it.",
+    "hybrid": "Screen introduces it, a physical action completes it."
+  },
+  "subjects": [
+    {
+      "subject_id": "ukg_maths",
+      "title": "Mathematics",
+      "sort_order": 1,
+      "topics": [
+        {
+          "topic_id": "ukg_maths_premaths",
+          "title": "Pre-Maths Concepts",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Big/small, front/back, full/empty, heavy/light, in/out, more/less, right/left, same/different, tall/short, thick/thin, top/bottom",
+          "intro_message": "Let us compare things in every way we can!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_pm_1",
+              "type": "multiple_choice",
+              "skill_id": "thick_thin",
+              "prompt": "Which book is THICK?",
+              "visual_items": [
+                "book_thick",
+                "book_thin"
+              ],
+              "options": [
+                "book_thick",
+                "book_thin"
+              ],
+              "correct_answer": "book_thick",
+              "hint": "Thick has many pages.",
+              "difficulty": "easy",
+              "emoji": "📕",
+              "option_emojis": [
+                "📕",
+                "📄"
+              ]
+            },
+            {
+              "activity_id": "ukg_pm_2",
+              "type": "multiple_choice",
+              "skill_id": "front_back",
+              "prompt": "Who is standing at the BACK of the line?",
+              "visual_items": [
+                "queue"
+              ],
+              "options": [
+                "last child",
+                "first child"
+              ],
+              "correct_answer": "last child",
+              "hint": "The back is the end of the line.",
+              "difficulty": "easy",
+              "emoji": "🧑‍🤝‍🧑"
+            },
+            {
+              "activity_id": "ukg_pm_3",
+              "type": "multiple_choice",
+              "skill_id": "more_less",
+              "prompt": "6 mangoes and 9 mangoes. Which is LESS?",
+              "visual_items": [
+                "mangoes_6",
+                "mangoes_9"
+              ],
+              "options": [
+                "6",
+                "9"
+              ],
+              "correct_answer": "6",
+              "hint": "Six comes before nine.",
+              "difficulty": "easy",
+              "emoji": "🥭",
+              "option_emojis": [
+                "6️⃣",
+                "9️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_pm_4",
+              "type": "multiple_choice",
+              "skill_id": "right_left",
+              "prompt": "Which side is the boy's RIGHT hand?",
+              "visual_items": [
+                "boy_facing"
+              ],
+              "options": [
+                "right",
+                "left"
+              ],
+              "correct_answer": "right",
+              "hint": "Face the same way he is facing.",
+              "difficulty": "hard",
+              "emoji": "🧒"
+            },
+            {
+              "activity_id": "ukg_pm_5",
+              "type": "multiple_choice",
+              "skill_id": "full_empty",
+              "prompt": "Which bottle is HALF full?",
+              "visual_items": [
+                "bottle_half",
+                "bottle_full"
+              ],
+              "options": [
+                "bottle_half",
+                "bottle_full"
+              ],
+              "correct_answer": "bottle_half",
+              "hint": "Half means part of the way up.",
+              "difficulty": "medium",
+              "emoji": "🍶",
+              "option_emojis": [
+                "🍶",
+                "🍾"
+              ]
+            },
+            {
+              "activity_id": "ukg_pm_6",
+              "type": "multiple_choice",
+              "skill_id": "same_different",
+              "prompt": "Which shape is DIFFERENT from the rest?",
+              "visual_items": [
+                "circle",
+                "circle",
+                "oval",
+                "circle"
+              ],
+              "options": [
+                "circle",
+                "oval"
+              ],
+              "correct_answer": "oval",
+              "hint": "One is stretched out.",
+              "difficulty": "medium",
+              "emoji": "⭕",
+              "option_emojis": [
+                "⭕",
+                "🥚"
+              ]
+            }
+          ],
+          "emoji": "⚖️"
+        },
+        {
+          "topic_id": "ukg_maths_numbers",
+          "title": "Numbers (1-200)",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Counting forward and backward, before/after/between, number names, skip counting",
+          "intro_message": "Big numbers now! Let us count far and wide.",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "ukg_nm_1",
+              "type": "multiple_choice",
+              "skill_id": "before_after_between",
+              "prompt": "What comes BETWEEN 24 and 26?",
+              "visual_items": [
+                "24",
+                "?",
+                "26"
+              ],
+              "options": [
+                "25",
+                "27"
+              ],
+              "correct_answer": "25",
+              "hint": "Count: 24, then what, then 26?",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_nm_2",
+              "type": "multiple_choice",
+              "skill_id": "before_after_between",
+              "prompt": "What comes AFTER 39?",
+              "visual_items": [
+                "39",
+                "?"
+              ],
+              "options": [
+                "40",
+                "38"
+              ],
+              "correct_answer": "40",
+              "hint": "After 39 comes a new ten.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_nm_3",
+              "type": "multiple_choice",
+              "skill_id": "backward_counting",
+              "prompt": "Count backwards: 15, 14, 13, ?",
+              "visual_items": [
+                "15",
+                "14",
+                "13",
+                "?"
+              ],
+              "options": [
+                "12",
+                "16"
+              ],
+              "correct_answer": "12",
+              "hint": "Backwards means going down.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_nm_4",
+              "type": "multiple_choice",
+              "skill_id": "number_names",
+              "prompt": "How do we write the number 'twelve'?",
+              "visual_items": [
+                "twelve"
+              ],
+              "options": [
+                "12",
+                "20",
+                "21"
+              ],
+              "correct_answer": "12",
+              "hint": "Ten and two more.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_nm_5",
+              "type": "multiple_choice",
+              "skill_id": "number_names",
+              "prompt": "What is the name of the number 30?",
+              "visual_items": [
+                "30"
+              ],
+              "options": [
+                "thirty",
+                "thirteen"
+              ],
+              "correct_answer": "thirty",
+              "hint": "Thirteen is 13, this is bigger.",
+              "difficulty": "hard",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_nm_6",
+              "type": "multiple_choice",
+              "skill_id": "skip_counting_2",
+              "prompt": "Skip count by 2: 2, 4, 6, ?",
+              "visual_items": [
+                "2",
+                "4",
+                "6",
+                "?"
+              ],
+              "options": [
+                "8",
+                "7"
+              ],
+              "correct_answer": "8",
+              "hint": "Add two each time.",
+              "difficulty": "medium",
+              "emoji": "️⃣",
+              "option_emojis": [
+                "8️⃣",
+                "7️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_nm_7",
+              "type": "multiple_choice",
+              "skill_id": "skip_counting_5",
+              "prompt": "Skip count by 5: 5, 10, 15, ?",
+              "visual_items": [
+                "5",
+                "10",
+                "15",
+                "?"
+              ],
+              "options": [
+                "20",
+                "16"
+              ],
+              "correct_answer": "20",
+              "hint": "Add five each time.",
+              "difficulty": "medium",
+              "emoji": "️⃣"
+            },
+            {
+              "activity_id": "ukg_nm_8",
+              "type": "trace",
+              "skill_id": "number_writing",
+              "prompt": "Write the number 15.",
+              "visual_items": [
+                "number_15_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "First a 1, then a 5.",
+              "difficulty": "medium",
+              "trace_target": "15",
+              "min_accuracy": 0.65,
+              "emoji": "✏️"
+            }
+          ],
+          "emoji": "🔢"
+        },
+        {
+          "topic_id": "ukg_maths_addsub",
+          "title": "Addition & Subtraction",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Picture and 1-digit addition and subtraction; comparison signs",
+          "intro_message": "Let us put numbers together and take them apart!",
+          "star_reward": 7,
+          "activities": [
+            {
+              "activity_id": "ukg_as_1",
+              "type": "count_objects",
+              "skill_id": "picture_addition",
+              "prompt": "2 apples and 3 apples. How many altogether?",
+              "visual_items": [
+                "apple",
+                "apple",
+                "plus",
+                "apple",
+                "apple",
+                "apple"
+              ],
+              "options": [
+                "4",
+                "5",
+                "6"
+              ],
+              "correct_answer": "5",
+              "hint": "Count them all together.",
+              "difficulty": "easy",
+              "emoji": "🍎",
+              "option_emojis": [
+                "4️⃣",
+                "5️⃣",
+                "6️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_as_2",
+              "type": "count_objects",
+              "skill_id": "picture_subtraction",
+              "prompt": "There were 5 balloons. 2 flew away. How many are left?",
+              "visual_items": [
+                "balloons_5_minus_2"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "3",
+              "hint": "Take two away and count what remains.",
+              "difficulty": "easy",
+              "emoji": "🎈",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_as_3",
+              "type": "multiple_choice",
+              "skill_id": "addition_1_digit",
+              "prompt": "4 + 3 = ?",
+              "visual_items": [
+                "4",
+                "plus",
+                "3"
+              ],
+              "options": [
+                "6",
+                "7",
+                "8"
+              ],
+              "correct_answer": "7",
+              "hint": "Start at four and count on three.",
+              "difficulty": "medium",
+              "emoji": "⃣3",
+              "option_emojis": [
+                "6️⃣",
+                "7️⃣",
+                "8️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_as_4",
+              "type": "multiple_choice",
+              "skill_id": "addition_1_digit",
+              "prompt": "6 + 2 = ?",
+              "visual_items": [
+                "6",
+                "plus",
+                "2"
+              ],
+              "options": [
+                "7",
+                "8",
+                "9"
+              ],
+              "correct_answer": "8",
+              "hint": "Six, then seven, then eight.",
+              "difficulty": "medium",
+              "emoji": "4️",
+              "option_emojis": [
+                "7️⃣",
+                "8️⃣",
+                "9️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_as_5",
+              "type": "multiple_choice",
+              "skill_id": "subtraction_1_digit",
+              "prompt": "9 - 4 = ?",
+              "visual_items": [
+                "9",
+                "minus",
+                "4"
+              ],
+              "options": [
+                "4",
+                "5",
+                "6"
+              ],
+              "correct_answer": "5",
+              "hint": "Count backwards four steps from nine.",
+              "difficulty": "medium",
+              "emoji": "6️",
+              "option_emojis": [
+                "4️⃣",
+                "5️⃣",
+                "6️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_as_6",
+              "type": "multiple_choice",
+              "skill_id": "subtraction_1_digit",
+              "prompt": "7 - 3 = ?",
+              "visual_items": [
+                "7",
+                "minus",
+                "3"
+              ],
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "correct_answer": "4",
+              "hint": "Seven take away three.",
+              "difficulty": "medium",
+              "emoji": "⃣5",
+              "option_emojis": [
+                "3️⃣",
+                "4️⃣",
+                "5️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_as_7",
+              "type": "multiple_choice",
+              "skill_id": "comparison_signs",
+              "prompt": "Which sign goes here? 8 __ 5",
+              "visual_items": [
+                "8",
+                "?",
+                "5"
+              ],
+              "options": [
+                ">",
+                "<",
+                "="
+              ],
+              "correct_answer": ">",
+              "hint": "The open mouth eats the bigger number.",
+              "difficulty": "hard",
+              "emoji": "️⃣"
+            },
+            {
+              "activity_id": "ukg_as_8",
+              "type": "multiple_choice",
+              "skill_id": "comparison_signs",
+              "prompt": "Which sign goes here? 3 __ 6",
+              "visual_items": [
+                "3",
+                "?",
+                "6"
+              ],
+              "options": [
+                "<",
+                ">",
+                "="
+              ],
+              "correct_answer": "<",
+              "hint": "Three is smaller than six.",
+              "difficulty": "hard",
+              "emoji": "2️"
+            },
+            {
+              "activity_id": "ukg_as_9",
+              "type": "multiple_choice",
+              "skill_id": "comparison_signs",
+              "prompt": "Which sign goes here? 4 __ 4",
+              "visual_items": [
+                "4",
+                "?",
+                "4"
+              ],
+              "options": [
+                "=",
+                ">",
+                "<"
+              ],
+              "correct_answer": "=",
+              "hint": "Both sides are the same.",
+              "difficulty": "medium",
+              "emoji": "⃣3"
+            }
+          ],
+          "emoji": "➕"
+        },
+        {
+          "topic_id": "ukg_maths_shapes",
+          "title": "Shapes",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Circle, oval, semi-circle, diamond, square, rectangle, triangle",
+          "intro_message": "More shapes to discover!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_sh_1",
+              "type": "select_shape",
+              "skill_id": "shape_oval",
+              "prompt": "Tap the oval.",
+              "visual_items": [
+                "circle",
+                "oval",
+                "square"
+              ],
+              "options": [
+                "circle",
+                "oval",
+                "square"
+              ],
+              "correct_answer": "oval",
+              "hint": "Like a squashed circle, or an egg.",
+              "difficulty": "medium",
+              "emoji": "⭕",
+              "option_emojis": [
+                "⭕",
+                "🥚",
+                "🟦"
+              ]
+            },
+            {
+              "activity_id": "ukg_sh_2",
+              "type": "select_shape",
+              "skill_id": "shape_diamond",
+              "prompt": "Tap the diamond.",
+              "visual_items": [
+                "square",
+                "diamond",
+                "triangle"
+              ],
+              "options": [
+                "square",
+                "diamond",
+                "triangle"
+              ],
+              "correct_answer": "diamond",
+              "hint": "A square standing on its corner.",
+              "difficulty": "medium",
+              "emoji": "🟦",
+              "option_emojis": [
+                "🟦",
+                "🔷",
+                "🔺"
+              ]
+            },
+            {
+              "activity_id": "ukg_sh_3",
+              "type": "select_shape",
+              "skill_id": "shape_semicircle",
+              "prompt": "Tap the semi-circle.",
+              "visual_items": [
+                "circle",
+                "semicircle"
+              ],
+              "options": [
+                "circle",
+                "semicircle"
+              ],
+              "correct_answer": "semicircle",
+              "hint": "Half of a circle.",
+              "difficulty": "medium",
+              "emoji": "⭕",
+              "option_emojis": [
+                "⭕",
+                "◗"
+              ]
+            },
+            {
+              "activity_id": "ukg_sh_4",
+              "type": "count_objects",
+              "skill_id": "shape_corners",
+              "prompt": "How many corners does a rectangle have?",
+              "visual_items": [
+                "rectangle"
+              ],
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "correct_answer": "4",
+              "hint": "Count each corner.",
+              "difficulty": "easy",
+              "emoji": "▭",
+              "option_emojis": [
+                "3️⃣",
+                "4️⃣",
+                "5️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_sh_5",
+              "type": "identify_shape",
+              "skill_id": "shape_in_objects",
+              "prompt": "Which object is shaped like an oval?",
+              "visual_items": [
+                "egg",
+                "box"
+              ],
+              "options": [
+                "egg",
+                "box"
+              ],
+              "correct_answer": "egg",
+              "hint": "Round but stretched.",
+              "difficulty": "medium",
+              "emoji": "🥚",
+              "option_emojis": [
+                "🥚",
+                "📦"
+              ]
+            }
+          ],
+          "emoji": "🔷"
+        },
+        {
+          "topic_id": "ukg_maths_colours",
+          "title": "Colours & Shades",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "Nine colours and their light and dark shades",
+          "intro_message": "Every colour has a light side and a dark side!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_co_1",
+              "type": "select_colour",
+              "skill_id": "colour_purple",
+              "prompt": "Tap the purple one.",
+              "visual_items": [
+                "purple_swatch",
+                "pink_swatch",
+                "orange_swatch"
+              ],
+              "options": [
+                "purple",
+                "pink",
+                "orange"
+              ],
+              "correct_answer": "purple",
+              "hint": "Red and blue mixed together.",
+              "difficulty": "easy",
+              "emoji": "🟪",
+              "option_emojis": [
+                "🟪",
+                "🌸",
+                "🍊"
+              ]
+            },
+            {
+              "activity_id": "ukg_co_2",
+              "type": "multiple_choice",
+              "skill_id": "colour_shades",
+              "prompt": "Which one is LIGHT blue?",
+              "visual_items": [
+                "light_blue",
+                "dark_blue"
+              ],
+              "options": [
+                "light_blue",
+                "dark_blue"
+              ],
+              "correct_answer": "light_blue",
+              "hint": "Light means paler.",
+              "difficulty": "medium",
+              "emoji": "🩵",
+              "option_emojis": [
+                "🩵",
+                "🟦"
+              ]
+            },
+            {
+              "activity_id": "ukg_co_3",
+              "type": "multiple_choice",
+              "skill_id": "colour_shades",
+              "prompt": "Which one is DARK green?",
+              "visual_items": [
+                "light_green",
+                "dark_green"
+              ],
+              "options": [
+                "dark_green",
+                "light_green"
+              ],
+              "correct_answer": "dark_green",
+              "hint": "Dark means deeper.",
+              "difficulty": "medium",
+              "emoji": "💚",
+              "option_emojis": [
+                "🟩",
+                "💚"
+              ]
+            },
+            {
+              "activity_id": "ukg_co_4",
+              "type": "multiple_choice",
+              "skill_id": "colour_mixing",
+              "prompt": "Red and yellow mixed together make which colour?",
+              "visual_items": [
+                "red_swatch",
+                "yellow_swatch"
+              ],
+              "options": [
+                "orange",
+                "green"
+              ],
+              "correct_answer": "orange",
+              "hint": "Think of a carrot.",
+              "difficulty": "hard",
+              "emoji": "🟥",
+              "option_emojis": [
+                "🍊",
+                "🟩"
+              ]
+            }
+          ],
+          "emoji": "🎨"
+        },
+        {
+          "topic_id": "ukg_maths_money_time",
+          "title": "Money & Time",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Coins and notes; o'clock, day and night, days of the week",
+          "intro_message": "Let us learn about money and telling the time!",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "ukg_mt_1",
+              "type": "multiple_choice",
+              "skill_id": "coin_values",
+              "prompt": "Which coin is worth MORE?",
+              "visual_items": [
+                "coin_2",
+                "coin_5"
+              ],
+              "options": [
+                "coin_5",
+                "coin_2"
+              ],
+              "correct_answer": "coin_5",
+              "hint": "Five is more than two.",
+              "difficulty": "easy",
+              "emoji": "🪙",
+              "option_emojis": [
+                "🪙",
+                "🪙"
+              ]
+            },
+            {
+              "activity_id": "ukg_mt_2",
+              "type": "count_objects",
+              "skill_id": "adding_money",
+              "prompt": "Two 2-rupee coins. How many rupees altogether?",
+              "visual_items": [
+                "coin_2",
+                "coin_2"
+              ],
+              "options": [
+                "2",
+                "4",
+                "5"
+              ],
+              "correct_answer": "4",
+              "hint": "Two and two more.",
+              "difficulty": "medium",
+              "emoji": "🪙",
+              "option_emojis": [
+                "2️⃣",
+                "4️⃣",
+                "5️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_mt_3",
+              "type": "multiple_choice",
+              "skill_id": "telling_time",
+              "prompt": "The big hand is on 12 and the small hand is on 3. What time is it?",
+              "visual_items": [
+                "clock_3"
+              ],
+              "options": [
+                "3 o'clock",
+                "12 o'clock"
+              ],
+              "correct_answer": "3 o'clock",
+              "hint": "The small hand tells the hour.",
+              "difficulty": "hard",
+              "emoji": "🕒"
+            },
+            {
+              "activity_id": "ukg_mt_4",
+              "type": "multiple_choice",
+              "skill_id": "day_night",
+              "prompt": "When do we see the moon and stars?",
+              "visual_items": [
+                "night_sky"
+              ],
+              "options": [
+                "night",
+                "day"
+              ],
+              "correct_answer": "night",
+              "hint": "When it is dark.",
+              "difficulty": "very_easy",
+              "emoji": "🌌"
+            },
+            {
+              "activity_id": "ukg_mt_5",
+              "type": "multiple_choice",
+              "skill_id": "days_of_week",
+              "prompt": "Which day comes after Monday?",
+              "visual_items": [
+                "calendar"
+              ],
+              "options": [
+                "Tuesday",
+                "Sunday"
+              ],
+              "correct_answer": "Tuesday",
+              "hint": "Sunday, Monday, then...",
+              "difficulty": "medium",
+              "emoji": "📅"
+            },
+            {
+              "activity_id": "ukg_mt_6",
+              "type": "count_objects",
+              "skill_id": "days_of_week",
+              "prompt": "How many days are there in a week?",
+              "visual_items": [
+                "calendar"
+              ],
+              "options": [
+                "5",
+                "7",
+                "10"
+              ],
+              "correct_answer": "7",
+              "hint": "Count from Sunday to Saturday.",
+              "difficulty": "medium",
+              "emoji": "📅",
+              "option_emojis": [
+                "5️⃣",
+                "7️⃣",
+                "🔢"
+              ]
+            }
+          ],
+          "emoji": "🪙"
+        }
+      ],
+      "emoji": "🔢"
+    },
+    {
+      "subject_id": "ukg_english",
+      "title": "English Language",
+      "sort_order": 2,
+      "topics": [
+        {
+          "topic_id": "ukg_eng_letters",
+          "title": "Letters (Aa-Zz)",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Revise all letters, sounds, vowels and consonants",
+          "intro_message": "You know your letters. Let us make them strong!",
+          "star_reward": 5,
+          "generation_rule": "For each letter a-z emit a sound-recall and a beginning-sound question. 26 x 2 = 52 activities.",
+          "activities": [
+            {
+              "activity_id": "ukg_lt_1",
+              "type": "multiple_choice",
+              "skill_id": "vowels_consonants",
+              "prompt": "How many vowels are there in English?",
+              "visual_items": [
+                "a",
+                "e",
+                "i",
+                "o",
+                "u"
+              ],
+              "options": [
+                "5",
+                "6",
+                "4"
+              ],
+              "correct_answer": "5",
+              "hint": "a, e, i, o, u.",
+              "difficulty": "medium",
+              "emoji": "🤔",
+              "option_emojis": [
+                "5️⃣",
+                "6️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_lt_2",
+              "type": "multiple_choice",
+              "skill_id": "vowels_consonants",
+              "prompt": "Which of these is a CONSONANT?",
+              "visual_items": [
+                "e",
+                "k",
+                "o"
+              ],
+              "options": [
+                "k",
+                "e",
+                "o"
+              ],
+              "correct_answer": "k",
+              "hint": "Anything that is not a vowel.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_lt_3",
+              "type": "multiple_choice",
+              "skill_id": "beginning_sound",
+              "prompt": "Which word begins with the same sound as ZEBRA?",
+              "visual_items": [
+                "zip",
+                "sun"
+              ],
+              "options": [
+                "zip",
+                "sun"
+              ],
+              "correct_answer": "zip",
+              "hint": "Listen for the 'zzz'.",
+              "difficulty": "medium",
+              "emoji": "☀️",
+              "option_emojis": [
+                "▫️",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "ukg_lt_4",
+              "type": "multiple_choice",
+              "skill_id": "ending_sound",
+              "prompt": "Which word ends with the sound 't'?",
+              "visual_items": [
+                "cat",
+                "dog"
+              ],
+              "options": [
+                "cat",
+                "dog"
+              ],
+              "correct_answer": "cat",
+              "hint": "Say each word and listen to the end.",
+              "difficulty": "medium",
+              "emoji": "🐱",
+              "option_emojis": [
+                "🐱",
+                "🐶"
+              ]
+            }
+          ],
+          "emoji": "🔤"
+        },
+        {
+          "topic_id": "ukg_eng_grammar",
+          "title": "Early Grammar",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Articles, one-many, positions, this/that, these/those, in/on/under",
+          "intro_message": "Small words help us say exactly what we mean.",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "ukg_gr_1",
+              "type": "multiple_choice",
+              "skill_id": "article_a_an",
+              "prompt": "Choose the right word: ___ umbrella",
+              "visual_items": [
+                "umbrella"
+              ],
+              "options": [
+                "an",
+                "a"
+              ],
+              "correct_answer": "an",
+              "hint": "'U' is a vowel sound here.",
+              "difficulty": "medium",
+              "emoji": "☂️"
+            },
+            {
+              "activity_id": "ukg_gr_2",
+              "type": "multiple_choice",
+              "skill_id": "preposition_in_on_under",
+              "prompt": "The cat is ___ the table.",
+              "visual_items": [
+                "cat_under_table"
+              ],
+              "options": [
+                "under",
+                "on",
+                "in"
+              ],
+              "correct_answer": "under",
+              "hint": "It is below the table.",
+              "difficulty": "medium",
+              "emoji": "🐱"
+            },
+            {
+              "activity_id": "ukg_gr_3",
+              "type": "multiple_choice",
+              "skill_id": "preposition_in_on_under",
+              "prompt": "The book is ___ the bag.",
+              "visual_items": [
+                "book_in_bag"
+              ],
+              "options": [
+                "in",
+                "on",
+                "under"
+              ],
+              "correct_answer": "in",
+              "hint": "It is inside.",
+              "difficulty": "easy",
+              "emoji": "📚"
+            },
+            {
+              "activity_id": "ukg_gr_4",
+              "type": "multiple_choice",
+              "skill_id": "preposition_in_on_under",
+              "prompt": "The cup is ___ the table.",
+              "visual_items": [
+                "cup_on_table"
+              ],
+              "options": [
+                "on",
+                "in",
+                "under"
+              ],
+              "correct_answer": "on",
+              "hint": "It is resting on top.",
+              "difficulty": "easy",
+              "emoji": "☕"
+            },
+            {
+              "activity_id": "ukg_gr_5",
+              "type": "multiple_choice",
+              "skill_id": "one_many",
+              "prompt": "One child, many ___?",
+              "visual_items": [
+                "child",
+                "children"
+              ],
+              "options": [
+                "children",
+                "childs"
+              ],
+              "correct_answer": "children",
+              "hint": "This one is special — it does not take an 's'.",
+              "difficulty": "hard",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_gr_6",
+              "type": "multiple_choice",
+              "skill_id": "these_those",
+              "prompt": "The flowers are here beside me. THESE or THOSE flowers?",
+              "visual_items": [
+                "flowers_near"
+              ],
+              "options": [
+                "these",
+                "those"
+              ],
+              "correct_answer": "these",
+              "hint": "'These' is for near.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            }
+          ],
+          "emoji": "📝"
+        },
+        {
+          "topic_id": "ukg_eng_words",
+          "title": "Words & Rhyming",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Vowel words and rhyming families",
+          "intro_message": "Words that sound alike are friends!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_wd_1",
+              "type": "multiple_choice",
+              "skill_id": "vowel_words_a",
+              "prompt": "Fill the gap: b _ t (something you hit a ball with)",
+              "visual_items": [
+                "bat"
+              ],
+              "options": [
+                "a",
+                "e",
+                "i"
+              ],
+              "correct_answer": "a",
+              "hint": "b-a-t.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_wd_2",
+              "type": "multiple_choice",
+              "skill_id": "vowel_words_e",
+              "prompt": "Fill the gap: h _ n (a bird that lays eggs)",
+              "visual_items": [
+                "hen"
+              ],
+              "options": [
+                "e",
+                "a",
+                "o"
+              ],
+              "correct_answer": "e",
+              "hint": "h-e-n.",
+              "difficulty": "medium",
+              "emoji": "🐔"
+            },
+            {
+              "activity_id": "ukg_wd_3",
+              "type": "multiple_choice",
+              "skill_id": "vowel_words_o",
+              "prompt": "Fill the gap: p _ t (we cook in it)",
+              "visual_items": [
+                "pot"
+              ],
+              "options": [
+                "o",
+                "i",
+                "u"
+              ],
+              "correct_answer": "o",
+              "hint": "p-o-t.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_wd_4",
+              "type": "multiple_choice",
+              "skill_id": "rhyming_family_at",
+              "prompt": "Which of these does NOT rhyme with CAT?",
+              "visual_items": [
+                "mat",
+                "rat",
+                "dog"
+              ],
+              "options": [
+                "mat",
+                "rat",
+                "dog"
+              ],
+              "correct_answer": "dog",
+              "hint": "Cat, mat and rat all end in -at.",
+              "difficulty": "medium",
+              "emoji": "🐶",
+              "option_emojis": [
+                "▫️",
+                "▫️",
+                "🐶"
+              ]
+            },
+            {
+              "activity_id": "ukg_wd_5",
+              "type": "multiple_choice",
+              "skill_id": "rhyming_family_ig",
+              "prompt": "Which word rhymes with PIG?",
+              "visual_items": [
+                "big",
+                "cup"
+              ],
+              "options": [
+                "big",
+                "cup"
+              ],
+              "correct_answer": "big",
+              "hint": "Listen to the -ig ending.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            }
+          ],
+          "emoji": "📝"
+        },
+        {
+          "topic_id": "ukg_eng_reading",
+          "title": "Reading & Conversation",
+          "sort_order": 4,
+          "delivery": "hybrid",
+          "objective": "Read simple words and sentences, picture composition, social conversation",
+          "intro_message": "You are ready to read! Let us try.",
+          "star_reward": 7,
+          "activities": [
+            {
+              "activity_id": "ukg_rd_1",
+              "type": "multiple_choice",
+              "skill_id": "word_reading",
+              "prompt": "Read this word and tap the matching picture: SUN",
+              "visual_items": [
+                "sun",
+                "moon"
+              ],
+              "options": [
+                "sun",
+                "moon"
+              ],
+              "correct_answer": "sun",
+              "hint": "Sound it out: s-u-n.",
+              "difficulty": "medium",
+              "emoji": "☀️",
+              "option_emojis": [
+                "▫️",
+                "🌙"
+              ]
+            },
+            {
+              "activity_id": "ukg_rd_2",
+              "type": "multiple_choice",
+              "skill_id": "sentence_reading",
+              "prompt": "Read: 'The dog is big.' Which picture matches?",
+              "visual_items": [
+                "big_dog",
+                "small_cat"
+              ],
+              "options": [
+                "big_dog",
+                "small_cat"
+              ],
+              "correct_answer": "big_dog",
+              "hint": "Read each word slowly.",
+              "difficulty": "hard",
+              "emoji": "🐕",
+              "option_emojis": [
+                "🐕",
+                "🐈"
+              ]
+            },
+            {
+              "activity_id": "ukg_rd_3",
+              "type": "multiple_choice",
+              "skill_id": "sentence_building",
+              "prompt": "Put these words in order: 'ball' 'the' 'red' 'is'",
+              "visual_items": [
+                "ball_red"
+              ],
+              "options": [
+                "The ball is red",
+                "Ball the red is"
+              ],
+              "correct_answer": "The ball is red",
+              "hint": "Start with 'The'.",
+              "difficulty": "hard",
+              "emoji": "⚽",
+              "option_emojis": [
+                "⚽",
+                "⚽"
+              ]
+            },
+            {
+              "activity_id": "ukg_rd_4",
+              "type": "voice_repeat",
+              "skill_id": "social_conversation",
+              "prompt": "Someone asks 'How are you?' What do you say?",
+              "visual_items": [
+                "child_avatar"
+              ],
+              "options": [],
+              "correct_answer": "i am fine",
+              "hint": "Say: I am fine, thank you.",
+              "difficulty": "medium",
+              "accept": [
+                "i am fine",
+                "im fine",
+                "fine thank you",
+                "i am fine thank you"
+              ],
+              "min_similarity": 0.65,
+              "emoji": "🧒"
+            },
+            {
+              "activity_id": "ukg_rd_5",
+              "type": "parent_activity",
+              "skill_id": "picture_composition",
+              "prompt": "Look at a picture and say four sentences about it.",
+              "visual_items": [
+                "park_scene"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Who is there? What are they doing?",
+              "difficulty": "hard",
+              "parent_note": "Ask open questions rather than correcting grammar. Fluency first, accuracy later.",
+              "emoji": "🏞️"
+            }
+          ],
+          "emoji": "📚"
+        },
+        {
+          "topic_id": "ukg_eng_methods",
+          "title": "Activities",
+          "sort_order": 5,
+          "delivery": "hybrid",
+          "objective": "Flashcards, storytelling, enactment and worksheets — English through play",
+          "intro_message": "Let us play with words: a story, some cards, and a little acting!",
+          "star_reward": 5,
+          "emoji": "🎭",
+          "activities": [
+            {
+              "activity_id": "ukg_em_1",
+              "type": "introduce_topic",
+              "skill_id": "english_methods",
+              "prompt": "Today we play with words — cards, a story, and some acting!",
+              "visual_items": [
+                "flashcards",
+                "storybook",
+                "mask"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "No writing yet. Just look and listen.",
+              "difficulty": "very_easy",
+              "emoji": "🎭"
+            },
+            {
+              "activity_id": "ukg_em_2",
+              "type": "story_listen",
+              "skill_id": "storytelling",
+              "prompt": "Here is a little story: a cat sat on a mat and a rat ran past!",
+              "visual_items": [
+                "cat",
+                "mat",
+                "rat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Listen for the words that sound the same.",
+              "difficulty": "easy",
+              "emoji": "📖"
+            },
+            {
+              "activity_id": "ukg_em_3",
+              "type": "multiple_choice",
+              "skill_id": "storytelling",
+              "prompt": "In the story, where did the cat sit?",
+              "visual_items": [
+                "mat",
+                "box"
+              ],
+              "options": [
+                "on the mat",
+                "in the box"
+              ],
+              "correct_answer": "on the mat",
+              "hint": "The cat sat on the mat.",
+              "difficulty": "easy",
+              "emoji": "🐈",
+              "option_emojis": [
+                "🧶",
+                "📦"
+              ]
+            },
+            {
+              "activity_id": "ukg_em_4",
+              "type": "identify_letter",
+              "skill_id": "flashcards",
+              "prompt": "Flashcard time! Which card starts the word 'ball'?",
+              "visual_items": [
+                "card_b",
+                "card_d"
+              ],
+              "options": [
+                "B",
+                "D"
+              ],
+              "correct_answer": "B",
+              "hint": "Ball begins with a buh sound.",
+              "difficulty": "easy",
+              "emoji": "🃏",
+              "option_emojis": [
+                "🅱️",
+                "🇩"
+              ]
+            },
+            {
+              "activity_id": "ukg_em_5",
+              "type": "repeat_word",
+              "skill_id": "oral_interaction",
+              "prompt": "Your turn to act it out. Say: 'The cat sat on the mat.'",
+              "visual_items": [
+                "cat",
+                "mat"
+              ],
+              "options": [],
+              "correct_answer": "the cat sat on the mat",
+              "accept": [
+                "cat sat on the mat",
+                "the cat sat on a mat",
+                "cat sat on mat"
+              ],
+              "hint": "Say it slowly, one word at a time.",
+              "difficulty": "medium",
+              "emoji": "🗣️"
+            },
+            {
+              "activity_id": "ukg_em_6",
+              "type": "parent_activity",
+              "skill_id": "worksheets",
+              "prompt": "Together time: act out the story with a grown-up.",
+              "visual_items": [
+                "mask"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One of you is the cat, one is the rat!",
+              "parent_note": "Take turns being the cat and the rat, then ask your child to tell the story back in their own words.",
+              "difficulty": "easy",
+              "emoji": "👪"
+            }
+          ]
+        }
+      ],
+      "emoji": "🔤"
+    },
+    {
+      "subject_id": "ukg_ga",
+      "title": "General Awareness",
+      "sort_order": 3,
+      "topics": [
+        {
+          "topic_id": "ukg_ga_myself",
+          "title": "Myself",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Body parts, sense organs, home, family, school, seasons",
+          "intro_message": "Let us learn how your body works!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_ms_1",
+              "type": "multiple_choice",
+              "skill_id": "sense_organs",
+              "prompt": "Which sense organ helps us taste?",
+              "visual_items": [
+                "tongue",
+                "nose"
+              ],
+              "options": [
+                "tongue",
+                "nose"
+              ],
+              "correct_answer": "tongue",
+              "hint": "It is inside your mouth.",
+              "difficulty": "easy",
+              "emoji": "👅",
+              "option_emojis": [
+                "👅",
+                "👃"
+              ]
+            },
+            {
+              "activity_id": "ukg_ms_2",
+              "type": "multiple_choice",
+              "skill_id": "sense_organs",
+              "prompt": "Which sense organ helps us touch and feel?",
+              "visual_items": [
+                "skin",
+                "ears"
+              ],
+              "options": [
+                "skin",
+                "ears"
+              ],
+              "correct_answer": "skin",
+              "hint": "It covers your whole body.",
+              "difficulty": "medium",
+              "emoji": "🤲",
+              "option_emojis": [
+                "🤲",
+                "👂"
+              ]
+            },
+            {
+              "activity_id": "ukg_ms_3",
+              "type": "count_objects",
+              "skill_id": "sense_organs",
+              "prompt": "How many sense organs do we have?",
+              "visual_items": [
+                "eyes",
+                "ears",
+                "nose",
+                "tongue",
+                "skin"
+              ],
+              "options": [
+                "4",
+                "5",
+                "6"
+              ],
+              "correct_answer": "5",
+              "hint": "Eyes, ears, nose, tongue, skin.",
+              "difficulty": "medium",
+              "emoji": "👀",
+              "option_emojis": [
+                "4️⃣",
+                "5️⃣",
+                "6️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_ms_4",
+              "type": "multiple_choice",
+              "skill_id": "seasons",
+              "prompt": "In which season do farmers wait for rain?",
+              "visual_items": [
+                "rain_field"
+              ],
+              "options": [
+                "rainy",
+                "winter"
+              ],
+              "correct_answer": "rainy",
+              "hint": "The season of water.",
+              "difficulty": "easy",
+              "emoji": "🌾"
+            },
+            {
+              "activity_id": "ukg_ms_5",
+              "type": "multiple_choice",
+              "skill_id": "family",
+              "prompt": "A family with parents, children, grandparents and uncles is called a ___ family.",
+              "visual_items": [
+                "big_family"
+              ],
+              "options": [
+                "joint",
+                "small"
+              ],
+              "correct_answer": "joint",
+              "hint": "Many people living together.",
+              "difficulty": "hard",
+              "emoji": "👨‍👩‍👧‍👦"
+            }
+          ],
+          "emoji": "🧒"
+        },
+        {
+          "topic_id": "ukg_ga_transport",
+          "title": "Transport",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Land, water and air transport",
+          "intro_message": "How many ways can we travel? Let us count!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_tr_1",
+              "type": "match",
+              "skill_id": "transport_land",
+              "prompt": "Which of these is LAND transport?",
+              "visual_items": [
+                "truck",
+                "ship"
+              ],
+              "options": [
+                "truck",
+                "ship"
+              ],
+              "correct_answer": "truck",
+              "hint": "It travels on roads.",
+              "difficulty": "easy",
+              "emoji": "🚚",
+              "option_emojis": [
+                "🚚",
+                "🚢"
+              ]
+            },
+            {
+              "activity_id": "ukg_tr_2",
+              "type": "match",
+              "skill_id": "transport_water",
+              "prompt": "Which of these is WATER transport?",
+              "visual_items": [
+                "ship",
+                "aeroplane"
+              ],
+              "options": [
+                "ship",
+                "aeroplane"
+              ],
+              "correct_answer": "ship",
+              "hint": "It sails on the sea.",
+              "difficulty": "easy",
+              "emoji": "🚢",
+              "option_emojis": [
+                "🚢",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "ukg_tr_3",
+              "type": "multiple_choice",
+              "skill_id": "transport_uses",
+              "prompt": "Which vehicle takes sick people to hospital quickly?",
+              "visual_items": [
+                "ambulance",
+                "bus"
+              ],
+              "options": [
+                "ambulance",
+                "bus"
+              ],
+              "correct_answer": "ambulance",
+              "hint": "It has a loud siren.",
+              "difficulty": "medium",
+              "emoji": "🚑",
+              "option_emojis": [
+                "🚑",
+                "🚌"
+              ]
+            },
+            {
+              "activity_id": "ukg_tr_4",
+              "type": "multiple_choice",
+              "skill_id": "transport_uses",
+              "prompt": "Which vehicle puts out fires?",
+              "visual_items": [
+                "fire_engine",
+                "taxi"
+              ],
+              "options": [
+                "fire_engine",
+                "taxi"
+              ],
+              "correct_answer": "fire_engine",
+              "hint": "It is red and carries water.",
+              "difficulty": "easy",
+              "emoji": "🚒",
+              "option_emojis": [
+                "🚒",
+                "🚕"
+              ]
+            }
+          ],
+          "emoji": "🚗"
+        },
+        {
+          "topic_id": "ukg_ga_animals",
+          "title": "Animals",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Wild, domestic, pet, farm and water animals; sounds and young ones",
+          "intro_message": "Let us learn about animal families!",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "ukg_an_1",
+              "type": "match",
+              "skill_id": "animal_young_ones",
+              "prompt": "What is a baby dog called?",
+              "visual_items": [
+                "dog",
+                "puppy"
+              ],
+              "options": [
+                "puppy",
+                "kitten"
+              ],
+              "correct_answer": "puppy",
+              "hint": "Puppy.",
+              "difficulty": "easy",
+              "emoji": "🐶",
+              "option_emojis": [
+                "🐕",
+                "🐈"
+              ]
+            },
+            {
+              "activity_id": "ukg_an_2",
+              "type": "match",
+              "skill_id": "animal_young_ones",
+              "prompt": "What is a baby cat called?",
+              "visual_items": [
+                "cat"
+              ],
+              "options": [
+                "kitten",
+                "calf"
+              ],
+              "correct_answer": "kitten",
+              "hint": "Kitten.",
+              "difficulty": "easy",
+              "emoji": "🐱",
+              "option_emojis": [
+                "🐈",
+                "🐄"
+              ]
+            },
+            {
+              "activity_id": "ukg_an_3",
+              "type": "match",
+              "skill_id": "animal_young_ones",
+              "prompt": "What is a baby cow called?",
+              "visual_items": [
+                "cow"
+              ],
+              "options": [
+                "calf",
+                "cub"
+              ],
+              "correct_answer": "calf",
+              "hint": "Calf.",
+              "difficulty": "medium",
+              "emoji": "🐄",
+              "option_emojis": [
+                "🐄",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "ukg_an_4",
+              "type": "match",
+              "skill_id": "animal_sounds",
+              "prompt": "Which animal roars?",
+              "visual_items": [
+                "lion",
+                "sheep"
+              ],
+              "options": [
+                "lion",
+                "sheep"
+              ],
+              "correct_answer": "lion",
+              "hint": "The king of the jungle.",
+              "difficulty": "very_easy",
+              "emoji": "🦁",
+              "option_emojis": [
+                "🦁",
+                "🐑"
+              ]
+            },
+            {
+              "activity_id": "ukg_an_5",
+              "type": "match",
+              "skill_id": "farm_animals",
+              "prompt": "Which animal do we find on a FARM?",
+              "visual_items": [
+                "hen",
+                "tiger"
+              ],
+              "options": [
+                "hen",
+                "tiger"
+              ],
+              "correct_answer": "hen",
+              "hint": "It lays eggs.",
+              "difficulty": "easy",
+              "emoji": "🐔",
+              "option_emojis": [
+                "🐔",
+                "🐅"
+              ]
+            },
+            {
+              "activity_id": "ukg_an_6",
+              "type": "multiple_choice",
+              "skill_id": "animal_uses",
+              "prompt": "Which animal gives us wool?",
+              "visual_items": [
+                "sheep",
+                "horse"
+              ],
+              "options": [
+                "sheep",
+                "horse"
+              ],
+              "correct_answer": "sheep",
+              "hint": "Its coat is soft and fluffy.",
+              "difficulty": "medium",
+              "emoji": "🐑",
+              "option_emojis": [
+                "🐑",
+                "🐴"
+              ]
+            }
+          ],
+          "emoji": "🐾"
+        }
+      ],
+      "emoji": "🌍"
+    },
+    {
+      "subject_id": "ukg_evs",
+      "title": "Environmental Science",
+      "sort_order": 4,
+      "topics": [
+        {
+          "topic_id": "ukg_evs_pollution",
+          "title": "Air, Water & Sound Pollution",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Introduction to the three kinds of pollution",
+          "intro_message": "Our world needs our care. Let us learn how to protect it.",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "ukg_po_1",
+              "type": "multiple_choice",
+              "skill_id": "air_pollution",
+              "prompt": "What makes the air dirty?",
+              "visual_items": [
+                "smoke",
+                "tree"
+              ],
+              "options": [
+                "smoke",
+                "tree"
+              ],
+              "correct_answer": "smoke",
+              "hint": "It comes from vehicles and factories.",
+              "difficulty": "medium",
+              "emoji": "🏭",
+              "option_emojis": [
+                "🏭",
+                "🌳"
+              ]
+            },
+            {
+              "activity_id": "ukg_po_2",
+              "type": "multiple_choice",
+              "skill_id": "water_pollution",
+              "prompt": "Should we throw rubbish into a river?",
+              "visual_items": [
+                "river"
+              ],
+              "options": [
+                "no",
+                "yes"
+              ],
+              "correct_answer": "no",
+              "hint": "It makes the water dirty for everyone.",
+              "difficulty": "easy",
+              "emoji": "🏞️"
+            },
+            {
+              "activity_id": "ukg_po_3",
+              "type": "multiple_choice",
+              "skill_id": "sound_pollution",
+              "prompt": "Too much loud noise is called ___ pollution.",
+              "visual_items": [
+                "horn"
+              ],
+              "options": [
+                "sound",
+                "water"
+              ],
+              "correct_answer": "sound",
+              "hint": "It hurts our ears.",
+              "difficulty": "medium",
+              "emoji": "📢",
+              "option_emojis": [
+                "▫️",
+                "💧"
+              ]
+            },
+            {
+              "activity_id": "ukg_po_4",
+              "type": "multiple_choice",
+              "skill_id": "protecting_environment",
+              "prompt": "What can we plant to make the air cleaner?",
+              "visual_items": [
+                "tree",
+                "car"
+              ],
+              "options": [
+                "tree",
+                "car"
+              ],
+              "correct_answer": "tree",
+              "hint": "Trees give us fresh air.",
+              "difficulty": "easy",
+              "emoji": "🌳",
+              "option_emojis": [
+                "🌳",
+                "🚗"
+              ]
+            }
+          ],
+          "emoji": "💨"
+        },
+        {
+          "topic_id": "ukg_evs_community",
+          "title": "Our Community",
+          "sort_order": 2,
+          "delivery": "parent_guided",
+          "objective": "Visit a police station or post office; observe types of transport",
+          "intro_message": "Let us explore the world outside!",
+          "star_reward": 6,
+          "note": "A screen cannot replace a visit. These are parent activity cards; the app records completion and celebrates, but asks no tap questions.",
+          "activities": [
+            {
+              "activity_id": "ukg_cm_1",
+              "type": "parent_activity",
+              "skill_id": "community_visit",
+              "prompt": "Visit a post office with a grown-up and see how letters travel.",
+              "visual_items": [
+                "post_office"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Look for the letter box and the stamps.",
+              "difficulty": "medium",
+              "parent_note": "Let the child post a letter themselves. Ask what they think happens next.",
+              "emoji": "🏤"
+            },
+            {
+              "activity_id": "ukg_cm_2",
+              "type": "parent_activity",
+              "skill_id": "transport_observation",
+              "prompt": "Stand safely by a road and count five different vehicles.",
+              "visual_items": [
+                "street"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Name each one as it passes.",
+              "difficulty": "easy",
+              "parent_note": "Stay well back from the kerb. Turn it into a tally game.",
+              "emoji": "🛣️"
+            },
+            {
+              "activity_id": "ukg_cm_3",
+              "type": "parent_activity",
+              "skill_id": "living_collection",
+              "prompt": "Collect five living and five non-living things and sort them.",
+              "visual_items": [
+                "basket"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Ask: does it grow? does it need food?",
+              "difficulty": "medium",
+              "parent_note": "Ask the child to justify each choice. The reasoning is the learning.",
+              "emoji": "🧺"
+            }
+          ],
+          "emoji": "🏤"
+        }
+      ],
+      "emoji": "🌱"
+    },
+    {
+      "subject_id": "ukg_language",
+      "title": "Language (Hindi)",
+      "sort_order": 5,
+      "topics": [
+        {
+          "topic_id": "ukg_lang_swar",
+          "title": "स्वर (अ - अः)",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Identify and sound the Hindi vowels",
+          "intro_message": "आओ, स्वर सीखें!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_hi_sw_1",
+              "type": "introduce",
+              "skill_id": "hindi_swar_a",
+              "prompt": "यह 'अ' है। अ से अनार।",
+              "visual_items": [
+                "hindi_a",
+                "pomegranate"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "अ का उच्चारण सुनो।",
+              "difficulty": "very_easy",
+              "emoji": "👋"
+            },
+            {
+              "activity_id": "ukg_hi_sw_2",
+              "type": "select_letter",
+              "skill_id": "hindi_swar_a",
+              "prompt": "'अ' पर टैप करो।",
+              "visual_items": [
+                "अ",
+                "आ"
+              ],
+              "options": [
+                "अ",
+                "आ"
+              ],
+              "correct_answer": "अ",
+              "hint": "पहला स्वर।",
+              "difficulty": "easy",
+              "emoji": "🔤"
+            },
+            {
+              "activity_id": "ukg_hi_sw_3",
+              "type": "select_letter",
+              "skill_id": "hindi_swar_aa",
+              "prompt": "'आ' पर टैप करो।",
+              "visual_items": [
+                "अ",
+                "आ"
+              ],
+              "options": [
+                "अ",
+                "आ"
+              ],
+              "correct_answer": "आ",
+              "hint": "आ से आम।",
+              "difficulty": "easy",
+              "emoji": "🔤"
+            },
+            {
+              "activity_id": "ukg_hi_sw_4",
+              "type": "multiple_choice",
+              "skill_id": "hindi_swar_objects",
+              "prompt": "'इ' से क्या बनता है?",
+              "visual_items": [
+                "imli",
+                "aam"
+              ],
+              "options": [
+                "इमली",
+                "आम"
+              ],
+              "correct_answer": "इमली",
+              "hint": "इ से इमली।",
+              "difficulty": "medium",
+              "emoji": "🌿"
+            }
+          ],
+          "emoji": "📘"
+        },
+        {
+          "topic_id": "ukg_lang_vyanjan",
+          "title": "व्यंजन (क - ज्ञ)",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Identify the Hindi consonants and related words",
+          "intro_message": "अब व्यंजन सीखते हैं!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "ukg_hi_vy_1",
+              "type": "introduce",
+              "skill_id": "hindi_vyanjan_ka",
+              "prompt": "यह 'क' है। क से कमल।",
+              "visual_items": [
+                "hindi_ka",
+                "lotus"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "क का उच्चारण सुनो।",
+              "difficulty": "very_easy",
+              "emoji": "👋"
+            },
+            {
+              "activity_id": "ukg_hi_vy_2",
+              "type": "select_letter",
+              "skill_id": "hindi_vyanjan_ka",
+              "prompt": "'क' पर टैप करो।",
+              "visual_items": [
+                "क",
+                "ख"
+              ],
+              "options": [
+                "क",
+                "ख"
+              ],
+              "correct_answer": "क",
+              "hint": "पहला व्यंजन।",
+              "difficulty": "easy",
+              "emoji": "🔤"
+            },
+            {
+              "activity_id": "ukg_hi_vy_3",
+              "type": "multiple_choice",
+              "skill_id": "hindi_vyanjan_objects",
+              "prompt": "'ग' से क्या बनता है?",
+              "visual_items": [
+                "gamla",
+                "kamal"
+              ],
+              "options": [
+                "गमला",
+                "कमल"
+              ],
+              "correct_answer": "गमला",
+              "hint": "ग से गमला।",
+              "difficulty": "medium",
+              "emoji": "🪴"
+            }
+          ],
+          "emoji": "📘"
+        },
+        {
+          "topic_id": "ukg_lang_matra",
+          "title": "मात्राओं का ज्ञान",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Apply अ and आ matras to consonants",
+          "intro_message": "मात्रा लगाने से नए शब्द बनते हैं!",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "ukg_hi_mt_1",
+              "type": "multiple_choice",
+              "skill_id": "hindi_matra_aa",
+              "prompt": "क + आ = ?",
+              "visual_items": [
+                "क",
+                "आ"
+              ],
+              "options": [
+                "का",
+                "कि"
+              ],
+              "correct_answer": "का",
+              "hint": "आ की मात्रा एक खड़ी लकीर है।",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_hi_mt_2",
+              "type": "multiple_choice",
+              "skill_id": "hindi_matra_aa",
+              "prompt": "म + आ = ?",
+              "visual_items": [
+                "म",
+                "आ"
+              ],
+              "options": [
+                "मा",
+                "मि"
+              ],
+              "correct_answer": "मा",
+              "hint": "मा जैसे 'माता' में।",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "ukg_hi_mt_3",
+              "type": "multiple_choice",
+              "skill_id": "hindi_word_building",
+              "prompt": "'ना' और 'क' मिलकर क्या बनाते हैं?",
+              "visual_items": [
+                "नाक"
+              ],
+              "options": [
+                "नाक",
+                "काम"
+              ],
+              "correct_answer": "नाक",
+              "hint": "यह चेहरे का हिस्सा है।",
+              "difficulty": "hard",
+              "emoji": "🤔"
+            }
+          ],
+          "emoji": "📘"
+        }
+      ],
+      "emoji": "🇮🇳",
+      "note": "Retained as published. Removal was requested for Nursery and Play Group only, and both have since been restored."
+    },
+    {
+      "subject_id": "ukg_rhymes",
+      "title": "Rhymes",
+      "sort_order": 6,
+      "topics": [
+        {
+          "topic_id": "ukg_rhymes_counting",
+          "title": "Counting Rhymes",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Count along to three rhymes, forwards and backwards",
+          "intro_message": "Let us count while we sing!",
+          "star_reward": 5,
+          "emoji": "🔢",
+          "activities": [
+            {
+              "activity_id": "ukg_rh_1",
+              "type": "story_listen",
+              "skill_id": "rhyme_counting",
+              "prompt": "Let us sing 'Rabbits, Rabbits, 1, 2, 3'!",
+              "visual_items": [
+                "rabbit",
+                "camel",
+                "monkey"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Count along with the animals.",
+              "difficulty": "easy",
+              "emoji": "🐰"
+            },
+            {
+              "activity_id": "ukg_rh_2",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In the rhyme, which animal has a hump?",
+              "visual_items": [
+                "camel",
+                "monkey"
+              ],
+              "options": [
+                "camel",
+                "monkey"
+              ],
+              "correct_answer": "camel",
+              "hint": "Camels, camels, 4, 5, 6...",
+              "difficulty": "medium",
+              "emoji": "🐫",
+              "option_emojis": [
+                "🐫",
+                "🐵"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_11",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_counting",
+              "prompt": "Let us sing 'The Peapod'!",
+              "visual_items": [
+                "peapod",
+                "peas"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Five little peas in a peapod pressed.",
+              "difficulty": "easy",
+              "emoji": "🫛"
+            },
+            {
+              "activity_id": "ukg_rh_12",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "How many little peas were in the peapod?",
+              "visual_items": [
+                "peas"
+              ],
+              "options": [
+                "3",
+                "5",
+                "7"
+              ],
+              "correct_answer": "5",
+              "hint": "Five little peas, in a peapod pressed.",
+              "difficulty": "medium",
+              "emoji": "🫛",
+              "option_emojis": [
+                "3️⃣",
+                "5️⃣",
+                "7️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_21",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_counting",
+              "prompt": "Let us sing the 'Indian Song' — up to ten and back!",
+              "visual_items": [
+                "ten_children"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One little, two little, three little...",
+              "difficulty": "easy",
+              "emoji": "🔟"
+            },
+            {
+              "activity_id": "ukg_rh_22",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In the 'Indian Song', we count up to ten. Then what happens?",
+              "visual_items": [
+                "ten_children"
+              ],
+              "options": [
+                "we count back down",
+                "we stop"
+              ],
+              "correct_answer": "we count back down",
+              "hint": "Ten little, nine little, eight little...",
+              "difficulty": "medium",
+              "emoji": "🔁",
+              "option_emojis": [
+                "⬇️",
+                "🛑"
+              ]
+            }
+          ]
+        },
+        {
+          "topic_id": "ukg_rhymes_me",
+          "title": "Rhymes About Me",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Point to each body part while singing",
+          "intro_message": "Sing along and point to yourself!",
+          "star_reward": 5,
+          "emoji": "🙋",
+          "activities": [
+            {
+              "activity_id": "ukg_rh_5",
+              "type": "story_listen",
+              "skill_id": "rhyme_body",
+              "prompt": "Let us sing 'All About Me' and point to each part!",
+              "visual_items": [
+                "child_avatar"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Head, mouth, eyes, nose, hair.",
+              "difficulty": "easy",
+              "emoji": "🧒"
+            },
+            {
+              "activity_id": "ukg_rh_8",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In 'All About Me', what do we see with?",
+              "visual_items": [
+                "eyes",
+                "nose"
+              ],
+              "options": [
+                "eyes",
+                "nose"
+              ],
+              "correct_answer": "eyes",
+              "hint": "These are eyes, with which I see.",
+              "difficulty": "medium",
+              "emoji": "👀",
+              "option_emojis": [
+                "👁️",
+                "👃"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_13",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_body",
+              "prompt": "Let us sing 'Little Me' and wiggle along!",
+              "visual_items": [
+                "fingers",
+                "toes"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Ten little toes all in a row.",
+              "difficulty": "easy",
+              "emoji": "🖐️"
+            },
+            {
+              "activity_id": "ukg_rh_14",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In 'Little Me', how many little toes are in a row?",
+              "visual_items": [
+                "toes"
+              ],
+              "options": [
+                "5",
+                "10"
+              ],
+              "correct_answer": "10",
+              "hint": "Ten little toes all in a row.",
+              "difficulty": "medium",
+              "emoji": "🦶",
+              "option_emojis": [
+                "5️⃣",
+                "🔟"
+              ]
+            }
+          ]
+        },
+        {
+          "topic_id": "ukg_rhymes_nature",
+          "title": "Nature Rhymes",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Sing about the sun, seeds and growing things",
+          "intro_message": "Let us sing about the world outside!",
+          "star_reward": 5,
+          "emoji": "🌱",
+          "activities": [
+            {
+              "activity_id": "ukg_rh_6",
+              "type": "story_listen",
+              "skill_id": "rhyme_nature",
+              "prompt": "Let us sing 'The Cherry Tree'!",
+              "visual_items": [
+                "cherry_tree"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A tiny stone grows into a tree.",
+              "difficulty": "easy",
+              "emoji": "🍒"
+            },
+            {
+              "activity_id": "ukg_rh_7",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In 'The Cherry Tree', what was planted in the ground?",
+              "visual_items": [
+                "cherry_stone",
+                "seed_packet"
+              ],
+              "options": [
+                "a cherry stone",
+                "a flower"
+              ],
+              "correct_answer": "a cherry stone",
+              "hint": "It came from a cherry.",
+              "difficulty": "medium",
+              "emoji": "🍒",
+              "option_emojis": [
+                "🪨",
+                "🌸"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_19",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_nature",
+              "prompt": "Let us sing 'This Is the Sun'!",
+              "visual_items": [
+                "sun",
+                "seed",
+                "flower",
+                "yacht"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "The sun is big and round.",
+              "difficulty": "easy",
+              "emoji": "☀️"
+            },
+            {
+              "activity_id": "ukg_rh_20",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In 'This Is the Sun', where do the yachts sail?",
+              "visual_items": [
+                "yacht"
+              ],
+              "options": [
+                "on the sea",
+                "in the sky"
+              ],
+              "correct_answer": "on the sea",
+              "hint": "These are the yachts that sail on the seas.",
+              "difficulty": "medium",
+              "emoji": "⛵",
+              "option_emojis": [
+                "🌊",
+                "☁️"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_9",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_thankful",
+              "prompt": "Let us sing 'Thank You God'!",
+              "visual_items": [
+                "world",
+                "food",
+                "bird"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Thank you for the birds that sing.",
+              "difficulty": "easy",
+              "emoji": "🙏"
+            },
+            {
+              "activity_id": "ukg_rh_10",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In 'Thank You God', what do the birds do?",
+              "visual_items": [
+                "bird"
+              ],
+              "options": [
+                "they sing",
+                "they swim"
+              ],
+              "correct_answer": "they sing",
+              "hint": "Thank you, God, for the birds that sing.",
+              "difficulty": "medium",
+              "emoji": "🐦",
+              "option_emojis": [
+                "🎶",
+                "🏊"
+              ]
+            }
+          ]
+        },
+        {
+          "topic_id": "ukg_rhymes_fun",
+          "title": "Colour & Fun Rhymes",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Sing about colours, balloons and a very funny clown",
+          "intro_message": "Time for the happiest songs!",
+          "star_reward": 5,
+          "emoji": "🌈",
+          "activities": [
+            {
+              "activity_id": "ukg_rh_3",
+              "type": "story_listen",
+              "skill_id": "rhyme_colours",
+              "prompt": "Let us sing 'Colours of the Rainbow'!",
+              "visual_items": [
+                "rainbow"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Violet, indigo, blue...",
+              "difficulty": "easy",
+              "emoji": "🌈"
+            },
+            {
+              "activity_id": "ukg_rh_4",
+              "type": "count_objects",
+              "skill_id": "rhyme_recall",
+              "prompt": "How many colours are in a rainbow?",
+              "visual_items": [
+                "rainbow"
+              ],
+              "options": [
+                "5",
+                "7",
+                "9"
+              ],
+              "correct_answer": "7",
+              "hint": "Count them in the song.",
+              "difficulty": "medium",
+              "emoji": "🌈",
+              "option_emojis": [
+                "5️⃣",
+                "7️⃣",
+                "9️⃣"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_15",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_colours",
+              "prompt": "Let us sing 'My Balloon'!",
+              "visual_items": [
+                "balloon"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A red or a blue, or a yellow will do.",
+              "difficulty": "easy",
+              "emoji": "🎈"
+            },
+            {
+              "activity_id": "ukg_rh_16",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In 'My Balloon', what did we go to the shop to buy?",
+              "visual_items": [
+                "balloon",
+                "kite"
+              ],
+              "options": [
+                "a balloon",
+                "a kite"
+              ],
+              "correct_answer": "a balloon",
+              "hint": "To buy a balloon that won't go pop.",
+              "difficulty": "medium",
+              "emoji": "🎈",
+              "option_emojis": [
+                "🎈",
+                "🪁"
+              ]
+            },
+            {
+              "activity_id": "ukg_rh_17",
+              "type": "rhyme_listen",
+              "skill_id": "rhyme_fun",
+              "prompt": "Let us sing 'The Clown'! Ha, ha, hee, hee!",
+              "visual_items": [
+                "clown"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "He laughs and laughs all day.",
+              "difficulty": "easy",
+              "emoji": "🤡"
+            },
+            {
+              "activity_id": "ukg_rh_18",
+              "type": "multiple_choice",
+              "skill_id": "rhyme_recall",
+              "prompt": "In the rhyme, what does the clown do all day?",
+              "visual_items": [
+                "clown"
+              ],
+              "options": [
+                "he laughs",
+                "he sleeps"
+              ],
+              "correct_answer": "he laughs",
+              "hint": "He laughs and laughs all day.",
+              "difficulty": "medium",
+              "emoji": "🤡",
+              "option_emojis": [
+                "😂",
+                "😴"
+              ]
+            }
+          ]
+        }
+      ],
+      "emoji": "🎵",
+      "note": "One rhyme_listen per rhyme and one recall question about it, kept together in the same level so the question always follows the singing."
+    }
+  ],
+  "emoji": "🚀",
+  "emoji_map": {
+    "2": "️⃣",
+    "3": "2️",
+    "4": "⃣3",
+    "5": "️⃣",
+    "6": "4️",
+    "7": "⃣5",
+    "8": "️⃣",
+    "9": "6️",
+    "Ball the red is": "⚽",
+    "The ball is red": "⚽",
+    "a cherry stone": "🪨",
+    "a flower": "🌸",
+    "aam": "🥭",
+    "aeroplane": "✈️",
+    "ambulance": "🚑",
+    "apple": "🍎",
+    "ball_red": "⚽",
+    "balloons_5_minus_2": "🎈",
+    "basket": "🧺",
+    "big_dog": "🐕",
+    "big_family": "👨‍👩‍👧‍👦",
+    "book_in_bag": "📚",
+    "book_thick": "📕",
+    "book_thin": "📄",
+    "bottle_full": "🍾",
+    "bottle_half": "🍶",
+    "box": "📦",
+    "boy_facing": "🧒",
+    "bus": "🚌",
+    "calendar": "📅",
+    "calf": "🐄",
+    "camel": "🐫",
+    "car": "🚗",
+    "cat": "🐱",
+    "cat_under_table": "🐱",
+    "cherry_stone": "🍒",
+    "cherry_tree": "🍒",
+    "child_avatar": "🧒",
+    "circle": "⭕",
+    "clock_3": "🕒",
+    "coin_2": "🪙",
+    "coin_5": "🪙",
+    "cow": "🐄",
+    "cup_on_table": "☕",
+    "dark_blue": "🟦",
+    "dark_green": "🟩",
+    "diamond": "🔷",
+    "dog": "🐶",
+    "ears": "👂",
+    "egg": "🥚",
+    "eyes": "👀",
+    "fire_engine": "🚒",
+    "gamla": "🪴",
+    "green": "🟩",
+    "hen": "🐔",
+    "horn": "📢",
+    "horse": "🐴",
+    "imli": "🌿",
+    "kamal": "🪷",
+    "kitten": "🐈",
+    "light_blue": "🩵",
+    "light_green": "💚",
+    "lion": "🦁",
+    "mangoes_6": "🥭",
+    "mangoes_9": "🥭",
+    "monkey": "🐵",
+    "moon": "🌙",
+    "night_sky": "🌌",
+    "nose": "👃",
+    "orange": "🍊",
+    "orange_swatch": "🟧",
+    "oval": "🥚",
+    "park_scene": "🏞️",
+    "pink": "🌸",
+    "pink_swatch": "🌸",
+    "post_office": "🏤",
+    "puppy": "🐕",
+    "purple": "🟪",
+    "purple_swatch": "🟪",
+    "queue": "🧑‍🤝‍🧑",
+    "rabbit": "🐰",
+    "rain_field": "🌾",
+    "rainbow": "🌈",
+    "rectangle": "▭",
+    "red_swatch": "🟥",
+    "river": "🏞️",
+    "seed_packet": "🌱",
+    "semicircle": "◗",
+    "sheep": "🐑",
+    "ship": "🚢",
+    "skin": "🤲",
+    "small_cat": "🐈",
+    "smoke": "🏭",
+    "square": "🟦",
+    "street": "🛣️",
+    "sun": "☀️",
+    "taxi": "🚕",
+    "tiger": "🐅",
+    "tongue": "👅",
+    "tree": "🌳",
+    "triangle": "🔺",
+    "truck": "🚚",
+    "umbrella": "☂️",
+    "water": "💧",
+    "yellow_swatch": "🟨"
+  },
+  "decisions": [
+    "Language (Hindi) is retained as published. It was removed once and restored on request, so the manifest no longer lists it under removed_subject_ids and this content is served.",
+    "Rhymes is delivered as a sixth subject. The syllabus publishes its eleven rhymes alongside the five subjects rather than inside one."
+  ]
+}

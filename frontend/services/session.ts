@@ -1,7 +1,6 @@
 "use client";
 
 import type { AuthResponse, ChildProfile, User } from "@/types";
-import { makeGuestChild } from "@/data/prototype";
 
 const TOKEN_KEY = "demo_session_token";
 const USER_KEY = "demo_user";
@@ -24,18 +23,15 @@ export function getUser(): User | null {
 }
 
 export function saveChild(child: ChildProfile) {
-  sessionStorage.setItem(CHILD_KEY, JSON.stringify(child));
+  const next = JSON.stringify(child);
+  // Only announce a profile that actually changed. Listeners re-read the child
+  // from the server, which saves it again; announcing an identical write would
+  // make that loop forever instead of settling once the two agree.
+  if (sessionStorage.getItem(CHILD_KEY) === next) return;
+  sessionStorage.setItem(CHILD_KEY, next);
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("little-learning-session"));
   }
-}
-
-export function setChildAge(age: number, ageGroup: string): ChildProfile {
-  const child = getOrCreateGuestChild();
-  const learningMode = age < 3 ? "toddler" : "standard";
-  const updated = { ...child, age, age_group: ageGroup, learning_mode: learningMode as ChildProfile["learning_mode"] };
-  saveChild(updated);
-  return updated;
 }
 
 export function getChild(): ChildProfile | null {
@@ -43,17 +39,26 @@ export function getChild(): ChildProfile | null {
   return raw ? (JSON.parse(raw) as ChildProfile) : null;
 }
 
-export function getOrCreateGuestChild(): ChildProfile {
-  const stored = getChild();
-  if (stored) return stored;
-  const child = makeGuestChild();
-  sessionStorage.setItem(GUEST_KEY, "true");
-  saveChild(child);
-  return child;
-}
-
 export function isGuestSession(): boolean {
   return sessionStorage.getItem(GUEST_KEY) === "true" || !getUser();
+}
+
+export function markGuestSession() {
+  sessionStorage.setItem(GUEST_KEY, "true");
+}
+
+/**
+ * Drop the stored child while leaving the parent signed in.
+ *
+ * Used when the server no longer recognises the child: profiles live in memory
+ * in this prototype, so a server restart leaves the browser holding an id that
+ * no longer exists. Keeping it would dead-end every child screen.
+ */
+export function forgetChild() {
+  sessionStorage.removeItem(CHILD_KEY);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("little-learning-session"));
+  }
 }
 
 export function clearSession() {

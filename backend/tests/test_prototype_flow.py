@@ -1,9 +1,17 @@
+"""Guide, companion and speech behaviour.
+
+Curriculum-specific flows live in test_curriculum.py and test_learning_flow.py.
+What is left here is the part of the app that does not care which topic a child
+is on: the guide agent's safety contract and speech normalization.
+"""
+
+from datetime import date
+
 from fastapi.testclient import TestClient
 import pytest
 
 from app.main import app
 from app.schemas.guide import GuideRequest
-from app.services.curriculum_service import get_stage
 from app.services.guide_agent_service import _fallback_guide, _validate_model_response
 
 
@@ -23,22 +31,13 @@ def make_child(client: TestClient):
     token = auth.json()["session_token"]
     child = client.post(
         "/children",
-        json={"session_token": token, "name": "Aaru", "age_group": "4-5", "preferred_language": "English"},
-    )
-    return token, child.json()["child_id"]
-
-
-def make_toddler(client: TestClient):
-    auth = client.post(
-        "/auth/register",
-        json={"name": "Toddler Parent", "email": "toddler@example.com", "password": "demo1234"},
-    )
-    if auth.status_code != 200:
-        auth = client.post("/auth/login", json={"email": "toddler@example.com", "password": "demo1234"})
-    token = auth.json()["session_token"]
-    child = client.post(
-        "/children",
-        json={"session_token": token, "name": "Mira", "age_group": "2 years", "age": 2, "preferred_language": "English"},
+        json={
+            "session_token": token,
+            "name": "Aaru",
+            "birth_year": date.today().year - 4,
+            "birth_month": 6,
+            "preferred_language": "English",
+        },
     )
     return token, child.json()["child_id"]
 
@@ -115,7 +114,7 @@ def test_guide_acknowledges_clear_but_irrelevant_activity_response():
         feature="banana car",
         question={
             "activity_id": "numbers_guest_03",
-            "topic": "numbers",
+            "topic": "pg_maths",
             "concept": "multiple_choice",
             "prompt": "Two blocks and one more block make how many?",
             "answer_type": "multiple_choice",
@@ -145,350 +144,15 @@ def test_register_login_and_create_child(client: TestClient):
     assert child.json()["name"] == "Aaru"
 
 
-def test_age_mode_resolution_and_child_profile_mode(client: TestClient):
-    toddler_mode = client.post("/toddler/mode", json={"age": 2})
-    standard_mode = client.post("/toddler/mode", json={"age": 3})
-    assert toddler_mode.json()["learning_mode"] == "toddler"
-    assert standard_mode.json()["learning_mode"] == "standard"
-
-    _, child_id = make_toddler(client)
-    child = client.get(f"/children/{child_id}").json()
-    assert child["age"] == 2
-    assert child["learning_mode"] == "toddler"
-
-
-def test_toddler_correct_and_close_speech_answers_award_stars(client: TestClient):
-    _, child_id = make_toddler(client)
-    start = client.post("/toddler/start", json={"child_id": child_id, "module": "alphabets", "level": 1})
-    assert start.status_code == 200
-    session_id = start.json()["session_id"]
-
-    intro = client.post("/toddler/answer", json={"session_id": session_id, "answer": "A"})
-    assert intro.json()["evaluation"]["result"] == "correct"
-
-    repeat = client.post("/toddler/answer", json={"session_id": session_id, "recognized_speech": "A"})
-    assert repeat.json()["evaluation"]["result"] == "correct"
-    assert repeat.json()["stars_earned"] == 1
-    assert repeat.json()["total_stars"] >= 2
-
-
-def test_toddler_retry_then_level_completion_unlocks_next_level(client: TestClient):
-    _, child_id = make_toddler(client)
-    start = client.post("/toddler/start", json={"child_id": child_id, "module": "alphabets", "level": 1})
-    session_id = start.json()["session_id"]
-    client.post("/toddler/answer", json={"session_id": session_id, "answer": "A"})
-    client.post("/toddler/answer", json={"session_id": session_id, "recognized_speech": "ay"})
-
-    retry = client.post("/toddler/answer", json={"session_id": session_id, "answer": "A"})
-    assert retry.json()["evaluation"]["result"] == "retry"
-    assert retry.json()["guide"]["target"] == "B"
-
-    client.post("/toddler/answer", json={"session_id": session_id, "answer": "B"})
-    complete = client.post("/toddler/answer", json={"session_id": session_id, "recognized_speech": "see"})
-    body = complete.json()
-    assert body["level_completed"] is True
-    assert body["next_level_unlocked"] is True
-    assert body["guide"]["action"] == "complete_level"
-
-    progress = client.get(f"/progress/{child_id}").json()["child"]["path_progress"]["toddler"]
-    assert 1 in progress["completed_stages"]
-    assert 2 in progress["unlocked_stages"]
-
-
-def test_toddler_changes_activity_after_four_wrong_answers(client: TestClient):
-    _, child_id = make_toddler(client)
-    start = client.post("/toddler/start", json={"child_id": child_id, "module": "numbers", "level": 1})
-    session_id = start.json()["session_id"]
-    client.post("/toddler/answer", json={"session_id": session_id, "answer": "1"})
-    first_question = client.post("/toddler/answer", json={"session_id": session_id, "answer": "9"})
-    first_activity_id = first_question.json()["activity"]["activity_id"]
-
-    result = first_question
-    for _ in range(3):
-        result = client.post("/toddler/answer", json={"session_id": session_id, "answer": "9"})
-
-    body = result.json()
-    assert body["question_changed"] is True
-    assert body["attempt_count"] == 0
-    assert body["activity"]["activity_id"] != first_activity_id
-    assert body["stars_earned"] == 0
-
-
-def test_toddler_colour_curriculum_teaches_red_yellow_and_blue(client: TestClient):
-    levels = client.get("/toddler/curriculum/colours").json()
-    activities = levels[0]["activities"]
-
-    assert levels[0]["concepts"] == ["Red", "Yellow", "Blue"]
-    assert {activity["concept"] for activity in activities} == {"Red", "Yellow", "Blue"}
-    assert {activity["type"] for activity in activities} >= {"introduce", "repeat_after_me", "recognition"}
-
-
-def test_toddler_guide_prefers_tap_for_preverbal_children(client: TestClient):
-    _, child_id = make_toddler(client)
-    response = client.post(
-        "/agent/guide",
-        json={
-            "session_id": "session_toddler",
-            "child_id": child_id,
-            "mode": "learning",
-            "event": "LEVEL_ANSWER_INCORRECT",
-            "route": "/toddler",
-            "screen": "toddler_lesson",
-            "feature": "alphabets",
-            "age": 2,
-            "learning_mode": "toddler",
-            "toddler": {
-                "learning_mode": "toddler",
-                "age": 2,
-                "module": "alphabets",
-                "level": 1,
-                "concept": "A",
-                "activity_type": "repeat_after_me",
-                "expected_answer": "A",
-                "recognized_speech": "",
-                "attempt_count": 1,
-                "stars": 1,
-                "recent_result": "unclear",
-            },
-            "available_actions": ["highlight"],
-            "available_targets": ["toddler-microphone", "toddler-choices"],
-        },
-    )
-    body = response.json()
-    assert response.status_code == 200
-    assert body["strategy"] == "hint"
-    assert body["ui_action"]["target"] == "toddler-choices"
-    assert "Tap A" in body["message"]
-    assert "can say" in body["message"]
-
-
-def test_toddler_ai_help_uses_the_current_activity_context():
-    payload = GuideRequest(
-        session_id="toddler_help",
-        child_id="guest_child",
-        mode="help",
-        event="GUIDE_HELP_REQUESTED",
-        route="/toddler",
-        screen="toddler_lesson",
-        feature="I don't understand this",
-        age=2,
-        learning_mode="toddler",
-        question={
-            "activity_id": "colour-find-red",
-            "topic": "colours",
-            "concept": "Red",
-            "learning_objective": "Tap the red circle.",
-            "prompt": "Which one is red?",
-            "answer_type": "recognition",
-            "options": ["🔴", "🟡", "🔵"],
-            "correct_answer": "🔴",
-            "hint": "Red looks like a strawberry.",
-            "attempt": 0,
-        },
-        toddler={"learning_mode": "toddler", "age": 2, "module": "colours", "concept": "Red"},
-        available_actions=["none"],
-        available_targets=[],
-    )
-
-    response = _fallback_guide(payload)
-
-    assert response.strategy == "help"
-    assert "red" in response.message.lower()
-
-
-def test_nursery_first_lessons_use_toddler_learning_progression():
-    expected_types = {
-        "numbers": "introduce_number",
-        "alphabets": "introduce_letter",
-        "colours": "introduce_colour",
-        "shapes": "introduce_shape",
-    }
-
-    for path_id, activity_type in expected_types.items():
-        stage = get_stage(path_id, 1)
-        assert stage.activities[0].type == activity_type
-        assert stage.activities[0].difficulty == "very_easy"
-
-
-def test_learning_wrong_hint_then_stage_completion_unlocks_next_stage(client: TestClient):
-    _, child_id = make_child(client)
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "numbers", "stage_number": 1})
-    assert start.status_code == 200
-    session_id = start.json()["session_id"]
-
-    wrong = client.post("/learning/answer", json={"session_id": session_id, "answer": "2"})
-    assert wrong.json()["is_correct"] is False
-    assert wrong.json()["attempt_number"] == 1
-    assert "one apple" in wrong.json()["feedback"]
-
-    for answer in ["1", "1", "1"]:
-        result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
-    body = result.json()
-    assert body["stage_completed"] is True
-    assert body["next_stage_unlocked"] is True
-
-    progress = client.get(f"/progress/{child_id}").json()["child"]
-    assert 2 in progress["path_progress"]["numbers"]["unlocked_stages"]
-    assert progress["stars"] > 0
-
-
-def test_learning_accepts_correct_answer_inside_a_natural_spoken_phrase(client: TestClient):
-    _, child_id = make_child(client)
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "numbers", "stage_number": 1})
-    session_id = start.json()["session_id"]
-    first_activity_id = start.json()["activity"]["activity_id"]
-
-    answer = client.post("/learning/answer", json={"session_id": session_id, "answer": "I can see one apple"})
-    body = answer.json()
-
-    assert answer.status_code == 200
-    assert body["is_correct"] is True
-    assert body["attempt_number"] == 0
-    assert body["activity"]["activity_id"] != first_activity_id
-
-
-def test_learning_changes_question_after_four_wrong_answers(client: TestClient):
-    _, child_id = make_child(client)
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "numbers", "stage_number": 1})
-    session_id = start.json()["session_id"]
-    first_activity_id = start.json()["activity"]["activity_id"]
-
-    for _ in range(4):
-        result = client.post("/learning/answer", json={"session_id": session_id, "answer": "99"})
-
-    body = result.json()
-    assert body["is_correct"] is False
-    assert body["question_changed"] is True
-    assert body["attempt_number"] == 0
-    assert body["activity"]["activity_id"] != first_activity_id
-    assert body["stars_earned"] == 0
-
-
-def test_locked_stage_is_blocked(client: TestClient):
-    _, child_id = make_child(client)
-    response = client.post("/learning/start", json={"child_id": child_id, "path_id": "numbers", "stage_number": 3})
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "LOCKED_STAGE"
-
-
-def test_future_world_is_blocked_until_previous_world_complete(client: TestClient):
-    _, child_id = make_child(client)
-    response = client.post("/learning/start", json={"child_id": child_id, "path_id": "alphabets", "stage_number": 1})
-    assert response.status_code == 403
-    assert response.json()["error"]["code"] == "LOCKED_STAGE"
-
-
 def test_companion_welcome_recommends_safe_continue_action(client: TestClient):
     _, child_id = make_child(client)
     response = client.post("/companion/session/start", json={"child_id": child_id, "current_route": "/", "is_guest": False})
     body = response.json()
     assert response.status_code == 200
-    assert "Continue Adventure" in body["message"]
+    assert body["message"]
     assert body["guidance"]["action"] == "highlight_element"
     assert body["guidance"]["target_id"] == "continue-adventure"
     assert body["guidance"]["wait_for_child_click"] is True
-
-
-def test_companion_welcome_uses_latest_completed_lesson_memory(client: TestClient):
-    _, child_id = make_child(client)
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "numbers", "stage_number": 1})
-    session_id = start.json()["session_id"]
-
-    for answer in ["1", "1", "1"]:
-        completed = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
-
-    assert completed.json()["stage_completed"] is True
-    response = client.post("/companion/session/start", json={"child_id": child_id, "current_route": "/", "is_guest": False})
-    message = response.json()["message"]
-    assert "Recognize number 1" in message
-    assert "Number Kingdom Level 1" in message
-    assert "Number Kingdom Level 2" in message
-
-
-def test_seed_unlocks_mixed_path_and_final_unlocks_certificate(client: TestClient):
-    _, child_id = make_child(client)
-    seeded = client.post(f"/dev/seed/{child_id}")
-    assert seeded.status_code == 200
-    assert seeded.json()["mixed_path_unlocked"] is True
-
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "mixed_final", "stage_number": 1})
-    session_id = start.json()["session_id"]
-    for answer in ["three red circles", "Apple", "2"]:
-        result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
-    assert result.json()["stage_completed"] is True
-
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "mixed_final", "stage_number": 2})
-    session_id = start.json()["session_id"]
-    for answer in ["4", "Dog", "star"]:
-        result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
-    assert result.json()["stage_completed"] is True
-
-    start = client.post("/learning/start", json={"child_id": child_id, "path_id": "mixed_final", "stage_number": 3})
-    session_id = start.json()["session_id"]
-    for answer in ["5", "Fish", "two yellow stars"]:
-        result = client.post("/learning/answer", json={"session_id": session_id, "answer": answer})
-    assert result.json()["stage_completed"] is True
-
-    certificate = client.get(f"/progress/{child_id}/certificate")
-    assert certificate.json()["unlocked"] is True
-    assert certificate.json()["certificate_id"].startswith("cert_")
-
-
-def test_practice_topics_and_answer(client: TestClient):
-    _, child_id = make_child(client)
-    topics = client.get(f"/practice/topics/{child_id}")
-    assert topics.status_code == 200
-    assert topics.json()[0]["unlocked"] is True
-
-    session = client.post("/practice/start", json={"child_id": child_id, "topic": "numbers"})
-    activity = session.json()["activities"][0]
-    assert session.json()["selection_reason"] == "introduced_skills"
-    answer = client.post(
-        "/practice/answer",
-        json={
-            "practice_session_id": session.json()["practice_session_id"],
-            "activity_id": activity["activity_id"],
-            "answer": activity["correct_answer"],
-        },
-    )
-    assert answer.json()["is_correct"] is True
-
-
-def test_practice_resets_attempts_after_four_wrong_answers(client: TestClient):
-    _, child_id = make_child(client)
-    session = client.post("/practice/start", json={"child_id": child_id, "topic": "numbers"}).json()
-    activity = session["activities"][0]
-
-    for _ in range(4):
-        result = client.post(
-            "/practice/answer",
-            json={
-                "practice_session_id": session["practice_session_id"],
-                "activity_id": activity["activity_id"],
-                "answer": "99",
-            },
-        )
-
-    body = result.json()
-    assert body["is_correct"] is False
-    assert body["question_changed"] is True
-    assert body["attempt_number"] == 0
-
-
-def test_voice_number_words_are_normalized_before_practice_evaluation(client: TestClient):
-    _, child_id = make_child(client)
-    session = client.post("/practice/start", json={"child_id": child_id, "topic": "numbers"})
-    activity = next(item for item in session.json()["activities"] if item["correct_answer"] == "1")
-    answer = client.post(
-        "/practice/answer",
-        json={
-            "practice_session_id": session.json()["practice_session_id"],
-            "activity_id": activity["activity_id"],
-            "answer": "number one",
-        },
-    )
-    assert answer.status_code == 200
-    assert answer.json()["is_correct"] is True
 
 
 def test_speech_normalize_resolves_browser_transcript_without_audio(client: TestClient):
@@ -535,11 +199,11 @@ def test_speech_normalize_resolves_letter_example_phrase(client: TestClient):
     assert body["matched_candidate"] == "A"
 
 
-def test_speech_normalize_preserves_toddler_spoken_letter_a(client: TestClient):
+def test_speech_normalize_preserves_a_spoken_letter_a(client: TestClient):
     response = client.post(
         "/speech/normalize",
         json={
-            "session_id": "toddler_letter_a",
+            "session_id": "speech_letter_a",
             "activity_id": "abc-repeat-a",
             "answer_type": "repeat_after_me",
             "transcript": "A",
@@ -622,7 +286,7 @@ def test_single_guide_app_open_and_wrong_attempt_contract(client: TestClient):
             "route": "/",
             "screen": "home",
             "feature": "home",
-            "progress": {"current_world": "numbers", "current_level": "Level 1", "session_stars": 0},
+            "progress": {"current_subject": "Basic Mathematics", "current_topic": "Colours", "session_stars": 0},
             "available_actions": ["highlight", "wait_for_click"],
             "available_targets": ["continue-adventure", "start-practice"],
         },
@@ -638,12 +302,12 @@ def test_single_guide_app_open_and_wrong_attempt_contract(client: TestClient):
             "child_id": child_id,
             "mode": "practice",
             "event": "PRACTICE_ANSWER_INCORRECT",
-            "route": "/practice/numbers",
+            "route": "/practice/pg_maths",
             "screen": "practice_session",
-            "feature": "numbers_practice",
+            "feature": "pg_maths_practice",
             "question": {
                 "activity_id": "numbers_count_3_apples_001",
-                "topic": "numbers",
+                "topic": "pg_maths",
                 "concept": "counting_3",
                 "learning_objective": "Count three visible apples one at a time.",
                 "prompt": "How many apples are there?",
@@ -696,12 +360,12 @@ def test_counting_help_counts_aloud_and_highlights_each_item(client: TestClient)
             "session_id": "counting_help",
             "mode": "help",
             "event": "GUIDE_HELP_REQUESTED",
-            "route": "/practice/numbers",
+            "route": "/practice/pg_maths",
             "screen": "practice_session",
             "feature": "I don't understand. Show me and count each item with me.",
             "question": {
                 "activity_id": "count_three_apples",
-                "topic": "numbers",
+                "topic": "pg_maths",
                 "concept": "counting_3",
                 "prompt": "How many apples are there?",
                 "answer_type": "count_objects",
@@ -733,9 +397,9 @@ def test_guide_rejects_invalid_visual_target(client: TestClient):
         json={
             "mode": "practice",
             "event": "PRACTICE_QUESTION_LOADED",
-            "route": "/practice/numbers",
+            "route": "/practice/pg_maths",
             "screen": "practice_session",
-            "feature": "numbers_practice",
+            "feature": "pg_maths_practice",
             "question": {"activity_id": "a1", "prompt": "How many apples?", "visual_items": ["apple"]},
             "available_actions": ["highlight"],
             "available_targets": ["question-area"],
@@ -744,25 +408,3 @@ def test_guide_rejects_invalid_visual_target(client: TestClient):
     )
     assert response.status_code == 400
     assert response.json()["error"]["code"] == "UNSAFE_VISUAL_TARGET"
-
-
-def test_answer_attempt_history_is_stored_after_backend_evaluation(client: TestClient):
-    _, child_id = make_child(client)
-    start = client.post("/practice/start", json={"child_id": child_id, "topic": "numbers"})
-    activity = start.json()["activities"][0]
-    answer = client.post(
-        "/practice/answer",
-        json={
-            "practice_session_id": start.json()["practice_session_id"],
-            "activity_id": activity["activity_id"],
-            "answer": "not the answer",
-        },
-    )
-    assert answer.json()["is_correct"] is False
-
-    history = client.get(f"/history/{child_id}")
-    attempts = history.json()["attempts"]
-    assert history.status_code == 200
-    assert attempts[-1]["activity_id"] == activity["activity_id"]
-    assert attempts[-1]["is_correct"] is False
-    assert attempts[-1]["attempt_number"] == 1

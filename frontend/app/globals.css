@@ -38,10 +38,10 @@
 
   /* Touch-target floors per surface (OP-06 §2). Fixed, not fluid — a
    * 3-year-old's fingertip does not shrink on a small screen. */
-  --touch-toddler: 96px;
+  --touch-early: 96px;
   --touch-child: 64px;
   --touch-parent: 44px;
-  --touch-gap-toddler: 16px;
+  --touch-gap-early: 16px;
   --touch-gap-child: 12px;
   --touch-gap-parent: 8px;
 
@@ -56,13 +56,25 @@
    * of the fixed dock. Starts at 0 so the first paint reserves nothing rather
    * than guessing; the observer fires before paint in practice. */
   --dock-height: 0px;
+
+  /* Height of the phone's bottom navigation bar. It is a variable rather than
+   * a number in one place because three things have to agree about it: the
+   * page's bottom padding, the guide dock's resting position, and the bar
+   * itself. Zero from md: up, where the header row carries navigation. */
+  --mobile-nav: 4.6rem;
 }
 
-/* Reserve exactly as much room as the dock actually occupies, plus the home
- * indicator. This replaces a hard-coded pb-36 (144px) that silently went
- * wrong the moment the dock reflowed to two rows. */
+@media (min-width: 768px) {
+  :root {
+    --mobile-nav: 0rem;
+  }
+}
+
+/* Reserve exactly as much room as the dock actually occupies, plus the phone
+ * nav bar and the home indicator. This replaces a hard-coded pb-36 (144px)
+ * that silently went wrong the moment the dock reflowed to two rows. */
 .app-shell-main {
-  padding-bottom: calc(var(--dock-height) + var(--safe-bottom) + 1rem);
+  padding-bottom: calc(var(--dock-height) + var(--mobile-nav) + var(--safe-bottom) + 1rem);
 }
 
 * {
@@ -411,12 +423,26 @@ select:focus-visible {
   background: linear-gradient(90deg, transparent, rgba(37, 49, 63, 0.14), transparent);
 }
 
+/* Phone first. At 28rem tall with a 9rem hill across the bottom, the last line
+ * of the header sat inside the scenery and the floating balloon — parked at a
+ * -68vw offset — drifted straight over the class title on a narrow screen. The
+ * scenery is decoration, so on a phone it gets smaller, gets out of the text's
+ * way, and the balloon steps out entirely. Full size returns from md:. */
 .world-entrance {
   position: relative;
   overflow: hidden;
-  min-height: 28rem;
+  min-height: 17rem;
   border-radius: 2rem;
+  padding-bottom: 5rem;
   background: rgba(255, 255, 255, 0.34);
+}
+
+@media (min-width: 768px) {
+  .world-entrance {
+    min-height: 28rem;
+    /* Back to what `sm:p-7` gives it; the hill has room again at this width. */
+    padding-bottom: 1.75rem;
+  }
 }
 
 .world-entrance::before {
@@ -424,7 +450,7 @@ select:focus-visible {
   position: absolute;
   pointer-events: none;
   inset: auto -8% 0;
-  height: 9rem;
+  height: 4.5rem;
   border-radius: 50% 50% 0 0;
   background:
     radial-gradient(circle at 18% 25%, #2f8f6b 0 1.6rem, transparent 1.7rem),
@@ -433,7 +459,11 @@ select:focus-visible {
     #d9f0cf;
 }
 
+/* The balloon and its far-left companion are pinned by viewport width, which
+ * is why they land on the title on a narrow screen. No phone has the room for
+ * them, so they only appear once there is some. */
 .world-entrance::after {
+  display: none;
   content: "";
   position: absolute;
   pointer-events: none;
@@ -445,6 +475,16 @@ select:focus-visible {
   background: var(--berry);
   box-shadow: inset -0.4rem -0.6rem 0 rgba(37, 49, 63, 0.1), -68vw 7rem 0 -0.2rem var(--sky);
   animation: floaty 4.8s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  .world-entrance::before {
+    height: 9rem;
+  }
+
+  .world-entrance::after {
+    display: block;
+  }
 }
 
 .floating-cloud {
@@ -814,23 +854,26 @@ select:focus-visible {
   filter: blur(0.2px);
 }
 
-.world-numbers::before {
+/* Subject tints. Keyed by position, not by subject name: the curriculum comes
+ * from the manifest, so a stylesheet must not assume which subjects exist.
+ * Apply with `subject-tint-{1..5}` cycling over the subjects of a class. */
+.subject-tint-1::before {
   background: linear-gradient(135deg, rgba(206, 239, 255, 0.64), rgba(255, 221, 116, 0.42));
 }
 
-.world-alphabets::before {
+.subject-tint-2::before {
   background: linear-gradient(135deg, rgba(192, 231, 183, 0.66), rgba(229, 246, 220, 0.44));
 }
 
-.world-colours::before {
+.subject-tint-3::before {
   background: linear-gradient(135deg, rgba(255, 187, 206, 0.5), rgba(255, 224, 129, 0.42));
 }
 
-.world-shapes::before {
+.subject-tint-4::before {
   background: linear-gradient(135deg, rgba(255, 233, 151, 0.5), rgba(181, 224, 255, 0.44));
 }
 
-.world-mixed_final::before {
+.subject-tint-5::before {
   background: linear-gradient(135deg, rgba(225, 213, 255, 0.56), rgba(204, 236, 255, 0.42));
 }
 
@@ -1874,6 +1917,106 @@ select:focus-visible {
   background: rgba(37, 49, 63, 0.45);
 }
 
+/* The collapsed guide sits above the phone nav bar rather than on top of it.
+ * The expanded sheet keeps its own bottom: 0 — it is a modal over everything,
+ * nav bar included, and its specificity already wins over this. */
+.avatar-dock,
+.avatar-dock[data-expanded="false"] {
+  bottom: calc(0.75rem + var(--safe-bottom) + var(--mobile-nav));
+}
+
+/* =====================================================================
+ * Phone navigation bar
+ *
+ * The header's navigation row is desktop-only, so on a phone every screen
+ * except home was a dead end. This is the way out of any screen: fixed to the
+ * bottom where a thumb already is, one picture per destination, and the two
+ * coaches folded behind More so four targets stay wide enough to hit.
+ *
+ * Hidden from md: in this file rather than with a `md:hidden` utility —
+ * Tailwind's utilities are emitted above this rule, so at equal specificity
+ * this block would win and the bar would leak onto the desktop.
+ * ===================================================================== */
+
+.mobile-tabs {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0.25rem;
+  border-top: 1px solid rgba(37, 49, 63, 0.08);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 0.3rem 0.35rem calc(0.3rem + var(--safe-bottom));
+  box-shadow: 0 -12px 32px rgba(37, 49, 63, 0.12);
+}
+
+@media (min-width: 768px) {
+  .mobile-tabs {
+    display: none;
+  }
+}
+
+.mobile-tab {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.1rem;
+  border: 0;
+  border-radius: 1.1rem;
+  background: transparent;
+  padding: 0.3rem 0.15rem;
+  color: rgba(37, 49, 63, 0.6);
+  font-weight: 900;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mobile-tab-icon {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+.mobile-tab-label {
+  font-size: 0.68rem;
+  line-height: 1;
+}
+
+.mobile-tab[data-active="true"] {
+  background: #f5f8ef;
+  color: var(--ink);
+}
+
+/* Kept clear of the right edge on purpose: the collapsed guide floats there,
+ * just above the bar, and a popover opening underneath it is unreachable. */
+.mobile-more {
+  position: absolute;
+  left: 0.5rem;
+  right: 5.25rem;
+  bottom: calc(100% + 0.4rem);
+  display: grid;
+  gap: 0.35rem;
+  border: 1px solid rgba(37, 49, 63, 0.08);
+  border-radius: 1.25rem;
+  background: #ffffff;
+  padding: 0.5rem;
+  box-shadow: 0 18px 40px rgba(37, 49, 63, 0.18);
+}
+
+.mobile-more a {
+  display: block;
+  border-radius: 1rem;
+  background: #f5f8ef;
+  padding: 0.65rem 0.85rem;
+  color: var(--ink);
+  font-weight: 900;
+  text-decoration: none;
+}
+
 /* ---------------------------------------------------------------------
  * md and above — the original dock, unchanged.
  *
@@ -2398,9 +2541,9 @@ select:focus-visible {
  * floor by being written somewhere new. Mark a subtree with data-surface and
  * every interactive descendant inherits the floor:
  *
- *   toddler (under 3)  96x96, gap 16
- *   child   (3+)       64x64, gap 12
- *   parent             44x44, gap 8
+ *   early   (Play Group, Nursery)  96x96, gap 16
+ *   child   (LKG, UKG)             64x64, gap 12
+ *   parent                         44x44, gap 8
  *
  * `min-width` is deliberately paired with `min-height` — a 64px-tall control
  * 20px wide is still a miss for a 3-year-old.
@@ -2419,20 +2562,27 @@ select:focus-visible {
  * WHAT EACH FLOOR IS FOR:
  *   child (64px)  answer options, the microphone — things a child taps to
  *                 LEARN. Never weaken this one.
+ *   early (96px)  the same learning controls, for Play Group and Nursery. The
+ *                 shell sets this surface from the class's experience mode, so
+ *                 the floor follows the manifest rather than a hardcoded age.
  *   chrome (44px) navigation and guide-dock furniture, tapped mostly by a
  *                 parent. Forcing these to 64px is what pushed the nav to
  *                 three rows and grew the fixed dock to ~250px, covering the
  *                 page beneath it.
  *   parent (44px) the parent drawer and parent routes.
+ *
+ * The floors are for LEARNING controls. Navigation and chrome stay at 44px on
+ * purpose — raising them does not help a child and costs the learning area the
+ * room it needs.
  */
-[data-surface="child"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="parent"] *):not([data-surface="toddler"] *):not([data-surface="chrome"] *) {
+[data-surface="child"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="parent"] *):not([data-surface="early"] *):not([data-surface="chrome"] *) {
   min-height: var(--touch-child);
   min-width: var(--touch-child);
 }
 
-[data-surface="toddler"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="parent"] *):not([data-surface="chrome"] *) {
-  min-height: var(--touch-toddler);
-  min-width: var(--touch-toddler);
+[data-surface="early"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="parent"] *):not([data-surface="chrome"] *) {
+  min-height: var(--touch-early);
+  min-width: var(--touch-early);
 }
 
 [data-surface="parent"] :is(button, summary, select, [role="button"], a[href]):not([data-surface="chrome"] *) {
@@ -2454,12 +2604,12 @@ select:focus-visible {
 
 /* Gaps between adjacent controls, so two 64px targets cannot sit flush and
  * read as one. */
-[data-surface="child"] :is(.avatar-controls, .touch-row):not([data-surface="parent"] *):not([data-surface="toddler"] *):not([data-surface="chrome"] *) {
+[data-surface="child"] :is(.avatar-controls, .touch-row):not([data-surface="parent"] *):not([data-surface="early"] *):not([data-surface="chrome"] *) {
   gap: var(--touch-gap-child);
 }
 
-[data-surface="toddler"] :is(.avatar-controls, .touch-row):not([data-surface="parent"] *):not([data-surface="chrome"] *) {
-  gap: var(--touch-gap-toddler);
+[data-surface="early"] :is(.avatar-controls, .touch-row):not([data-surface="parent"] *):not([data-surface="chrome"] *) {
+  gap: var(--touch-gap-early);
 }
 
 [data-surface="parent"] :is(.avatar-controls, .touch-row):not([data-surface="chrome"] *) {
@@ -2510,6 +2660,346 @@ select:focus-visible {
   .avatar-stage {
     width: 3.4rem;
     height: 3.4rem;
+  }
+}
+
+/* =====================================================================
+ * Level trail — a subject's topics as floating nodes on a rope.
+ *
+ * The levels inside a subject used to be a stack of rectangles. A child reads
+ * a game map long before they read a card, so the levels are now round nodes
+ * strung along a beaded rope, bobbing over a sky.
+ *
+ * The geometry is what makes the rope land: each level owns a row and is
+ * pushed left or right by --drift, and the rope for that row is an SVG box
+ * pinned from the node's centre (--node-center) down one full row (height:
+ * 100%), spanning the two drifts horizontally. Corner to corner of that box is
+ * exactly centre-to-centre of the two nodes, at any row height — which is why
+ * the open level can carry a bubble of detail without bending every rope below
+ * it. preserveAspectRatio="none" stretches the curve to fit; non-scaling-stroke
+ * keeps the beads round while it does.
+ * ===================================================================== */
+
+.topic-sky {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 2rem;
+  padding: 1rem 0.5rem 1.5rem;
+  background:
+    radial-gradient(circle at 14% 5%, rgba(255, 255, 255, 0.72) 0 4.5rem, transparent 4.6rem),
+    linear-gradient(180deg, #e7f6ff 0%, #f7fbff 44%, #eef9e8 100%);
+  box-shadow: inset 0 0 0 1px rgba(37, 49, 63, 0.06);
+}
+
+/* Scenery is decoration: off on phones, where it costs paint budget and buys
+ * nothing a small screen has room to show. Same rule as the adventure map. */
+.topic-sky-decor {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .topic-sky-decor {
+    display: block;
+  }
+}
+
+.topic-cloud {
+  position: absolute;
+  width: 6.5rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 2rem -0.7rem 0 rgba(255, 255, 255, 0.82), 3.7rem 0.15rem 0 -0.2rem rgba(255, 255, 255, 0.8);
+  animation: drift 9s ease-in-out infinite;
+}
+
+.topic-cloud-a {
+  left: 4%;
+  top: 3rem;
+}
+
+.topic-cloud-b {
+  right: 5%;
+  top: 17rem;
+  animation-delay: -3s;
+}
+
+.topic-cloud-c {
+  left: 7%;
+  bottom: 5rem;
+  transform: scale(0.8);
+  animation-delay: -6s;
+}
+
+.topic-path {
+  /* Phone values. --node-size is the early-mode touch floor as a circle, so
+   * the picture itself is a legal target before the name below it is counted. */
+  --drift: 3.4rem;
+  --node-size: 6rem;
+  --node-center: 3rem;
+  --row: 12rem;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  margin: 0;
+  padding: 2rem 0 0;
+  list-style: none;
+}
+
+.topic-orbit {
+  position: relative;
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  min-height: var(--row);
+}
+
+/* The last level has no rope to hold up, so it does not need a row of empty
+ * sky under it. */
+.topic-orbit:last-child {
+  min-height: 0;
+}
+
+.topic-edge {
+  position: absolute;
+  left: calc(50% - var(--drift));
+  top: var(--node-center);
+  z-index: 0;
+  width: calc(var(--drift) * 2);
+  height: 100%;
+  overflow: visible;
+}
+
+/* Odd rows run right-to-left; the curve is the same one, mirrored. */
+.topic-edge-flip {
+  transform: scaleX(-1);
+}
+
+.topic-edge path {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 0.01 16;
+}
+
+/* Rope the child has already walked. */
+.topic-rope-open path {
+  stroke: rgba(245, 184, 75, 0.92);
+}
+
+.topic-rope-dim path {
+  stroke: rgba(74, 144, 194, 0.32);
+  stroke-width: 6;
+}
+
+/* The rope leading into the level they are on: beads travel towards it. */
+.topic-rope-live path {
+  animation: rope-beads 1.5s linear infinite;
+}
+
+.topic-slot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  justify-items: center;
+  transform: translateX(calc(var(--side) * var(--drift)));
+}
+
+.topic-node {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  color: var(--ink);
+  text-decoration: none;
+  animation: level-float 4.8s ease-in-out infinite;
+  animation-delay: calc(var(--i) * -0.62s);
+}
+
+.topic-node-symbol {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--node-size);
+  height: var(--node-size);
+  border-radius: 999px;
+  border: 0.4rem solid rgba(255, 255, 255, 0.92);
+  font-size: 2.6rem;
+  line-height: 1;
+  /* A long, soft shadow well below the circle — the level is in the air. */
+  box-shadow: 0 18px 26px -10px rgba(37, 49, 63, 0.45), inset 0 -0.55rem 0 rgba(37, 49, 63, 0.07);
+}
+
+.topic-symbol-done {
+  background: linear-gradient(135deg, #fff2bd, #f5b84b);
+}
+
+.topic-symbol-ready {
+  background: linear-gradient(135deg, #d8f3ff, #ffffff 55%, #c9f0dc);
+}
+
+.topic-symbol-locked,
+.topic-symbol-coming-soon {
+  background: rgba(255, 255, 255, 0.7);
+  filter: grayscale(0.45);
+  box-shadow: 0 12px 20px -12px rgba(37, 49, 63, 0.4);
+}
+
+.topic-node-locked,
+.topic-node-coming-soon {
+  opacity: 0.7;
+  animation-duration: 6.8s;
+}
+
+.topic-node-star {
+  position: absolute;
+  right: -0.15rem;
+  top: -0.15rem;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+/* The level a child is on: lit, ringed and named in the bubble below it. */
+.topic-node-now .topic-node-symbol {
+  background: linear-gradient(135deg, #f5b84b, #ff9ec4 52%, #8b7bd8);
+  color: #ffffff;
+  animation: level-ring 1.9s ease-in-out infinite;
+}
+
+.topic-node-name {
+  max-width: 9.5rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 0.28rem 0.7rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  box-shadow: 0 8px 18px rgba(37, 49, 63, 0.12);
+}
+
+.topic-node-chip {
+  border-radius: 999px;
+  padding: 0.15rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.topic-chip-done {
+  background: var(--leaf);
+  color: #ffffff;
+}
+
+.topic-chip-ready {
+  background: var(--sun);
+  color: var(--ink);
+}
+
+.topic-chip-locked,
+.topic-chip-coming-soon {
+  background: rgba(255, 255, 255, 0.82);
+  color: rgba(37, 49, 63, 0.52);
+}
+
+.topic-tap-arrow {
+  position: absolute;
+  left: 50%;
+  top: -1.25rem;
+  z-index: 2;
+  width: 1.3rem;
+  height: 1.3rem;
+  border-right: 0.38rem solid #d94f70;
+  border-bottom: 0.38rem solid #d94f70;
+  transform: translateX(-50%) rotate(45deg);
+  animation: arrow-drop 1.05s ease-in-out infinite;
+  filter: drop-shadow(0 8px 10px rgba(217, 79, 112, 0.22));
+}
+
+.topic-now-bubble {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 0.5rem;
+  width: min(22rem, 100%);
+  margin: 0.9rem auto 0.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.74);
+  padding: 0.85rem 1rem;
+  box-shadow: 0 18px 40px rgba(37, 49, 63, 0.12);
+}
+
+/* Points at the node it belongs to, drift and all. */
+.topic-now-bubble::before {
+  content: "";
+  position: absolute;
+  left: calc(50% + var(--side) * var(--drift));
+  top: -0.45rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.8);
+  border-left: 1px solid rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.74);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+@media (min-width: 768px) {
+  .topic-sky {
+    padding: 1.25rem 1rem 2rem;
+  }
+
+  .topic-path {
+    --drift: 6.5rem;
+    --node-size: 7rem;
+    --node-center: 3.5rem;
+    --row: 13.5rem;
+  }
+
+  .topic-node-symbol {
+    font-size: 3rem;
+  }
+
+  .topic-node-name {
+    max-width: 12rem;
+    font-size: 1.05rem;
+  }
+
+  .topic-now-bubble {
+    backdrop-filter: blur(12px) saturate(1.1);
+  }
+}
+
+@keyframes level-float {
+  0%,
+  100% {
+    transform: translateY(-0.3rem);
+  }
+
+  50% {
+    transform: translateY(0.35rem);
+  }
+}
+
+@keyframes level-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0.4rem rgba(245, 184, 75, 0.22), 0 18px 26px -10px rgba(37, 49, 63, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 0 0.95rem rgba(245, 184, 75, 0.28), 0 22px 30px -10px rgba(37, 49, 63, 0.48);
+  }
+}
+
+@keyframes rope-beads {
+  to {
+    stroke-dashoffset: -16.01;
   }
 }
 

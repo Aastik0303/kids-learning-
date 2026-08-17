@@ -18,14 +18,14 @@ GuideEvent = Literal[
     "PRACTICE_ANSWER_INCORRECT",
     "PRACTICE_COMPLETED",
     "ADVENTURE_OPENED",
-    "LEVEL_OPENED",
-    "LEVEL_STARTED",
-    "LEVEL_QUESTION_LOADED",
-    "LEVEL_ANSWER_CORRECT",
-    "LEVEL_ANSWER_INCORRECT",
-    "LEVEL_COMPLETED",
-    "WORLD_COMPLETED",
-    "WORLD_UNLOCKED",
+    "TOPIC_OPENED",
+    "TOPIC_STARTED",
+    "TOPIC_QUESTION_LOADED",
+    "TOPIC_ANSWER_CORRECT",
+    "TOPIC_ANSWER_INCORRECT",
+    "TOPIC_COMPLETED",
+    "SUBJECT_COMPLETED",
+    "TOPIC_UNLOCKED",
     "REWARDS_OPENED",
     "CERTIFICATE_UNLOCKED",
     "GUIDE_HELP_REQUESTED",
@@ -81,28 +81,14 @@ class GuideQuestionContext(BaseModel):
 
 
 class GuideProgressContext(BaseModel):
-    current_world: str | None = None
-    current_level: str | None = None
-    last_completed_level: str | None = None
+    current_class: str | None = None
+    current_subject: str | None = None
+    current_topic: str | None = None
+    last_completed_topic: str | None = None
     last_completed_title: str | None = None
-    last_completed_objective: str | None = None
     last_completed_at: datetime | None = None
     weak_skills: list[str] = Field(default_factory=list)
     session_stars: int = 0
-
-
-class ToddlerGuideContext(BaseModel):
-    learning_mode: str = "standard"
-    age: int | None = None
-    module: str | None = None
-    level: int | None = None
-    concept: str | None = None
-    activity_type: str | None = None
-    expected_answer: str | None = None
-    recognized_speech: str | None = None
-    attempt_count: int = 0
-    stars: int = 0
-    recent_result: str | None = None
 
 
 class GuideRequest(BaseModel):
@@ -113,14 +99,13 @@ class GuideRequest(BaseModel):
     route: str
     screen: str
     feature: str
-    age_group: str = "3-6"
-    age: int | None = None
-    learning_mode: str = "standard"
+    class_id: str | None = None
+    # Presentation mode from the manifest: "early" or "standard".
+    experience_mode: str = "standard"
     preferred_language: str = "en"
     conversation: list[GuideConversationTurn] = Field(default_factory=list, max_length=8)
     question: GuideQuestionContext | None = None
     progress: GuideProgressContext | None = None
-    toddler: ToddlerGuideContext | None = None
     available_actions: list[GuideActionType] = Field(default_factory=list)
     available_targets: list[str] = Field(default_factory=list)
     allowed_visual_targets: list[str] = Field(default_factory=list)

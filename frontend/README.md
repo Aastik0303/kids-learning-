@@ -15,9 +15,26 @@ Set `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000` in `.env.local` if needed.
 
 - `/login`, `/register`, `/onboarding`, `/child/select`
 - `/home`
-- `/levels`, `/levels/[pathId]`, `/levels/[pathId]/[stageId]`
+- `/adventure` — the child's class, as its subjects
+- `/adventure/[subjectId]` — the topics in one subject
+- `/adventure/[subjectId]/[topicId]` — one topic's lesson
 - `/practice`, `/practice/[topic]`
-- `/rewards`, `/certificate`, `/guide`, `/parent/progress`
+- `/rewards`, `/certificate`, `/guide`, `/parent/progress`, `/parent/profile`
+
+`/levels` and `/toddler` were the path-based prototype and are redirected to
+`/adventure` in `next.config.js`.
+
+## Curriculum
+
+Every class, subject and topic name is served by the backend from
+`backend/app/data/curriculum/manifest.json`. There are no curriculum strings in
+this codebase — adding a subject or topic is a manifest edit and appears in the
+UI with no frontend change.
+
+Presentation rules (touch target, choices per screen, text density) also come
+from the manifest, via the class's experience mode. `lib/experience.ts` applies
+them; its only hardcoded numbers are a strict fallback for the moment before the
+first response arrives.
 
 ## Prototype State
 

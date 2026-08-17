@@ -1,15 +1,27 @@
-from uuid import uuid4
-import random
+"""Practice draws from the topics a child has already met, weighted towards
+whatever they found hard. Selection is deterministic given the same child state:
+the shuffle is seeded, so a reload does not reshuffle the questions under them.
+"""
 
-from app.schemas.practice import PracticeAnswerRequest, PracticeAnswerResponse, PracticeStartRequest, PracticeStartResponse, PracticeTopic
-from app.services.answer_resolution_service import AnswerResolutionContext, resolved_answers_match
-from app.services import curriculum_service
+import random
+from uuid import uuid4
+
+from app.schemas.curriculum import Topic
+from app.schemas.practice import (
+    PracticeAnswerRequest,
+    PracticeAnswerResponse,
+    PracticeStartRequest,
+    PracticeStartResponse,
+    PracticeSubject,
+)
+from app.services import activity_evaluators, curriculum_service
 from app.services.avatar_service import learning_avatar
-from app.services.child_service import get_child
+from app.services.child_service import get_child_record, subject_progress
 from app.services.errors import app_error
 from app.services.history_service import record_attempt
 from app.services.mock_storage import mock_practice_sessions
 
+QUESTIONS_PER_SESSION = 5
 
 CORRECT_FEEDBACK = [
     "Nice work!",
@@ -29,7 +41,6 @@ INCORRECT_FEEDBACK_ATTEMPT_1 = [
     "Almost! Try again carefully.",
     "Almost. Take another look.",
     "So close! Think about it once more.",
-    "Good try. Let us try again.",
 ]
 
 INCORRECT_FEEDBACK_ATTEMPT_2 = [
@@ -47,31 +58,59 @@ INCORRECT_FEEDBACK_ATTEMPT_3_PLUS = [
 ]
 
 
-def topics_for_child(child_id: str) -> list[PracticeTopic]:
-    child = get_child(child_id)
-    topics = []
-    for path_id, title in [("numbers", "Numbers"), ("alphabets", "Alphabets"), ("colours", "Colours"), ("shapes", "Shapes")]:
-        progress = child.path_progress.get(path_id)
-        unlocked = bool(progress and progress.unlocked_stages)
-        topics.append(PracticeTopic(topic=path_id, title=title, unlocked=unlocked))
-    mixed_unlocked = child.mixed_path_unlocked
-    topics.append(PracticeTopic(topic="mixed_final", title="Mixed Practice", unlocked=mixed_unlocked))
-    return topics
+def subjects_for_child(child_id: str) -> list[PracticeSubject]:
+    """Every subject in the child's class, with an honest availability flag."""
+    child = get_child_record(child_id)
+    detail = curriculum_service.get_class(child["class_id"])
+    subjects = []
+    for subject in detail.subjects:
+        progress = subject_progress(child, subject.subject_id)
+        practisable = [
+            t for t in subject.topics if t.available and t.topic_id in progress["unlocked_topics"]
+        ]
+        subjects.append(
+            PracticeSubject(
+                subject_id=subject.subject_id,
+                title=subject.title,
+                class_id=subject.class_id,
+                icon=subject.icon,
+                unlocked=bool(practisable),
+                has_activities=subject.available,
+                topic_count=len(practisable),
+                fun_name=subject.fun_name,
+                colour=subject.colour,
+                easy_line=subject.easy_line,
+                topic_titles=[t.title for t in practisable],
+            )
+        )
+    return subjects
 
 
 def start_practice(payload: PracticeStartRequest) -> PracticeStartResponse:
-    child = get_child(payload.child_id)
-    available = {topic.topic: topic.unlocked for topic in topics_for_child(payload.child_id)}
-    if not available.get(payload.topic):
+    child = get_child_record(payload.child_id)
+    subject = curriculum_service.get_subject(payload.subject_id)
+    if subject.class_id != child["class_id"]:
+        raise app_error("LOCKED_STAGE", "That subject belongs to a different class.", 403)
+    if not subject.available:
+        raise app_error(
+            "TOPIC_NOT_READY",
+            "This subject is still being prepared. Let us try another one.",
+            409,
+        )
+
+    progress = subject_progress(child, subject.subject_id)
+    introduced = [t for t in subject.topics if t.available and t.topic_id in progress["unlocked_topics"]]
+    if not introduced:
         raise app_error("LOCKED_STAGE", "Practice opens after a topic is introduced.", 403)
-    stages = curriculum_service.get_stages(payload.topic)
-    activities, selection_reason = _weighted_practice_activities(child, payload.topic, stages)
+
+    activities, selection_reason = _weighted_activities(child, subject.subject_id, introduced, progress)
     if not activities:
         raise app_error("MISSING_CURRICULUM", "Practice needs activities before it can start.", 404)
+
     session_id = f"practice_{uuid4()}"
     mock_practice_sessions[session_id] = {
         "child_id": payload.child_id,
-        "topic": payload.topic,
+        "subject_id": subject.subject_id,
         "activities": [a.model_dump() for a in activities],
         "selection_reason": selection_reason,
         "attempts": {},
@@ -79,61 +118,56 @@ def start_practice(payload: PracticeStartRequest) -> PracticeStartResponse:
     }
     return PracticeStartResponse(
         practice_session_id=session_id,
-        topic=payload.topic,
+        subject_id=subject.subject_id,
+        subject_title=subject.title,
+        subject_fun_name=subject.fun_name,
+        subject_easy_line=subject.easy_line,
         activities=activities,
         selection_reason=selection_reason,
     )
 
 
-def _skill_slug(text: str) -> str:
-    return text.lower().replace(" ", "_")
+def _weighted_activities(
+    child: dict, subject_id: str, introduced: list[Topic], progress: dict
+) -> tuple[list, str]:
+    """Weak topics come up most, then recent ones, then mastered ones."""
+    completed = set(progress["completed_topics"])
+    weak_skills = set(child["weak_skills"])
 
+    weak = [t for t in introduced if f"{subject_id}:{t.topic_id}" in weak_skills]
+    recent_ids = set(progress["completed_topics"][-2:])
+    if progress.get("current_topic_id"):
+        recent_ids.add(progress["current_topic_id"])
+    recent = [t for t in introduced if t.topic_id in recent_ids and t not in weak]
+    mastered = [t for t in introduced if t.topic_id in completed and t not in weak and t not in recent]
 
-def _weighted_practice_activities(child, topic: str, stages) -> tuple[list, str]:
-    progress = child.path_progress.get(topic)
-    unlocked = set(progress.unlocked_stages if progress else [1])
-    completed = set(progress.completed_stages if progress else [])
-    introduced = [stage for stage in stages if stage.stage_number in unlocked]
-    weak_skills = set(child.weak_skills)
-    weak = [stage for stage in introduced if _skill_slug(stage.objective) in weak_skills]
-    recent_numbers = set(sorted(completed)[-2:])
-    if progress:
-        recent_numbers.add(progress.current_stage)
-    recent = [stage for stage in introduced if stage.stage_number in recent_numbers and stage not in weak]
-    mastered = [stage for stage in introduced if stage.stage_number in completed and stage not in weak and stage not in recent]
+    pool = (weak * 12) + (recent * 5) + (mastered * 3) or introduced
 
-    weighted_pool = (weak * 12) + (recent * 5) + (mastered * 3)
-    if not weighted_pool:
-        weighted_pool = introduced or stages[:1]
-
-    seed = f"{child.child_id}:{topic}:{','.join(sorted(weak_skills))}:{len(completed)}"
+    seed = f"{child['child_id']}:{subject_id}:{','.join(sorted(weak_skills))}:{len(completed)}"
     rng = random.Random(seed)
-    chosen_stage_numbers: list[int] = []
+
+    chosen: list = []
+    seen_activity_ids: set[str] = set()
     attempts = 0
-    while len(chosen_stage_numbers) < 5 and attempts < 30:
+    while len(chosen) < QUESTIONS_PER_SESSION and attempts < 60:
         attempts += 1
-        stage = rng.choice(weighted_pool)
-        if chosen_stage_numbers and chosen_stage_numbers[-1] == stage.stage_number:
+        topic = rng.choice(pool)
+        candidates = [
+            activity
+            for activity in curriculum_service.get_activities(topic.topic_id)
+            if activity.activity_id not in seen_activity_ids
+            # nothing to practise in a watch-and-listen activity
+            and activity_evaluators.requires_answer(activity.type)
+        ]
+        if not candidates:
             continue
-        if chosen_stage_numbers.count(stage.stage_number) >= 2:
-            continue
-        chosen_stage_numbers.append(stage.stage_number)
-
-    chosen = []
-    seen_activity_ids = set()
-    for stage_number in chosen_stage_numbers:
-        stage = next(item for item in stages if item.stage_number == stage_number)
-        for activity in stage.activities:
-            if activity.activity_id in seen_activity_ids:
-                continue
-            chosen.append(activity)
-            seen_activity_ids.add(activity.activity_id)
-            break
-        if len(chosen) >= 5:
-            break
-
-    if not chosen:
-        chosen = [activity for stage in introduced for activity in stage.activities][:5]
+        # A topic holds several examples of the same skill. Practice takes one
+        # at random rather than always the first, so a child who met "red" in
+        # the adventure meets "blue" here instead of the same question twice.
+        # Still deterministic: the rng is seeded from the child's own state.
+        activity = rng.choice(candidates)
+        chosen.append(activity)
+        seen_activity_ids.add(activity.activity_id)
 
     if weak:
         reason = "weak_skills_60_recent_25_mastered_15"
@@ -141,69 +175,63 @@ def _weighted_practice_activities(child, topic: str, stages) -> tuple[list, str]
         reason = "recent_skills_25_mastered_15"
     else:
         reason = "introduced_skills"
-    return chosen[:5], reason
+    return chosen[:QUESTIONS_PER_SESSION], reason
 
 
 def _pick_incorrect_feedback(attempt_number: int) -> str:
-    """Pick attempt-aware incorrect feedback with variety."""
     if attempt_number <= 1:
         return random.choice(INCORRECT_FEEDBACK_ATTEMPT_1)
-    elif attempt_number == 2:
+    if attempt_number == 2:
         return random.choice(INCORRECT_FEEDBACK_ATTEMPT_2)
-    else:
-        return random.choice(INCORRECT_FEEDBACK_ATTEMPT_3_PLUS)
+    return random.choice(INCORRECT_FEEDBACK_ATTEMPT_3_PLUS)
 
 
 def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
     session = mock_practice_sessions.get(payload.practice_session_id)
     if not session:
         raise app_error("EXPIRED_LEARNING_SESSION", "Let us start practice again.", 404)
-    activity = next((item for item in session["activities"] if item["activity_id"] == payload.activity_id), None)
+    activity = next(
+        (item for item in session["activities"] if item["activity_id"] == payload.activity_id), None
+    )
     if not activity:
         raise app_error("INVALID_ANSWER", "That practice question was not found.", 404)
-    answer_type = activity.get("type", session["topic"])
-    is_correct, resolved = resolved_answers_match(
-        AnswerResolutionContext(
-            transcript=payload.answer,
-            confidence=0.9,
-            answer_type=answer_type,
-            correct_answer=activity["correct_answer"],
-            accepted_answers=[activity["correct_answer"]],
+
+    is_correct, normalized_answer = activity_evaluators.evaluate(
+        activity_evaluators.EvaluationInput(
+            activity_type=activity["type"],
+            correct_answer=activity.get("correct_answer") or "",
             options=activity.get("options", []),
+            answer=payload.answer,
+            accepted_answers=tuple(activity.get("accept") or []),
+            open_ended=bool(activity.get("open_ended")),
         )
     )
-    normalized_answer = resolved.normalized
+
     attempts = session.setdefault("attempts", {})
     attempt_number = 0 if is_correct else attempts.get(payload.activity_id, 0) + 1
     question_changed = not is_correct and attempt_number >= 4
     attempts[payload.activity_id] = 0 if is_correct or question_changed else attempt_number
-
-    # Track streaks
-    if is_correct:
-        session["correct_streak"] = session.get("correct_streak", 0) + 1
-    else:
-        session["correct_streak"] = 0
+    session["correct_streak"] = session.get("correct_streak", 0) + 1 if is_correct else 0
 
     record_attempt(
         child_id=session["child_id"],
         session_id=payload.practice_session_id,
         activity_id=payload.activity_id,
-        topic=session["topic"],
-        skill=activity.get("type", session["topic"]),
+        topic=session["subject_id"],
+        skill=activity["type"],
         child_answer=normalized_answer,
         is_correct=is_correct,
         attempt_number=attempt_number,
     )
 
     if is_correct:
-        streak = session.get("correct_streak", 1)
+        streak = session["correct_streak"]
+        feedback = random.choice(CORRECT_FEEDBACK)
         if streak >= 3:
-            feedback = f"{random.choice(CORRECT_FEEDBACK)} {streak} in a row!"
-        else:
-            feedback = random.choice(CORRECT_FEEDBACK)
+            feedback = f"{feedback} {streak} in a row!"
         hint = None
     elif question_changed:
-        feedback = "Let's try a different question now."
+        feedback = "Let us try a different question now."
         hint = None
     else:
         feedback = _pick_incorrect_feedback(attempt_number)

@@ -38,8 +38,9 @@ export function VoiceRecorder({
         sessionId,
         activityId: activity.activity_id,
         answerType: activity.type,
-        correctAnswer: activity.correct_answer,
-        acceptedAnswers: [activity.correct_answer],
+        // Presentational activities carry no answer key.
+        correctAnswer: activity.correct_answer ?? "",
+        acceptedAnswers: activity.correct_answer ? [activity.correct_answer, ...(activity.accept ?? [])] : [],
         options: activity.options
       });
       onStateChange("transcribing");

@@ -7,6 +7,7 @@
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.learnkids.app",
@@ -25,9 +26,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -43,15 +42,15 @@
         {
           "microphonePermission": "Learn Kids listens when your child answers a question out loud.",
           "speechRecognitionPermission": "Learn Kids turns your child's spoken answer into text so the lesson can respond.",
-          "androidSpeechServicePackages": [
-            "com.google.android.googlequicksearchbox"
-          ]
+          "androidSpeechServicePackages": ["com.google.android.googlequicksearchbox"]
         }
-      ],
-      "expo-asset"
+      ]
     ],
     "extra": {
       "apiBaseUrl": "http://localhost:8008"
     }
   }
 }
+
+
+

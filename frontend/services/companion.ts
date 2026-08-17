@@ -24,8 +24,10 @@ export function startCompanionSession(child: ChildProfile | null, isGuest: boole
       is_guest: isGuest
     })
   }).catch(() => {
+    // Offline greeting only. It names no subject or topic, because curriculum
+    // names live in the manifest and this path has not reached the server.
     const name = child?.name && !isGuest ? `, ${child.name}` : "";
-    const message = `Hello${name}! Welcome to Little Learning. Let us begin with Number Kingdom.`;
+    const message = `Hello${name}! Welcome to Saksham IQ.`;
     return {
       request_id: "local_companion",
       session_id: "local_companion",
@@ -33,13 +35,13 @@ export function startCompanionSession(child: ChildProfile | null, isGuest: boole
       message,
       avatar: { state: "speaking", message, speak: true, animationEffect: "gentle_hint" },
       guidance: { action: "highlight_element", target_id: "continue-adventure", wait_for_child_click: true },
-      next_action: "start_next_level",
+      next_action: "start_next_topic",
       recommendation: {
-        kind: "start_next_level",
-        path_id: "numbers",
-        stage_number: 1,
+        kind: "start_next_topic",
+        subject_id: null,
+        topic_id: null,
         target_id: "continue-adventure",
-        route: "/levels",
+        route: "/adventure",
         label: "Continue Adventure"
       }
     } satisfies CompanionResponse;

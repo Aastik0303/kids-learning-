@@ -15,7 +15,7 @@ import { useChildStore } from "@/store/childStore";
 import type { ChildStackParamList } from "@/navigation/routes";
 
 /**
- * The Little Learning Explorer certificate.
+ * The Saksham IQ Explorer certificate.
  *
  * Whether it is unlocked is entirely the backend's call. This screen
  * renders the award; it never decides eligibility.

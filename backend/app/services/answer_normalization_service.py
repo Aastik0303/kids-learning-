@@ -58,6 +58,7 @@ LETTER_EXAMPLES = {
 }
 LETTER_LIKE_TYPES = {
     "select_letter",
+    "identify_letter",
     "introduce_letter",
     "repeat_letter",
     "recognize_letter",
@@ -231,12 +232,12 @@ def normalize_answer(text: str, answer_type: str | None = None) -> str:
         if numeric:
             return numeric[-1]
 
-    if answer_type in {"select_letter"} or tokens[0] == "letter":
+    if answer_type in {"select_letter", "identify_letter"} or tokens[0] == "letter":
         letters = [token for token in tokens if len(token) == 1 and token.isalpha()]
         if letters:
             return letters[-1]
 
-    if answer_type in {"select_letter", "multiple_choice", "match", "mixed"}:
+    if answer_type in {"select_letter", "identify_letter", "multiple_choice", "match", "mixed"}:
         example_letters = [LETTER_EXAMPLES[token] for token in tokens if token in LETTER_EXAMPLES]
         if example_letters:
             explicit_letters = [token for token in tokens if len(token) == 1 and token.isalpha()]
@@ -267,6 +268,13 @@ def normalize_answer(text: str, answer_type: str | None = None) -> str:
 def answers_match(child_answer: str, correct_answer: str, answer_type: str | None = None) -> bool:
     normalized_child = normalize_answer(child_answer, answer_type)
     normalized_correct = normalize_answer(correct_answer, answer_type)
+    if not normalized_child or not normalized_correct:
+        # Normalization exists for speech, so it strips articles, politeness
+        # words and punctuation. Some authored answers are made entirely of
+        # those — "an apple", "please", "8 > 5" — and normalize to nothing.
+        # Comparing empty to empty would call every option right, so when either
+        # side is emptied the literal answers are compared instead.
+        return child_answer.strip().lower() == correct_answer.strip().lower()
     if normalized_child == normalized_correct:
         return True
     # Fuzzy fallback: if normalized answers are very close (distance <= 1), accept

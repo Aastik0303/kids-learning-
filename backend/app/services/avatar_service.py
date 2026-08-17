@@ -76,7 +76,7 @@ def page_avatar(page: str) -> AvatarPayload:
         ),
         "certificate": AvatarPayload(
             state="celebrating",
-            message="Your certificate is ready! You are a Little Learning Explorer.",
+            message="Your certificate is ready! You are a Saksham IQ Explorer.",
             animationEffect="confetti",
         ),
         "idle": AvatarPayload(

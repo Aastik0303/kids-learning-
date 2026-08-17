@@ -10,7 +10,7 @@ import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { avatarForPage, avatarForPracticeResult } from "@/services/avatar";
 import { activityQuestion, askGuideQuestion, GUIDE_TARGETS, guideAgent, isSafeGuideTarget, progressContext, secondTryEncouragement, visualTargetsForActivity } from "@/services/guide";
 import { answerPractice, startPractice } from "@/services/practice";
-import { getOrCreateGuestChild } from "@/services/session";
+import { getChild } from "@/services/session";
 import type { Activity } from "@/types";
 
 function localQuestionMessage(prompt: string) {
@@ -20,6 +20,10 @@ function localQuestionMessage(prompt: string) {
 export default function PracticeSessionPage({ params }: { params: Promise<{ topic: string }> }) {
   const { topic } = use(params);
   const [sessionId, setSessionId] = useState("");
+  // The subject's own names, from the server. The route param is a subject_id,
+  // so titling the page from it printed "ukg maths Practice" at a child.
+  const [heading, setHeading] = useState("");
+  const [easyLine, setEasyLine] = useState("");
   const [activities, setActivities] = useState<Activity[]>([]);
   const [index, setIndex] = useState(0);
   const [feedback, setFeedback] = useState("");
@@ -38,7 +42,8 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
 
   async function explainQuestion(activity: Activity, currentSessionId: string, updateSpokenMessage = false) {
     const requestId = ++guideRequestRef.current;
-    const child = getOrCreateGuestChild();
+    const child = getChild();
+    if (!child) return;
     setVoiceState("explaining");
     const guide = await guideAgent({
       session_id: currentSessionId,
@@ -48,7 +53,8 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       route: `/practice/${topic}`,
       screen: "practice_session",
       feature: `${topic}_practice`,
-      age_group: child.age_group,
+      class_id: child.class_id,
+      experience_mode: child.experience_mode,
       preferred_language: child.preferred_language,
       question: activityQuestion(activity, { topic, concept: activity.type, attempt: wrongAttempts[activity.activity_id] ?? 0 }),
       progress: progressContext(child, topic, null),
@@ -68,10 +74,16 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
     let active = true;
     setLoading(true);
     setAvatar(avatarForPage("practice"));
-    const child = getOrCreateGuestChild();
+    const child = getChild();
+    if (!child) {
+      setLoading(false);
+      return;
+    }
     startPractice(child.child_id, topic).then((session) => {
       if (!active) return;
       setSessionId(session.practice_session_id);
+      setHeading(session.subject_fun_name ?? session.subject_title);
+      setEasyLine(session.subject_easy_line ?? "");
       setActivities(session.activities);
       setIndex(0);
       setFeedback("");
@@ -152,7 +164,8 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       setVoiceState("correct");
       setAvatar(result.avatar ?? avatarForPracticeResult(result));
       if (index + 1 >= activities.length) {
-        const child = getOrCreateGuestChild();
+        const child = getChild();
+    if (!child) return;
         guideAgent({
           session_id: sessionId,
           child_id: child.child_id,
@@ -161,11 +174,12 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
           route: `/practice/${topic}`,
           screen: "practice_complete",
           feature: `${topic}_practice`,
-          age_group: child.age_group,
+          class_id: child.class_id,
+          experience_mode: child.experience_mode,
           preferred_language: child.preferred_language,
           progress: progressContext(child, topic, null),
           available_actions: ["highlight"],
-          available_targets: [GUIDE_TARGETS.MORE_PRACTICE, GUIDE_TARGETS.OPEN_LEVELS]
+          available_targets: [GUIDE_TARGETS.MORE_PRACTICE, GUIDE_TARGETS.OPEN_SUBJECTS]
         }).then((guide) => {
           setAvatar(guide.avatar);
           setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
@@ -220,7 +234,8 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
     setVoiceState("re_explaining");
     setGuideMessage(localHint);
     setAvatar({ state: "encouraging", message: localHint, animationEffect: "gentle_hint", durationMs: null });
-    const child = getOrCreateGuestChild();
+    const child = getChild();
+    if (!child) return;
     const requestId = ++guideRequestRef.current;
     guideAgent({
       session_id: sessionId,
@@ -230,7 +245,8 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
       route: `/practice/${topic}`,
       screen: "practice_session",
       feature: `${topic}_practice`,
-      age_group: child.age_group,
+      class_id: child.class_id,
+      experience_mode: child.experience_mode,
       preferred_language: child.preferred_language,
       question: activityQuestion(activity, {
         topic,
@@ -269,7 +285,8 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
         <div className="surface-panel flex flex-wrap items-center justify-between gap-3 rounded-[2rem] p-5">
           <div>
             <p className="text-sm font-black uppercase text-sky">Practice</p>
-            <h1 className="text-4xl font-black capitalize text-ink sm:text-5xl">{topic.replace("-", " ")} Practice</h1>
+            <h1 className="text-4xl font-black text-ink sm:text-5xl">{heading || "Practice"}</h1>
+            {easyLine ? <p className="mt-1 font-bold text-ink/70">{easyLine}</p> : null}
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="rounded-full bg-sunshine px-4 py-3 font-black text-ink">Question {Math.min(index + 1, activities.length)} of {activities.length || 1}</span>
@@ -314,7 +331,7 @@ export default function PracticeSessionPage({ params }: { params: Promise<{ topi
               <Link data-guide-id="more-practice" className={`pressable rounded-3xl bg-sky px-5 py-4 text-xl font-black text-white shadow-soft ${highlightId === "more-practice" ? "guide-glow" : ""}`} href="/practice">
                 More Practice
               </Link>
-              <Link data-guide-id="open-levels" className={`pressable rounded-3xl bg-leaf px-5 py-4 text-xl font-black text-white shadow-soft ${highlightId === "open-levels" ? "guide-glow" : ""}`} href="/levels">
+              <Link data-guide-id="open-subjects" className={`pressable rounded-3xl bg-leaf px-5 py-4 text-xl font-black text-white shadow-soft ${highlightId === "open-subjects" ? "guide-glow" : ""}`} href="/adventure">
                 Open Levels
               </Link>
             </div>

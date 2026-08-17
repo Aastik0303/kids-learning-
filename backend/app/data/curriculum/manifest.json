@@ -2,27 +2,45 @@
   "version": "2026-27",
   "source": "CBSE Updated Syllabus 2026-27 (Play Group, Nursery, LKG, UKG)",
   "notes": [
-    "Hindi removed from Nursery per product decision. Play Group and LKG never had Hindi.",
-    "UKG retains its Language (Hindi) subject as published — flag if this should also be removed.",
+    "Hindi is taught in Nursery orally and in UKG with writing. Both were removed by an earlier product decision and restored on request; Play Group and LKG never published a Hindi subject.",
     "Age bands are the product's, not the PDF's: the Play Group PDF states 2.5-3.5 years; this manifest uses 2-3 to make the four bands contiguous.",
-    "This file is the curriculum TAXONOMY only. Activities and questions are authored per topic from these subtopics."
+    "This file is the curriculum TAXONOMY only. Activities and questions are authored per topic from these subtopics.",
+    "`easy_line` and `subtopic_easy` are the child-facing explanation of a topic and of each of its points, in the syllabus's own plain words. `note` stays the editorial note for a grown-up reading this file and is not a card."
   ],
   "experience_modes": {
     "early": {
-      "applies_to": ["playgroup", "nursery"],
+      "applies_to": [
+        "playgroup",
+        "nursery"
+      ],
       "touch_target_px": 96,
-      "max_choices_per_screen": 2,
+      "max_choices_per_screen": 3,
       "text_density": "none",
       "voice": "always",
-      "idle_thresholds_seconds": [12, 25, 40, 60, 80]
+      "idle_thresholds_seconds": [
+        12,
+        25,
+        40,
+        60,
+        80
+      ]
     },
     "standard": {
-      "applies_to": ["lkg", "ukg"],
+      "applies_to": [
+        "lkg",
+        "ukg"
+      ],
       "touch_target_px": 64,
       "max_choices_per_screen": 4,
       "text_density": "short_words",
       "voice": "always",
-      "idle_thresholds_seconds": [8, 18, 30, 45, 60]
+      "idle_thresholds_seconds": [
+        8,
+        18,
+        30,
+        45,
+        60
+      ]
     }
   },
   "classes": [
@@ -35,118 +53,142 @@
       "max_age": 3,
       "experience_mode": "early",
       "sort_order": 1,
-      "pedagogy": "Fully play-based, oral and activity-driven. No formal written examination; assessment is through observation.",
+      "pedagogy": "A fun and interactive early learning program designed to develop language, cognitive, motor, social, emotional, and creative skills through play-based activities.",
       "subjects": [
         {
-          "subject_id": "pg_maths",
-          "title": "Basic Mathematics",
-          "note": "Pre-Number Concepts",
-          "sort_order": 1,
-          "topics": [
-            {
-              "topic_id": "pg_maths_colours",
-              "title": "Colours",
-              "sort_order": 1,
-              "subtopics": [
-                "Red, Yellow, Blue",
-                "Green, Black, White",
-                "Identify colours of objects around us",
-                "Sorting objects by colour"
-              ]
-            },
-            {
-              "topic_id": "pg_maths_shapes",
-              "title": "Shapes",
-              "sort_order": 2,
-              "subtopics": ["Circle", "Square", "Triangle", "Matching same shapes"]
-            },
-            {
-              "topic_id": "pg_maths_numbers_1_5",
-              "title": "Numbers 1 to 5",
-              "sort_order": 3,
-              "subtopics": [
-                "Oral counting 1-5 (rote)",
-                "Number recognition 1-5",
-                "Counting objects up to 5",
-                "Finger counting and number rhymes"
-              ]
-            },
-            {
-              "topic_id": "pg_maths_prenumber",
-              "title": "Pre-Number Concepts",
-              "sort_order": 4,
-              "subtopics": [
-                "Big and Small",
-                "Tall and Short",
-                "Long and Short",
-                "Heavy and Light",
-                "More and Less"
-              ]
-            },
-            {
-              "topic_id": "pg_maths_positions",
-              "title": "Positions",
-              "sort_order": 5,
-              "subtopics": ["In and Out", "Up and Down", "Open and Close", "Front and Back"]
-            },
-            {
-              "topic_id": "pg_maths_matching",
-              "title": "Matching & Sorting",
-              "sort_order": 6,
-              "subtopics": ["Same and Different", "Match the pair", "Sort by colour and size"]
-            }
-          ]
-        },
-        {
           "subject_id": "pg_english",
-          "title": "English",
-          "note": "Oral & Pre-Writing",
-          "sort_order": 2,
+          "title": "English & Language Development",
+          "icon": "🔤",
+          "accent": "leaf",
+          "note": "Develop basic listening, speaking, vocabulary, and alphabet recognition skills.",
+          "sort_order": 1,
           "topics": [
             {
               "topic_id": "pg_eng_strokes",
               "title": "Pre-Writing Strokes",
+              "icon": "✏️",
               "sort_order": 1,
               "subtopics": [
-                "Free scribbling and crayon grip",
-                "Standing line",
-                "Sleeping line",
+                "Crayon grip",
+                "Scribbling",
+                "Standing lines",
+                "Sleeping lines",
                 "Slanting lines",
-                "Curves and circles",
+                "Curves",
                 "Joining dots"
               ]
             },
             {
-              "topic_id": "pg_eng_capitals_a_e",
+              "topic_id": "pg_eng_letters",
               "title": "Capital Letters (A-E)",
+              "icon": "🅰️",
               "sort_order": 2,
               "subtopics": [
-                "Oral identification",
-                "Sound of the letter",
-                "One object related to each letter",
-                "Tracing on sand tray / slate"
+                "Oral identification of A to E",
+                "Sound of each letter",
+                "One object per letter"
               ]
             },
             {
               "topic_id": "pg_eng_listening",
               "title": "Listening & Speaking",
+              "icon": "👂",
               "sort_order": 3,
               "subtopics": [
-                "Greetings - Good Morning, Thank You, Sorry, Please",
-                "Answering own name and age",
-                "Naming familiar objects",
-                "Following simple one-step instructions"
+                "Greetings",
+                "Own name and age",
+                "Naming objects",
+                "One-step instructions"
               ]
             },
             {
               "topic_id": "pg_eng_rhymes",
               "title": "Rhymes & Stories",
+              "icon": "🎵",
               "sort_order": 4,
               "subtopics": [
-                "10-12 simple action rhymes",
-                "Picture story listening",
-                "Animal and bird sounds",
-                "Puppet play and enactment"
+                "Action rhymes",
+                "Picture stories",
+                "Animal sounds",
+                "Bird sounds"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "pg_maths",
+          "title": "Early Mathematics",
+          "icon": "🔢",
+          "accent": "sky",
+          "note": "Introduce children to numbers, counting, shapes, patterns, and basic mathematical concepts.",
+          "sort_order": 2,
+          "topics": [
+            {
+              "topic_id": "pg_maths_colours",
+              "title": "Colours",
+              "icon": "🎨",
+              "sort_order": 1,
+              "subtopics": [
+                "Recognise red, yellow, blue, green, black and white",
+                "Sort by colour"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_shapes",
+              "title": "Shapes",
+              "icon": "🔺",
+              "sort_order": 2,
+              "subtopics": [
+                "Recognise circle, square and triangle",
+                "Match same shapes"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_numbers",
+              "title": "Numbers 1 to 5",
+              "icon": "5️⃣",
+              "sort_order": 3,
+              "subtopics": [
+                "Oral counting 1-5",
+                "Number recognition",
+                "Counting objects",
+                "Finger counting"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_prenumber",
+              "title": "Pre-Number Concepts",
+              "icon": "⚖️",
+              "sort_order": 4,
+              "subtopics": [
+                "Big and small",
+                "Tall and short",
+                "Long and short",
+                "Heavy and light",
+                "More and less"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_positions",
+              "title": "Positions",
+              "icon": "📦",
+              "sort_order": 5,
+              "subtopics": [
+                "In and out",
+                "Up and down",
+                "Open and close",
+                "Front and back"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_matching",
+              "title": "Matching & Sorting",
+              "icon": "🧩",
+              "sort_order": 6,
+              "subtopics": [
+                "Same and different",
+                "Match the pair",
+                "Sort by colour and size"
               ]
             }
           ]
@@ -154,121 +196,189 @@
         {
           "subject_id": "pg_ga",
           "title": "General Awareness",
+          "icon": "🌍",
+          "accent": "berry",
+          "note": "Help children understand themselves and the world around them. The published topics are delivered as short levels of three things each — Colours as three levels, Animals as four, and so on — because a two-year-old meets one thing at a time and a level has to fit in one sitting. Every published point survives as a subtopic of the level that teaches it.",
           "sort_order": 3,
           "topics": [
             {
-              "topic_id": "pg_ga_myself",
-              "title": "About Myself",
+              "topic_id": "pg_ga_colors_1",
+              "title": "Colours: Red, Blue, Yellow",
+              "icon": "🌈",
               "sort_order": 1,
               "subtopics": [
-                "My name",
-                "My body parts - eyes, ears, nose, mouth, hands, legs",
-                "My family members"
+                "Learn Basic Colors",
+                "Learn: Red",
+                "Learn: Blue",
+                "Learn: Yellow"
               ]
             },
             {
-              "topic_id": "pg_ga_school",
-              "title": "My School",
+              "topic_id": "pg_ga_colors_2",
+              "title": "Colours: Green, Orange, Purple",
+              "icon": "🟩",
               "sort_order": 2,
-              "subtopics": ["My teacher and friends", "My classroom", "My school bag and bottle"]
+              "subtopics": [
+                "Learn: Green",
+                "Learn: Orange",
+                "Learn: Purple"
+              ]
             },
             {
-              "topic_id": "pg_ga_things",
-              "title": "Things Around Us",
+              "topic_id": "pg_ga_colors_3",
+              "title": "Colours: Pink, Black, White",
+              "icon": "🌸",
               "sort_order": 3,
               "subtopics": [
-                "Fruits - apple, banana, mango",
-                "Vegetables - potato, tomato, carrot",
-                "Animals - cat, dog, cow",
-                "Birds - crow, parrot"
+                "Learn: Pink",
+                "Learn: Black",
+                "Learn: White"
               ]
             },
             {
-              "topic_id": "pg_ga_transport",
-              "title": "Transport",
+              "topic_id": "pg_ga_animals_1",
+              "title": "Farm Animals: Cow, Dog, Cat",
+              "icon": "🐄",
               "sort_order": 4,
-              "subtopics": ["Car, Bus, Cycle", "Aeroplane, Train, Boat"]
+              "subtopics": [
+                "Farm Animals",
+                "Learn: Cow",
+                "Learn: Dog",
+                "Learn: Cat"
+              ]
             },
             {
-              "topic_id": "pg_ga_habits",
-              "title": "Good Habits",
+              "topic_id": "pg_ga_animals_2",
+              "title": "Farm Animals: Horse, Goat, Sheep",
+              "icon": "🐴",
               "sort_order": 5,
               "subtopics": [
-                "Washing hands",
-                "Brushing teeth",
-                "Using the dustbin",
-                "Saying Thank You and Sorry"
-              ]
-            }
-          ]
-        },
-        {
-          "subject_id": "pg_evs",
-          "title": "Environmental Science",
-          "sort_order": 4,
-          "topics": [
-            {
-              "topic_id": "pg_evs_all",
-              "title": "My World",
-              "sort_order": 1,
-              "subtopics": [
-                "Myself and my body",
-                "My family and my home",
-                "Simple good habits and cleanliness",
-                "Nature walk - trees, flowers, sun, moon, water",
-                "Domestic animals and their sounds",
-                "Day and Night"
-              ]
-            }
-          ]
-        },
-        {
-          "subject_id": "pg_art",
-          "title": "Art, Music & Motor Skills",
-          "sort_order": 5,
-          "topics": [
-            {
-              "topic_id": "pg_art_fine",
-              "title": "Fine Motor Skills",
-              "sort_order": 1,
-              "subtopics": [
-                "Crumpling and tearing paper",
-                "Thumb and finger printing",
-                "Beading and threading",
-                "Clay and dough moulding",
-                "Colouring inside big pictures"
+                "Learn: Horse",
+                "Learn: Goat",
+                "Learn: Sheep"
               ]
             },
             {
-              "topic_id": "pg_art_gross",
-              "title": "Gross Motor Skills",
-              "sort_order": 2,
+              "topic_id": "pg_ga_animals_3",
+              "title": "Wild Animals: Lion, Tiger, Elephant",
+              "icon": "🦁",
+              "sort_order": 6,
               "subtopics": [
-                "Running, jumping, hopping",
-                "Ball throwing and catching",
-                "Balancing on a line",
-                "Free play with slides and swings"
+                "Wild Animals",
+                "Learn: Lion",
+                "Learn: Tiger",
+                "Learn: Elephant"
               ]
             },
             {
-              "topic_id": "pg_art_music",
-              "title": "Music & Movement",
-              "sort_order": 3,
+              "topic_id": "pg_ga_animals_4",
+              "title": "Wild Animals: Monkey, Bear, Giraffe",
+              "icon": "🐵",
+              "sort_order": 7,
               "subtopics": [
-                "Action songs with claps",
-                "Dance and free movement",
-                "Rhythm with simple instruments"
+                "Learn: Monkey",
+                "Learn: Bear",
+                "Learn: Giraffe"
               ]
             },
             {
-              "topic_id": "pg_art_celebrations",
-              "title": "Celebrations",
-              "sort_order": 4,
-              "subtopics": ["Birthdays", "Festivals - Diwali, Holi, Christmas", "Independence Day"]
+              "topic_id": "pg_ga_fruits_1",
+              "title": "Fruits: Apple, Banana, Mango",
+              "icon": "🍎",
+              "sort_order": 8,
+              "subtopics": [
+                "Learn About Fruits",
+                "Learn: Apple",
+                "Learn: Banana",
+                "Learn: Mango"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_fruits_2",
+              "title": "Fruits: Orange, Grapes, Watermelon",
+              "icon": "🍉",
+              "sort_order": 9,
+              "subtopics": [
+                "Learn: Orange",
+                "Learn: Grapes",
+                "Learn: Watermelon"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_vegetables_1",
+              "title": "Vegetables: Potato, Tomato, Carrot",
+              "icon": "🥕",
+              "sort_order": 10,
+              "subtopics": [
+                "Learn About Vegetables",
+                "Learn: Potato",
+                "Learn: Tomato",
+                "Learn: Carrot"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_vegetables_2",
+              "title": "Vegetables: Peas, Onion, Spinach",
+              "icon": "🥬",
+              "sort_order": 11,
+              "subtopics": [
+                "Learn: Peas",
+                "Learn: Onion",
+                "Learn: Spinach"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_transport_1",
+              "title": "Transport: Car, Bus, Train",
+              "icon": "🚗",
+              "sort_order": 12,
+              "subtopics": [
+                "Types of Transport",
+                "Learn: Car",
+                "Learn: Bus",
+                "Learn: Train"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_transport_2",
+              "title": "Transport: Bicycle, Aeroplane, Boat",
+              "icon": "✈️",
+              "sort_order": 13,
+              "subtopics": [
+                "Learn: Bicycle",
+                "Learn: Airplane",
+                "Learn: Boat"
+              ]
+            },
+            {
+              "topic_id": "pg_ga_weather",
+              "title": "Weather",
+              "icon": "☀️",
+              "sort_order": 14,
+              "subtopics": [
+                "Learn About Weather",
+                "Learn: Sunny",
+                "Learn: Rainy",
+                "Learn: Cloudy",
+                "Learn: Windy"
+              ]
             }
           ]
         }
-      ]
+      ],
+      "removed_subjects": [
+        "Motor Skills Development",
+        "Social and Emotional Learning",
+        "Creative Learning",
+        "Basic Life Skills"
+      ],
+      "removed_subject_ids": [
+        "pg_motor",
+        "pg_social",
+        "pg_creative",
+        "pg_life"
+      ],
+      "note": "Play Group teaches English, Early Mathematics and General Awareness only, by product decision. Social and Emotional Learning, Creative Learning and Basic Life Skills are in the published syllabus, so they are recorded under removed_subjects rather than deleted; restoring any of them is a manifest edit alone."
     },
     {
       "class_id": "nursery",
@@ -279,16 +389,20 @@
       "experience_mode": "early",
       "sort_order": 2,
       "pedagogy": "Activity-based with the beginning of guided writing. Assessment is continuous and observation-based.",
-      "removed_subjects": ["Hindi (Oral Introduction)"],
+      "removed_subjects": [],
+      "removed_subject_ids": [],
       "subjects": [
         {
           "subject_id": "nur_maths",
           "title": "Basic Mathematics",
+          "icon": "🔢",
+          "accent": "sky",
           "sort_order": 1,
           "topics": [
             {
               "topic_id": "nur_maths_shapes",
               "title": "Shapes",
+              "icon": "🔷",
               "sort_order": 1,
               "subtopics": [
                 "Circle, Square, Triangle, Rectangle",
@@ -300,6 +414,7 @@
             {
               "topic_id": "nur_maths_colours",
               "title": "Colours",
+              "icon": "🌈",
               "sort_order": 2,
               "subtopics": [
                 "Primary colours - Red, Yellow, Blue",
@@ -308,24 +423,42 @@
               ]
             },
             {
-              "topic_id": "nur_maths_count_5",
-              "title": "Count to 5",
+              "topic_id": "nur_maths_count_123",
+              "title": "Numbers 1 2 3",
+              "icon": "🧮",
               "sort_order": 3,
               "subtopics": [
                 "Learn to count (up to 5)",
+                "Number recognition 1-5"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_count_45",
+              "title": "Numbers 4 and 5",
+              "icon": "🧮",
+              "sort_order": 4,
+              "subtopics": [
                 "Count dots, shapes and objects (up to 5)",
-                "Number recognition 1-5",
                 "Writing numbers 1-5 with tracing"
               ]
             },
             {
-              "topic_id": "nur_maths_count_10",
-              "title": "Count to 10",
-              "sort_order": 4,
+              "topic_id": "nur_maths_count_678",
+              "title": "Numbers 6 7 8",
+              "icon": "🧮",
+              "sort_order": 5,
               "subtopics": [
                 "Oral counting 1-20",
                 "Number recognition 1-10",
-                "Count objects up to 10",
+                "Count objects up to 10"
+              ]
+            },
+            {
+              "topic_id": "nur_maths_count_910",
+              "title": "Numbers 9 and 10",
+              "icon": "🧮",
+              "sort_order": 6,
+              "subtopics": [
                 "Match number with quantity",
                 "Writing numbers 1-10",
                 "Missing numbers (1-10)"
@@ -334,13 +467,19 @@
             {
               "topic_id": "nur_maths_comparing",
               "title": "Comparing",
-              "sort_order": 5,
-              "subtopics": ["More and Fewer", "Compare groups by counting", "Equal groups"]
+              "icon": "⚖️",
+              "sort_order": 7,
+              "subtopics": [
+                "More and Fewer",
+                "Compare groups by counting",
+                "Equal groups"
+              ]
             },
             {
               "topic_id": "nur_maths_positions",
               "title": "Positions",
-              "sort_order": 6,
+              "icon": "📍",
+              "sort_order": 8,
               "subtopics": [
                 "Inside and Outside",
                 "Above and Below",
@@ -352,7 +491,8 @@
             {
               "topic_id": "nur_maths_classify",
               "title": "Classify & Sort",
-              "sort_order": 7,
+              "icon": "🧩",
+              "sort_order": 9,
               "subtopics": [
                 "Same and Different",
                 "Sort by colour",
@@ -364,7 +504,8 @@
             {
               "topic_id": "nur_maths_size",
               "title": "Size & Measurement",
-              "sort_order": 8,
+              "icon": "📏",
+              "sort_order": 10,
               "subtopics": [
                 "Big and Small",
                 "Tall and Short",
@@ -376,19 +517,28 @@
             {
               "topic_id": "nur_maths_readiness",
               "title": "Pre-Number Readiness",
-              "sort_order": 9,
-              "subtopics": ["Number rhymes", "Before and After (1-10)", "Concept of Zero"]
+              "icon": "🧠",
+              "sort_order": 11,
+              "subtopics": [
+                "Number rhymes",
+                "Before and After (1-10)",
+                "Concept of Zero"
+              ]
             }
-          ]
+          ],
+          "note": "Count to 5 and Count to 10 are published as two units. They are delivered as four number levels so that one sitting is one short level: every number is met, counted, said aloud and written before the next one arrives. All ten published subtopics are preserved across the four levels."
         },
         {
           "subject_id": "nur_english",
           "title": "English",
+          "icon": "🔤",
+          "accent": "leaf",
           "sort_order": 2,
           "topics": [
             {
               "topic_id": "nur_eng_strokes",
               "title": "Pre-Writing Strokes",
+              "icon": "✏️",
               "sort_order": 1,
               "subtopics": [
                 "Standing line",
@@ -401,31 +551,140 @@
               ]
             },
             {
-              "topic_id": "nur_eng_capitals",
-              "title": "Capital Letters (A-Z)",
+              "topic_id": "nur_eng_letters_ab",
+              "title": "Letters Aa Bb",
+              "icon": "🔤",
               "sort_order": 2,
               "subtopics": [
-                "Identification",
-                "Tracing and writing",
-                "Sound of each letter",
-                "One object related to each letter",
-                "Missing letters"
+                "Aa — big A, small a, A for apple",
+                "Bb — big B, small b, B for ball"
               ]
             },
             {
-              "topic_id": "nur_eng_smalls",
-              "title": "Small Letters (a-z)",
+              "topic_id": "nur_eng_letters_cd",
+              "title": "Letters Cc Dd",
+              "icon": "🔤",
               "sort_order": 3,
               "subtopics": [
-                "Oral identification",
-                "Introduction to writing (a-j)",
-                "Matching capital with small letters"
+                "Cc — big C, small c, C for cat",
+                "Dd — big D, small d, D for dog"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_ef",
+              "title": "Letters Ee Ff",
+              "icon": "🔤",
+              "sort_order": 4,
+              "subtopics": [
+                "Ee — big E, small e, E for egg",
+                "Ff — big F, small f, F for fish"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_gh",
+              "title": "Letters Gg Hh",
+              "icon": "🔤",
+              "sort_order": 5,
+              "subtopics": [
+                "Gg — big G, small g, G for goat",
+                "Hh — big H, small h, H for hat"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_ij",
+              "title": "Letters Ii Jj",
+              "icon": "🔤",
+              "sort_order": 6,
+              "subtopics": [
+                "Ii — big I, small i, I for ice cream",
+                "Jj — big J, small j, J for jug"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_kl",
+              "title": "Letters Kk Ll",
+              "icon": "🔤",
+              "sort_order": 7,
+              "subtopics": [
+                "Kk — big K, small k, K for kite",
+                "Ll — big L, small l, L for lion"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_mn",
+              "title": "Letters Mm Nn",
+              "icon": "🔤",
+              "sort_order": 8,
+              "subtopics": [
+                "Mm — big M, small m, M for monkey",
+                "Nn — big N, small n, N for nest"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_op",
+              "title": "Letters Oo Pp",
+              "icon": "🔤",
+              "sort_order": 9,
+              "subtopics": [
+                "Oo — big O, small o, O for orange",
+                "Pp — big P, small p, P for parrot"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_qr",
+              "title": "Letters Qq Rr",
+              "icon": "🔤",
+              "sort_order": 10,
+              "subtopics": [
+                "Qq — big Q, small q, Q for queen",
+                "Rr — big R, small r, R for rabbit"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_st",
+              "title": "Letters Ss Tt",
+              "icon": "🔤",
+              "sort_order": 11,
+              "subtopics": [
+                "Ss — big S, small s, S for sun",
+                "Tt — big T, small t, T for tree"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_uv",
+              "title": "Letters Uu Vv",
+              "icon": "🔤",
+              "sort_order": 12,
+              "subtopics": [
+                "Uu — big U, small u, U for umbrella",
+                "Vv — big V, small v, V for van"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_wx",
+              "title": "Letters Ww Xx",
+              "icon": "🔤",
+              "sort_order": 13,
+              "subtopics": [
+                "Ww — big W, small w, W for watch",
+                "Xx — big X, small x, X for xylophone"
+              ]
+            },
+            {
+              "topic_id": "nur_eng_letters_yz",
+              "title": "Letters Yy Zz",
+              "icon": "🔤",
+              "sort_order": 14,
+              "subtopics": [
+                "Yy — big Y, small y, Y for yak",
+                "Zz — big Z, small z, Z for zebra"
               ]
             },
             {
               "topic_id": "nur_eng_phonetics",
               "title": "Phonetics",
-              "sort_order": 4,
+              "icon": "🔊",
+              "sort_order": 15,
               "subtopics": [
                 "Sound of letters (a-z)",
                 "Beginning sound of objects",
@@ -436,7 +695,8 @@
             {
               "topic_id": "nur_eng_listening",
               "title": "Listening & Speaking",
-              "sort_order": 5,
+              "icon": "🗣️",
+              "sort_order": 16,
               "subtopics": [
                 "Greetings and polite words",
                 "Self-introduction - name, age, parents' names",
@@ -447,23 +707,28 @@
             {
               "topic_id": "nur_eng_rhymes",
               "title": "Rhymes & Stories",
-              "sort_order": 6,
+              "icon": "🎵",
+              "sort_order": 17,
               "subtopics": [
                 "15-20 action rhymes",
                 "Storytelling and retelling with pictures",
                 "Enactment, flashcards and worksheets"
               ]
             }
-          ]
+          ],
+          "note": "The published syllabus lists Capital Letters (A-Z) and Small Letters (a-z) as two separate units. They are delivered here as 13 levels of two letters, each teaching the big and the small form of the same letter together — Aa, not A now and a much later — because that is what a three-year-old is being asked to recognise. Every published subtopic survives inside the levels: identification, letter sounds, one object per letter, matching capital with small, and writing (capitals throughout, small letters a-j, as published)."
         },
         {
           "subject_id": "nur_ga",
           "title": "General Awareness",
+          "icon": "🌍",
+          "accent": "berry",
           "sort_order": 3,
           "topics": [
             {
               "topic_id": "nur_ga_myself",
               "title": "About Myself",
+              "icon": "🙋",
               "sort_order": 1,
               "subtopics": [
                 "Myself",
@@ -477,6 +742,7 @@
             {
               "topic_id": "nur_ga_habits",
               "title": "Good Habits & Manners",
+              "icon": "🪥",
               "sort_order": 2,
               "subtopics": [
                 "Cleanliness and hygiene",
@@ -487,24 +753,43 @@
             {
               "topic_id": "nur_ga_safety",
               "title": "Safety",
+              "icon": "🚦",
               "sort_order": 3,
-              "subtopics": ["At home", "On the road", "At the playground"]
+              "subtopics": [
+                "At home",
+                "On the road",
+                "At the playground"
+              ]
             },
             {
               "topic_id": "nur_ga_helpers",
               "title": "People Who Help Us",
+              "icon": "👩‍⚕️",
               "sort_order": 4,
-              "subtopics": ["Doctor", "Teacher", "Policeman", "Postman", "Farmer"]
+              "subtopics": [
+                "Doctor",
+                "Teacher",
+                "Policeman",
+                "Postman",
+                "Farmer"
+              ]
             },
             {
               "topic_id": "nur_ga_transport",
               "title": "Transport",
+              "icon": "🚌",
               "sort_order": 5,
-              "subtopics": ["Road", "Rail", "Air", "Water"]
+              "subtopics": [
+                "Road",
+                "Rail",
+                "Air",
+                "Water"
+              ]
             },
             {
               "topic_id": "nur_ga_animals",
               "title": "Animals",
+              "icon": "🐘",
               "sort_order": 6,
               "subtopics": [
                 "Wild animals",
@@ -517,6 +802,7 @@
             {
               "topic_id": "nur_ga_seasons",
               "title": "Seasons & Festivals",
+              "icon": "🎊",
               "sort_order": 7,
               "subtopics": [
                 "Summer, Winter, Rainy",
@@ -529,20 +815,40 @@
         {
           "subject_id": "nur_evs",
           "title": "Environmental Science",
+          "icon": "🌱",
+          "accent": "leaf",
           "sort_order": 4,
+          "note": "The Nursery EVS syllabus is published as one flat list of seven items. It is grouped here into three topics so each one is a real lesson unit rather than a single oversized topic. All seven published items are preserved as subtopics; 'Good habits and manners' and 'Introduction to traffic rules and safety' are also taught under General Awareness.",
           "topics": [
             {
-              "topic_id": "nur_evs_all",
-              "title": "My Environment",
+              "topic_id": "nur_evs_living",
+              "title": "Living & Non-Living",
+              "icon": "🌿",
               "sort_order": 1,
               "subtopics": [
-                "Good habits and manners",
-                "Parts of the body and sense organs",
                 "Living and non-living things",
+                "Parts of the body and sense organs",
+                "Good habits and manners"
+              ]
+            },
+            {
+              "topic_id": "nur_evs_plants",
+              "title": "Plants Around Us",
+              "icon": "🌻",
+              "sort_order": 2,
+              "subtopics": [
                 "Plants around us - parts of a plant",
-                "Introduction to traffic rules and safety",
-                "Air, water and the sun - why we need them",
                 "Project - collecting leaves, flowers and seeds"
+              ]
+            },
+            {
+              "topic_id": "nur_evs_air_water_sun",
+              "title": "Air, Water and the Sun",
+              "icon": "💧",
+              "sort_order": 3,
+              "subtopics": [
+                "Air, water and the sun - why we need them",
+                "Introduction to traffic rules and safety"
               ]
             }
           ]
@@ -550,11 +856,14 @@
         {
           "subject_id": "nur_art",
           "title": "Art, Music & Motor Skills",
+          "icon": "🎨",
+          "accent": "sun",
           "sort_order": 5,
           "topics": [
             {
               "topic_id": "nur_art_fine",
               "title": "Fine Motor Skills",
+              "icon": "✋",
               "sort_order": 1,
               "subtopics": [
                 "Colouring within outlines",
@@ -567,6 +876,7 @@
             {
               "topic_id": "nur_art_gross",
               "title": "Gross Motor Skills",
+              "icon": "🤸",
               "sort_order": 2,
               "subtopics": [
                 "Running, jumping, hopping and balancing",
@@ -577,12 +887,18 @@
             {
               "topic_id": "nur_art_music",
               "title": "Music & Movement",
+              "icon": "🎵",
               "sort_order": 3,
-              "subtopics": ["Action songs and dance", "Rhythm and clapping patterns", "Group singing"]
+              "subtopics": [
+                "Action songs and dance",
+                "Rhythm and clapping patterns",
+                "Group singing"
+              ]
             },
             {
               "topic_id": "nur_art_showtell",
               "title": "Show & Tell",
+              "icon": "🗣️",
               "sort_order": 4,
               "subtopics": [
                 "Speaking about a favourite object",
@@ -591,8 +907,120 @@
               ]
             }
           ]
+        },
+        {
+          "subject_id": "nur_hindi",
+          "title": "Hindi (Oral Introduction)",
+          "icon": "🪁",
+          "accent": "sun",
+          "language": "hi",
+          "sort_order": 6,
+          "note": "Oral only. The published syllabus says so in as many words — \"Is saal Hindi likhna nahi hai\" — so a Hindi level is meet it, find it, find its picture, say it, and there is no tracing step anywhere in this subject. Everything else follows Nursery English: one letter at a time, two per level, taught before it is asked, each level unlocking the next. The twelve swar are paired as a child hears them (अ आ, इ ई, उ ऊ, ए ऐ, ओ औ, अं अः); ऋ is not taught at this age and the syllabus's own examples stop at ई. Only क to ङ are introduced, as published.",
+          "topics": [
+            {
+              "topic_id": "nur_hindi_swar_a_aa",
+              "title": "स्वर अ आ",
+              "icon": "🪁",
+              "sort_order": 1,
+              "subtopics": [
+                "अ — अ से अनार",
+                "आ — आ से आम"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_swar_i_ii",
+              "title": "स्वर इ ई",
+              "icon": "🪁",
+              "sort_order": 2,
+              "subtopics": [
+                "इ — इ से इमली",
+                "ई — ई से ईख"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_swar_u_uu",
+              "title": "स्वर उ ऊ",
+              "icon": "🪁",
+              "sort_order": 3,
+              "subtopics": [
+                "उ — उ से उल्लू",
+                "ऊ — ऊ से ऊन"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_swar_e_ai",
+              "title": "स्वर ए ऐ",
+              "icon": "🪁",
+              "sort_order": 4,
+              "subtopics": [
+                "ए — ए से एड़ी",
+                "ऐ — ऐ से ऐनक"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_swar_o_au",
+              "title": "स्वर ओ औ",
+              "icon": "🪁",
+              "sort_order": 5,
+              "subtopics": [
+                "ओ — ओ से ओखली",
+                "औ — औ से औरत"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_swar_am_ah",
+              "title": "स्वर अं अः",
+              "icon": "🪁",
+              "sort_order": 6,
+              "subtopics": [
+                "अं — अं से अंगूर",
+                "अः — अः से नमः"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_vyanjan_ka_kha",
+              "title": "व्यंजन क ख",
+              "icon": "🪁",
+              "sort_order": 7,
+              "subtopics": [
+                "क — क से कबूतर",
+                "ख — ख से खरगोश"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_vyanjan_ga_gha",
+              "title": "व्यंजन ग घ",
+              "icon": "🪁",
+              "sort_order": 8,
+              "subtopics": [
+                "ग — ग से गमला",
+                "घ — घ से घड़ी"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_vyanjan_nga",
+              "title": "व्यंजन ङ",
+              "icon": "🪁",
+              "sort_order": 9,
+              "subtopics": [
+                "ङ — ङ से पतंग"
+              ]
+            },
+            {
+              "topic_id": "nur_hindi_maukhik",
+              "title": "मौखिक कार्य",
+              "icon": "🎵",
+              "sort_order": 10,
+              "subtopics": [
+                "Hindi rhymes (कविताएँ)",
+                "Names of fruits, animals and family members in Hindi",
+                "Simple greetings - नमस्ते, धन्यवाद"
+              ]
+            }
+          ]
         }
-      ]
+      ],
+      "note": "Hindi (Oral Introduction) was removed from Nursery by an earlier product decision and restored on request. UKG's Language (Hindi) subject remains removed."
     },
     {
       "class_id": "lkg",
@@ -607,20 +1035,30 @@
         {
           "subject_id": "lkg_maths",
           "title": "Basic Mathematics",
+          "fun_name": "Number Fun 🔢",
+          "icon": "🧮",
+          "accent": "sky",
+          "colour": "#FF6B6B",
           "sort_order": 1,
           "topics": [
             {
               "topic_id": "lkg_maths_shapes",
               "title": "Shapes",
+              "icon": "🔷",
               "sort_order": 1,
               "subtopics": [
                 "Identify Circles, Squares and Triangles",
                 "Identify Squares and Rectangles"
+              ],
+              "subtopic_icons": [
+                "⭕🟦🔺",
+                "🟦▭"
               ]
             },
             {
               "topic_id": "lkg_maths_count_3",
               "title": "Count to 3",
+              "icon": "3️⃣",
               "sort_order": 2,
               "subtopics": [
                 "Learn to Count (up to 3)",
@@ -629,11 +1067,20 @@
                 "Count Objects (up to 3)",
                 "Count on Ten Frames (up to 3)",
                 "Show Numbers on Ten Frames (up to 3)"
+              ],
+              "subtopic_icons": [
+                "🗣️",
+                "⚫",
+                "🔺",
+                "🧸",
+                "🔲",
+                "🖍️"
               ]
             },
             {
               "topic_id": "lkg_maths_count_5",
               "title": "Count to 5",
+              "icon": "🖐️",
               "sort_order": 3,
               "subtopics": [
                 "Learn to Count (up to 5)",
@@ -643,11 +1090,21 @@
                 "Count On Ten Frames (up to 5)",
                 "Show Numbers on Ten Frames (up to 5)",
                 "Represent Numbers (up to 5)"
+              ],
+              "subtopic_icons": [
+                "5️⃣",
+                "⚫",
+                "⭐",
+                "🍎",
+                "🔲",
+                "🖍️",
+                "✍️"
               ]
             },
             {
               "topic_id": "lkg_maths_count_10",
               "title": "Count to 10",
+              "icon": "🔟",
               "sort_order": 4,
               "subtopics": [
                 "Learn to Count (up to 10)",
@@ -657,22 +1114,39 @@
                 "Count On Ten Frames (up to 10)",
                 "Show Numbers on Ten Frames (up to 10)",
                 "Represent Numbers (up to 10)"
+              ],
+              "subtopic_icons": [
+                "🗣️",
+                "⚫",
+                "🔷",
+                "🧸",
+                "🔲",
+                "🖍️",
+                "✍️"
               ]
             },
             {
               "topic_id": "lkg_maths_comparing",
               "title": "Comparing",
+              "icon": "⚖️",
               "sort_order": 5,
               "subtopics": [
                 "Are There Enough?",
                 "Compare Groups (Fewer or More)",
                 "Fewer and More - Compare by Counting",
                 "Compare in a Mixed Group"
+              ],
+              "subtopic_icons": [
+                "🪑",
+                "➕➖",
+                "🔢",
+                "🍎🍏"
               ]
             },
             {
               "topic_id": "lkg_maths_positions",
               "title": "Positions",
+              "icon": "📍",
               "sort_order": 6,
               "subtopics": [
                 "Inside and Outside",
@@ -682,11 +1156,21 @@
                 "Left, Middle and Right",
                 "Top and Bottom",
                 "Top, Middle and Bottom"
+              ],
+              "subtopic_icons": [
+                "📦",
+                "⬆️⬇️",
+                "🧍🧍",
+                "👈👉",
+                "↔️",
+                "🔝",
+                "📚"
               ]
             },
             {
               "topic_id": "lkg_maths_classify",
               "title": "Classify",
+              "icon": "🗂️",
               "sort_order": 7,
               "subtopics": [
                 "Same",
@@ -695,72 +1179,103 @@
                 "Classify Shapes by Colour",
                 "Classify and Sort by Colour",
                 "Classify and Sort by Shape"
+              ],
+              "subtopic_icons": [
+                "👯",
+                "🔍",
+                "⚖️",
+                "🌈",
+                "🧺",
+                "🔺"
               ]
             },
             {
               "topic_id": "lkg_maths_size",
               "title": "Size",
+              "icon": "📏",
               "sort_order": 8,
               "subtopics": [
                 "Long and Short",
                 "Tall and Short",
                 "Light and Heavy",
                 "Wide and Narrow"
+              ],
+              "subtopic_icons": [
+                "🐍✏️",
+                "🦒🐇",
+                "🪶🪨",
+                "🛣️"
               ]
             },
             {
               "topic_id": "lkg_maths_money",
               "title": "Money",
+              "icon": "🪙",
               "sort_order": 9,
-              "subtopics": ["Coin Values", "Count 1-Rupee Coins"]
+              "subtopics": [
+                "Coin Values",
+                "Count 1-Rupee Coins"
+              ],
+              "subtopic_icons": [
+                "💰",
+                "🪙🪙"
+              ]
             }
           ]
         },
         {
           "subject_id": "lkg_english",
           "title": "English",
+          "fun_name": "Letter Land 📖",
+          "icon": "📖",
+          "accent": "leaf",
+          "colour": "#4ECDC4",
           "sort_order": 2,
+          "note": "Reading, listening and speaking. Every writing subtopic moved to Art & Writing, so all drawing lives in one subject; nothing published was dropped.",
           "topics": [
-            {
-              "topic_id": "lkg_eng_strokes",
-              "title": "Pre-Writing Strokes",
-              "sort_order": 1,
-              "subtopics": [
-                "Standing Line",
-                "Sleeping Line",
-                "Left Slanting Line",
-                "Right Slanting Line",
-                "Left Curve",
-                "Right Curve",
-                "Up Curve",
-                "Down Curve"
-              ]
-            },
             {
               "topic_id": "lkg_eng_capitals",
               "title": "Capital Letters (A-Z)",
-              "sort_order": 2,
-              "subtopics": ["Identification", "Writing", "Objects Related to Each Letter"]
+              "icon": "🅰️",
+              "sort_order": 1,
+              "subtopics": [
+                "Identification",
+                "Objects Related to Each Letter"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "🍎"
+              ]
             },
             {
               "topic_id": "lkg_eng_smalls",
               "title": "Small Letters (a-z)",
-              "sort_order": 3,
+              "icon": "🔡",
+              "sort_order": 2,
               "subtopics": [
                 "Identification",
-                "Writing",
                 "Objects Related to Each Letter",
                 "Matching Capital and Small",
                 "Vowels and Consonants",
                 "Phonic Drill",
                 "Vowel Words",
                 "Rhyming Words to Improve Listening Skills"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "🐜",
+                "🔗",
+                "🅰️🅱️",
+                "🔊",
+                "🐈",
+                "🎶"
               ]
             },
             {
               "topic_id": "lkg_eng_phonetics",
               "title": "Phonetics",
-              "sort_order": 4,
+              "icon": "🔊",
+              "sort_order": 3,
               "subtopics": [
                 "Sound of Letters",
                 "Objects Related to Letters",
@@ -772,6 +1287,18 @@
                 "Positions",
                 "Rhyming Words",
                 "Genie Board, Flashcards, Oral Interaction, Written Work, Worksheets, Storytelling and Enactment"
+              ],
+              "subtopic_icons": [
+                "🎧",
+                "🖼️",
+                "🅰️",
+                "📝",
+                "1️⃣",
+                "👉",
+                "🍬🍬",
+                "📍",
+                "🎵",
+                "🎭"
               ]
             }
           ]
@@ -779,11 +1306,16 @@
         {
           "subject_id": "lkg_ga",
           "title": "General Awareness",
+          "fun_name": "My World 🌍",
+          "icon": "🧠",
+          "accent": "berry",
+          "colour": "#A78BFA",
           "sort_order": 3,
           "topics": [
             {
               "topic_id": "lkg_ga_myself",
               "title": "About Myself",
+              "icon": "🪞",
               "sort_order": 1,
               "subtopics": [
                 "Myself",
@@ -792,54 +1324,204 @@
                 "My Birthday",
                 "My Home",
                 "My School"
+              ],
+              "subtopic_icons": [
+                "😊",
+                "🧍",
+                "👨‍👩‍👧‍👦",
+                "🎂",
+                "🏠",
+                "🏫"
               ]
             },
             {
               "topic_id": "lkg_ga_safety",
               "title": "Safety",
+              "icon": "🛡️",
               "sort_order": 2,
-              "subtopics": ["At Home", "On the Road", "At the Playground"]
+              "subtopics": [
+                "At Home",
+                "On the Road",
+                "At the Playground"
+              ],
+              "subtopic_icons": [
+                "🏡",
+                "🚦",
+                "🛝"
+              ]
             },
             {
               "topic_id": "lkg_ga_helpers",
               "title": "People Who Help Us",
+              "icon": "🤝",
               "sort_order": 3,
-              "subtopics": ["Doctor", "Teacher", "Policeman", "Postman", "Carpenter", "Farmer"]
+              "subtopics": [
+                "Doctor",
+                "Teacher",
+                "Policeman",
+                "Postman",
+                "Carpenter",
+                "Farmer"
+              ],
+              "subtopic_icons": [
+                "👩‍⚕️",
+                "👩‍🏫",
+                "👮",
+                "📮",
+                "🪚",
+                "👨‍🌾"
+              ]
             },
             {
               "topic_id": "lkg_ga_transport",
               "title": "Transport",
+              "icon": "🚗",
               "sort_order": 4,
-              "subtopics": ["Road", "Rail", "Air"]
+              "subtopics": [
+                "Road",
+                "Rail",
+                "Air"
+              ],
+              "subtopic_icons": [
+                "🚌",
+                "🚂",
+                "✈️"
+              ]
             },
             {
               "topic_id": "lkg_ga_seasons",
               "title": "Seasons",
+              "icon": "🌦️",
               "sort_order": 5,
-              "subtopics": ["Summer", "Winter", "Rainy"]
+              "subtopics": [
+                "Summer",
+                "Winter",
+                "Rainy"
+              ],
+              "subtopic_icons": [
+                "☀️",
+                "❄️",
+                "🌧️"
+              ]
             },
             {
               "topic_id": "lkg_ga_animals",
               "title": "Animals",
+              "icon": "🐾",
               "sort_order": 6,
-              "subtopics": ["Wild", "Domestic", "Water", "Pet"]
+              "subtopics": [
+                "Wild",
+                "Domestic",
+                "Water",
+                "Pet"
+              ],
+              "subtopic_icons": [
+                "🦁",
+                "🐄",
+                "🐟",
+                "🐶"
+              ]
             }
           ]
         },
         {
           "subject_id": "lkg_evs",
           "title": "Environmental Science",
+          "fun_name": "Nature Explorer 🌿",
+          "icon": "🌱",
+          "accent": "leaf",
+          "colour": "#34D399",
           "sort_order": 4,
+          "note": "Published as one flat list; grouped into topics so each is a real lesson unit. All four published items are preserved as subtopics.",
           "topics": [
             {
-              "topic_id": "lkg_evs_all",
-              "title": "My Environment",
+              "topic_id": "lkg_evs_habits",
+              "title": "Good Habits & Manners",
+              "icon": "😇",
               "sort_order": 1,
               "subtopics": [
-                "Good habits and manners",
-                "Project on collecting a few living and non-living things",
+                "Good habits and manners"
+              ],
+              "subtopic_icons": [
+                "😇"
+              ]
+            },
+            {
+              "topic_id": "lkg_evs_living",
+              "title": "Living & Non-Living",
+              "icon": "🍃",
+              "sort_order": 2,
+              "subtopics": [
+                "Project on collecting a few living and non-living things"
+              ],
+              "subtopic_icons": [
+                "🍃🪨"
+              ]
+            },
+            {
+              "topic_id": "lkg_evs_traffic",
+              "title": "Traffic Rules & Body Parts",
+              "icon": "🚸",
+              "sort_order": 3,
+              "subtopics": [
                 "Introduction to traffic rules and safety",
                 "Parts of the body"
+              ],
+              "subtopic_icons": [
+                "🚸",
+                "🧍"
+              ]
+            }
+          ]
+        },
+        {
+          "subject_id": "lkg_art",
+          "title": "Art & Writing",
+          "fun_name": "Art Corner 🎨",
+          "icon": "🎨",
+          "accent": "sun",
+          "colour": "#FBBF24",
+          "sort_order": 5,
+          "note": "Every drawing step LKG has, in one place: the pre-writing strokes and the letter writing, both moved here from English. Not a published subject — a delivery decision, so a later reader can tell it from an extraction bug.",
+          "topics": [
+            {
+              "topic_id": "lkg_art_strokes",
+              "title": "Pre-Writing Strokes",
+              "icon": "✍️",
+              "sort_order": 1,
+              "subtopics": [
+                "Standing Line",
+                "Sleeping Line",
+                "Left Slanting Line",
+                "Right Slanting Line",
+                "Left Curve",
+                "Right Curve",
+                "Up Curve",
+                "Down Curve"
+              ],
+              "subtopic_icons": [
+                "❕",
+                "➖",
+                "↖️",
+                "↗️",
+                "🌙",
+                "🌛",
+                "🌈",
+                "🥣"
+              ]
+            },
+            {
+              "topic_id": "lkg_art_writing",
+              "title": "Letter Writing",
+              "icon": "✏️",
+              "sort_order": 2,
+              "subtopics": [
+                "Writing Capital Letters (A-Z)",
+                "Writing Small Letters (a-z)"
+              ],
+              "subtopic_icons": [
+                "✏️",
+                "✏️"
               ]
             }
           ]
@@ -850,21 +1532,158 @@
       "class_id": "ukg",
       "code": "UKG",
       "title": "UKG",
-      "subtitle": "Upper Kindergarten / KG2",
+      "subtitle": "Upper Kindergarten / KG-2",
       "min_age": 5,
       "max_age": 6,
       "experience_mode": "standard",
       "sort_order": 4,
+      "pedagogy": "UKG bahut zaroori saal hai — yahan se bachcha Class 1 ke liye taiyaar hota hai. Padhna, likhna, jodna-ghatana aur baat-cheet, sab khel ke saath. Roz ki observation aur chhote worksheets se, koi bada exam nahi.",
+      "removed_subjects": [],
+      "removed_subject_ids": [],
       "subjects": [
+        {
+          "subject_id": "ukg_english",
+          "title": "English Language",
+          "fun_name": "Letter Land 📚",
+          "icon": "📖",
+          "accent": "leaf",
+          "colour": "#4ECDC4",
+          "easy_line": "Ab letters se aage — words aur sentences!",
+          "sort_order": 1,
+          "note": "The syllabus publishes English as one list of sixteen points. It is delivered as five topics so one sitting is one idea; all sixteen points survive as subtopics.",
+          "topics": [
+            {
+              "topic_id": "ukg_eng_letters",
+              "title": "Letters & Sounds",
+              "icon": "🔤",
+              "sort_order": 1,
+              "easy_line": "Har letter pehchano, uski awaaz suno aur uska naam lo",
+              "subtopics": [
+                "Letters (Aa-Zz)",
+                "Identification",
+                "Sound of Letters",
+                "Objects Related to Letters",
+                "Vowels and Consonants"
+              ],
+              "subtopic_icons": [
+                "🔡",
+                "👀",
+                "🔊",
+                "🧸",
+                "🅰️🅱️"
+              ],
+              "subtopic_easy": [
+                "Capital aur small dono — pehchano aur likho",
+                "Dekh kar letter aur word pehchano",
+                "Har letter ki apni sound",
+                "A for Apple, B for Ball, C for Cat",
+                "a e i o u vowels, baaki sab consonants"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_grammar",
+              "title": "Early Grammar",
+              "icon": "📝",
+              "sort_order": 2,
+              "easy_line": "Chhote-chhote niyam jo sentence ko sahi banate hain",
+              "subtopics": [
+                "Article (A/An)",
+                "One-Many",
+                "Positions",
+                "This-That & These-Those",
+                "Making sentences with certain words or structure and use of 'in', 'on' and 'under' in sentences"
+              ],
+              "subtopic_icons": [
+                "1️⃣",
+                "🍬🍬",
+                "📍",
+                "👉",
+                "✍️"
+              ],
+              "subtopic_easy": [
+                "a ball ⚽ par an apple 🍎 — kab kya lagta hai",
+                "Ek cheez aur bahut si cheezein — cat/cats",
+                "in 📦, on 🔝, under ⬇️ — kahan rakha hai",
+                "Paas ki = this/these, door ki = that/those",
+                "Diye gaye shabd se apna sentence banao"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_words",
+              "title": "Words & Rhyming",
+              "icon": "🎵",
+              "sort_order": 3,
+              "easy_line": "Teen letter ke shabd banao aur milti-julti awaaz pakdo",
+              "subtopics": [
+                "Vowel Words",
+                "Rhyming Words"
+              ],
+              "subtopic_icons": [
+                "📝",
+                "🎵"
+              ],
+              "subtopic_easy": [
+                "cat, pen, pin, top, cup jaise 3-letter shabd",
+                "cat–bat–hat, milti-julti awaaz"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_reading",
+              "title": "Reading & Conversation",
+              "icon": "📖",
+              "sort_order": 4,
+              "easy_line": "Ab sirf shabd nahi — poora sentence padho aur bolo",
+              "subtopics": [
+                "Reading words and sentences and having social conversations",
+                "Picture composition",
+                "Revision of the English language basics"
+              ],
+              "subtopic_icons": [
+                "💬",
+                "🖼️",
+                "🔁"
+              ],
+              "subtopic_easy": [
+                "Chhote sentence padhna aur logon se baat karna",
+                "Tasveer dekh kar 3-4 line bolna/likhna",
+                "Saal bhar ki cheezein dohrao"
+              ]
+            },
+            {
+              "topic_id": "ukg_eng_methods",
+              "title": "Activities",
+              "icon": "🎭",
+              "sort_order": 5,
+              "easy_line": "Khel, kahani aur acting se English ki practice",
+              "subtopics": [
+                "Use of Genie Board, Flashcards, Oral Interaction, Written Work, Worksheets, Storytelling and Enactment"
+              ],
+              "subtopic_icons": [
+                "🎭"
+              ],
+              "subtopic_easy": [
+                "Board, cards, baat-cheet, likhai, kahani aur acting se practice"
+              ]
+            }
+          ]
+        },
         {
           "subject_id": "ukg_maths",
           "title": "Mathematics",
-          "sort_order": 1,
+          "fun_name": "Number Fun 🔢",
+          "icon": "🧮",
+          "accent": "sky",
+          "colour": "#FF6B6B",
+          "easy_line": "Ab 200 tak ginti, jod-ghatav, shapes aur colours!",
+          "sort_order": 2,
+          "note": "The published Numbers (1-200) unit is delivered as three topics — counting, add and subtract, and money with time — so one sitting is one idea. All fifteen of its points survive as subtopics.",
           "topics": [
             {
               "topic_id": "ukg_maths_premaths",
               "title": "Pre-Maths Concepts",
+              "icon": "🧠",
               "sort_order": 1,
+              "easy_line": "Ulta-pulta jodi — bada/chhota, upar/neeche!",
               "subtopics": [
                 "Big-Small",
                 "Front-Back",
@@ -877,12 +1696,40 @@
                 "Tall-Short",
                 "Thick-Thin",
                 "Top-Bottom"
+              ],
+              "subtopic_icons": [
+                "🐘🐜",
+                "🙋",
+                "🥛",
+                "🪨🪶",
+                "📦",
+                "➕➖",
+                "👉👈",
+                "🔍",
+                "🦒🐇",
+                "📕📄",
+                "🔝"
+              ],
+              "subtopic_easy": [
+                "Haathi bada, cheenti chhoti",
+                "Aage aur peeche",
+                "Bhara glass aur khaali glass",
+                "Bhaari patthar, halka pankh",
+                "Andar aur bahar",
+                "Zyada aur kam",
+                "Daayan haath aur baayan haath",
+                "Ek jaisi aur alag cheezein",
+                "Uncha giraffe, chhota khargosh",
+                "Moti kitaab, patla kagaz",
+                "Sabse upar aur sabse neeche"
               ]
             },
             {
               "topic_id": "ukg_maths_numbers",
               "title": "Numbers (1-200)",
+              "icon": "🔢",
               "sort_order": 2,
+              "easy_line": "Ab 200 tak! Ginti likho, padho aur ulti bhi karo",
               "subtopics": [
                 "Count and Write, Colour and Match",
                 "Forward and Backward Counting (1-50)",
@@ -890,12 +1737,30 @@
                 "Number Names (1-50)",
                 "Skip Counting 2 & 5",
                 "Writing"
+              ],
+              "subtopic_icons": [
+                "🖍️",
+                "🔁",
+                "↔️",
+                "🔤",
+                "⏭️",
+                "✍️"
+              ],
+              "subtopic_easy": [
+                "Ginno, likho, rang bharo aur jodo",
+                "1→50 aur ulta 50→1",
+                "7 se pehle 6, baad mein 8, beech ka number",
+                "One, two, three... shabdon mein likho",
+                "2, 4, 6, 8... aur 5, 10, 15, 20...",
+                "1 se 200 tak number likhna"
               ]
             },
             {
               "topic_id": "ukg_maths_addsub",
               "title": "Addition & Subtraction",
+              "icon": "➕",
               "sort_order": 3,
+              "easy_line": "Jodna aur ghatana — pehle tasveer se, phir dimaag se",
               "subtopics": [
                 "Picture Addition",
                 "Picture Subtraction",
@@ -904,12 +1769,32 @@
                 "1 digit Subtraction",
                 "Addition and Subtraction Without Objects or Pictures",
                 "Putting Signs like '>', '<' and '='"
+              ],
+              "subtopic_icons": [
+                "🍎➕🍎",
+                "🍎➖",
+                "🧸",
+                "➕",
+                "➖",
+                "🧠",
+                "🐊"
+              ],
+              "subtopic_easy": [
+                "Tasveer dekh kar jodo",
+                "Tasveer se hatakar ghatao",
+                "Toys/beads se jod-ghatav",
+                "2 + 3 = 5 jaise chhote sawaal",
+                "5 − 2 = 3 jaise chhote sawaal",
+                "Bina ungli/tasveer ke dimaag se jod-ghatav",
+                "Bada muh hamesha bade number ki taraf"
               ]
             },
             {
               "topic_id": "ukg_maths_shapes",
               "title": "Shapes",
+              "icon": "🔷",
               "sort_order": 4,
+              "easy_line": "Saat shapes pehchano!",
               "subtopics": [
                 "Circle",
                 "Diamond",
@@ -918,78 +1803,119 @@
                 "Semi-Circle",
                 "Square",
                 "Triangle"
+              ],
+              "subtopic_icons": [
+                "⭕",
+                "🔶",
+                "🥚",
+                "▭",
+                "🌗",
+                "🟦",
+                "🔺"
+              ],
+              "subtopic_easy": [
+                "Gol — jaise roti 🫓",
+                "Patang jaisa 🪁",
+                "Ande jaisa",
+                "Lamba box — jaise darwaza 🚪",
+                "Aadha gol",
+                "Chaaron side barabar",
+                "Teen kone — jaise samosa 🥟"
               ]
             },
             {
               "topic_id": "ukg_maths_colours",
               "title": "Colours",
+              "icon": "🎨",
               "sort_order": 5,
+              "easy_line": "Ab colour ke shades bhi — light aur dark!",
               "subtopics": [
                 "Black, White, Pink (Shades - Light & Dark)",
                 "Orange, Green, Purple (Shades - Light & Dark)",
                 "Red, Yellow, Blue (Shades - Light & Dark)"
+              ],
+              "subtopic_icons": [
+                "⚫⚪🩷",
+                "🟠🟢🟣",
+                "🔴🟡🔵"
+              ],
+              "subtopic_easy": [
+                "Halka pink aur gehra pink",
+                "Halka green aur gehra green",
+                "Teen magic colours ke dono shade"
               ]
             },
             {
               "topic_id": "ukg_maths_money_time",
               "title": "Money & Time",
+              "icon": "🪙",
               "sort_order": 6,
-              "subtopics": ["Money", "Time"]
+              "easy_line": "Sikke ginno aur ghadi mein time padho",
+              "subtopics": [
+                "Money",
+                "Time"
+              ],
+              "subtopic_icons": [
+                "🪙",
+                "🕐"
+              ],
+              "subtopic_easy": [
+                "Note aur sikke pehchano, ginno",
+                "Ghadi mein ghanta padhna, subah-shaam"
+              ]
             }
           ]
         },
         {
-          "subject_id": "ukg_english",
-          "title": "English Language",
-          "sort_order": 2,
+          "subject_id": "ukg_evs",
+          "title": "Environmental Science (EVS)",
+          "fun_name": "Nature Explorer 🌿",
+          "icon": "🌱",
+          "accent": "leaf",
+          "colour": "#34D399",
+          "easy_line": "Apne aas-paas ki duniya dekho aur samjho",
+          "sort_order": 3,
+          "note": "Published as one flat list; grouped into topics so each is a real lesson unit. All five published items are preserved as subtopics.",
           "topics": [
             {
-              "topic_id": "ukg_eng_letters",
-              "title": "Letters (Aa-Zz)",
+              "topic_id": "ukg_evs_pollution",
+              "title": "Pollution & Traffic Rules",
+              "icon": "💨",
               "sort_order": 1,
+              "easy_line": "Saaf hawa, saaf paani aur sadak par safety",
               "subtopics": [
-                "Identification",
-                "Sound of Letters",
-                "Objects Related to Letters",
-                "Vowels and Consonants"
+                "Introduction to air, water, and sound pollution",
+                "Introduction to traffic rules and safety"
+              ],
+              "subtopic_icons": [
+                "💨💧🔊",
+                "🚦"
+              ],
+              "subtopic_easy": [
+                "Gandi hawa, ganda paani aur zyada shor — sab kharab hai",
+                "Laal ruko 🔴, hara chalo 🟢, peela ruk kar dekho 🟡"
               ]
             },
             {
-              "topic_id": "ukg_eng_grammar",
-              "title": "Early Grammar",
+              "topic_id": "ukg_evs_community",
+              "title": "Our Community",
+              "icon": "🏘️",
               "sort_order": 2,
+              "easy_line": "Bahar nikal kar dekho log kaise kaam karte hain",
               "subtopics": [
-                "Article (A/An)",
-                "One-Many",
-                "Positions",
-                "This-That & These-Those",
-                "Use of 'in', 'on' and 'under' in sentences"
-              ]
-            },
-            {
-              "topic_id": "ukg_eng_words",
-              "title": "Words & Rhyming",
-              "sort_order": 3,
-              "subtopics": ["Vowel Words", "Rhyming Words"]
-            },
-            {
-              "topic_id": "ukg_eng_reading",
-              "title": "Reading & Conversation",
-              "sort_order": 4,
-              "subtopics": [
-                "Reading words and sentences",
-                "Having social conversations",
-                "Picture composition",
-                "Making sentences with certain words or structure",
-                "Revision of the English language basics"
-              ]
-            },
-            {
-              "topic_id": "ukg_eng_methods",
-              "title": "Activities",
-              "sort_order": 5,
-              "subtopics": [
-                "Genie Board, Flashcards, Oral Interaction, Written Work, Worksheets, Storytelling and Enactment"
+                "A visit to a police station or post office",
+                "Talking about all types of transport as well as providing a demonstration of vehicles",
+                "Project on collecting a few living and non-living things"
+              ],
+              "subtopic_icons": [
+                "🚓📮",
+                "🚗🚂✈️",
+                "🍃🪨"
+              ],
+              "subtopic_easy": [
+                "Field trip — dekho log kaise kaam karte hain",
+                "Gaadiyon ke baare mein baat aur model dikhana",
+                "Patte-phool (living) aur patthar-chammach (non-living) jama karo"
               ]
             }
           ]
@@ -997,31 +1923,81 @@
         {
           "subject_id": "ukg_ga",
           "title": "General Awareness",
-          "sort_order": 3,
+          "fun_name": "My World 🌍",
+          "icon": "🧠",
+          "accent": "berry",
+          "colour": "#A78BFA",
+          "easy_line": "Main, mera ghar, sawaari aur jaanwar — sab kuch!",
+          "sort_order": 4,
           "topics": [
             {
               "topic_id": "ukg_ga_myself",
               "title": "Myself",
+              "icon": "🪞",
               "sort_order": 1,
+              "easy_line": "Sab kuch mere aur mere ghar ke baare mein!",
               "subtopics": [
                 "Parts of Body",
                 "Sense Organs",
                 "My Home",
+                "Seasons",
                 "My Family",
                 "My School",
-                "Seasons - Summer, Rainy, Winter"
+                "Summer",
+                "Rainy",
+                "Winter"
+              ],
+              "subtopic_icons": [
+                "🧍",
+                "👁️👂👃👅✋",
+                "🏠",
+                "🌦️",
+                "👨‍👩‍👧‍👦",
+                "🏫",
+                "☀️",
+                "🌧️",
+                "❄️"
+              ],
+              "subtopic_easy": [
+                "Sar, haath, pair, pet — sab ke naam",
+                "Aankh dekhti, kaan sunte, naak soonghti",
+                "Mere ghar ke kamre aur cheezein",
+                "Saal ke mausam",
+                "Mummy, papa, bhai, behen, dada, dadi",
+                "Meri class, teacher aur dost",
+                "Garmi — aam, pankha, nimbu paani",
+                "Barish — chhata, raincoat, paani",
+                "Sardi — sweater, topi, dhoop"
               ]
             },
             {
               "topic_id": "ukg_ga_transport",
               "title": "Transport",
+              "icon": "🚗",
               "sort_order": 2,
-              "subtopics": ["Land", "Water", "Air"]
+              "easy_line": "Zameen, paani aur aasman ki sawaari!",
+              "subtopics": [
+                "Land",
+                "Water",
+                "Air"
+              ],
+              "subtopic_icons": [
+                "🚌",
+                "⛵",
+                "✈️"
+              ],
+              "subtopic_easy": [
+                "Bus, car, cycle, train — sadak/patri par",
+                "Naav, ship — paani par",
+                "Hawai jahaz, helicopter — aasman mein"
+              ]
             },
             {
               "topic_id": "ukg_ga_animals",
               "title": "Animals",
+              "icon": "🐾",
               "sort_order": 3,
+              "easy_line": "Jaanwar, unki awaaz aur unke bachche!",
               "subtopics": [
                 "Wild Animals",
                 "Domestic Animals",
@@ -1030,25 +2006,24 @@
                 "Water Animals",
                 "Animals and Their Sounds",
                 "Animals and Their Young Ones"
-              ]
-            }
-          ]
-        },
-        {
-          "subject_id": "ukg_evs",
-          "title": "Environmental Science",
-          "sort_order": 4,
-          "topics": [
-            {
-              "topic_id": "ukg_evs_all",
-              "title": "My Environment",
-              "sort_order": 1,
-              "subtopics": [
-                "A visit to a police station or post office",
-                "Introduction to air, water, and sound pollution",
-                "Introduction to traffic rules and safety",
-                "Project on collecting a few living and non-living things",
-                "All types of transport and demonstration of vehicles"
+              ],
+              "subtopic_icons": [
+                "🦁",
+                "🐄",
+                "🐶",
+                "🐔",
+                "🐟",
+                "🔊",
+                "🐣"
+              ],
+              "subtopic_easy": [
+                "Sher, baagh, haathi — jungle mein",
+                "Gaay, bakri, ghoda — ghar-khet mein",
+                "Kutta, billi, khargosh — ghar mein paalte hain",
+                "Murgi, bhains, bail — khet ke jaanwar",
+                "Machhli, mendak, kachhua — paani mein",
+                "Kutta bhaunkta 🐕, gaay rambhaati 🐄, sher dahaadta 🦁",
+                "Gaay ka bachcha = calf, kutte ka = puppy 🐶"
               ]
             }
           ]
@@ -1056,30 +2031,70 @@
         {
           "subject_id": "ukg_language",
           "title": "Language (Hindi)",
+          "fun_name": "हिंदी की मस्ती 🪁",
+          "icon": "🇮🇳",
+          "accent": "sun",
+          "colour": "#FFA62B",
+          "language": "hi",
+          "easy_line": "Swar, vyanjan aur matra — teeno seekhenge! Ab likhna bhi shuru ✏️",
           "sort_order": 5,
-          "retained_note": "Published UKG syllabus includes a Language subject. Removal was requested for Nursery and Play Group only. Confirm whether UKG should also drop it.",
+          "note": "The six published points are delivered as three topics: swar, vyanjan, and the four matra points together, so one sitting is one idea. Every published point survives as a subtopic.",
           "topics": [
             {
               "topic_id": "ukg_lang_swar",
               "title": "स्वर (अ - अः)",
+              "icon": "🅰️",
               "sort_order": 1,
-              "subtopics": ["Identification of vowels", "Sound of each vowel"]
+              "easy_line": "Saare swar — अ, आ, इ, ई, उ, ऊ... अः tak",
+              "subtopics": [
+                "स्वर (अ – अः)"
+              ],
+              "subtopic_icons": [
+                "🅰️"
+              ],
+              "subtopic_easy": [
+                "Saare swar — अ, आ, इ, ई, उ, ऊ... अः tak"
+              ]
             },
             {
               "topic_id": "ukg_lang_vyanjan",
               "title": "व्यंजन (क - ज्ञ)",
+              "icon": "🔡",
               "sort_order": 2,
-              "subtopics": ["Identification of consonants", "Related pictures and words"]
+              "easy_line": "क se ज्ञ tak poore vyanjan",
+              "subtopics": [
+                "व्यंजन (क – ज्ञ)"
+              ],
+              "subtopic_icons": [
+                "🔡"
+              ],
+              "subtopic_easy": [
+                "क se ज्ञ tak poore vyanjan"
+              ]
             },
             {
               "topic_id": "ukg_lang_matra",
               "title": "मात्राओं का ज्ञान",
+              "icon": "🧠",
               "sort_order": 3,
+              "easy_line": "Vyanjan par matra lagao aur naya shabd banao — क + अ = क, क + आ = का",
               "subtopics": [
-                "मात्राओं का ज्ञान (अ - अः)",
-                "व्यंजन (क-ज्ञ) पर मात्राएँ लगाना",
-                "एक मात्रा हर व्यंजन पर",
-                "दो मात्रा (अ, आ)"
+                "मात्राओं का ज्ञान (अ – अः)",
+                "व्यंजन (क–ज्ञ) मात्राएँ लगाना",
+                "एक मात्रा हर एक व्यंजन पर लिखकर सिखाया जाता है",
+                "दो मात्रा (अ, आ) दोनों एक साथ लिखकर सिखाया जाता है"
+              ],
+              "subtopic_icons": [
+                "🧠",
+                "🔗",
+                "✏️",
+                "📝"
+              ],
+              "subtopic_easy": [
+                "Har matra ka nishaan aur uski awaaz",
+                "Vyanjan par matra lagana seekho",
+                "Ek-ek matra har vyanjan par lagakar likhna",
+                "अ aur आ ki matra saath mein lagana"
               ]
             }
           ]
@@ -1087,29 +2102,102 @@
         {
           "subject_id": "ukg_rhymes",
           "title": "Rhymes",
+          "fun_name": "Rhyme Time 🎶",
+          "icon": "🎵",
+          "accent": "berry",
+          "easy_line": "Gyarah pyaare gaane — gao, actions karo aur yaad rakho",
           "sort_order": 6,
+          "note": "The syllabus lists its eleven rhymes outside the five subjects. They are delivered as a subject of their own so a child can actually sing them, and as four short levels rather than one topic of eleven: a lesson plays a whole level, so every recall question follows the rhyme that was just sung.",
           "topics": [
             {
-              "topic_id": "ukg_rhymes_all",
-              "title": "UKG Rhymes",
+              "topic_id": "ukg_rhymes_counting",
+              "title": "Counting Rhymes",
+              "icon": "🔢",
               "sort_order": 1,
+              "easy_line": "Gaate-gaate ginti — 1 se 10 tak aur wapas",
               "subtopics": [
                 "Rabbits, Rabbits (1, 2, 3)",
-                "All About Me",
-                "Thank You God",
                 "The Peapod",
-                "Little Me",
-                "The Cherry Tree",
-                "My Balloon",
-                "The Clown",
-                "This Is the Sun",
-                "Colours of the Rainbow",
                 "Indian Song"
+              ],
+              "subtopic_icons": [
+                "🐰",
+                "🫛",
+                "🔟"
+              ],
+              "subtopic_easy": [
+                "Counting animals 1-10",
+                "Counting and growing",
+                "Forward and backward counting"
+              ]
+            },
+            {
+              "topic_id": "ukg_rhymes_me",
+              "title": "Rhymes About Me",
+              "icon": "🙋",
+              "sort_order": 2,
+              "easy_line": "Apne body parts par haath rakho aur gao",
+              "subtopics": [
+                "All About Me",
+                "Little Me"
+              ],
+              "subtopic_icons": [
+                "🙋",
+                "🖐️"
+              ],
+              "subtopic_easy": [
+                "Body parts with actions",
+                "Fingers, toes and body"
+              ]
+            },
+            {
+              "topic_id": "ukg_rhymes_nature",
+              "title": "Nature Rhymes",
+              "icon": "🌱",
+              "sort_order": 3,
+              "easy_line": "Sooraj, ped aur beej ke gaane",
+              "subtopics": [
+                "The Cherry Tree",
+                "This Is the Sun",
+                "Thank You God"
+              ],
+              "subtopic_icons": [
+                "🍒",
+                "☀️",
+                "🙏"
+              ],
+              "subtopic_easy": [
+                "Seed to tree",
+                "Nature around us",
+                "Being thankful"
+              ]
+            },
+            {
+              "topic_id": "ukg_rhymes_fun",
+              "title": "Colour & Fun Rhymes",
+              "icon": "🌈",
+              "sort_order": 4,
+              "easy_line": "Rangon aur hansi ke gaane",
+              "subtopics": [
+                "Colours of the Rainbow",
+                "My Balloon",
+                "The Clown"
+              ],
+              "subtopic_icons": [
+                "🌈",
+                "🎈",
+                "🤡"
+              ],
+              "subtopic_easy": [
+                "Colours and counting",
+                "Colours and fun",
+                "Laughing and fun"
               ]
             }
           ]
         }
-      ]
+      ],
+      "note": "Language (Hindi) was removed from UKG by an earlier product decision and restored on request, so the published five subjects are all here. Rhymes is the sixth, published alongside them rather than inside one."
     }
   ]
 }

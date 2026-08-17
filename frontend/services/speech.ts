@@ -109,6 +109,18 @@ export function stopSpeech() {
   finish?.();
 }
 
+/**
+ * The language to read a line in, from the line itself.
+ *
+ * Nursery Hindi is an oral subject — a lesson the child cannot hear is no
+ * lesson at all — and a Devanagari sentence handed to an English voice is
+ * either silent or gibberish. The text carries its own answer, so nothing has
+ * to be threaded through every caller.
+ */
+function speechLanguage(text: string): string {
+  return /[ऀ-ॿ]/.test(text) ? "hi-IN" : "en-US";
+}
+
 function speakWithBrowser(text: string) {
   return new Promise<void>((resolve) => {
     if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
@@ -116,6 +128,14 @@ function speakWithBrowser(text: string) {
       return;
     }
     const utterance = new SpeechSynthesisUtterance(text);
+    const lang = speechLanguage(text);
+    utterance.lang = lang;
+    // A matching installed voice, when there is one. Without this some browsers
+    // keep the default English voice even after `lang` is set.
+    const voice = window.speechSynthesis
+      .getVoices()
+      .find((candidate) => candidate.lang?.replace("_", "-").toLowerCase().startsWith(lang.slice(0, 2)));
+    if (voice) utterance.voice = voice;
     utterance.rate = 0.9;
     utterance.pitch = 1.12;
     utterance.volume = 1;

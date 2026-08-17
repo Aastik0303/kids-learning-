@@ -10,44 +10,38 @@ from app.config import get_settings
 logger = logging.getLogger(__name__)
 
 CREATE_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS learning_memories (
+CREATE TABLE IF NOT EXISTS topic_memories (
     id UUID PRIMARY KEY,
     child_id TEXT NOT NULL,
-    path_id TEXT NOT NULL,
-    stage_id TEXT NOT NULL,
-    stage_number INTEGER NOT NULL CHECK (stage_number > 0),
+    subject_id TEXT NOT NULL,
+    topic_id TEXT NOT NULL,
     title TEXT NOT NULL,
-    objective TEXT NOT NULL,
     score INTEGER NOT NULL CHECK (score BETWEEN 0 AND 100),
     completed_at TIMESTAMPTZ NOT NULL,
-    UNIQUE (child_id, stage_id)
+    UNIQUE (child_id, topic_id)
 )
 """
 
 CREATE_INDEX_SQL = """
-CREATE INDEX IF NOT EXISTS learning_memories_child_completed_idx
-ON learning_memories (child_id, completed_at DESC)
+CREATE INDEX IF NOT EXISTS topic_memories_child_completed_idx
+ON topic_memories (child_id, completed_at DESC)
 """
 
 UPSERT_SQL = """
-INSERT INTO learning_memories (
-    id, child_id, path_id, stage_id, stage_number,
-    title, objective, score, completed_at
+INSERT INTO topic_memories (
+    id, child_id, subject_id, topic_id, title, score, completed_at
 )
-VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (child_id, stage_id) DO UPDATE SET
-    path_id = EXCLUDED.path_id,
-    stage_number = EXCLUDED.stage_number,
+VALUES (%s, %s, %s, %s, %s, %s, %s)
+ON CONFLICT (child_id, topic_id) DO UPDATE SET
+    subject_id = EXCLUDED.subject_id,
     title = EXCLUDED.title,
-    objective = EXCLUDED.objective,
     score = EXCLUDED.score,
     completed_at = EXCLUDED.completed_at
 """
 
 LATEST_SQL = """
-SELECT child_id, path_id, stage_id, stage_number,
-       title, objective, score, completed_at
-FROM learning_memories
+SELECT child_id, subject_id, topic_id, title, score, completed_at
+FROM topic_memories
 WHERE child_id = %s
 ORDER BY completed_at DESC
 LIMIT 1
@@ -57,11 +51,9 @@ LIMIT 1
 @dataclass(frozen=True)
 class LearningMemory:
     child_id: str
-    path_id: str
-    stage_id: str
-    stage_number: int
+    subject_id: str
+    topic_id: str
     title: str
-    objective: str
     score: int
     completed_at: datetime
 
@@ -113,20 +105,16 @@ def initialize_learning_memory_store() -> bool:
 def record_completed_lesson(
     *,
     child_id: str,
-    path_id: str,
-    stage_id: str,
-    stage_number: int,
+    subject_id: str,
+    topic_id: str,
     title: str,
-    objective: str,
     score: int,
 ) -> LearningMemory:
     memory = LearningMemory(
         child_id=child_id,
-        path_id=path_id,
-        stage_id=stage_id,
-        stage_number=stage_number,
+        subject_id=subject_id,
+        topic_id=topic_id,
         title=title,
-        objective=objective,
         score=score,
         completed_at=datetime.now(timezone.utc),
     )
@@ -142,11 +130,9 @@ def record_completed_lesson(
                 (
                     uuid4(),
                     memory.child_id,
-                    memory.path_id,
-                    memory.stage_id,
-                    memory.stage_number,
+                    memory.subject_id,
+                    memory.topic_id,
                     memory.title,
-                    memory.objective,
                     memory.score,
                     memory.completed_at,
                 ),
@@ -164,13 +150,11 @@ def get_latest_learning_memory(child_id: str) -> LearningMemory | None:
             if row:
                 memory = LearningMemory(
                     child_id=row[0],
-                    path_id=row[1],
-                    stage_id=row[2],
-                    stage_number=row[3],
-                    title=row[4],
-                    objective=row[5],
-                    score=row[6],
-                    completed_at=row[7],
+                    subject_id=row[1],
+                    topic_id=row[2],
+                    title=row[3],
+                    score=row[4],
+                    completed_at=row[5],
                 )
                 _session_fallback[child_id] = memory
                 return memory

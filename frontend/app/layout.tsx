@@ -3,8 +3,8 @@ import { Providers } from "./providers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI Nursery Learning",
-  description: "Prototype nursery learning platform"
+  title: "Saksham IQ",
+  description: "Saksham IQ — prototype nursery learning platform"
 };
 
 export const viewport: Viewport = {

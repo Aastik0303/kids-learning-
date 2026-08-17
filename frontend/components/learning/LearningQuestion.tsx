@@ -8,30 +8,8 @@ import { VoiceFallbackOptions } from "@/components/voice/VoiceFallbackOptions";
 import { VoiceRecorder } from "@/components/voice/VoiceRecorder";
 import { VoiceStateIndicator, type VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
 import { VoiceTranscriptPreview } from "@/components/voice/VoiceTranscriptPreview";
+import { VisualTile } from "@/components/shared/VisualTile";
 import type { Activity } from "@/types";
-
-const shapeClass: Record<string, string> = {
-  circle: "rounded-full bg-berry",
-  square: "rounded-xl bg-sky",
-  triangle: "triangle",
-  red: "rounded-full bg-berry",
-  blue: "rounded-full bg-sky",
-  yellow: "rounded-full bg-sunshine",
-  green: "rounded-full bg-leaf"
-};
-
-const visualEmoji: Record<string, string> = {
-  apple: "apple",
-  star: "star",
-  "one star": "star",
-  block: "block",
-  circle: "circle",
-  square: "square",
-  triangle: "triangle",
-  "red circle": "red circle",
-  "blue square": "blue square",
-  "yellow triangle": "yellow triangle"
-};
 
 function VisualItem({
   item,
@@ -46,24 +24,15 @@ function VisualItem({
   visualAction?: VisualGuideAction;
   showCountLabel?: boolean;
 }) {
-  const normalized = item.toLowerCase();
-  const label = visualEmoji[normalized] ?? null;
-  const visualClass = visualGuideClass(visualAction, visualId);
-  const countLabel = showCountLabel ? index + 1 : undefined;
-  if (label) {
-    return (
-      <span data-visual-id={visualId} data-count-label={countLabel} className={`grid h-20 w-20 place-items-center rounded-3xl bg-white px-2 text-center text-sm font-black capitalize text-ink shadow-soft ${visualClass}`} aria-label={item}>
-        {label}
-      </span>
-    );
-  }
-  const simple = normalized.split(" ").at(-1) ?? normalized;
-  if (shapeClass[simple]) {
-    return <span data-visual-id={visualId} data-count-label={countLabel} className={`grid h-20 w-20 place-items-center text-xs font-black text-white shadow-soft ${shapeClass[simple]} ${visualClass}`}>{item.includes(" ") ? item.split(" ")[0] : ""}</span>;
-  }
-  return <span data-visual-id={visualId} data-count-label={countLabel} className={`grid min-h-20 min-w-20 place-items-center rounded-3xl bg-white px-5 text-base font-black shadow-soft ${visualClass}`}>{item}</span>;
+  return (
+    <VisualTile
+      item={item}
+      visualId={visualId}
+      countLabel={showCountLabel ? index + 1 : undefined}
+      highlightClass={visualGuideClass(visualAction, visualId)}
+    />
+  );
 }
-
 export function LearningQuestion({
   activity,
   sessionId,
@@ -98,7 +67,7 @@ export function LearningQuestion({
   const [speechError, setSpeechError] = useState("");
   const [speechFailures, setSpeechFailures] = useState(0);
   const [showFallback, setShowFallback] = useState(false);
-  const showToddlerStyleChoices = activity.difficulty === "very_easy" || /^(introduce|repeat|recognize|recognition)/.test(activity.type);
+  const showIconOnlyChoices = activity.difficulty === "very_easy" || /^(introduce|repeat|recognize|recognition)/.test(activity.type);
   const showCountLabels = countGuideEnabled || showFallback;
 
   useEffect(() => {
@@ -196,7 +165,7 @@ export function LearningQuestion({
         <VoiceTranscriptPreview transcript={transcript} />
         <SpeechErrorMessage message={speechError} />
       </div>
-      {visualAnswerFallback && (showOptionsWithMicrophone || showFallback || countGuideEnabled || showToddlerStyleChoices) ? (
+      {visualAnswerFallback && (showOptionsWithMicrophone || showFallback || countGuideEnabled || showIconOnlyChoices) ? (
         <div className="activity-answers grid gap-3 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-4">
           <p className="text-center text-sm font-black uppercase text-sky">Choose or say your answer</p>
           <VoiceFallbackOptions options={activity.options} disabled={disabled} onAnswer={onAnswer} />

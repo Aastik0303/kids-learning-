@@ -83,6 +83,27 @@ def _semantic_answer(context: AnswerResolutionContext, raw: str, candidates: lis
 
 def resolve_answer(context: AnswerResolutionContext) -> AnswerResolutionResult:
     raw = context.transcript.strip()
+
+    # A tapped answer arrives as the option's own text, so it needs none of the
+    # speech handling below — and must not be put through it. An option of "an",
+    # "please" or ">" normalizes to nothing, which used to end this function as
+    # "empty" and score a correct tap wrong every single time. An exact match
+    # against what was offered settles the answer before any of that.
+    for candidate in _candidate_pool(context):
+        if raw.lower() == candidate.lower():
+            # Still report the normalized form where there is one, so a spoken
+            # "A" resolves to "a" as it always has. The literal is the fallback
+            # only for answers normalization cannot represent.
+            resolved = normalize_answer(candidate, context.answer_type) or candidate
+            return AnswerResolutionResult(
+                raw_transcript=raw,
+                normalized=resolved,
+                resolved_answer=resolved,
+                resolution_confidence=round(min(max(context.confidence, 0.99), 1.0), 2),
+                matched_candidate=candidate,
+                input_kind="answer",
+            )
+
     normalized = normalize_answer(raw, context.answer_type)
     if not raw or not normalized:
         return AnswerResolutionResult(

@@ -1,43 +1,69 @@
 import { api } from "@/services/api";
-import { makeGuestChild, seedFinalDemo } from "@/data/prototype";
 import type { ChildProfile } from "@/types";
-import { getChild, saveChild } from "./session";
+import { saveChild } from "./session";
 
-export function createChild(session_token: string, name: string, age_group: string, preferred_language: string, age?: number | null) {
+/**
+ * Birth month is collected once at onboarding. The class is derived on the
+ * server, so nothing here decides which curriculum a child sees.
+ */
+export function createChild(
+  session_token: string,
+  name: string,
+  birth_year: number,
+  birth_month: number,
+  preferred_language: string
+) {
   return api<ChildProfile>("/children", {
     method: "POST",
-    body: JSON.stringify({ session_token, name, age_group, age, preferred_language })
-  }).catch(() => {
-    const child = { ...makeGuestChild(), child_id: `local-child-${Date.now()}`, user_id: "local-user", name, age_group, age, learning_mode: age !== null && age !== undefined && age < 3 ? "toddler" as const : "standard" as const, preferred_language };
+    body: JSON.stringify({ session_token, name, birth_year, birth_month, preferred_language })
+  }).then((child) => {
     saveChild(child);
     return child;
   });
 }
 
-export function getProgress(childId: string) {
-  return api<{ child: ChildProfile }>(`/progress/${childId}`).catch(() => ({ child: getChild() ?? makeGuestChild() }));
+/**
+ * The children belonging to the signed-in parent.
+ *
+ * Nothing is stored client-side across a login: the session only holds a token,
+ * so the child has to be fetched back from the server before any screen can
+ * show a class, subjects or progress.
+ */
+export function listChildren(session_token: string) {
+  return api<ChildProfile[]>("/children", {
+    headers: { "X-Demo-Session": session_token }
+  });
 }
 
-export function updateChildProfile(session_token: string | null, child: ChildProfile, updates: { age?: number; age_group?: string; preferred_language?: string; name?: string }) {
-  const learning_mode = updates.age !== undefined ? (updates.age < 3 ? "toddler" as const : "standard" as const) : child.learning_mode;
-  const localChild = { ...child, ...updates, learning_mode };
-  if (!session_token || child.child_id === "guest_child" || child.child_id.startsWith("local-child")) {
-    saveChild(localChild);
-    return Promise.resolve(localChild);
-  }
+/** Load the parent's first child into the session. Returns null when there is none yet. */
+export async function loadActiveChild(session_token: string): Promise<ChildProfile | null> {
+  const children = await listChildren(session_token);
+  const child = children[0] ?? null;
+  if (child) saveChild(child);
+  return child;
+}
+
+export function getProgress(childId: string) {
+  return api<{ child: ChildProfile }>(`/progress/${childId}`);
+}
+
+export function updateChildProfile(
+  session_token: string,
+  child: ChildProfile,
+  updates: { name?: string; birth_year?: number; birth_month?: number; preferred_language?: string }
+) {
   return api<ChildProfile>(`/children/${child.child_id}`, {
     method: "PATCH",
     body: JSON.stringify({ session_token, ...updates })
-  }).catch(() => {
-    saveChild(localChild);
-    return localChild;
+  }).then((updated) => {
+    saveChild(updated);
+    return updated;
   });
 }
 
 export function seedChild(childId: string) {
-  return api<ChildProfile>(`/dev/seed/${childId}`, { method: "POST" }).catch(() => {
-    const seeded = seedFinalDemo(getChild() ?? makeGuestChild());
-    saveChild(seeded);
-    return seeded;
+  return api<ChildProfile>(`/dev/seed/${childId}`, { method: "POST" }).then((child) => {
+    saveChild(child);
+    return child;
   });
 }

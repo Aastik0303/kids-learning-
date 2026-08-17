@@ -3,14 +3,15 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/shared/AppShell";
 import { getProgress, seedChild } from "@/services/child";
-import { getOrCreateGuestChild, saveChild } from "@/services/session";
+import { getChild, saveChild } from "@/services/session";
 import type { ChildProfile } from "@/types";
 
 export default function ParentProgressPage() {
   const [child, setChild] = useState<ChildProfile | null>(null);
 
   async function refresh() {
-    const stored = getOrCreateGuestChild();
+    const stored = getChild();
+    if (!stored) return;
     const response = await getProgress(stored.child_id);
     saveChild(response.child);
     setChild(response.child);
@@ -36,11 +37,11 @@ export default function ParentProgressPage() {
         </div>
         <div className="grid gap-4">
           {child
-            ? Object.entries(child.path_progress).map(([path, progress]) => (
-                <div key={path} className="rounded-[2rem] bg-white p-5 shadow-soft">
-                  <h2 className="text-2xl font-black capitalize">{path.replace("_", " ")}</h2>
-                  <p className="font-bold">Completed stages: {progress.completed_stages.join(", ") || "None yet"}</p>
-                  <p className="font-bold">Unlocked stages: {progress.unlocked_stages.join(", ")}</p>
+            ? Object.entries(child.subject_progress).map(([subjectId, progress]) => (
+                <div key={subjectId} className="rounded-[2rem] bg-white p-5 shadow-soft">
+                  <h2 className="text-2xl font-black">{subjectId}</h2>
+                  <p className="font-bold">Completed topics: {progress.completed_topics.join(", ") || "None yet"}</p>
+                  <p className="font-bold">Unlocked topics: {progress.unlocked_topics.join(", ")}</p>
                 </div>
               ))
             : null}

@@ -67,12 +67,12 @@ const config: Config = {
       minWidth: {
         "touch-parent": "var(--touch-parent)",
         "touch-child": "var(--touch-child)",
-        "touch-toddler": "var(--touch-toddler)"
+        "touch-early": "var(--touch-early)"
       },
       minHeight: {
         "touch-parent": "var(--touch-parent)",
         "touch-child": "var(--touch-child)",
-        "touch-toddler": "var(--touch-toddler)"
+        "touch-early": "var(--touch-early)"
       },
       boxShadow: {
         soft: "0 14px 40px rgba(37, 49, 63, 0.12)"

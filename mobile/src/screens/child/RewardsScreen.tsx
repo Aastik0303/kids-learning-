@@ -133,7 +133,7 @@ export function RewardsScreen() {
         >
           <Text style={{ fontSize: 50 }}>{isCertificateReady ? "🏆" : "🔒"}</Text>
           <Text variant="heading" align="center">
-            Little Learning Explorer
+            Saksham IQ Explorer
           </Text>
           <Text variant="body" align="center" muted>
             {isCertificateReady

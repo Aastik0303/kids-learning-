@@ -11,7 +11,7 @@ class CertificateResponse(BaseModel):
     unlocked: bool
     certificate_id: str | None = None
     child_name: str | None = None
-    title: str = "Little Learning Explorer Certificate"
+    title: str = "Saksham IQ Explorer Certificate"
     completion_message: str | None = None
     completion_date: str | None = None
     stars_earned: int = 0

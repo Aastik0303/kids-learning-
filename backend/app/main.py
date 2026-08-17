@@ -4,8 +4,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import auth, children, companion, dev, guide, history, learning, practice, progress, speech, toddler
+from app.api import auth, children, companion, curriculum, dev, guide, history, learning, practice, progress, speech
 from app.config import get_settings
+from app.services.curriculum_service import load_curriculum
 from app.services.learning_memory_service import initialize_learning_memory_store
 
 settings = get_settings()
@@ -13,6 +14,9 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    # Fail fast: a malformed curriculum stops the server here, with the offending
+    # file and field named, rather than surfacing as a broken screen for a child.
+    load_curriculum()
     initialize_learning_memory_store()
     yield
 
@@ -51,11 +55,11 @@ async def health() -> dict:
 app.include_router(auth.router)
 app.include_router(children.router)
 app.include_router(companion.router)
+app.include_router(curriculum.router)
 app.include_router(learning.router)
 app.include_router(practice.router)
 app.include_router(progress.router)
 app.include_router(speech.router)
-app.include_router(toddler.router)
 app.include_router(guide.router)
 app.include_router(history.router)
 app.include_router(dev.router)

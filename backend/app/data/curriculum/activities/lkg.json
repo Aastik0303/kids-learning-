@@ -1,0 +1,2543 @@
+{
+  "class_id": "lkg",
+  "title": "LKG",
+  "subtitle": "Lower Kindergarten",
+  "min_age": 4,
+  "max_age": 5,
+  "experience_mode": "standard",
+  "version": "2026-27",
+  "source": "CBSE LKG Syllabus 2026-27",
+  "delivery_legend": {
+    "digital": "Fully teachable on screen. The engine serves these.",
+    "parent_guided": "Physical-world learning. The app shows the parent an activity card and records completion — it does NOT fake a tap question for it.",
+    "hybrid": "Screen introduces it, a physical action completes it."
+  },
+  "subjects": [
+    {
+      "subject_id": "lkg_maths",
+      "title": "Basic Mathematics",
+      "sort_order": 1,
+      "topics": [
+        {
+          "topic_id": "lkg_maths_shapes",
+          "title": "Shapes",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Identify circles, squares, triangles and rectangles",
+          "intro_message": "Let us look at shapes more closely today.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_sh_1",
+              "type": "select_shape",
+              "skill_id": "shape_circle",
+              "prompt": "Tap the circle.",
+              "visual_items": [
+                "circle",
+                "square",
+                "triangle"
+              ],
+              "options": [
+                "circle",
+                "square",
+                "triangle"
+              ],
+              "correct_answer": "circle",
+              "hint": "Round, with no corners.",
+              "difficulty": "very_easy",
+              "emoji": "⭕",
+              "option_emojis": [
+                "⭕",
+                "🟦",
+                "🔺"
+              ]
+            },
+            {
+              "activity_id": "lkg_sh_2",
+              "type": "select_shape",
+              "skill_id": "shape_triangle",
+              "prompt": "Tap the triangle.",
+              "visual_items": [
+                "circle",
+                "square",
+                "triangle"
+              ],
+              "options": [
+                "circle",
+                "square",
+                "triangle"
+              ],
+              "correct_answer": "triangle",
+              "hint": "It has three corners.",
+              "difficulty": "easy",
+              "emoji": "⭕",
+              "option_emojis": [
+                "⭕",
+                "🟦",
+                "🔺"
+              ]
+            },
+            {
+              "activity_id": "lkg_sh_3",
+              "type": "multiple_choice",
+              "skill_id": "square_vs_rectangle",
+              "prompt": "Which one has all four sides the SAME length?",
+              "visual_items": [
+                "square",
+                "rectangle"
+              ],
+              "options": [
+                "square",
+                "rectangle"
+              ],
+              "correct_answer": "square",
+              "hint": "A square is equal on every side.",
+              "difficulty": "medium",
+              "emoji": "🟦",
+              "option_emojis": [
+                "🟦",
+                "▭"
+              ]
+            },
+            {
+              "activity_id": "lkg_sh_4",
+              "type": "multiple_choice",
+              "skill_id": "square_vs_rectangle",
+              "prompt": "Which one is longer than it is tall?",
+              "visual_items": [
+                "square",
+                "rectangle"
+              ],
+              "options": [
+                "rectangle",
+                "square"
+              ],
+              "correct_answer": "rectangle",
+              "hint": "A rectangle is stretched out.",
+              "difficulty": "medium",
+              "emoji": "🟦",
+              "option_emojis": [
+                "▭",
+                "🟦"
+              ]
+            },
+            {
+              "activity_id": "lkg_sh_5",
+              "type": "identify_shape",
+              "skill_id": "shape_in_objects",
+              "prompt": "Which object is shaped like a rectangle?",
+              "visual_items": [
+                "door",
+                "plate"
+              ],
+              "options": [
+                "door",
+                "plate"
+              ],
+              "correct_answer": "door",
+              "hint": "Tall and straight on all sides.",
+              "difficulty": "medium",
+              "emoji": "🚪",
+              "option_emojis": [
+                "🚪",
+                "▫️"
+              ]
+            }
+          ],
+          "emoji": "🔷"
+        },
+        {
+          "topic_id": "lkg_maths_count_3",
+          "title": "Count to 3",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Count dots, shapes and objects up to 3; read and show ten frames",
+          "intro_message": "Let us start small. One, two, three!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_c3_1",
+              "type": "count_objects",
+              "skill_id": "count_to_3",
+              "prompt": "Count the dots.",
+              "visual_items": [
+                "dot",
+                "dot"
+              ],
+              "options": [
+                "1",
+                "2",
+                "3"
+              ],
+              "correct_answer": "2",
+              "hint": "Touch each dot once.",
+              "difficulty": "very_easy",
+              "emoji": "⚫",
+              "option_emojis": [
+                "1️⃣",
+                "2️⃣",
+                "3️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c3_2",
+              "type": "count_objects",
+              "skill_id": "count_to_3",
+              "prompt": "Count the triangles.",
+              "visual_items": [
+                "triangle",
+                "triangle",
+                "triangle"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "3",
+              "hint": "One, two, three.",
+              "difficulty": "very_easy",
+              "emoji": "🔺",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c3_3",
+              "type": "count_objects",
+              "skill_id": "ten_frame_3",
+              "prompt": "How many squares are filled on the ten frame?",
+              "visual_items": [
+                "ten_frame_3"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "3",
+              "hint": "Count the coloured boxes.",
+              "difficulty": "easy",
+              "emoji": "🔢",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c3_4",
+              "type": "multiple_choice",
+              "skill_id": "show_on_ten_frame",
+              "prompt": "Which ten frame shows 2?",
+              "visual_items": [
+                "ten_frame_2",
+                "ten_frame_3"
+              ],
+              "options": [
+                "ten_frame_2",
+                "ten_frame_3"
+              ],
+              "correct_answer": "ten_frame_2",
+              "hint": "Count the filled boxes in each.",
+              "difficulty": "medium",
+              "emoji": "🔢",
+              "option_emojis": [
+                "🔢",
+                "🔢"
+              ]
+            }
+          ],
+          "emoji": "🔢"
+        },
+        {
+          "topic_id": "lkg_maths_count_5",
+          "title": "Count to 5",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Count and represent numbers up to 5",
+          "intro_message": "Now let us count to five, like the fingers on your hand!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_c5_1",
+              "type": "count_objects",
+              "skill_id": "count_to_5",
+              "prompt": "Count the stars.",
+              "visual_items": [
+                "star",
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "correct_answer": "4",
+              "hint": "Count each star carefully.",
+              "difficulty": "easy",
+              "emoji": "⭐",
+              "option_emojis": [
+                "3️⃣",
+                "4️⃣",
+                "5️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c5_2",
+              "type": "count_objects",
+              "skill_id": "ten_frame_5",
+              "prompt": "How many boxes are filled?",
+              "visual_items": [
+                "ten_frame_5"
+              ],
+              "options": [
+                "4",
+                "5",
+                "6"
+              ],
+              "correct_answer": "5",
+              "hint": "The whole top row is full.",
+              "difficulty": "easy",
+              "emoji": "🔢",
+              "option_emojis": [
+                "4️⃣",
+                "5️⃣",
+                "6️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c5_3",
+              "type": "select_number",
+              "skill_id": "represent_5",
+              "prompt": "Which number shows how many apples there are?",
+              "visual_items": [
+                "apple",
+                "apple",
+                "apple"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "3",
+              "hint": "Count first, then find the number.",
+              "difficulty": "easy",
+              "emoji": "🍎",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c5_4",
+              "type": "match",
+              "skill_id": "represent_5",
+              "prompt": "Match the number 5 to the right group.",
+              "visual_items": [
+                "5"
+              ],
+              "options": [
+                "group_4",
+                "group_5"
+              ],
+              "correct_answer": "group_5",
+              "hint": "Count each group.",
+              "difficulty": "medium",
+              "emoji": "️⃣",
+              "option_emojis": [
+                "🔢",
+                "🔢"
+              ]
+            }
+          ],
+          "emoji": "🔢"
+        },
+        {
+          "topic_id": "lkg_maths_count_10",
+          "title": "Count to 10",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Count and represent numbers up to 10",
+          "intro_message": "Ten fingers, ten toes. Let us count to ten!",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "lkg_c10_1",
+              "type": "count_objects",
+              "skill_id": "count_to_10",
+              "prompt": "Count the birds.",
+              "visual_items": [
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird"
+              ],
+              "options": [
+                "6",
+                "7",
+                "8"
+              ],
+              "correct_answer": "7",
+              "hint": "Count in a line, left to right.",
+              "difficulty": "easy",
+              "emoji": "🐦",
+              "option_emojis": [
+                "6️⃣",
+                "7️⃣",
+                "8️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_c10_2",
+              "type": "count_objects",
+              "skill_id": "ten_frame_10",
+              "prompt": "How many boxes are filled on the ten frame?",
+              "visual_items": [
+                "ten_frame_9"
+              ],
+              "options": [
+                "8",
+                "9",
+                "10"
+              ],
+              "correct_answer": "9",
+              "hint": "One box is still empty.",
+              "difficulty": "medium",
+              "emoji": "🔢",
+              "option_emojis": [
+                "8️⃣",
+                "9️⃣",
+                "🔢"
+              ]
+            },
+            {
+              "activity_id": "lkg_c10_3",
+              "type": "select_number",
+              "skill_id": "number_recognition_1_10",
+              "prompt": "Tap the number 8.",
+              "visual_items": [
+                "6",
+                "8",
+                "10"
+              ],
+              "options": [
+                "6",
+                "8",
+                "10"
+              ],
+              "correct_answer": "8",
+              "hint": "Eight looks like two circles stacked up.",
+              "difficulty": "easy",
+              "emoji": "4️",
+              "option_emojis": [
+                "6️⃣",
+                "8️⃣",
+                "🔢"
+              ]
+            },
+            {
+              "activity_id": "lkg_c10_4",
+              "type": "match",
+              "skill_id": "represent_10",
+              "prompt": "Which group has 10 things?",
+              "visual_items": [
+                "group_9",
+                "group_10"
+              ],
+              "options": [
+                "group_9",
+                "group_10"
+              ],
+              "correct_answer": "group_10",
+              "hint": "Count both groups.",
+              "difficulty": "medium",
+              "emoji": "🔢",
+              "option_emojis": [
+                "🔢",
+                "🔢"
+              ]
+            },
+            {
+              "activity_id": "lkg_c10_5",
+              "type": "multiple_choice",
+              "skill_id": "count_dots_10",
+              "prompt": "How many dots altogether?",
+              "visual_items": [
+                "dot_group_6"
+              ],
+              "options": [
+                "5",
+                "6",
+                "7"
+              ],
+              "correct_answer": "6",
+              "hint": "Count in twos if it helps.",
+              "difficulty": "medium",
+              "emoji": "⚫",
+              "option_emojis": [
+                "5️⃣",
+                "6️⃣",
+                "7️⃣"
+              ]
+            }
+          ],
+          "emoji": "🔢"
+        },
+        {
+          "topic_id": "lkg_maths_comparing",
+          "title": "Comparing",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "Compare groups by counting; fewer, more, enough",
+          "intro_message": "Is there enough for everyone? Let us check!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_cmp_1",
+              "type": "multiple_choice",
+              "skill_id": "are_there_enough",
+              "prompt": "There are 3 children and 3 chairs. Is there a chair for everyone?",
+              "visual_items": [
+                "children_3",
+                "chairs_3"
+              ],
+              "options": [
+                "yes",
+                "no"
+              ],
+              "correct_answer": "yes",
+              "hint": "Match one chair to each child.",
+              "difficulty": "easy",
+              "emoji": "🧒"
+            },
+            {
+              "activity_id": "lkg_cmp_2",
+              "type": "multiple_choice",
+              "skill_id": "are_there_enough",
+              "prompt": "There are 4 dogs and 2 bones. Is there a bone for every dog?",
+              "visual_items": [
+                "dogs_4",
+                "bones_2"
+              ],
+              "options": [
+                "no",
+                "yes"
+              ],
+              "correct_answer": "no",
+              "hint": "Two dogs will have none.",
+              "difficulty": "medium",
+              "emoji": "🐶"
+            },
+            {
+              "activity_id": "lkg_cmp_3",
+              "type": "multiple_choice",
+              "skill_id": "fewer_more",
+              "prompt": "Which group has FEWER?",
+              "visual_items": [
+                "group_3",
+                "group_7"
+              ],
+              "options": [
+                "group_3",
+                "group_7"
+              ],
+              "correct_answer": "group_3",
+              "hint": "Fewer means a smaller number.",
+              "difficulty": "easy",
+              "emoji": "🔢",
+              "option_emojis": [
+                "🔢",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "lkg_cmp_4",
+              "type": "multiple_choice",
+              "skill_id": "compare_by_counting",
+              "prompt": "There are 6 red balls and 4 blue balls. Which colour has more?",
+              "visual_items": [
+                "balls_mixed"
+              ],
+              "options": [
+                "red",
+                "blue"
+              ],
+              "correct_answer": "red",
+              "hint": "Six is more than four.",
+              "difficulty": "medium",
+              "emoji": "🔴",
+              "option_emojis": [
+                "🟥",
+                "🟦"
+              ]
+            },
+            {
+              "activity_id": "lkg_cmp_5",
+              "type": "count_objects",
+              "skill_id": "mixed_group",
+              "prompt": "In this mixed group, how many are stars?",
+              "visual_items": [
+                "star",
+                "circle",
+                "star",
+                "square",
+                "star"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "3",
+              "hint": "Count only the stars, skip the rest.",
+              "difficulty": "hard",
+              "emoji": "⭐",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            }
+          ],
+          "emoji": "⚖️"
+        },
+        {
+          "topic_id": "lkg_maths_positions",
+          "title": "Positions",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Inside/outside, above/below, beside, left/right, top/middle/bottom",
+          "intro_message": "Let us learn where things are.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_pos_1",
+              "type": "multiple_choice",
+              "skill_id": "inside_outside",
+              "prompt": "Is the ball inside or outside the basket?",
+              "visual_items": [
+                "ball_outside_basket"
+              ],
+              "options": [
+                "outside",
+                "inside"
+              ],
+              "correct_answer": "outside",
+              "hint": "The ball is not in the basket.",
+              "difficulty": "very_easy",
+              "emoji": "⚽"
+            },
+            {
+              "activity_id": "lkg_pos_2",
+              "type": "multiple_choice",
+              "skill_id": "beside_next_to",
+              "prompt": "Which animal is BESIDE the tree?",
+              "visual_items": [
+                "tree",
+                "dog_beside",
+                "bird_above"
+              ],
+              "options": [
+                "dog",
+                "bird"
+              ],
+              "correct_answer": "dog",
+              "hint": "Beside means right next to it.",
+              "difficulty": "easy",
+              "emoji": "🌳",
+              "option_emojis": [
+                "🐶",
+                "🐦"
+              ]
+            },
+            {
+              "activity_id": "lkg_pos_3",
+              "type": "multiple_choice",
+              "skill_id": "left_right",
+              "prompt": "Which hand is your LEFT hand?",
+              "visual_items": [
+                "hands"
+              ],
+              "options": [
+                "left",
+                "right"
+              ],
+              "correct_answer": "left",
+              "hint": "Hold up both hands and think.",
+              "difficulty": "medium",
+              "emoji": "✋"
+            },
+            {
+              "activity_id": "lkg_pos_4",
+              "type": "multiple_choice",
+              "skill_id": "left_middle_right",
+              "prompt": "Which toy is in the MIDDLE?",
+              "visual_items": [
+                "car",
+                "doll",
+                "ball"
+              ],
+              "options": [
+                "car",
+                "doll",
+                "ball"
+              ],
+              "correct_answer": "doll",
+              "hint": "The one between the other two.",
+              "difficulty": "medium",
+              "emoji": "🚗",
+              "option_emojis": [
+                "🚗",
+                "▫️",
+                "⚽"
+              ]
+            },
+            {
+              "activity_id": "lkg_pos_5",
+              "type": "multiple_choice",
+              "skill_id": "top_middle_bottom",
+              "prompt": "Which book is at the BOTTOM of the pile?",
+              "visual_items": [
+                "book_stack"
+              ],
+              "options": [
+                "blue_book",
+                "red_book"
+              ],
+              "correct_answer": "blue_book",
+              "hint": "The one holding all the others up.",
+              "difficulty": "medium",
+              "emoji": "📚",
+              "option_emojis": [
+                "🟦",
+                "🟥"
+              ]
+            }
+          ],
+          "emoji": "📦"
+        },
+        {
+          "topic_id": "lkg_maths_classify",
+          "title": "Classify",
+          "sort_order": 7,
+          "delivery": "digital",
+          "objective": "Sort by colour and by shape; same and different",
+          "intro_message": "Let us sort things into groups.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_cls_1",
+              "type": "multiple_choice",
+              "skill_id": "same_different",
+              "prompt": "Which two are the SAME?",
+              "visual_items": [
+                "cat",
+                "cat",
+                "dog"
+              ],
+              "options": [
+                "the two cats",
+                "the cat and dog"
+              ],
+              "correct_answer": "the two cats",
+              "hint": "Look for the matching pair.",
+              "difficulty": "easy",
+              "emoji": "🐱",
+              "option_emojis": [
+                "▫️",
+                "🐱"
+              ]
+            },
+            {
+              "activity_id": "lkg_cls_2",
+              "type": "match",
+              "skill_id": "classify_by_colour",
+              "prompt": "Find all the yellow shapes.",
+              "visual_items": [
+                "yellow_circle",
+                "blue_square",
+                "yellow_triangle"
+              ],
+              "options": [
+                "yellow_circle",
+                "blue_square",
+                "yellow_triangle"
+              ],
+              "correct_answer": "yellow_circle,yellow_triangle",
+              "hint": "Ignore the shape, look at the colour.",
+              "difficulty": "medium",
+              "emoji": "🟡",
+              "option_emojis": [
+                "🟡",
+                "🟦",
+                "🔶"
+              ]
+            },
+            {
+              "activity_id": "lkg_cls_3",
+              "type": "match",
+              "skill_id": "classify_by_shape",
+              "prompt": "Find all the circles.",
+              "visual_items": [
+                "red_circle",
+                "blue_circle",
+                "green_square"
+              ],
+              "options": [
+                "red_circle",
+                "blue_circle",
+                "green_square"
+              ],
+              "correct_answer": "red_circle,blue_circle",
+              "hint": "Ignore the colour, look at the shape.",
+              "difficulty": "medium",
+              "emoji": "🔴",
+              "option_emojis": [
+                "🔴",
+                "🔵",
+                "🟩"
+              ]
+            },
+            {
+              "activity_id": "lkg_cls_4",
+              "type": "multiple_choice",
+              "skill_id": "classify_shapes_by_colour",
+              "prompt": "Which square is red?",
+              "visual_items": [
+                "red_square",
+                "blue_square"
+              ],
+              "options": [
+                "red_square",
+                "blue_square"
+              ],
+              "correct_answer": "red_square",
+              "hint": "Both are squares — look at the colour.",
+              "difficulty": "easy",
+              "emoji": "🟥",
+              "option_emojis": [
+                "🟥",
+                "🟦"
+              ]
+            }
+          ],
+          "emoji": "🧩"
+        },
+        {
+          "topic_id": "lkg_maths_size",
+          "title": "Size",
+          "sort_order": 8,
+          "delivery": "digital",
+          "objective": "Long/short, tall/short, light/heavy, wide/narrow",
+          "intro_message": "Let us compare how big things are.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_sz_1",
+              "type": "multiple_choice",
+              "skill_id": "long_short",
+              "prompt": "Which snake is LONGER?",
+              "visual_items": [
+                "snake_long",
+                "snake_short"
+              ],
+              "options": [
+                "snake_long",
+                "snake_short"
+              ],
+              "correct_answer": "snake_long",
+              "hint": "Follow each one from end to end.",
+              "difficulty": "easy",
+              "emoji": "🐍",
+              "option_emojis": [
+                "🐍",
+                "🐍"
+              ]
+            },
+            {
+              "activity_id": "lkg_sz_2",
+              "type": "multiple_choice",
+              "skill_id": "tall_short",
+              "prompt": "Which building is TALLER?",
+              "visual_items": [
+                "building_tall",
+                "building_short"
+              ],
+              "options": [
+                "building_tall",
+                "building_short"
+              ],
+              "correct_answer": "building_tall",
+              "hint": "Tall goes up towards the sky.",
+              "difficulty": "easy",
+              "emoji": "🏢",
+              "option_emojis": [
+                "🏢",
+                "🏠"
+              ]
+            },
+            {
+              "activity_id": "lkg_sz_3",
+              "type": "multiple_choice",
+              "skill_id": "light_heavy",
+              "prompt": "Which one is LIGHTER?",
+              "visual_items": [
+                "balloon",
+                "brick"
+              ],
+              "options": [
+                "balloon",
+                "brick"
+              ],
+              "correct_answer": "balloon",
+              "hint": "Light things are easy to lift.",
+              "difficulty": "easy",
+              "emoji": "🎈",
+              "option_emojis": [
+                "🎈",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "lkg_sz_4",
+              "type": "multiple_choice",
+              "skill_id": "wide_narrow",
+              "prompt": "Which road is WIDE?",
+              "visual_items": [
+                "road_wide",
+                "road_narrow"
+              ],
+              "options": [
+                "road_wide",
+                "road_narrow"
+              ],
+              "correct_answer": "road_wide",
+              "hint": "Wide has lots of space across.",
+              "difficulty": "medium",
+              "emoji": "🛣️",
+              "option_emojis": [
+                "▫️",
+                "▫️"
+              ]
+            }
+          ],
+          "emoji": "📏"
+        },
+        {
+          "topic_id": "lkg_maths_money",
+          "title": "Money",
+          "sort_order": 9,
+          "delivery": "digital",
+          "objective": "Recognise coin values and count 1-rupee coins",
+          "intro_message": "Let us learn about coins!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_mn_1",
+              "type": "multiple_choice",
+              "skill_id": "coin_values",
+              "prompt": "Which coin is 1 rupee?",
+              "visual_items": [
+                "coin_1",
+                "coin_5"
+              ],
+              "options": [
+                "coin_1",
+                "coin_5"
+              ],
+              "correct_answer": "coin_1",
+              "hint": "Look for the number 1 on it.",
+              "difficulty": "easy",
+              "emoji": "🪙",
+              "option_emojis": [
+                "🪙",
+                "🪙"
+              ]
+            },
+            {
+              "activity_id": "lkg_mn_2",
+              "type": "count_objects",
+              "skill_id": "count_rupee_coins",
+              "prompt": "How many 1-rupee coins are here?",
+              "visual_items": [
+                "coin_1",
+                "coin_1",
+                "coin_1"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "3",
+              "hint": "Count each coin.",
+              "difficulty": "easy",
+              "emoji": "🪙",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_mn_3",
+              "type": "multiple_choice",
+              "skill_id": "count_rupee_coins",
+              "prompt": "You have 4 one-rupee coins. How many rupees is that?",
+              "visual_items": [
+                "coin_1",
+                "coin_1",
+                "coin_1",
+                "coin_1"
+              ],
+              "options": [
+                "3",
+                "4",
+                "5"
+              ],
+              "correct_answer": "4",
+              "hint": "Each coin is one rupee.",
+              "difficulty": "medium",
+              "emoji": "🪙",
+              "option_emojis": [
+                "3️⃣",
+                "4️⃣",
+                "5️⃣"
+              ]
+            }
+          ],
+          "emoji": "🪙"
+        }
+      ],
+      "emoji": "🔢"
+    },
+    {
+      "subject_id": "lkg_english",
+      "title": "English",
+      "sort_order": 2,
+      "topics": [
+        {
+          "topic_id": "lkg_eng_capitals",
+          "title": "Capital Letters (A-Z)",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Identify and link an object to every capital letter",
+          "intro_message": "A to Z — let us learn them all!",
+          "star_reward": 6,
+          "letter_object_map": {
+            "A": "apple",
+            "B": "ball",
+            "C": "cat",
+            "D": "dog",
+            "E": "egg",
+            "F": "fish",
+            "G": "goat",
+            "H": "hat",
+            "I": "ice cream",
+            "J": "jug",
+            "K": "kite",
+            "L": "lion",
+            "M": "monkey",
+            "N": "nest",
+            "O": "orange",
+            "P": "parrot",
+            "Q": "queen",
+            "R": "rabbit",
+            "S": "sun",
+            "T": "tree",
+            "U": "umbrella",
+            "V": "van",
+            "W": "watch",
+            "X": "xylophone",
+            "Y": "yak",
+            "Z": "zebra"
+          },
+          "generation_rule": "For each letter L in A-Z emit two activities: select_letter (L against two distractors) and object-match (which object starts with L). Writing lives in lkg_art_writing. 26 x 2 = 52 activities.",
+          "activities": [
+            {
+              "activity_id": "lkg_cap_A_1",
+              "type": "select_letter",
+              "skill_id": "letter_A",
+              "prompt": "Tap the letter A.",
+              "visual_items": [
+                "A",
+                "M",
+                "T"
+              ],
+              "options": [
+                "A",
+                "M",
+                "T"
+              ],
+              "correct_answer": "A",
+              "hint": "A looks like a tent with a belt.",
+              "difficulty": "very_easy",
+              "emoji": "🔤"
+            },
+            {
+              "activity_id": "lkg_cap_A_2",
+              "type": "multiple_choice",
+              "skill_id": "letter_A_object",
+              "prompt": "Which one starts with A?",
+              "visual_items": [
+                "apple",
+                "ball"
+              ],
+              "options": [
+                "apple",
+                "ball"
+              ],
+              "correct_answer": "apple",
+              "hint": "A for apple.",
+              "difficulty": "very_easy",
+              "emoji": "🍎",
+              "option_emojis": [
+                "🍎",
+                "⚽"
+              ]
+            },
+            {
+              "activity_id": "lkg_cap_M_1",
+              "type": "select_letter",
+              "skill_id": "letter_M",
+              "prompt": "Tap the letter M.",
+              "visual_items": [
+                "N",
+                "M",
+                "W"
+              ],
+              "options": [
+                "N",
+                "M",
+                "W"
+              ],
+              "correct_answer": "M",
+              "hint": "M has two mountains.",
+              "difficulty": "easy",
+              "emoji": "🔤"
+            },
+            {
+              "activity_id": "lkg_cap_M_2",
+              "type": "multiple_choice",
+              "skill_id": "letter_M_object",
+              "prompt": "Which one starts with M?",
+              "visual_items": [
+                "monkey",
+                "nest"
+              ],
+              "options": [
+                "monkey",
+                "nest"
+              ],
+              "correct_answer": "monkey",
+              "hint": "M for monkey.",
+              "difficulty": "very_easy",
+              "emoji": "🐵",
+              "option_emojis": [
+                "🐵",
+                "🪹"
+              ]
+            },
+            {
+              "activity_id": "lkg_cap_missing_1",
+              "type": "multiple_choice",
+              "skill_id": "missing_letter",
+              "prompt": "Which letter is missing? D, E, ?, G",
+              "visual_items": [
+                "D",
+                "E",
+                "?",
+                "G"
+              ],
+              "options": [
+                "F",
+                "H"
+              ],
+              "correct_answer": "F",
+              "hint": "Sing the alphabet song from D.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            }
+          ],
+          "emoji": "🔠"
+        },
+        {
+          "topic_id": "lkg_eng_smalls",
+          "title": "Small Letters (a-z)",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Small letters, capital-small matching, vowels, phonic drill, vowel words, rhyming",
+          "intro_message": "Now the small letters, and the words they make!",
+          "star_reward": 6,
+          "generation_rule": "For each letter a-z emit select_letter and a capital-small match. Writing lives in lkg_art_writing. 26 x 2 = 52 activities.",
+          "activities": [
+            {
+              "activity_id": "lkg_sm_1",
+              "type": "match",
+              "skill_id": "capital_small_match",
+              "prompt": "Which small letter goes with D?",
+              "visual_items": [
+                "D"
+              ],
+              "options": [
+                "d",
+                "b",
+                "p"
+              ],
+              "correct_answer": "d",
+              "hint": "The tummy is on the right.",
+              "difficulty": "medium",
+              "emoji": "🧩"
+            },
+            {
+              "activity_id": "lkg_sm_2",
+              "type": "match",
+              "skill_id": "capital_small_match",
+              "prompt": "Which small letter goes with G?",
+              "visual_items": [
+                "G"
+              ],
+              "options": [
+                "g",
+                "q"
+              ],
+              "correct_answer": "g",
+              "hint": "It has a tail that curls left.",
+              "difficulty": "medium",
+              "emoji": "🧩"
+            },
+            {
+              "activity_id": "lkg_sm_3",
+              "type": "multiple_choice",
+              "skill_id": "vowels_consonants",
+              "prompt": "Which of these is a VOWEL?",
+              "visual_items": [
+                "a",
+                "b",
+                "c"
+              ],
+              "options": [
+                "a",
+                "b",
+                "c"
+              ],
+              "correct_answer": "a",
+              "hint": "The vowels are a, e, i, o, u.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "lkg_sm_4",
+              "type": "multiple_choice",
+              "skill_id": "vowel_words",
+              "prompt": "Fill the gap: c _ t (a cat says meow)",
+              "visual_items": [
+                "cat"
+              ],
+              "options": [
+                "a",
+                "o",
+                "u"
+              ],
+              "correct_answer": "a",
+              "hint": "Say the word slowly: c-a-t.",
+              "difficulty": "medium",
+              "emoji": "🐱"
+            },
+            {
+              "activity_id": "lkg_sm_5",
+              "type": "multiple_choice",
+              "skill_id": "vowel_words",
+              "prompt": "Fill the gap: p _ g (it says oink)",
+              "visual_items": [
+                "pig"
+              ],
+              "options": [
+                "i",
+                "a",
+                "e"
+              ],
+              "correct_answer": "i",
+              "hint": "p-i-g.",
+              "difficulty": "medium",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "lkg_sm_6",
+              "type": "multiple_choice",
+              "skill_id": "rhyming_words",
+              "prompt": "Which word rhymes with SUN?",
+              "visual_items": [
+                "bun",
+                "cat"
+              ],
+              "options": [
+                "bun",
+                "cat"
+              ],
+              "correct_answer": "bun",
+              "hint": "Listen to the ending: -un.",
+              "difficulty": "medium",
+              "emoji": "🥐",
+              "option_emojis": [
+                "🥐",
+                "🐱"
+              ]
+            },
+            {
+              "activity_id": "lkg_sm_7",
+              "type": "voice_repeat",
+              "skill_id": "phonic_drill",
+              "prompt": "Say the sounds: a, e, i, o, u.",
+              "visual_items": [
+                "a",
+                "e",
+                "i",
+                "o",
+                "u"
+              ],
+              "options": [],
+              "correct_answer": "a e i o u",
+              "hint": "Say each one clearly.",
+              "difficulty": "medium",
+              "accept": [
+                "a e i o u",
+                "aeiou"
+              ],
+              "min_similarity": 0.6,
+              "emoji": "🎤"
+            }
+          ],
+          "emoji": "🔡"
+        },
+        {
+          "topic_id": "lkg_eng_phonetics",
+          "title": "Phonetics & Early Grammar",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Article a/an, this-that, these-those, one-many, positions, rhyming",
+          "intro_message": "Let us put words together to make sense!",
+          "star_reward": 6,
+          "activities": [
+            {
+              "activity_id": "lkg_ph_1",
+              "type": "multiple_choice",
+              "skill_id": "article_a_an",
+              "prompt": "Choose the right word: ___ apple",
+              "visual_items": [
+                "apple"
+              ],
+              "options": [
+                "an",
+                "a"
+              ],
+              "correct_answer": "an",
+              "hint": "Use 'an' before a, e, i, o, u.",
+              "difficulty": "medium",
+              "emoji": "🍎"
+            },
+            {
+              "activity_id": "lkg_ph_2",
+              "type": "multiple_choice",
+              "skill_id": "article_a_an",
+              "prompt": "Choose the right word: ___ ball",
+              "visual_items": [
+                "ball"
+              ],
+              "options": [
+                "a",
+                "an"
+              ],
+              "correct_answer": "a",
+              "hint": "Use 'a' before other letters.",
+              "difficulty": "medium",
+              "emoji": "⚽"
+            },
+            {
+              "activity_id": "lkg_ph_3",
+              "type": "multiple_choice",
+              "skill_id": "this_that",
+              "prompt": "The cat is near you. Do you say THIS cat or THAT cat?",
+              "visual_items": [
+                "cat_near"
+              ],
+              "options": [
+                "this",
+                "that"
+              ],
+              "correct_answer": "this",
+              "hint": "'This' is for near, 'that' is for far.",
+              "difficulty": "medium",
+              "emoji": "🐱"
+            },
+            {
+              "activity_id": "lkg_ph_4",
+              "type": "multiple_choice",
+              "skill_id": "these_those",
+              "prompt": "The birds are far away. Do you say THESE birds or THOSE birds?",
+              "visual_items": [
+                "birds_far"
+              ],
+              "options": [
+                "those",
+                "these"
+              ],
+              "correct_answer": "those",
+              "hint": "'Those' is for far and many.",
+              "difficulty": "hard",
+              "emoji": "🐦"
+            },
+            {
+              "activity_id": "lkg_ph_5",
+              "type": "multiple_choice",
+              "skill_id": "one_many",
+              "prompt": "One cat, many ___?",
+              "visual_items": [
+                "cat",
+                "cats"
+              ],
+              "options": [
+                "cats",
+                "cat"
+              ],
+              "correct_answer": "cats",
+              "hint": "Add an 's' for more than one.",
+              "difficulty": "medium",
+              "emoji": "🐱",
+              "option_emojis": [
+                "▫️",
+                "🐱"
+              ]
+            },
+            {
+              "activity_id": "lkg_ph_6",
+              "type": "multiple_choice",
+              "skill_id": "one_many",
+              "prompt": "One box, many ___?",
+              "visual_items": [
+                "box"
+              ],
+              "options": [
+                "boxes",
+                "boxs"
+              ],
+              "correct_answer": "boxes",
+              "hint": "Some words add 'es'.",
+              "difficulty": "hard",
+              "emoji": "📦"
+            }
+          ],
+          "emoji": "🔊"
+        }
+      ],
+      "emoji": "🔤"
+    },
+    {
+      "subject_id": "lkg_ga",
+      "title": "General Awareness",
+      "sort_order": 3,
+      "topics": [
+        {
+          "topic_id": "lkg_ga_myself",
+          "title": "About Myself",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Body parts, family, birthday, home and school",
+          "intro_message": "Let us talk about you and your world.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_ms_1",
+              "type": "multiple_choice",
+              "skill_id": "body_parts",
+              "prompt": "How many eyes do we have?",
+              "visual_items": [
+                "face"
+              ],
+              "options": [
+                "1",
+                "2",
+                "3"
+              ],
+              "correct_answer": "2",
+              "hint": "Touch them and count.",
+              "difficulty": "very_easy",
+              "emoji": "😊",
+              "option_emojis": [
+                "1️⃣",
+                "2️⃣",
+                "3️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_ms_2",
+              "type": "multiple_choice",
+              "skill_id": "body_parts",
+              "prompt": "Which part do we use to walk?",
+              "visual_items": [
+                "legs",
+                "hands"
+              ],
+              "options": [
+                "legs",
+                "hands"
+              ],
+              "correct_answer": "legs",
+              "hint": "They are below your knees.",
+              "difficulty": "very_easy",
+              "emoji": "🦵",
+              "option_emojis": [
+                "🦵",
+                "✋"
+              ]
+            },
+            {
+              "activity_id": "lkg_ms_3",
+              "type": "multiple_choice",
+              "skill_id": "family",
+              "prompt": "Who is your father's father?",
+              "visual_items": [
+                "grandfather",
+                "uncle"
+              ],
+              "options": [
+                "grandfather",
+                "uncle"
+              ],
+              "correct_answer": "grandfather",
+              "hint": "Grandfather.",
+              "difficulty": "medium",
+              "emoji": "👴",
+              "option_emojis": [
+                "👴",
+                "👨"
+              ]
+            },
+            {
+              "activity_id": "lkg_ms_4",
+              "type": "multiple_choice",
+              "skill_id": "birthday",
+              "prompt": "What do we cut on a birthday?",
+              "visual_items": [
+                "cake",
+                "book"
+              ],
+              "options": [
+                "cake",
+                "book"
+              ],
+              "correct_answer": "cake",
+              "hint": "It has candles on top.",
+              "difficulty": "very_easy",
+              "emoji": "🎂",
+              "option_emojis": [
+                "🎂",
+                "📚"
+              ]
+            },
+            {
+              "activity_id": "lkg_ms_5",
+              "type": "multiple_choice",
+              "skill_id": "school",
+              "prompt": "Where do we keep our books at school?",
+              "visual_items": [
+                "schoolbag",
+                "fridge"
+              ],
+              "options": [
+                "schoolbag",
+                "fridge"
+              ],
+              "correct_answer": "schoolbag",
+              "hint": "You carry it on your back.",
+              "difficulty": "easy",
+              "emoji": "🎒",
+              "option_emojis": [
+                "🎒",
+                "▫️"
+              ]
+            }
+          ],
+          "emoji": "🧒"
+        },
+        {
+          "topic_id": "lkg_ga_safety",
+          "title": "Safety",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Safety at home, on the road and at the playground",
+          "intro_message": "Being safe means being careful. Let us learn how.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_sf_1",
+              "type": "multiple_choice",
+              "skill_id": "road_safety",
+              "prompt": "Where should we walk on a busy road?",
+              "visual_items": [
+                "footpath",
+                "middle_of_road"
+              ],
+              "options": [
+                "footpath",
+                "middle of road"
+              ],
+              "correct_answer": "footpath",
+              "hint": "Away from the cars.",
+              "difficulty": "easy",
+              "emoji": "🚶",
+              "option_emojis": [
+                "🚶",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "lkg_sf_2",
+              "type": "multiple_choice",
+              "skill_id": "road_safety",
+              "prompt": "Whose hand should we hold when crossing the road?",
+              "visual_items": [
+                "adult_hand"
+              ],
+              "options": [
+                "a grown-up",
+                "nobody"
+              ],
+              "correct_answer": "a grown-up",
+              "hint": "Never cross alone.",
+              "difficulty": "easy",
+              "emoji": "✋"
+            },
+            {
+              "activity_id": "lkg_sf_3",
+              "type": "multiple_choice",
+              "skill_id": "home_safety",
+              "prompt": "Should we play with matches?",
+              "visual_items": [
+                "matches"
+              ],
+              "options": [
+                "no",
+                "yes"
+              ],
+              "correct_answer": "no",
+              "hint": "Fire is dangerous.",
+              "difficulty": "very_easy",
+              "emoji": "🔥"
+            },
+            {
+              "activity_id": "lkg_sf_4",
+              "type": "multiple_choice",
+              "skill_id": "playground_safety",
+              "prompt": "Should we push others on the slide?",
+              "visual_items": [
+                "slide"
+              ],
+              "options": [
+                "no",
+                "yes"
+              ],
+              "correct_answer": "no",
+              "hint": "Wait for your turn.",
+              "difficulty": "easy",
+              "emoji": "🛝"
+            }
+          ],
+          "emoji": "🚸"
+        },
+        {
+          "topic_id": "lkg_ga_helpers",
+          "title": "People Who Help Us",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Doctor, teacher, policeman, postman, carpenter, farmer",
+          "intro_message": "Let us meet the helpers in our town.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_hp_1",
+              "type": "multiple_choice",
+              "skill_id": "helper_doctor",
+              "prompt": "Who gives us medicine when we are ill?",
+              "visual_items": [
+                "doctor",
+                "carpenter"
+              ],
+              "options": [
+                "doctor",
+                "carpenter"
+              ],
+              "correct_answer": "doctor",
+              "hint": "You visit them at a clinic.",
+              "difficulty": "easy",
+              "emoji": "👨‍⚕️",
+              "option_emojis": [
+                "▫️",
+                "🪚"
+              ]
+            },
+            {
+              "activity_id": "lkg_hp_2",
+              "type": "multiple_choice",
+              "skill_id": "helper_carpenter",
+              "prompt": "Who makes chairs and tables from wood?",
+              "visual_items": [
+                "carpenter",
+                "postman"
+              ],
+              "options": [
+                "carpenter",
+                "postman"
+              ],
+              "correct_answer": "carpenter",
+              "hint": "They use a hammer and saw.",
+              "difficulty": "medium",
+              "emoji": "🪚",
+              "option_emojis": [
+                "🪚",
+                "📮"
+              ]
+            },
+            {
+              "activity_id": "lkg_hp_3",
+              "type": "multiple_choice",
+              "skill_id": "helper_policeman",
+              "prompt": "Who keeps us safe and directs traffic?",
+              "visual_items": [
+                "policeman",
+                "farmer"
+              ],
+              "options": [
+                "policeman",
+                "farmer"
+              ],
+              "correct_answer": "policeman",
+              "hint": "They wear a uniform.",
+              "difficulty": "easy",
+              "emoji": "👮",
+              "option_emojis": [
+                "👮",
+                "👨‍🌾"
+              ]
+            },
+            {
+              "activity_id": "lkg_hp_4",
+              "type": "match",
+              "skill_id": "helper_tools",
+              "prompt": "Which tool belongs to the farmer?",
+              "visual_items": [
+                "plough",
+                "stethoscope"
+              ],
+              "options": [
+                "plough",
+                "stethoscope"
+              ],
+              "correct_answer": "plough",
+              "hint": "It is used in the field.",
+              "difficulty": "medium",
+              "emoji": "🚜",
+              "option_emojis": [
+                "🚜",
+                "🩺"
+              ]
+            }
+          ],
+          "emoji": "👮"
+        },
+        {
+          "topic_id": "lkg_ga_transport",
+          "title": "Transport",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Road, rail and air transport",
+          "intro_message": "Let us go on a journey!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_tr_1",
+              "type": "match",
+              "skill_id": "transport_sorting",
+              "prompt": "Which of these travels by AIR?",
+              "visual_items": [
+                "helicopter",
+                "train"
+              ],
+              "options": [
+                "helicopter",
+                "train"
+              ],
+              "correct_answer": "helicopter",
+              "hint": "It has spinning blades on top.",
+              "difficulty": "easy",
+              "emoji": "🚁",
+              "option_emojis": [
+                "🚁",
+                "🚂"
+              ]
+            },
+            {
+              "activity_id": "lkg_tr_2",
+              "type": "match",
+              "skill_id": "transport_sorting",
+              "prompt": "Which of these travels by RAIL?",
+              "visual_items": [
+                "train",
+                "bus"
+              ],
+              "options": [
+                "train",
+                "bus"
+              ],
+              "correct_answer": "train",
+              "hint": "It needs tracks.",
+              "difficulty": "easy",
+              "emoji": "🚂",
+              "option_emojis": [
+                "🚂",
+                "🚌"
+              ]
+            },
+            {
+              "activity_id": "lkg_tr_3",
+              "type": "count_objects",
+              "skill_id": "transport_wheels",
+              "prompt": "How many wheels does a cycle have?",
+              "visual_items": [
+                "cycle"
+              ],
+              "options": [
+                "2",
+                "3",
+                "4"
+              ],
+              "correct_answer": "2",
+              "hint": "One in front, one behind.",
+              "difficulty": "easy",
+              "emoji": "🚲",
+              "option_emojis": [
+                "2️⃣",
+                "3️⃣",
+                "4️⃣"
+              ]
+            },
+            {
+              "activity_id": "lkg_tr_4",
+              "type": "multiple_choice",
+              "skill_id": "transport_road",
+              "prompt": "Which one carries many people on the road?",
+              "visual_items": [
+                "bus",
+                "cycle"
+              ],
+              "options": [
+                "bus",
+                "cycle"
+              ],
+              "correct_answer": "bus",
+              "hint": "It is big and has many seats.",
+              "difficulty": "easy",
+              "emoji": "🚌",
+              "option_emojis": [
+                "🚌",
+                "🚲"
+              ]
+            }
+          ],
+          "emoji": "🚗"
+        },
+        {
+          "topic_id": "lkg_ga_seasons",
+          "title": "Seasons",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "Summer, winter and rainy season",
+          "intro_message": "The year has different seasons. Let us meet them.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_se_1",
+              "type": "multiple_choice",
+              "skill_id": "season_summer",
+              "prompt": "Which season do we wear light clothes and drink cold water?",
+              "visual_items": [
+                "sun"
+              ],
+              "options": [
+                "summer",
+                "winter"
+              ],
+              "correct_answer": "summer",
+              "hint": "The hottest season.",
+              "difficulty": "easy",
+              "emoji": "☀️"
+            },
+            {
+              "activity_id": "lkg_se_2",
+              "type": "multiple_choice",
+              "skill_id": "season_winter",
+              "prompt": "Which season do we wear a woollen cap?",
+              "visual_items": [
+                "cap"
+              ],
+              "options": [
+                "winter",
+                "rainy"
+              ],
+              "correct_answer": "winter",
+              "hint": "When it is cold.",
+              "difficulty": "easy",
+              "emoji": "🧢"
+            },
+            {
+              "activity_id": "lkg_se_3",
+              "type": "match",
+              "skill_id": "season_clothing",
+              "prompt": "Which of these do we use in the rainy season?",
+              "visual_items": [
+                "raincoat",
+                "sweater"
+              ],
+              "options": [
+                "raincoat",
+                "sweater"
+              ],
+              "correct_answer": "raincoat",
+              "hint": "It keeps you dry.",
+              "difficulty": "easy",
+              "emoji": "🧥",
+              "option_emojis": [
+                "🧥",
+                "🧥"
+              ]
+            }
+          ],
+          "emoji": "🌦️"
+        },
+        {
+          "topic_id": "lkg_ga_animals",
+          "title": "Animals",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Wild, domestic, water and pet animals",
+          "intro_message": "Animals live in many different places!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_an_1",
+              "type": "match",
+              "skill_id": "wild_animals",
+              "prompt": "Which animal is WILD?",
+              "visual_items": [
+                "tiger",
+                "cow"
+              ],
+              "options": [
+                "tiger",
+                "cow"
+              ],
+              "correct_answer": "tiger",
+              "hint": "It lives in the forest.",
+              "difficulty": "easy",
+              "emoji": "🐅",
+              "option_emojis": [
+                "🐅",
+                "🐄"
+              ]
+            },
+            {
+              "activity_id": "lkg_an_2",
+              "type": "match",
+              "skill_id": "domestic_animals",
+              "prompt": "Which animal is DOMESTIC?",
+              "visual_items": [
+                "goat",
+                "lion"
+              ],
+              "options": [
+                "goat",
+                "lion"
+              ],
+              "correct_answer": "goat",
+              "hint": "It lives with people.",
+              "difficulty": "easy",
+              "emoji": "🐐",
+              "option_emojis": [
+                "🐐",
+                "🦁"
+              ]
+            },
+            {
+              "activity_id": "lkg_an_3",
+              "type": "match",
+              "skill_id": "water_animals",
+              "prompt": "Which animal lives in WATER?",
+              "visual_items": [
+                "turtle",
+                "camel"
+              ],
+              "options": [
+                "turtle",
+                "camel"
+              ],
+              "correct_answer": "turtle",
+              "hint": "It swims and has a shell.",
+              "difficulty": "easy",
+              "emoji": "🐢",
+              "option_emojis": [
+                "🐢",
+                "🐫"
+              ]
+            },
+            {
+              "activity_id": "lkg_an_4",
+              "type": "multiple_choice",
+              "skill_id": "pet_animals",
+              "prompt": "Which animal do we keep as a PET at home?",
+              "visual_items": [
+                "dog",
+                "elephant"
+              ],
+              "options": [
+                "dog",
+                "elephant"
+              ],
+              "correct_answer": "dog",
+              "hint": "It wags its tail.",
+              "difficulty": "very_easy",
+              "emoji": "🐶",
+              "option_emojis": [
+                "🐶",
+                "🐘"
+              ]
+            },
+            {
+              "activity_id": "lkg_an_5",
+              "type": "multiple_choice",
+              "skill_id": "animal_homes",
+              "prompt": "Where does a bird live?",
+              "visual_items": [
+                "nest",
+                "kennel"
+              ],
+              "options": [
+                "nest",
+                "kennel"
+              ],
+              "correct_answer": "nest",
+              "hint": "It is built in a tree.",
+              "difficulty": "medium",
+              "emoji": "🪹",
+              "option_emojis": [
+                "🪹",
+                "🏠"
+              ]
+            }
+          ],
+          "emoji": "🐾"
+        }
+      ],
+      "emoji": "🌍"
+    },
+    {
+      "subject_id": "lkg_evs",
+      "title": "Environmental Science",
+      "sort_order": 4,
+      "topics": [
+        {
+          "topic_id": "lkg_evs_habits",
+          "title": "Good Habits & Manners",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Everyday good habits and polite manners",
+          "intro_message": "Good habits make everyone happy.",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_gh_1",
+              "type": "multiple_choice",
+              "skill_id": "good_habits",
+              "prompt": "What should we do with waste paper?",
+              "visual_items": [
+                "dustbin",
+                "floor"
+              ],
+              "options": [
+                "put it in the dustbin",
+                "throw it on the floor"
+              ],
+              "correct_answer": "put it in the dustbin",
+              "hint": "Keep our place clean.",
+              "difficulty": "very_easy",
+              "emoji": "🗑️",
+              "option_emojis": [
+                "▫️",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "lkg_gh_2",
+              "type": "multiple_choice",
+              "skill_id": "manners",
+              "prompt": "What do we say before asking for something?",
+              "visual_items": [
+                "child"
+              ],
+              "options": [
+                "please",
+                "give me"
+              ],
+              "correct_answer": "please",
+              "hint": "A magic word.",
+              "difficulty": "easy",
+              "emoji": "🤔"
+            },
+            {
+              "activity_id": "lkg_gh_3",
+              "type": "multiple_choice",
+              "skill_id": "good_habits",
+              "prompt": "How many times a day should we brush our teeth?",
+              "visual_items": [
+                "toothbrush"
+              ],
+              "options": [
+                "2",
+                "0",
+                "5"
+              ],
+              "correct_answer": "2",
+              "hint": "Morning and night.",
+              "difficulty": "easy",
+              "emoji": "🪥",
+              "option_emojis": [
+                "2️⃣",
+                "0️⃣",
+                "5️⃣"
+              ]
+            }
+          ],
+          "emoji": "🧼"
+        },
+        {
+          "topic_id": "lkg_evs_living",
+          "title": "Living & Non-Living",
+          "sort_order": 2,
+          "delivery": "hybrid",
+          "objective": "Sort living from non-living things",
+          "intro_message": "Some things are alive. Let us find out which!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_lv_1",
+              "type": "match",
+              "skill_id": "living_nonliving",
+              "prompt": "Which of these is LIVING?",
+              "visual_items": [
+                "tree",
+                "table"
+              ],
+              "options": [
+                "tree",
+                "table"
+              ],
+              "correct_answer": "tree",
+              "hint": "Living things grow and need water.",
+              "difficulty": "easy",
+              "emoji": "🌳",
+              "option_emojis": [
+                "🌳",
+                "🪑"
+              ]
+            },
+            {
+              "activity_id": "lkg_lv_2",
+              "type": "match",
+              "skill_id": "living_nonliving",
+              "prompt": "Which of these is NON-LIVING?",
+              "visual_items": [
+                "ball",
+                "bird"
+              ],
+              "options": [
+                "ball",
+                "bird"
+              ],
+              "correct_answer": "ball",
+              "hint": "It cannot move on its own.",
+              "difficulty": "easy",
+              "emoji": "⚽",
+              "option_emojis": [
+                "⚽",
+                "🐦"
+              ]
+            },
+            {
+              "activity_id": "lkg_lv_3",
+              "type": "parent_activity",
+              "skill_id": "living_collection",
+              "prompt": "Collect three living and three non-living things with a grown-up.",
+              "visual_items": [
+                "basket"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A leaf is living, a spoon is not.",
+              "difficulty": "medium",
+              "parent_note": "Lay them in two piles and ask the child to explain each choice. The reasoning matters more than the sorting.",
+              "emoji": "🧺"
+            }
+          ],
+          "emoji": "🌱"
+        },
+        {
+          "topic_id": "lkg_evs_traffic",
+          "title": "Traffic Rules & Body Parts",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Traffic signals and naming parts of the body",
+          "intro_message": "Rules keep us safe, and our body helps us follow them!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_tf_1",
+              "type": "multiple_choice",
+              "skill_id": "traffic_signals",
+              "prompt": "What does a YELLOW light mean?",
+              "visual_items": [
+                "traffic_light"
+              ],
+              "options": [
+                "get ready",
+                "go fast"
+              ],
+              "correct_answer": "get ready",
+              "hint": "It comes between red and green.",
+              "difficulty": "medium",
+              "emoji": "🚦"
+            },
+            {
+              "activity_id": "lkg_tf_2",
+              "type": "multiple_choice",
+              "skill_id": "traffic_signals",
+              "prompt": "Where do people cross the road safely?",
+              "visual_items": [
+                "zebra_crossing"
+              ],
+              "options": [
+                "zebra crossing",
+                "anywhere"
+              ],
+              "correct_answer": "zebra crossing",
+              "hint": "The white stripes on the road.",
+              "difficulty": "medium",
+              "emoji": "🚸",
+              "option_emojis": [
+                "🦓",
+                "▫️"
+              ]
+            },
+            {
+              "activity_id": "lkg_tf_3",
+              "type": "multiple_choice",
+              "skill_id": "body_parts",
+              "prompt": "Which part of the body do we use to hold things?",
+              "visual_items": [
+                "hands",
+                "ears"
+              ],
+              "options": [
+                "hands",
+                "ears"
+              ],
+              "correct_answer": "hands",
+              "hint": "They have fingers.",
+              "difficulty": "very_easy",
+              "emoji": "✋",
+              "option_emojis": [
+                "✋",
+                "👂"
+              ]
+            }
+          ],
+          "emoji": "🚦"
+        }
+      ],
+      "emoji": "🌱"
+    },
+    {
+      "subject_id": "lkg_art",
+      "title": "Art & Writing",
+      "sort_order": 5,
+      "topics": [
+        {
+          "topic_id": "lkg_art_strokes",
+          "title": "Pre-Writing Strokes",
+          "sort_order": 1,
+          "delivery": "digital",
+          "objective": "Standing, sleeping, slanting lines and all four curves",
+          "intro_message": "Strong lines make strong letters!",
+          "star_reward": 5,
+          "activities": [
+            {
+              "activity_id": "lkg_st_1",
+              "type": "trace",
+              "skill_id": "stroke_standing",
+              "prompt": "Trace the standing line.",
+              "visual_items": [
+                "standing_line_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Top to bottom, nice and straight.",
+              "difficulty": "very_easy",
+              "trace_target": "standing_line",
+              "min_accuracy": 0.65,
+              "emoji": "➖"
+            },
+            {
+              "activity_id": "lkg_st_2",
+              "type": "trace",
+              "skill_id": "stroke_sleeping",
+              "prompt": "Trace the sleeping line.",
+              "visual_items": [
+                "sleeping_line_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Left to right, flat.",
+              "difficulty": "very_easy",
+              "trace_target": "sleeping_line",
+              "min_accuracy": 0.65,
+              "emoji": "➖"
+            },
+            {
+              "activity_id": "lkg_st_3",
+              "type": "trace",
+              "skill_id": "stroke_left_slant",
+              "prompt": "Trace the left slanting line.",
+              "visual_items": [
+                "left_slant_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Lean it to the left.",
+              "difficulty": "easy",
+              "trace_target": "left_slant",
+              "min_accuracy": 0.6,
+              "emoji": "✏️"
+            },
+            {
+              "activity_id": "lkg_st_4",
+              "type": "trace",
+              "skill_id": "stroke_right_slant",
+              "prompt": "Trace the right slanting line.",
+              "visual_items": [
+                "right_slant_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Lean it to the right.",
+              "difficulty": "easy",
+              "trace_target": "right_slant",
+              "min_accuracy": 0.6,
+              "emoji": "✏️"
+            },
+            {
+              "activity_id": "lkg_st_5",
+              "type": "trace",
+              "skill_id": "stroke_up_curve",
+              "prompt": "Trace the up curve.",
+              "visual_items": [
+                "up_curve_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Like a smile.",
+              "difficulty": "easy",
+              "trace_target": "up_curve",
+              "min_accuracy": 0.6,
+              "emoji": "✏️"
+            },
+            {
+              "activity_id": "lkg_st_6",
+              "type": "trace",
+              "skill_id": "stroke_down_curve",
+              "prompt": "Trace the down curve.",
+              "visual_items": [
+                "down_curve_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Like a rainbow.",
+              "difficulty": "easy",
+              "trace_target": "down_curve",
+              "min_accuracy": 0.6,
+              "emoji": "✏️"
+            }
+          ],
+          "emoji": "✏️"
+        },
+        {
+          "topic_id": "lkg_art_writing",
+          "title": "Letter Writing",
+          "sort_order": 2,
+          "delivery": "digital",
+          "objective": "Write the capital and small letters with a finger",
+          "intro_message": "Now let us write! Follow the shape with your finger.",
+          "star_reward": 6,
+          "generation_rule": "For each letter emit one trace of the capital and one of the small letter. Only A is authored so far; the rest of the alphabet is still to be written.",
+          "activities": [
+            {
+              "activity_id": "lkg_cap_A_3",
+              "type": "trace",
+              "skill_id": "letter_A_trace",
+              "prompt": "Write the letter A.",
+              "visual_items": [
+                "letter_A_outline"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down, down, then across.",
+              "difficulty": "easy",
+              "trace_target": "A",
+              "min_accuracy": 0.65,
+              "emoji": "✏️"
+            }
+          ],
+          "emoji": "✏️"
+        }
+      ],
+      "emoji": "🎨"
+    }
+  ],
+  "emoji": "🌟",
+  "emoji_map": {
+    "0": "0️",
+    "1": "⃣1",
+    "2": "️⃣",
+    "3": "2️",
+    "4": "⃣3",
+    "5": "️⃣",
+    "6": "4️",
+    "7": "⃣5",
+    "8": "️⃣",
+    "9": "6️",
+    "adult_hand": "✋",
+    "apple": "🍎",
+    "ball": "⚽",
+    "ball_outside_basket": "⚽",
+    "balloon": "🎈",
+    "balls_mixed": "🔴",
+    "basket": "🧺",
+    "bird": "🐦",
+    "bird_above": "🐦",
+    "birds_far": "🐦",
+    "blue": "🟦",
+    "blue_book": "🟦",
+    "blue_circle": "🔵",
+    "blue_square": "🟦",
+    "bones_2": "🦴",
+    "book": "📚",
+    "book_stack": "📚",
+    "box": "📦",
+    "building_short": "🏠",
+    "building_tall": "🏢",
+    "bun": "🥐",
+    "bus": "🚌",
+    "cake": "🎂",
+    "camel": "🐫",
+    "cap": "🧢",
+    "car": "🚗",
+    "carpenter": "🪚",
+    "cat": "🐱",
+    "cat_near": "🐱",
+    "chairs_3": "🪑",
+    "children_3": "🧒",
+    "circle": "⭕",
+    "coin_1": "🪙",
+    "coin_5": "🪙",
+    "cow": "🐄",
+    "cycle": "🚲",
+    "doctor": "👨‍⚕️",
+    "dog": "🐶",
+    "dog_beside": "🐶",
+    "dogs_4": "🐶",
+    "door": "🚪",
+    "dot": "⚫",
+    "dot_group_6": "⚫",
+    "dustbin": "🗑️",
+    "ears": "👂",
+    "elephant": "🐘",
+    "face": "😊",
+    "farmer": "👨‍🌾",
+    "footpath": "🚶",
+    "goat": "🐐",
+    "grandfather": "👴",
+    "green_square": "🟩",
+    "group_10": "🔢",
+    "group_3": "🔢",
+    "group_4": "🔢",
+    "group_5": "🔢",
+    "group_9": "🔢",
+    "hands": "✋",
+    "helicopter": "🚁",
+    "kennel": "🏠",
+    "legs": "🦵",
+    "lion": "🦁",
+    "matches": "🔥",
+    "monkey": "🐵",
+    "nest": "🪹",
+    "plate": "🍽️",
+    "plough": "🚜",
+    "policeman": "👮",
+    "postman": "📮",
+    "put it in the dustbin": "🗑️",
+    "raincoat": "🧥",
+    "rectangle": "▭",
+    "red": "🟥",
+    "red_book": "🟥",
+    "red_circle": "🔴",
+    "red_square": "🟥",
+    "road_narrow": "🛤️",
+    "road_wide": "🛣️",
+    "schoolbag": "🎒",
+    "sleeping_line_outline": "➖",
+    "slide": "🛝",
+    "snake_long": "🐍",
+    "snake_short": "🐍",
+    "square": "🟦",
+    "standing_line_outline": "➖",
+    "star": "⭐",
+    "stethoscope": "🩺",
+    "sun": "☀️",
+    "sweater": "🧥",
+    "table": "🪑",
+    "ten_frame_2": "🔢",
+    "ten_frame_3": "🔢",
+    "ten_frame_5": "🔢",
+    "ten_frame_9": "🔢",
+    "the cat and dog": "🐱",
+    "tiger": "🐅",
+    "toothbrush": "🪥",
+    "traffic_light": "🚦",
+    "train": "🚂",
+    "tree": "🌳",
+    "triangle": "🔺",
+    "turtle": "🐢",
+    "uncle": "👨",
+    "yellow_circle": "🟡",
+    "yellow_triangle": "🔶",
+    "zebra crossing": "🦓",
+    "zebra_crossing": "🚸"
+  }
+}

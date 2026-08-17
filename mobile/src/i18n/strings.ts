@@ -59,7 +59,7 @@ const en = {
   // Rewards
   "reward.starEarned": "You earned a star!",
   "reward.levelComplete": "You did it!",
-  "reward.certificate": "Little Learning Explorer",
+  "reward.certificate": "Saksham IQ Explorer",
 } as const;
 
 /**

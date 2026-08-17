@@ -9,38 +9,129 @@ export type AuthResponse = {
   user: User;
 };
 
-export type PathProgress = {
-  current_stage: number;
-  completed_stages: number[];
-  unlocked_stages: number[];
-  score: number;
+/** Presentation rules for an age band. Served from the manifest, never hardcoded. */
+export type ExperienceMode = {
+  mode_id: string;
+  applies_to: string[];
+  touch_target_px: number;
+  max_choices_per_screen: number;
+  text_density: "none" | "short_words" | string;
+  voice: string;
+  idle_thresholds_seconds: number[];
+};
+
+export type Topic = {
+  topic_id: string;
+  subject_id: string;
+  class_id: string;
+  title: string;
+  icon: string;
+  sort_order: number;
+  subtopics: string[];
+  /**
+   * One emoji per subtopic, in the same order. Optional, and not only because a
+   * topic may author none: a server older than this field omits it entirely, so
+   * a caller that assumes an array here crashes against a backend mid-deploy.
+   */
+  subtopic_icons?: string[];
+  /**
+   * One plain-language line per subtopic, in the same order — what that point
+   * actually means to a child. Optional for the same two reasons as the icons.
+   */
+  subtopic_easy?: string[];
+  /** The whole topic in one friendly line. `objective` stays the grown-up summary. */
+  easy_line?: string | null;
+  activity_count: number;
+  available: boolean;
+  passing_score: number;
+  star_reward: number;
+  objective?: string | null;
+  intro_message?: string | null;
+  /** "digital" | "hybrid" | "parent_guided" */
+  delivery: string;
+};
+
+export type Subject = {
+  subject_id: string;
+  class_id: string;
+  title: string;
+  /** The child-facing name, when the manifest gives one. Falls back to `title`. */
+  fun_name?: string | null;
+  icon: string;
+  accent: string;
+  /** An exact colour for a subject that pins one. Falls back to `accent`. */
+  colour?: string | null;
+  note?: string | null;
+  /** What the subject is, in a line a child can follow. `note` is for grown-ups. */
+  easy_line?: string | null;
+  sort_order: number;
+  topic_count: number;
+  subtopic_count: number;
+  activity_count: number;
+  available: boolean;
+  topics: Topic[];
+};
+
+export type ClassSummary = {
+  class_id: string;
+  code: string;
+  title: string;
+  subtitle?: string | null;
+  min_age: number;
+  max_age: number;
+  experience_mode: string;
+  sort_order: number;
+  pedagogy?: string | null;
+  subject_count: number;
+  topic_count: number;
+  subtopic_count: number;
+  activity_count: number;
+};
+
+export type ClassDetail = ClassSummary & {
+  experience: ExperienceMode;
+  removed_subjects: string[];
+  subjects: Subject[];
+};
+
+export type CurriculumOverview = {
+  version: string;
+  source: string;
+  classes: ClassSummary[];
+  experience_modes: Record<string, ExperienceMode>;
+};
+
+export type SubjectProgress = {
+  completed_topics: string[];
+  unlocked_topics: string[];
+  current_topic_id: string | null;
+  scores: Record<string, number>;
 };
 
 export type ChildProfile = {
   child_id: string;
   user_id: string;
   name: string;
-  age_group: string;
-  age?: number | null;
-  learning_mode?: "standard" | "toddler";
+  birth_year: number;
+  birth_month: number;
+  age_years: number;
+  class_id: string;
+  default_class_id: string;
+  class_override: string | null;
+  experience_mode: string;
   preferred_language: string;
   stars: number;
-  current_path: string;
-  current_stage: number;
-  completed_paths: string[];
-  path_progress: Record<string, PathProgress>;
+  current_subject_id: string | null;
+  current_topic_id: string | null;
+  completed_subjects: string[];
+  subject_progress: Record<string, SubjectProgress>;
   weak_skills: string[];
   rewards: string[];
-  mixed_path_unlocked: boolean;
   certificate_unlocked: boolean;
 };
 
-export type PathSummary = {
-  path_id: string;
-  title: string;
-  description: string;
-  total_stages: number;
-};
+/** How an activity is answered. Decided by the server's evaluator registry. */
+export type AnswerKind = "choice" | "spoken" | "presentational";
 
 export type Activity = {
   activity_id: string;
@@ -48,40 +139,41 @@ export type Activity = {
   prompt: string;
   visual_items: string[];
   options: string[];
-  correct_answer: string;
+  correct_answer: string | null;
   hint: string;
   difficulty: string;
-};
-
-export type Stage = {
-  stage_id: string;
-  path_id: string;
-  stage_number: number;
-  title: string;
-  objective: string;
-  module_type: string;
-  difficulty: string;
-  intro_message: string;
-  passing_score: number;
-  star_reward: number;
-  activities: Activity[];
-  next_stage: number | null;
+  answer_kind: AnswerKind;
+  skill_id?: string | null;
+  accept?: string[];
+  min_similarity?: number | null;
+  open_ended?: boolean;
+  /** Trace activities: what to draw, and how close counts as done. */
+  trace_target?: string | null;
+  min_accuracy?: number | null;
+  /** Shown to the grown-up for a physical-world activity. */
+  parent_note?: string | null;
 };
 
 export type LearningResponse = {
   session_id: string;
   child_id: string;
-  path_id: string;
-  stage_number: number;
+  class_id: string;
+  subject_id: string;
+  topic_id: string;
+  topic_title: string;
+  experience_mode: string;
   tutor_response: string;
   activity: Activity | null;
+  activity_index: number;
+  activity_total: number;
   is_correct: boolean | null;
   attempt_number: number;
   feedback: string;
   stars_earned: number;
   current_score: number;
-  stage_completed: boolean;
-  next_stage_unlocked: boolean;
+  topic_completed: boolean;
+  next_topic_id: string | null;
+  next_topic_unlocked: boolean;
   recommended_practice: boolean;
   question_changed: boolean;
   complete: boolean;
@@ -122,14 +214,14 @@ export type GuideEvent =
   | "PRACTICE_ANSWER_INCORRECT"
   | "PRACTICE_COMPLETED"
   | "ADVENTURE_OPENED"
-  | "LEVEL_OPENED"
-  | "LEVEL_STARTED"
-  | "LEVEL_QUESTION_LOADED"
-  | "LEVEL_ANSWER_CORRECT"
-  | "LEVEL_ANSWER_INCORRECT"
-  | "LEVEL_COMPLETED"
-  | "WORLD_COMPLETED"
-  | "WORLD_UNLOCKED"
+  | "TOPIC_OPENED"
+  | "TOPIC_STARTED"
+  | "TOPIC_QUESTION_LOADED"
+  | "TOPIC_ANSWER_CORRECT"
+  | "TOPIC_ANSWER_INCORRECT"
+  | "TOPIC_COMPLETED"
+  | "SUBJECT_COMPLETED"
+  | "TOPIC_UNLOCKED"
   | "REWARDS_OPENED"
   | "CERTIFICATE_UNLOCKED"
   | "GUIDE_HELP_REQUESTED"
@@ -165,32 +257,20 @@ export type GuideRequest = {
   route: string;
   screen: string;
   feature: string;
-  age_group?: string;
-  age?: number | null;
-  learning_mode?: "standard" | "toddler";
+  class_id?: string | null;
+  experience_mode?: string;
   preferred_language?: string;
   conversation?: Array<{
     role: "user" | "assistant";
     content: string;
   }>;
-  toddler?: {
-    learning_mode: "standard" | "toddler";
-    age?: number | null;
-    module?: string | null;
-    level?: number | null;
-    concept?: string | null;
-    activity_type?: string | null;
-    expected_answer?: string | null;
-    recognized_speech?: string | null;
-    attempt_count?: number;
-    stars?: number;
-    recent_result?: string | null;
-  } | null;
   question?: GuideQuestionContext | null;
   progress?: {
-    current_world?: string | null;
-    current_level?: string | null;
-    last_completed_level?: string | null;
+    current_class?: string | null;
+    current_subject?: string | null;
+    current_topic?: string | null;
+    last_completed_topic?: string | null;
+    last_completed_title?: string | null;
     weak_skills?: string[];
     session_stars?: number;
   } | null;
@@ -224,41 +304,12 @@ export type CompanionResponse = {
   next_action: string;
   recommendation: {
     kind?: string;
-    path_id?: string | null;
-    stage_number?: number | null;
+    subject_id?: string | null;
+    topic_id?: string | null;
     target_id?: string | null;
     route?: string;
     label?: string;
   };
-};
-
-export type LearningMode = "standard" | "toddler";
-
-export type ToddlerModule = "alphabets" | "numbers" | "colours" | "shapes";
-
-export type ToddlerActivity = {
-  activity_id: string;
-  type: "introduce" | "repeat_after_me" | "recognition" | "count_objects" | "complete";
-  prompt: string;
-  speech: string;
-  concept: string;
-  emoji: string;
-  word?: string | null;
-  visual_items: string[];
-  choices: string[];
-  answer?: string | null;
-  accepted: string[];
-};
-
-export type ToddlerLevel = {
-  id: string;
-  mode: "toddler";
-  module: ToddlerModule;
-  level: number;
-  title: string;
-  concepts: string[];
-  star_reward: number;
-  activities: ToddlerActivity[];
 };
 
 export type SpeechEvaluation = {
@@ -267,39 +318,4 @@ export type SpeechEvaluation = {
   expected: string;
   heard: string;
   retry: boolean;
-};
-
-export type ToddlerGuideResponse = {
-  speech: string;
-  emotion: "happy" | "encouraging" | "thinking" | "celebrate" | "gentle_retry";
-  emoji: string;
-  action: "speak" | "listen" | "repeat" | "next_activity" | "show_visual" | "give_reward" | "complete_level";
-  repeat: boolean;
-  target: string | null;
-};
-
-export type ToddlerResponse = {
-  session_id: string;
-  child_id: string;
-  module: ToddlerModule;
-  level: number;
-  activity: ToddlerActivity | null;
-  guide: ToddlerGuideResponse;
-  evaluation: SpeechEvaluation | null;
-  stars_earned: number;
-  total_stars: number;
-  attempt_count: number;
-  completed_activities: string[];
-  level_completed: boolean;
-  next_level_unlocked: boolean;
-  question_changed: boolean;
-  learned_concepts: string[];
-  avatar: import("@/components/avatar/avatar.types").AvatarPayload;
-};
-
-export type ToddlerModuleSummary = {
-  module: ToddlerModule;
-  title: string;
-  icon: string;
-  levels: number;
 };

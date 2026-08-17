@@ -31,10 +31,15 @@ Nothing new is invented.
 
 | Class | `class_id` | Age | Mode | Subjects | Topics |
 |---|---|---|---|---|---|
-| Play Group | `playgroup` | 2–3 | `early` | 5 | 20 |
-| Nursery | `nursery` | 3–4 | `early` | 5 | 27 |
-| LKG | `lkg` | 4–5 | `standard` | 4 | 20 |
-| UKG | `ukg` | 5–6 | `standard` | 6 | 19 |
+| Play Group | `playgroup` | 2–3 | `early` | 3 | 24 |
+| Nursery | `nursery` | 3–4 | `early` | 6 | 52 |
+| LKG | `lkg` | 4–5 | `standard` | 5 | 23 |
+| UKG | `ukg` | 5–6 | `standard` | 6 | 23 |
+
+Play Group's three subjects are a product decision, not the published count —
+see section 4a. Nursery's and Play Group's topic counts are levels rather than
+published units: a published unit that would be one oversized lesson is split so
+one sitting is one idea.
 
 `toddler` is gone. Play Group replaces it.
 
@@ -42,7 +47,7 @@ Nothing new is invented.
 
 | Mode | Classes | Touch target | Choices/screen | Text | Idle rungs (s) |
 |---|---|---|---|---|---|
-| `early` | Play Group, Nursery | 96 px | 2 | none — icon + voice only | 12 / 25 / 40 / 60 / 80 |
+| `early` | Play Group, Nursery | 96 px | 3 | none — icon + voice only | 12 / 25 / 40 / 60 / 80 |
 | `standard` | LKG, UKG | 64 px | 4 | short words | 8 / 18 / 30 / 45 / 60 |
 
 Two modes, not four. The gap between a 2-year-old and a 4-year-old is an interface problem;
@@ -50,9 +55,31 @@ the gap between LKG and UKG is a content problem.
 
 ## 4. Hindi
 
-Removed from **Nursery**. Play Group and LKG never had it. **UKG retains its Language
-subject** — you asked only for Nursery and Play Group. Confirm before shipping: the
-curriculum currently has no Hindi for ages 2–5 and then Hindi at 5–6.
+Removed from **Nursery** and **UKG**, then restored in both on request: Nursery's
+orally, UKG's with writing and matras. Play Group and LKG never published a Hindi
+subject. Neither restored class lists one under `removed_subjects` any more — the
+mechanism is still there, and still records Play Group's Motor Skills below.
+**Decided and shipped.**
+
+## 4a. Play Group teaches three subjects
+
+Play Group ships **English, Early Mathematics and General Awareness** only.
+"Motor Skills Development" was removed first, then "Social and Emotional
+Learning", "Creative Learning" and "Basic Life Skills" — all four by the same
+`removed_subjects` mechanism and for the same reason: each is in the published
+syllabus, so a silent deletion would read as an extraction gap. Any authored
+activities stay in `activities/playgroup.json` and are skipped at load time, so
+restoring a subject is a manifest edit alone. **Decided and shipped.**
+
+## 4b. General Awareness is delivered as short levels
+
+Play Group's six published General Awareness topics are delivered as fourteen
+levels of three or four things each — Colours as three levels, Animals as four,
+and so on. A level meets each thing one at a time and then checks it, and carries
+extra question variants so the adventure and Practice do not repeat each other.
+Every published point survives as a subtopic of the level that teaches it, which
+is why the class keeps 50 General Awareness subtopics and only the topic count
+moved. Same reasoning as Nursery's letter and number levels in section 4.
 
 ## 5. Age band resolution
 
@@ -77,26 +104,40 @@ the child change it.
 
 **Backend**
 
-- [ ] `backend/app/data/curriculum/manifest.json` is the only curriculum source; the five `*_path.json` files are deleted.
-- [ ] A loader validates the manifest on startup and **fails fast** with a named error on a malformed file.
-- [ ] All 4 classes, 20 subjects, 86 topics load; counts asserted in a test.
-- [ ] No Hindi subject exists under `nursery` — asserted by test.
-- [ ] Age → class resolution matches §5 exactly, including boundaries at 3.0, 4.0 and 5.0.
-- [ ] Adding a subject or topic requires **only** a manifest edit — zero code changes, demonstrated.
-- [ ] Every `activity.type` referenced has a registered evaluator, or the loader rejects the file naming the offending type.
-- [ ] `toddler` no longer appears anywhere in the backend — grep-verified.
+- [x] `backend/app/data/curriculum/manifest.json` is the only curriculum source; the five `*_path.json` files are deleted.
+- [x] A loader validates the manifest on startup and **fails fast** with a named error on a malformed file. — `curriculum_service.load_curriculum()` from `main.lifespan`, raising `CurriculumManifestError`.
+- [x] All 4 classes, **20** subjects, **98** topics load; counts asserted in a test. — counts moved twice since the plan: UKG's Language subject was removed (§4), and Play Group's Motor Skills Development was removed later by the same mechanism (§4a).
+- [x] No Hindi subject exists under `nursery` — asserted by test, and under every other class too.
+- [x] Age → class resolution matches §5 exactly, including boundaries at 3.0, 4.0 and 5.0. — parametrised test.
+- [x] Adding a subject or topic requires **only** a manifest edit — zero code changes, demonstrated by `test_adding_a_topic_needs_only_a_manifest_edit`.
+- [x] Every `activity.type` referenced has a registered evaluator, or the loader rejects the file naming the offending type.
+- [x] `toddler` no longer appears anywhere in the backend — grep-verified (only this doc and the curriculum README's changelog table mention it).
 
 **Frontend**
 
-- [ ] The age gate is replaced by class selection driven by the manifest, shown once during onboarding.
-- [ ] `/toddler` is gone; requesting it redirects to `/adventure`.
-- [ ] `services/toddlerGuide.ts`, `services/toddlerVoice.ts`, `components/toddler/ToddlerExperience.tsx`, `ToddlerHome.tsx`, `ToddlerLesson.tsx` are deleted.
-- [ ] `data/prototype.ts` is deleted; nothing imports it.
-- [ ] The adventure screen shows the child's class → subjects → topics, all from the server.
-- [ ] `early` mode enforces 96 px targets and 2 choices; `standard` enforces 64 px and 4 — automated check per mode.
-- [ ] A parent can override to an adjacent class; a child cannot.
-- [ ] Class, subject and topic names come from the manifest — no hardcoded curriculum strings anywhere, grep-verified.
-- [ ] A subject with no authored activities yet renders an honest "coming soon" state, never a crash or an empty screen.
+- [x] The age gate is replaced by class selection driven by the manifest, shown once during onboarding. — onboarding asks for a birth month once; the class is resolved server-side and previewed from `/curriculum/classes`.
+- [x] `/toddler` is gone; requesting it redirects to `/adventure` (also `/levels`).
+- [x] `services/toddlerGuide.ts`, `services/toddlerVoice.ts`, `components/toddler/*` are deleted.
+- [x] `data/prototype.ts` is deleted; nothing imports it.
+- [x] The adventure screen shows the child's class → subjects → topics, all from the server.
+- [x] `early` mode enforces 96 px targets and its choice cap; `standard` enforces 64 px and 4. — the floor is applied by `data-surface` in `globals.css` and `lib/experience.ts`; the choice cap is enforced on both sides, and an over-wide authored activity fails the server's startup. The `early` cap is now 3 rather than 2, see Content status below.
+- [x] A parent can override to an adjacent class; a child cannot. — the override needs a parent session token, and the server rejects any non-adjacent target with `CLASS_NOT_ADJACENT`.
+- [x] Class, subject and topic names come from the manifest — no hardcoded curriculum strings anywhere, grep-verified.
+- [x] A subject with no authored activities yet renders an honest "coming soon" state, never a crash or an empty screen. — the API answers `TOPIC_NOT_READY` rather than pretending.
+
+### Content status
+
+Activity content followed the migration rather than being part of it. All four
+classes are authored — 614 activities served — with Play Group filled in last and
+carrying 296 of them, several examples per topic so that the adventure and
+Practice never hand a child the same question twice. Two things changed as a
+result of real content meeting the spec:
+
+- `early` mode now allows **three** choices per screen, not two. A counting question
+  with two options is close to a coin flip.
+- Environmental Science is grouped into topics per class instead of one catch-all
+  topic, so each topic is a real lesson unit. Every published subtopic is preserved,
+  which is why the topic count rose from 83 to 88 while subtopics stayed at 381.
 
 ---
 

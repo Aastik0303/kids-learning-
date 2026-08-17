@@ -1,5 +1,5 @@
 import { api } from "@/services/api";
-import { getOrCreateGuestChild } from "@/services/session";
+import { getChild } from "@/services/session";
 import type { Activity, ChildProfile, GuideQuestionContext, GuideRequest, GuideResponse } from "@/types";
 
 type ActiveGuideContext = {
@@ -7,9 +7,8 @@ type ActiveGuideContext = {
   sessionId?: string;
   screen?: string;
   topic?: string;
-  learningMode?: "standard" | "toddler";
+  experienceMode?: string;
   question?: GuideQuestionContext | null;
-  toddler?: GuideRequest["toddler"];
 };
 
 let activeGuideContext: ActiveGuideContext | null = null;
@@ -22,7 +21,9 @@ export const GUIDE_TARGETS = {
   HOME_PRACTICE: "home-practice",
   START_PRACTICE: "start-practice",
   CONTINUE_ADVENTURE: "continue-adventure",
-  CURRENT_LEVEL: "current-level",
+  SUBJECT_CARD: "subject-card",
+  TOPIC_CARD: "topic-card",
+  ACTIVITY_AREA: "activity-area",
   CURRENT_MAP_LEVEL: "current-map-level",
   QUESTION_AREA: "question-area",
   COUNTING_OBJECTS: "counting-object-group",
@@ -34,7 +35,8 @@ export const GUIDE_TARGETS = {
   PARENT_PROFILE: "parent-profile",
   OPEN_CERTIFICATE: "open-certificate",
   MORE_PRACTICE: "more-practice",
-  OPEN_LEVELS: "open-levels"
+  OPEN_SUBJECTS: "open-subjects",
+  ADVENTURE_HOME: "adventure-home"
 } as const;
 
 const SAFE_GUIDE_TARGETS = new Set<string>(Object.values(GUIDE_TARGETS));
@@ -68,7 +70,7 @@ export function activityQuestion(activity: Activity, overrides: Partial<NonNulla
     correct_answer: activity.correct_answer,
     hint: activity.hint,
     visual_items: activity.visual_items,
-    accepted_answers: [activity.correct_answer],
+    accepted_answers: activity.correct_answer ? [activity.correct_answer, ...(activity.accept ?? [])] : [],
     recent_answers: [],
     difficulty: activity.difficulty,
     attempt: 0,
@@ -80,11 +82,12 @@ export function visualTargetsForActivity(activity: Activity) {
   return activity.visual_items.map((_, index) => `visual-item-${index}`);
 }
 
-export function progressContext(child: ChildProfile | null, currentWorld?: string | null, currentLevel?: string | null): GuideRequest["progress"] {
+export function progressContext(child: ChildProfile | null, currentSubject?: string | null, currentTopic?: string | null): GuideRequest["progress"] {
   return {
-    current_world: currentWorld ?? child?.current_path ?? null,
-    current_level: currentLevel ?? (child?.current_stage ? `Level ${child.current_stage}` : null),
-    last_completed_level: null,
+    current_class: child?.class_id ?? null,
+    current_subject: currentSubject ?? child?.current_subject_id ?? null,
+    current_topic: currentTopic ?? child?.current_topic_id ?? null,
+    last_completed_topic: null,
     weak_skills: child?.weak_skills ?? [],
     session_stars: child?.stars ?? 0
   };
@@ -105,8 +108,7 @@ export function askGuideQuestion({
   screen,
   activity,
   questionContext,
-  toddlerContext,
-  learningMode,
+  experienceMode,
   topic,
   attempt = 0
 }: {
@@ -117,12 +119,11 @@ export function askGuideQuestion({
   screen?: string;
   activity?: Activity;
   questionContext?: GuideQuestionContext;
-  toddlerContext?: GuideRequest["toddler"];
-  learningMode?: "standard" | "toddler";
+  experienceMode?: string;
   topic?: string;
   attempt?: number;
 }) {
-  const child = getOrCreateGuestChild();
+  const child = getChild();
   const activeContext = activeGuideContext?.route === route ? activeGuideContext : null;
   const contextualQuestion = activity
     ? activityQuestion(activity, {
@@ -133,24 +134,22 @@ export function askGuideQuestion({
         attempt
       })
     : questionContext ?? activeContext?.question ?? undefined;
-  const toddlerMode = (learningMode ?? activeContext?.learningMode ?? child.learning_mode ?? "standard") === "toddler";
-  const contextualTargets = toddlerMode
-    ? ["toddler-activity", "toddler-choices", "toddler-microphone"]
+  const earlyMode = (experienceMode ?? activeContext?.experienceMode ?? child?.experience_mode ?? "standard") === "early";
+  const contextualTargets = earlyMode
+    ? [GUIDE_TARGETS.ACTIVITY_AREA, GUIDE_TARGETS.ANSWER_OPTIONS, GUIDE_TARGETS.MICROPHONE_BUTTON]
     : [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON];
   return guideAgent({
     session_id: sessionId ?? activeContext?.sessionId ?? `guide_${Date.now()}`,
-    child_id: child.child_id,
+    child_id: child?.child_id ?? null,
     mode: "help",
     event: "GUIDE_HELP_REQUESTED",
     route,
     screen: screen ?? activeContext?.screen ?? (route === "/guide" ? "guide_help" : "learning_app"),
     feature: question.trim(),
-    age_group: child.age_group,
-    age: child.age,
-    learning_mode: toddlerMode ? "toddler" : "standard",
-    preferred_language: child.preferred_language,
+    class_id: child?.class_id ?? null,
+    experience_mode: earlyMode ? "early" : "standard",
+    preferred_language: child?.preferred_language ?? "English",
     conversation: conversation.slice(-8),
-    toddler: toddlerContext ?? activeContext?.toddler,
     question: contextualQuestion
       ? { ...contextualQuestion, child_answer: question.trim(), recent_answers: [question.trim()], attempt }
       : undefined,
@@ -236,7 +235,7 @@ function localGuide(payload: GuideRequest): GuideResponse {
       ? "Wonderful work! Tap the glowing button."
       : prompt
         ? `Look carefully. ${prompt} Say your answer after I finish.`
-        : "I am your Little Learning guide. Tap the glowing button.";
+        : "I am your Saksham IQ guide. Tap the glowing button.";
   const target = secondTry
     ? payload.available_targets.find((item) => item !== GUIDE_TARGETS.COUNTING_OBJECTS && SAFE_GUIDE_TARGETS.has(item)) ?? null
     : payload.available_targets.find((item) => SAFE_GUIDE_TARGETS.has(item)) ?? null;
