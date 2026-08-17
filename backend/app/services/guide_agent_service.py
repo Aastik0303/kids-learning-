@@ -355,6 +355,11 @@ def validate_guide_request(payload: GuideRequest) -> None:
         raise app_error("UNSAFE_VISUAL_TARGET", "Let us use a safe visual step.", 400)
 
 
+# Writing steps that ask for a drawing rather than a shape. The curriculum
+# authors these with no accuracy to reach: the point is holding the crayon.
+FREE_DRAW_TARGETS = {"free", "free draw", "freedraw", "scribble", "doodle", "anything", "draw"}
+
+
 def _is_counting_question(payload: GuideRequest) -> bool:
     if not payload.question:
         return False
@@ -386,6 +391,31 @@ def _question_teaching_message(payload: GuideRequest) -> tuple[str, GuideVisualA
         return (
             f"Look at the {item_name}s. Count each one only once. How many do you see?",
             _visual_action(payload, "highlight_sequence" if len(visual_targets) > 1 else "pulse", visual_targets),
+            "visual_explanation",
+        )
+
+    # Writing is guided by hand, not by choosing: the help a child needs is
+    # where to start and which way to move, said out loud while they draw.
+    # Whether the writing is good enough is measured on the device from the
+    # gesture — nothing here decides that.
+    if any(word in answer_type for word in ("trace", "write", "draw")):
+        shape = (question.example or question.correct_answer or (visual_items[0] if visual_items else "") or "shape").replace("_", " ")
+        # A free page has no shape to follow, so it must not be described as one.
+        if shape in FREE_DRAW_TARGETS:
+            return (
+                "This page is yours. Draw anything you like, then tap I finished.",
+                GuideVisualAction(),
+                "visual_explanation",
+            )
+        if attempt >= 1:
+            return (
+                f"Tap Watch me. My finger draws {shape}. Then follow the grey line slowly.",
+                _visual_action(payload, "trace_shape", visual_targets[:1]),
+                "re_explain",
+            )
+        return (
+            f"Put your finger on the blue dot. Follow the grey {shape} all the way.",
+            _visual_action(payload, "trace_shape", visual_targets[:1]),
             "visual_explanation",
         )
 
@@ -544,7 +574,10 @@ def _fallback_guide(payload: GuideRequest) -> GuideResponse:
             action = _ui_action(payload, "highlight", ["continue-adventure", "topic-card", "open-subjects"])
             effect = "confetti"
         else:
-            message = "Wonderful work! Tap Continue Adventure for the next topic."
+            # Named after no single button: a finished lesson offers "See my
+            # levels", the home screen offers "Continue Adventure", and the
+            # child is told to tap whichever one is glowing at them.
+            message = "Wonderful work! Tap the glowing button to keep going."
             action = _ui_action(payload, "highlight", ["continue-adventure", "topic-card", "open-subjects"])
         strategy = "celebrate"
         next_event = "button_clicked"
@@ -615,6 +648,11 @@ def _early_mode_guide(payload: GuideRequest) -> GuideResponse:
     strategy = "read_question"
     next_event = "wait_for_child"
     visual_action = GuideVisualAction()
+    # Writing is most of what Play Group and Nursery do, and it is the one
+    # activity with nothing to tap. Echoing the prompt back at the child helps
+    # nobody: what they need is where to put the finger and which way to go.
+    is_writing = bool(question) and any(word in activity_type for word in ("trace", "write", "draw"))
+    drawn = ((question.example or question.correct_answer or "") if question else "").replace("_", " ")
 
     if payload.event in {"APP_OPENED", "HOME_OPENED"}:
         message = "Hi little explorer! 👋 Let's learn."
@@ -630,7 +668,10 @@ def _early_mode_guide(payload: GuideRequest) -> GuideResponse:
             update={"question": question.model_copy(update={"attempt": max(1, question.attempt)})}
         ) if question else payload
         teaching_message, visual_action, strategy = _question_teaching_message(teaching_payload)
-        message = teaching_message if _is_counting_question(teaching_payload) else f"Here it is. Tap {concept}." if concept else _help_message(payload)
+        if is_writing:
+            message = "Tap Watch me. 👀 Then follow the grey line."
+        else:
+            message = teaching_message if _is_counting_question(teaching_payload) else f"Here it is. Tap {concept}." if concept else _help_message(payload)
         state = "speaking"
         strategy = "help"
         target_preferences = ["answer-options", "activity-area", "microphone-button"]
@@ -642,7 +683,10 @@ def _early_mode_guide(payload: GuideRequest) -> GuideResponse:
         next_event = "next_activity"
     elif payload.event in {"TOPIC_ANSWER_INCORRECT", "PRACTICE_ANSWER_INCORRECT", "HINT_REQUESTED"}:
         # After two tries, stop testing and simply show the answer.
-        if activity_type.startswith("repeat_") and concept:
+        if is_writing:
+            message = "Tap Watch me. 👀 My finger shows the way."
+            strategy = "re_explain" if attempt_count >= 2 else "hint"
+        elif activity_type.startswith("repeat_") and concept:
             message = f"Tap {concept}. You can say it too."
             strategy = "re_explain" if attempt_count >= 2 else "hint"
         elif attempt_count >= 2 and concept:
@@ -663,7 +707,11 @@ def _early_mode_guide(payload: GuideRequest) -> GuideResponse:
         strategy = "celebrate"
         target_preferences = ["continue-adventure", "start-practice"]
     elif question:
-        if activity_type.startswith("repeat_") and concept:
+        if is_writing and drawn in FREE_DRAW_TARGETS:
+            message = "Draw anything you like! 🎨"
+        elif is_writing:
+            message = f"Finger on the blue dot. Follow the {drawn}. ✏️" if drawn else "Finger on the blue dot. Follow the grey line. ✏️"
+        elif activity_type.startswith("repeat_") and concept:
             message = f"Tap {concept}. You can say it too."
             target_preferences = ["answer-options", "activity-area", "microphone-button"]
         elif activity_type.startswith(("identify_", "recognize_", "select_")) and concept:

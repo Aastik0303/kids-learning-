@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
+import { GuideCoach } from "@/components/guide/GuideCoach";
+import { VisualGuideRenderer, visualGuideClass, type VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { TraceCanvas } from "@/components/learning/TraceCanvas";
 import { VisualTile } from "@/components/shared/VisualTile";
 import { SpeechErrorMessage } from "@/components/voice/SpeechErrorMessage";
@@ -22,6 +24,22 @@ type Props = {
   attemptNumber?: number;
   hint?: string;
   onAnswer: (answer: string) => void;
+  /** The guide's current line about this activity: what it is, or how to try again. */
+  guideMessage?: string;
+  /** A guide request is in flight — the coach says so rather than going blank. */
+  guideBusy?: boolean;
+  /** Asks the guide for one small step. */
+  onHint?: () => void;
+  /** Asks the guide to point at the pictures and work through them. */
+  onShowMe?: () => void;
+  /** A question the child asked out loud, routed to the guide. */
+  onGuideQuestion?: (question: string) => Promise<void> | void;
+  /** A guide target to make glow, already checked against the safe list. */
+  highlightId?: string | null;
+  /** Which pictures the guide is pointing at, and how. */
+  visualAction?: VisualGuideAction;
+  /** Number every picture, so "count them with me" has something to count. */
+  countGuideEnabled?: boolean;
 };
 
 /**
@@ -32,8 +50,10 @@ type Props = {
  * rendering a choice grid for those would show a child an empty box.
  *
  * The presentation matches Practice on purpose: same mission card, same picture
- * tiles, same microphone. A lesson and its practice are the same content, so
- * they should not look like two different apps.
+ * tiles, same microphone, and — since the guide moved in — the same coach that
+ * explains the question aloud, hints after a miss, and points at what to look
+ * at. A lesson and its practice are the same content, so they should not look
+ * or behave like two different apps.
  *
  * The question itself is always shown, in both modes. It carries the emoji a
  * pre-reader actually reads, and it is spoken aloud either way. `early` mode
@@ -48,7 +68,15 @@ export function ActivityView({
   isCorrect,
   attemptNumber = 0,
   hint,
-  onAnswer
+  onAnswer,
+  guideMessage = "",
+  guideBusy = false,
+  onHint,
+  onShowMe,
+  onGuideQuestion,
+  highlightId,
+  visualAction,
+  countGuideEnabled = false
 }: Props) {
   const withText = showsText(mode);
   const { setAvatar, speakMessage } = useAvatar();
@@ -60,6 +88,9 @@ export function ActivityView({
   const [voiceState, setVoiceState] = useState<VoiceInteractionState>("ready_to_listen");
   const [transcript, setTranscript] = useState("");
   const [speechError, setSpeechError] = useState("");
+  // Bumped whenever the child asks to be shown, so the writing canvas replays
+  // its demo from the guide's button as well as its own.
+  const [demoSignal, setDemoSignal] = useState(0);
 
   useEffect(() => {
     setPicked([]);
@@ -76,16 +107,35 @@ export function ActivityView({
   const answerTokens = new Set(
     (activity.correct_answer ?? "").split(",").map((part) => part.trim().toLowerCase())
   );
+  const glow = (target: string) => (highlightId === target ? "guide-glow" : "");
 
   function readPrompt() {
     setAvatar({ state: "speaking", message: activity.prompt, animationEffect: "none", durationMs: 4200 });
     speakMessage(activity.prompt);
   }
 
+  function showMe() {
+    setDemoSignal((current) => current + 1);
+    onShowMe?.();
+  }
+
+  const coach = guideMessage || guideBusy ? (
+    <GuideCoach
+      message={guideMessage}
+      busy={guideBusy}
+      disabled={disabled}
+      onHint={onHint}
+      onShowMe={onShowMe ? showMe : undefined}
+    />
+  ) : null;
+
   const mission = (
-    <div className="grid gap-4 rounded-[2rem] bg-[#f7fbff] p-4 sm:grid-cols-[7rem_1fr] sm:items-center">
+    <div
+      data-guide-id="question-area"
+      className={`activity-primary grid gap-4 rounded-[2rem] bg-[#f7fbff] p-4 sm:grid-cols-[7rem_1fr] sm:items-center ${glow("question-area")}`}
+    >
       <div className="mascot-face min-h-28 rounded-[1.75rem]" />
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-black uppercase text-sky">🧩 Mini mission</p>
         <h2 id="question-area" className="mt-2 text-3xl font-black leading-tight text-ink sm:text-4xl">
           {activity.prompt}
@@ -108,18 +158,28 @@ export function ActivityView({
   );
 
   const visuals = activity.visual_items.length ? (
-    <div className="flex min-h-36 flex-wrap items-center justify-center gap-4 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-5">
-      {activity.visual_items.map((item, index) => (
-        <VisualTile
-          key={`${item}-${index}`}
-          item={item}
-          domId={`visual-item-${index}`}
-          visualId={`visual-item-${index}`}
-          highlightClass={
-            pointOutAnswer && answerTokens.has(item.trim().toLowerCase()) ? "visual-guide-pulse" : ""
-          }
-        />
-      ))}
+    <div
+      data-guide-id="counting-object-group"
+      className={`flex min-h-36 flex-wrap items-center justify-center gap-3 rounded-[2rem] border border-sky/10 bg-[#f7fbff] p-4 sm:gap-4 sm:p-5 ${glow("counting-object-group")}`}
+    >
+      {activity.visual_items.map((item, index) => {
+        const visualId = `visual-item-${index}`;
+        // Two ways a picture is pointed at: the guide's own visual action, and
+        // the local "this is the one" after a second miss. Either may fire.
+        const guideClass = visualGuideClass(visualAction, visualId);
+        const localClass =
+          pointOutAnswer && answerTokens.has(item.trim().toLowerCase()) ? "visual-guide-pulse" : "";
+        return (
+          <VisualTile
+            key={`${item}-${index}`}
+            item={item}
+            domId={visualId}
+            visualId={visualId}
+            countLabel={countGuideEnabled ? index + 1 : undefined}
+            highlightClass={guideClass || localClass}
+          />
+        );
+      })}
     </div>
   ) : null;
 
@@ -137,22 +197,30 @@ export function ActivityView({
     </div>
   ) : null;
 
+  const shellClass = `activity-shell surface-panel grid gap-5 rounded-[2rem] p-4 sm:p-6 ${glow("activity-area")}`;
+
   // --- written with a finger ----------------------------------------------
   if (activity.type === "trace") {
     return (
       <section
         id="activity-area"
+        data-guide-id="activity-area"
         data-testid="activity-area"
         data-answer-kind="presentational"
-        className="surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6"
+        className={shellClass}
       >
         {mission}
-        <TraceCanvas
-          target={activity.trace_target ?? activity.visual_items[0] ?? "line"}
-          minAccuracy={activity.min_accuracy ?? 0.5}
-          disabled={disabled}
-          onComplete={() => onAnswer("done")}
-        />
+        {coach}
+        <div className="activity-answers grid gap-4">
+          <TraceCanvas
+            target={activity.trace_target ?? activity.visual_items[0] ?? "line"}
+            minAccuracy={activity.min_accuracy ?? 0.5}
+            disabled={disabled}
+            onComplete={() => onAnswer("done")}
+            onNeedHelp={onGuideQuestion ? (question) => void onGuideQuestion(question) : undefined}
+            demoSignal={demoSignal}
+          />
+        </div>
       </section>
     );
   }
@@ -163,12 +231,15 @@ export function ActivityView({
     return (
       <section
         id="activity-area"
+        data-guide-id="activity-area"
         data-testid="activity-area"
         data-answer-kind="presentational"
-        className="surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6"
+        className={shellClass}
       >
         {mission}
+        {coach}
         {visuals}
+        <VisualGuideRenderer visualAction={visualAction} />
         {isParentCard && activity.parent_note ? (
           <div data-surface="parent" className="rounded-[2rem] bg-[#f5f8ef] p-5">
             <p className="text-sm font-black uppercase text-leaf">👨‍👩‍👧 For the grown-up</p>
@@ -181,7 +252,7 @@ export function ActivityView({
           onClick={() => onAnswer("done")}
           style={learningTargetStyle(mode)}
           data-testid="activity-done"
-          className="pressable rounded-3xl bg-leaf px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-50"
+          className="pressable activity-answers rounded-3xl bg-leaf px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-50"
         >
           {isParentCard ? "🎉 We did it!" : "👉 Next"}
         </button>
@@ -194,14 +265,22 @@ export function ActivityView({
     return (
       <section
         id="activity-area"
+        data-guide-id="activity-area"
         data-testid="activity-area"
         data-answer-kind="spoken"
-        className="surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6"
+        className={shellClass}
       >
         {mission}
+        {coach}
         {visuals}
+        <VisualGuideRenderer visualAction={visualAction} />
         {helper}
-        <div className="grid gap-4 rounded-[2rem] bg-sunshine/20 p-5 text-center">
+        <div
+          data-guide-id="voice-answer-area"
+          className={`activity-answers grid gap-4 rounded-[2rem] bg-sunshine/20 p-4 text-center sm:p-5 ${
+            highlightId === "voice-answer-area" || highlightId === "microphone-button" ? "guide-glow" : ""
+          }`}
+        >
           <VoiceStateIndicator state={voiceState} />
           <VoiceRecorder
             sessionId={sessionId}
@@ -211,6 +290,7 @@ export function ActivityView({
             onStateChange={setVoiceState}
             onTranscript={setTranscript}
             onSpeechError={setSpeechError}
+            onGuideQuestion={onGuideQuestion}
             onVoiceAnswer={onAnswer}
           />
           <VoiceTranscriptPreview transcript={transcript} />
@@ -239,19 +319,27 @@ export function ActivityView({
   return (
     <section
       id="activity-area"
+      data-guide-id="activity-area"
       data-testid="activity-area"
       data-answer-kind="choice"
-      className="surface-panel grid gap-5 rounded-[2rem] p-5 sm:p-6"
+      className={shellClass}
     >
       {mission}
+      {coach}
       {visuals}
+      <VisualGuideRenderer visualAction={visualAction} />
       {helper}
       <div
         id="answer-options"
+        data-guide-id="answer-options"
         data-testid="answer-options"
         data-choice-count={choices.length}
         data-max-choices={mode.max_choices_per_screen}
-        className={`grid gap-4 ${choices.length > 2 ? "grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}
+        // Three across is fine once there is room for it. On a 320px phone it
+        // squeezed three 64px targets and their labels into one row.
+        className={`activity-answers grid gap-3 sm:gap-4 ${
+          choices.length > 2 ? "grid-cols-2 md:grid-cols-3" : "grid-cols-1 xs:grid-cols-2"
+        } ${glow("answer-options")}`}
       >
         {choices.map((choice) => {
           const isPicked = picked.includes(choice);
@@ -279,14 +367,14 @@ export function ActivityView({
               data-testid="answer-option"
               data-state={isAnswer ? "answer" : missed ? "missed" : undefined}
               aria-label={choice}
-              className={`pressable flex flex-col items-center justify-center gap-1 rounded-3xl border-2 p-4 font-black shadow-soft transition disabled:opacity-50 ${
+              className={`pressable flex flex-col items-center justify-center gap-1 rounded-3xl border-2 p-3 font-black shadow-soft transition disabled:opacity-50 sm:p-4 ${
                 isPicked ? "bg-leaf text-white" : "bg-white"
               } ${isAnswer ? "visual-guide-pulse border-leaf" : missed ? "border-berry opacity-60" : "border-transparent hover:border-ink/10"}`}
             >
-              <span aria-hidden className="text-5xl leading-none">
+              <span aria-hidden className="text-4xl leading-none sm:text-5xl">
                 {isTextToken(choice) ? displayToken(choice) : visualIcon(choice)}
               </span>
-              {withText ? <span className="text-lg capitalize">{choice}</span> : null}
+              {withText ? <span className="text-base capitalize sm:text-lg">{choice}</span> : null}
             </button>
           );
         })}

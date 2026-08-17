@@ -70,6 +70,9 @@ export function activityQuestion(activity: Activity, overrides: Partial<NonNulla
     correct_answer: activity.correct_answer,
     hint: activity.hint,
     visual_items: activity.visual_items,
+    // What a writing activity asks the child to draw. Without it the guide can
+    // only see the type "trace" and has nothing to name.
+    example: activity.trace_target ?? undefined,
     accepted_answers: activity.correct_answer ? [activity.correct_answer, ...(activity.accept ?? [])] : [],
     recent_answers: [],
     difficulty: activity.difficulty,
