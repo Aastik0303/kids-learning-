@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import type { ChildProfile, ExperienceMode, Subject, Topic } from "@/types";
 import { learningTargetStyle } from "@/lib/experience";
+import { useTodayPlan } from "@/lib/useTodayPlan";
 
 type Props = {
   subject: Subject;
@@ -20,17 +21,19 @@ const DELIVERY: Record<string, { icon: string; label: string }> = {
   parent_guided: { icon: "👪", label: "With a grown-up" }
 };
 
-type NodeState = "done" | "ready" | "locked" | "coming-soon";
+type NodeState = "done" | "ready" | "tomorrow" | "locked" | "coming-soon";
 
 /** The chip under each node. Short, and the emoji carries it for a pre-reader. */
 function chipFor(state: NodeState, isCurrent: boolean, score: number | undefined) {
   if (state === "coming-soon") return "🌱 Coming soon";
   if (state === "done") return `⭐ Done · ${score ?? 100}%`;
+  if (state === "tomorrow") return "🌙 Tomorrow";
   if (state === "locked") return "🔒 Locked";
   return isCurrent ? "🎈 Play now" : "🎈 Ready";
 }
 
 function symbolFor(state: NodeState, topic: Topic) {
+  if (state === "tomorrow") return "🌙";
   if (state === "locked") return "🔒";
   if (state === "coming-soon") return "🌱";
   return topic.icon;
@@ -61,11 +64,20 @@ export function TopicList({ subject, child, mode }: Props) {
   const unlocked = new Set(progress?.unlocked_topics ?? []);
   const completed = new Set(progress?.completed_topics ?? []);
   const scores = progress?.scores ?? {};
+  // The day's plan decides what is playable, not just what is unlocked.
+  // Finishing a level unlocks the next one; the next one is tomorrow's, and the
+  // server refuses it today - so the map has to say so rather than let a child
+  // tap into a refusal.
+  const { plannedTopicIds, loaded } = useTodayPlan(child);
 
   const stateOf = (topic: Topic): NodeState => {
     if (!topic.available) return "coming-soon";
     if (completed.has(topic.topic_id)) return "done";
-    return unlocked.has(topic.topic_id) ? "ready" : "locked";
+    if (!unlocked.has(topic.topic_id)) return "locked";
+    // Until the plan has actually loaded nothing is greyed out on a guess: a
+    // slow request must not make a playable level look shut.
+    if (loaded && plannedTopicIds.size > 0 && !plannedTopicIds.has(topic.topic_id)) return "tomorrow";
+    return "ready";
   };
 
   // The one level the child is on: their bookmark when it is still playable,

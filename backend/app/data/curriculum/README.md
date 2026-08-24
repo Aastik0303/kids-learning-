@@ -177,9 +177,11 @@ They are grouped into levels instead, the same way Play Group's are:
 | व्यंजन (क – ङ) | 3 levels — `nur_hindi_vyanjan_ka_kha`, `_ga_gha`, `_nga` |
 
 A letter level teaches **Aa as one letter**, not a capital now and a small one
-months later. Both forms are on the introduction card, and the level asks for
-both: find the big A, then match small a back to it. Writing follows the
-syllabus exactly — capitals throughout, small letters only for a–j.
+months later. Both forms are on the introduction card, the level explains the
+letter on three cards before asking anything, and it asks for both forms at the
+end: match small a back to its capital, then match the pair to the picture it
+starts. Drawing follows the syllabus exactly — capitals throughout, small letters
+only for a–j — and it comes before the child is asked to say or match the letter.
 
 Every published subtopic survives the regrouping, and the reason for it is
 recorded in the `note` on `nur_english` and `nur_maths`, so a later reader can
@@ -249,8 +251,8 @@ backend/app/data/curriculum/
 ├── manifest.json        ← the taxonomy
 ├── activities/          ← the content, one file per class or per subject
 │   ├── README.md        ← the activity file contract
-│   ├── playgroup.json   ← 182 served (see Play Group below)
-│   ├── nursery.json     ← 503 activities
+│   ├── playgroup.json   ← 421 served (see Play Group below)
+│   ├── nursery.json     ← 585 activities
 │   ├── lkg.json         ←  98 activities
 │   └── ukg.json         ← 118 activities
 └── superseded/          ← parked content, outside the loader's glob
@@ -272,18 +274,17 @@ removed, so what is left is English and Early Mathematics:
   taxonomy; re-home a topic by moving it back under a `topic_id` the manifest
   declares. Leaving it in place was not an option — the loader fails fast on an
   unknown `topic_id`, so it stopped the server from starting at all.
-- **English and Early Mathematics are still at the published taxonomy**:
-  `pg_eng_letters` is one "Capital Letters (A–E)" topic and `pg_maths_numbers`
-  one "Numbers 1 to 5" topic. Neither has been split into the one-thing-at-a-time
-  levels the class needs — A to Z three letters a level, and 1 to 10 — and
-  `pg_eng_strokes` still has no answerable activity and no `trace_target` on its
-  tracing steps. The assertions that describe that finished shape
-  (`test_play_group_meets_the_alphabet_one_letter_at_a_time`,
-  `test_play_group_counts_one_to_ten_in_order`,
-  `test_a_letter_level_teaches_finds_says_and_writes_every_letter`,
-  `test_every_writing_step_carries_something_to_trace`,
-  `test_every_play_group_topic_has_several_examples_to_practise`) and the
-  `tests/test_learning_flow.py` fixture, which authors against
-  `pg_maths_number_123`, fail until it is authored.
+- **English and Early Mathematics are now one thing at a time.** The published
+  taxonomy's single "Capital Letters (A–E)" and "Numbers 1 to 5" topics are gone.
+  In their place are twenty-six letter levels (`pg_english_letters_a` … `_z`) and
+  ten counting levels (`pg_maths_number_1` … `_10`), each seven steps — look at
+  it, hear it, use it in a word, draw it, say it, then two matching questions —
+  and each unlocking the next. A two-year-old working out A should not be shown B
+  in the same sitting, which is what a level of three letters does.
+- `pg_eng_strokes` is the one Play Group topic still short of the bar: it has no
+  answerable activity, and its tracing steps carry no `trace_target` and a zero
+  `min_accuracy`. `test_every_play_group_topic_has_several_examples_to_practise`
+  and `test_every_writing_step_carries_something_to_trace` fail on it alone until
+  it is authored.
 
 General Awareness, Nursery, LKG and UKG are unaffected and fully authored.

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Saksham IQ — Teaching Graph (nodes &amp; edges)</title>
+<style>
+:root{
+  color-scheme:light dark;
+  --page:#f9f9f7;--surface:#fcfcfb;--surface-2:#f3f2ee;
+  --ink:#0b0b0b;--ink-2:#52514e;--muted:#898781;
+  --grid:#e1e0d9;--border:rgba(11,11,11,.10);
+  --det:#2a78d6;--agt:#eb6834;--rl:#1baf7a;--term:#52514e;
+  --det-bg:#eaf2fd;--agt-bg:#fdeee7;--rl-bg:#e7f6f0;--term-bg:#f0efec;
+  --edge:#898781;--elbg:#fcfcfb;
+  --font:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])){
+  --page:#0d0d0d;--surface:#1a1a19;--surface-2:#222220;
+  --ink:#fff;--ink-2:#c3c2b7;--muted:#898781;
+  --grid:#2c2c2a;--border:rgba(255,255,255,.10);
+  --det:#3987e5;--agt:#d95926;--rl:#199e70;--term:#c3c2b7;
+  --det-bg:#141f2e;--agt-bg:#2a1810;--rl-bg:#0f2019;--term-bg:#252523;
+  --edge:#898781;--elbg:#1a1a19;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.55}
+.wrap{max-width:1240px;margin:0 auto;padding:40px 22px 80px}
+h1{font-size:30px;margin:0 0 6px;letter-spacing:-.02em;line-height:1.2}
+h2{font-size:19px;margin:0;letter-spacing:-.01em}
+p{margin:0 0 12px;color:var(--ink-2)}
+.sub{font-size:15px;color:var(--ink-2)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;margin:18px 0}
+.sec{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.num{font:700 12px/1 var(--mono);color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:5px 7px}
+code{font-family:var(--mono);font-size:.88em}
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+      background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:5px 12px 5px 8px}
+.sw{width:13px;height:13px;border-radius:3px;flex:none;border:1.6px solid}
+.sw.d{background:var(--det-bg);border-color:var(--det)}
+.sw.a{background:var(--agt-bg);border-color:var(--agt)}
+.sw.r{background:var(--rl-bg);border-color:var(--rl)}
+.sw.t{background:var(--term-bg);border-color:var(--term);border-radius:999px}
+.shapes{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--ink-2)}
+.shapes b{color:var(--ink)}
+svg{display:block;margin:6px auto 0;max-width:100%;height:auto}
+.nid{font:700 9.5px var(--mono);fill:var(--muted);letter-spacing:.06em}
+.ntt{font:700 13px var(--font);fill:var(--ink)}
+.ntt.emph{font-size:14.5px}
+.nsb{font:400 10.5px var(--font);fill:var(--ink-2)}
+.ed{fill:none;stroke:var(--edge);stroke-width:1.5}
+.ed.loop{stroke-dasharray:2 3;opacity:.75}
+.el{font:600 10px var(--font);fill:var(--ink-2)}
+.elbg{paint-order:stroke;stroke:var(--elbg);stroke-width:4px;stroke-linejoin:round}
+.nd{transition:opacity .12s}
+svg:hover .nd{opacity:.5} svg .nd:hover{opacity:1}
+table{border-collapse:collapse;width:100%;margin-top:12px;font-size:12.5px}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--grid);vertical-align:top}
+th{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td.n{font-variant-numeric:tabular-nums;text-align:right}
+td code{white-space:nowrap}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.note code{word-break:break-word}
+table{min-width:520px}
+.note{border:1px solid var(--border);border-left:4px solid var(--det);border-radius:11px;
+      padding:15px 17px;background:var(--surface-2);margin:16px 0;font-size:13.5px}
+.note.warn{border-left-color:#d03b3b}
+.note b{color:var(--ink)}
+.note p{margin:0 0 8px;font-size:13.5px}.note p:last-child{margin:0}
+.tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);
+     border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;
+     box-shadow:0 6px 20px rgba(0,0,0,.16);opacity:0;transition:opacity .1s;z-index:50;white-space:nowrap}
+.scroll{overflow-x:auto}
+footer{color:var(--muted);font-size:12.5px;margin-top:34px;text-align:center}
+</style></head><body><div class="wrap">
+
+<header>
+<h1>Teaching Graph — nodes &amp; edges</h1>
+<p class="sub">The classroom expressed as five graphs, 60 nodes and 77 edges.
+Colour carries the <b>owner</b>; shape carries the <b>node type</b>.</p>
+<div class="legend">
+  <span class="chip"><span class="sw d"></span>D — deterministic code</span>
+  <span class="chip"><span class="sw a"></span>A / H — LLM agent</span>
+  <span class="chip"><span class="sw r"></span>RL — learned policy</span>
+  <span class="chip"><span class="sw t"></span>terminal</span>
+</div>
+<div class="shapes">
+  <span><b>▭</b> compute / io</span>
+  <span><b>⬡</b> router</span>
+  <span><b>▭ dashed</b> guard</span>
+  <span><b>▭ doubled</b> subgraph / agent</span>
+  <span><b>▬ pill</b> terminal</span>
+  <span><b>– – –</b> failure or fallback edge</span>
+</div>
+</header>
+
+<section class="card">
+<div class="sec"><span class="num">CG</span><h2>Concept Graph — 25 nodes</h2></div>
+<p>One concept, from first exposure to <code>MASTERED</code> or <code>PARK</code>.
+Everything above <code>CG.15 COMMIT</code> is deterministic; every agent node sits below it,
+so an agent failure can never cost the child progress.</p>
+<div class="scroll"><svg viewBox="0 0 1180 1600" width="100%" role="img" aria-label="Concept graph: teach, ask, evaluate, commit, then gate or repair, ending in mastered or parked">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker></defs>
+<g class="nd" data-t="CG.01 concept_enter · compute · D">
+<rect x="470" y="20" width="230" height="62" rx="31.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="38">CG.01</text>
+<text class="ntt" x="483" y="56">concept_enter</text>
+<text class="nsb" x="483" y="72">reset turn fields</text>
+</g>
+<g class="nd" data-t="CG.02 router · D">
+<polygon points="485,108 685,108 700,139.0 685,170 485,170 470,139.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="126">CG.02</text>
+<text class="ntt" x="483" y="144">prereq weak?</text>
+<text class="nsb" x="483" y="160">min(prereq_mastery) &lt; 0.40</text>
+</g>
+<g class="nd" data-t="CG.03 subgraph · depth-capped">
+<rect x="150" y="108" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<rect x="154" y="112" width="222" height="54" rx="6" fill="none" stroke="var(--det)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="163" y="126">CG.03</text>
+<text class="ntt" x="163" y="144">prereq subgraph</text>
+<text class="nsb" x="163" y="160">recurse, depth ≤ 1</text>
+</g>
+<g class="nd" data-t="CG.04 io · D — skip teaching if already known">
+<rect x="470" y="200" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="218">CG.04</text>
+<text class="ntt" x="483" y="236">probe_known</text>
+<text class="nsb" x="483" y="252">one question at S0 scaffold</text>
+</g>
+<g class="nd" data-t="CG.24 terminal — same node as bottom-left">
+<rect x="800" y="200" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="813" y="218">CG.24</text>
+<text class="ntt" x="813" y="236">MASTERED</text>
+<text class="nsb" x="813" y="252">already known → skip</text>
+</g>
+<g class="nd" data-t="first exposure?">
+<polygon points="485,292 685,292 700,323.0 685,354 485,354 470,323.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="310">CG.05</text>
+<text class="ntt" x="483" y="328">first exposure?</text>
+<text class="nsb" x="483" y="344">strategies_used == []</text>
+</g>
+<g class="nd" data-t="CG.06 policy · RL — bounded to 9 strategies">
+<rect x="150" y="292" width="230" height="62" rx="9" fill="var(--rl-bg)" stroke="var(--rl)" stroke-width="1.4"/>
+<text class="nid" x="163" y="310">CG.06</text>
+<text class="ntt" x="163" y="328">select_teach_strategy</text>
+<text class="nsb" x="163" y="344">forced S1+S2 on first</text>
+</g>
+<g class="nd" data-t="CG.07 agent · H — words only, decision is an input">
+<rect x="150" y="384" width="230" height="62" rx="9" fill="var(--agt-bg)" stroke="var(--agt)" stroke-width="1.4"/>
+<rect x="154" y="388" width="222" height="54" rx="6" fill="none" stroke="var(--agt)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="163" y="402">CG.07</text>
+<text class="ntt" x="163" y="420">render_teach</text>
+<text class="nsb" x="163" y="436">agent 2.5 s → template</text>
+</g>
+<g class="nd" data-t="select_question">
+<rect x="470" y="476" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="494">CG.08</text>
+<text class="ntt" x="483" y="512">select_question</text>
+<text class="nsb" x="483" y="528">difficulty engine · H1–H6</text>
+</g>
+<g class="nd" data-t="present">
+<rect x="470" y="568" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="586">CG.09</text>
+<text class="ntt" x="483" y="604">present</text>
+<text class="nsb" x="483" y="620">to client</text>
+</g>
+<g class="nd" data-t="await_response">
+<polygon points="485,660 685,660 700,691.0 685,722 485,722 470,691.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="678">CG.10</text>
+<text class="ntt" x="483" y="696">await_response</text>
+<text class="nsb" x="483" y="712">idle timer from manifest</text>
+</g>
+<g class="nd" data-t="idle ladder">
+<rect x="150" y="660" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<rect x="154" y="664" width="222" height="54" rx="6" fill="none" stroke="var(--det)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="163" y="678">CG.11</text>
+<text class="ntt" x="163" y="696">idle ladder</text>
+<text class="nsb" x="163" y="712">5 rungs · only rung 3 = LLM</text>
+</g>
+<g class="nd" data-t="resolve_input">
+<rect x="470" y="752" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="770">CG.12</text>
+<text class="ntt" x="483" y="788">resolve_input</text>
+<text class="nsb" x="483" y="804">deterministic speech clean</text>
+</g>
+<g class="nd" data-t="CG.13 THE TRUTH NODE — activity_evaluators.py, 37 types">
+<rect x="470" y="844" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="2.4"/>
+<text class="nid" x="483" y="862">CG.13</text>
+<text class="ntt emph" x="483" y="880">evaluate</text>
+<text class="nsb" x="483" y="896">pure · LLM unreachable</text>
+</g>
+<g class="nd" data-t="update_mastery">
+<rect x="470" y="922" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="940">CG.14</text>
+<text class="ntt" x="483" y="958">update_mastery</text>
+<text class="nsb" x="483" y="974">EWMA + forms + days</text>
+</g>
+<g class="nd" data-t="CG.15 transaction boundary — every agent node is downstream">
+<rect x="470" y="1000" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="2.4"/>
+<text class="nid" x="483" y="1018">CG.15</text>
+<text class="ntt emph" x="483" y="1036">COMMIT</text>
+<text class="nsb" x="483" y="1052">truth persisted</text>
+</g>
+<g class="nd" data-t="route_outcome">
+<polygon points="485,1100 685,1100 700,1131.0 685,1162 485,1162 470,1131.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="1118">CG.16</text>
+<text class="ntt" x="483" y="1136">route_outcome</text>
+<text class="nsb" x="483" y="1152">is_correct?</text>
+</g>
+<g class="nd" data-t="mastery ≥ .75 · attempts ≥ 4 · 2 forms · 2 days">
+<rect x="150" y="1192" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text class="nid" x="163" y="1210">CG.17</text>
+<text class="ntt" x="163" y="1228">concept_gate</text>
+<text class="nsb" x="163" y="1244">4 clauses</text>
+</g>
+<g class="nd" data-t="CG.18 emitted BEFORE the agent is invoked">
+<rect x="800" y="1192" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="813" y="1210">CG.18</text>
+<text class="ntt" x="813" y="1228">instant_ack</text>
+<text class="nsb" x="813" y="1244">0 ms filler</text>
+</g>
+<g class="nd" data-t="CG.24 terminal — same node as the top-right exit">
+<rect x="150" y="1284" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="163" y="1302">CG.24</text>
+<text class="ntt" x="163" y="1320">MASTERED</text>
+<text class="nsb" x="163" y="1336">unlock dependents</text>
+</g>
+<g class="nd" data-t="select_repair_strategy">
+<rect x="800" y="1284" width="230" height="62" rx="9" fill="var(--rl-bg)" stroke="var(--rl)" stroke-width="1.4"/>
+<text class="nid" x="813" y="1302">CG.19</text>
+<text class="ntt" x="813" y="1320">select_repair_strategy</text>
+<text class="nsb" x="813" y="1336">9 actions · RL</text>
+</g>
+<g class="nd" data-t="PARK">
+<rect x="470" y="1376" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="483" y="1394">CG.25</text>
+<text class="ntt" x="483" y="1412">PARK</text>
+<text class="nsb" x="483" y="1428">revisit tomorrow · no shame</text>
+</g>
+<g class="nd" data-t="teacher_agent">
+<rect x="800" y="1376" width="230" height="62" rx="9" fill="var(--agt-bg)" stroke="var(--agt)" stroke-width="1.4"/>
+<rect x="804" y="1380" width="222" height="54" rx="6" fill="none" stroke="var(--agt)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="813" y="1394">CG.20</text>
+<text class="ntt" x="813" y="1412">teacher_agent</text>
+<text class="nsb" x="813" y="1428">subgraph TA · 2.5 s</text>
+</g>
+<g class="nd" data-t="envelope">
+<rect x="800" y="1468" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text class="nid" x="813" y="1486">CG.21</text>
+<text class="ntt" x="813" y="1504">envelope</text>
+<text class="nsb" x="813" y="1520">26 rules · clamp/veto</text>
+</g>
+<g class="nd" data-t="adjust_difficulty">
+<rect x="470" y="1468" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="483" y="1486">CG.22</text>
+<text class="ntt" x="483" y="1504">adjust_difficulty</text>
+<text class="nsb" x="483" y="1520">one dial, one step</text>
+</g>
+<path class="ed" d="M585.0,82 L585.0,108" marker-end="url(#ah)"/>
+<path class="ed" d="M470,139 L380,139" marker-end="url(#ah)"/><text class="el" x="425.0" y="133" text-anchor="middle"><tspan class="elbg">weak</tspan></text>
+<path class="ed" d="M585.0,170 L585.0,200" marker-end="url(#ah)"/><text class="el" x="591.0" y="189.0" text-anchor="start"><tspan class="elbg">ok</tspan></text>
+<path class="ed" d="M265.0,170 L265.0,215 L470,215" marker-end="url(#ah)"/><text class="el" x="273.0" y="200" text-anchor="start"><tspan class="elbg">back</tspan></text>
+<path class="ed" d="M700,231 L800,231" marker-end="url(#ah)"/><text class="el" x="750.0" y="224" text-anchor="middle"><tspan class="elbg">known</tspan></text>
+<path class="ed" d="M585.0,262 L585.0,292" marker-end="url(#ah)"/><text class="el" x="591.0" y="281.0" text-anchor="start"><tspan class="elbg">not known</tspan></text>
+<path class="ed" d="M470,323 L380,323" marker-end="url(#ah)"/><text class="el" x="425.0" y="317" text-anchor="middle"><tspan class="elbg">yes</tspan></text>
+<path class="ed" d="M265.0,354 L265.0,384" marker-end="url(#ah)"/>
+<path class="ed" d="M265.0,446 L265.0,507 L470,507" marker-end="url(#ah)"/>
+<path class="ed" d="M585.0,354 L585.0,476" marker-end="url(#ah)"/><text class="el" x="591.0" y="420" text-anchor="start"><tspan class="elbg">no — already taught</tspan></text>
+<path class="ed" d="M585.0,538 L585.0,568" marker-end="url(#ah)"/>
+<path class="ed" d="M585.0,630 L585.0,660" marker-end="url(#ah)"/>
+<path class="ed" d="M470,691 L380,691" marker-end="url(#ah)"/><text class="el" x="425.0" y="685" text-anchor="middle"><tspan class="elbg">idle</tspan></text>
+<path class="ed" d="M265.0,660 L265.0,599 L470,599" marker-end="url(#ah)"/><text class="el" x="273.0" y="630" text-anchor="start"><tspan class="elbg">rung 1,2,4,5</tspan></text>
+<path class="ed" d="M380,737 L1060,737 L1060,1300 L1030,1300" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="1066" y="760" text-anchor="start"><tspan class="elbg">rung 3 → re-explain</tspan></text>
+<path class="ed" d="M585.0,722 L585.0,752" marker-end="url(#ah)"/><text class="el" x="460" y="746" text-anchor="end"><tspan class="elbg">input</tspan></text>
+<path class="ed" d="M585.0,814 L585.0,844" marker-end="url(#ah)"/>
+<path class="ed" d="M585.0,906 L585.0,922" marker-end="url(#ah)"/>
+<path class="ed" d="M585.0,984 L585.0,1000" marker-end="url(#ah)"/>
+<path class="ed" d="M585.0,1062 L585.0,1100" marker-end="url(#ah)"/>
+<path class="ed" d="M470,1131 L380,1131 L265.0,1192" marker-end="url(#ah)"/><text class="el" x="425.0" y="1125" text-anchor="middle"><tspan class="elbg">correct</tspan></text>
+<path class="ed" d="M700,1131 L800,1131 L915.0,1192" marker-end="url(#ah)"/><text class="el" x="750.0" y="1125" text-anchor="middle"><tspan class="elbg">wrong</tspan></text>
+<path class="ed" d="M265.0,1254 L265.0,1284" marker-end="url(#ah)"/><text class="el" x="271.0" y="1273.0" text-anchor="start"><tspan class="elbg">gate pass</tspan></text>
+<path class="ed" d="M380,1223 L585.0,1223 L585.0,1468" marker-end="url(#ah)"/><text class="el" x="465.0" y="1216" text-anchor="middle"><tspan class="elbg">not yet</tspan></text>
+<path class="ed" d="M915.0,1254 L915.0,1284" marker-end="url(#ah)"/><text class="el" x="921.0" y="1273.0" text-anchor="start"><tspan class="elbg">attempts &lt; 4</tspan></text>
+<path class="ed" d="M800,1223 L700,1223 L700,1376" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="750.0" y="1216" text-anchor="middle"><tspan class="elbg">attempts = 4</tspan></text>
+<path class="ed" d="M915.0,1346 L915.0,1376" marker-end="url(#ah)"/>
+<path class="ed" d="M915.0,1438 L915.0,1468" marker-end="url(#ah)"/>
+<path class="ed" d="M800,1499 L700,1499" marker-end="url(#ah)"/>
+<path class="ed" d="M800,1478 L770,1478 L770,1352 L700,1352" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="764" y="1345" text-anchor="end"><tspan class="elbg">forced END_KINDLY</tspan></text>
+<path class="ed loop" d="M585.0,1530 L585.0,1552 L1120,1552 L1120,507 L700,507" marker-end="url(#ah)"/><text class="el" x="1112" y="1000" text-anchor="end"><tspan class="elbg">loop → next question</tspan></text>
+</svg></div>
+<div class="note warn">
+<p><b>CG.13 <code>evaluate</code> is the truth node.</b> Its only inbound edge is
+<code>CG.12</code> and its only outbound edge is <code>CG.14</code>. It must not reach
+<code>app/agents/</code> or <code>app/ai/</code> through any import path — enforced by AST
+walk in <code>tests/contract/test_truth_node_isolation.py</code>, not by review.</p>
+<p><b>CG.18 → CG.25 is a hard cap.</b> At four attempts the concept parks, whatever the agent
+or the policy would prefer. The concept is not marked failed — it returns tomorrow, and
+everything downstream of it stays locked until it is genuinely learned.</p>
+</div>
+<div class="note">
+<p><b>Why CG.18 <code>instant_ack</code> is a node and not a flag.</b> The repair path
+CG.19 → CG.20 → CG.21 takes about 1.4 s. A three-year-old disengages in that silence.
+CG.18 emits a deterministic filler at 0 ms, before the agent is invoked; the agent's line
+arrives while the filler is still being spoken and cuts it mid-sentence — which is what a real
+teacher does. Without this node the agent architecture is not shippable to this age group.</p>
+</div>
+</section>
+
+<section class="card">
+<div class="sec"><span class="num">SG</span><h2>Session Graph — 15 nodes</h2></div>
+<p>One app open: authenticate, load the learner, plan the day, open the class, run each plan
+item through the concept graph, close.</p>
+<div class="scroll"><svg viewBox="0 0 1200 940" width="100%" role="img" aria-label="Session graph: entry, authenticate, load learner, plan, greet, lesson loop, close">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker></defs>
+<g class="nd" data-t="entry">
+<rect x="430" y="16" width="230" height="62" rx="31.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="34">SG.01</text>
+<text class="ntt" x="443" y="52">entry</text>
+<text class="nsb" x="443" y="68">app opened</text>
+</g>
+<g class="nd" data-t="authenticate">
+<rect x="430" y="100" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text class="nid" x="443" y="118">SG.02</text>
+<text class="ntt" x="443" y="136">authenticate</text>
+<text class="nsb" x="443" y="152">owned_child</text>
+</g>
+<g class="nd" data-t="load_learner">
+<rect x="430" y="184" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="202">SG.03</text>
+<text class="ntt" x="443" y="220">load_learner</text>
+<text class="nsb" x="443" y="236">mastery · revisit · profile</text>
+</g>
+<g class="nd" data-t="check_calendar">
+<polygon points="445,268 645,268 660,299.0 645,330 445,330 430,299.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="286">SG.04</text>
+<text class="ntt" x="443" y="304">check_calendar</text>
+<text class="nsb" x="443" y="320">study day?</text>
+</g>
+<g class="nd" data-t="rest_day">
+<rect x="120" y="268" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="133" y="286">SG.05</text>
+<text class="ntt" x="133" y="304">rest_day</text>
+<text class="nsb" x="133" y="320">warm rest state</text>
+</g>
+<g class="nd" data-t="plan_exists?">
+<polygon points="445,352 645,352 660,383.0 645,414 445,414 430,383.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="370">SG.06</text>
+<text class="ntt" x="443" y="388">plan_exists?</text>
+<text class="nsb" x="443" y="404">frozen per (child, date)</text>
+</g>
+<g class="nd" data-t="planner_agent">
+<rect x="740" y="352" width="230" height="62" rx="9" fill="var(--agt-bg)" stroke="var(--agt)" stroke-width="1.4"/>
+<rect x="744" y="356" width="222" height="54" rx="6" fill="none" stroke="var(--agt)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="753" y="370">SG.07</text>
+<text class="ntt" x="753" y="388">planner_agent</text>
+<text class="nsb" x="753" y="404">8 s · 8 steps · PA</text>
+</g>
+<g class="nd" data-t="plan_envelope">
+<rect x="740" y="436" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text class="nid" x="753" y="454">SG.08</text>
+<text class="ntt" x="753" y="472">plan_envelope</text>
+<text class="nsb" x="753" y="488">unlocked · time · freeze</text>
+</g>
+<g class="nd" data-t="plan_fallback">
+<rect x="740" y="520" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="753" y="538">SG.09</text>
+<text class="ntt" x="753" y="556">plan_fallback</text>
+<text class="nsb" x="753" y="572">deterministic W3 S1–S6</text>
+</g>
+<g class="nd" data-t="freeze_plan">
+<rect x="430" y="520" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="538">SG.10</text>
+<text class="ntt" x="443" y="556">freeze_plan</text>
+<text class="nsb" x="443" y="572">UNIQUE(child, date)</text>
+</g>
+<g class="nd" data-t="greet">
+<rect x="430" y="604" width="230" height="62" rx="9" fill="var(--agt-bg)" stroke="var(--agt)" stroke-width="1.4"/>
+<rect x="434" y="608" width="222" height="54" rx="6" fill="none" stroke="var(--agt)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="443" y="622">SG.11</text>
+<text class="ntt" x="443" y="640">greet</text>
+<text class="nsb" x="443" y="656">continuity line · agent</text>
+</g>
+<g class="nd" data-t="await_start">
+<polygon points="445,688 645,688 660,719.0 645,750 445,750 430,719.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="706">SG.12</text>
+<text class="ntt" x="443" y="724">await_start</text>
+<text class="nsb" x="443" y="740">5 s → auto-open</text>
+</g>
+<g class="nd" data-t="next_item">
+<polygon points="445,772 645,772 660,803.0 645,834 445,834 430,803.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="443" y="790">SG.13</text>
+<text class="ntt" x="443" y="808">next_item</text>
+<text class="nsb" x="443" y="824">plan_cursor</text>
+</g>
+<g class="nd" data-t="CONCEPT GRAPH">
+<rect x="740" y="772" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<rect x="744" y="776" width="222" height="54" rx="6" fill="none" stroke="var(--det)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="753" y="790">SG.14</text>
+<text class="ntt" x="753" y="808">CONCEPT GRAPH</text>
+<text class="nsb" x="753" y="824">subgraph CG · 25 nodes</text>
+</g>
+<g class="nd" data-t="close">
+<rect x="120" y="856" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="133" y="874">SG.15</text>
+<text class="ntt" x="133" y="892">close</text>
+<text class="nsb" x="133" y="908">recap · no further CTA</text>
+</g>
+<path class="ed" d="M545.0,78 L545.0,100" marker-end="url(#ah)"/>
+<path class="ed" d="M545.0,162 L545.0,184" marker-end="url(#ah)"/><text class="el" x="551.0" y="177.0" text-anchor="start"><tspan class="elbg">ok</tspan></text>
+<path class="ed" d="M545.0,246 L545.0,268" marker-end="url(#ah)"/>
+<path class="ed" d="M430,299 L350,299" marker-end="url(#ah)"/><text class="el" x="390.0" y="293" text-anchor="middle"><tspan class="elbg">off day</tspan></text>
+<path class="ed" d="M545.0,330 L545.0,352" marker-end="url(#ah)"/><text class="el" x="551.0" y="345.0" text-anchor="start"><tspan class="elbg">study day</tspan></text>
+<path class="ed" d="M660,383 L740,383" marker-end="url(#ah)"/><text class="el" x="700.0" y="377" text-anchor="middle"><tspan class="elbg">no plan</tspan></text>
+<path class="ed" d="M855.0,414 L855.0,436" marker-end="url(#ah)"/><text class="el" x="861.0" y="429.0" text-anchor="start"><tspan class="elbg">proposal</tspan></text>
+<path class="ed" d="M740,404 L716,404 L716,551 L740,551" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="710" y="480" text-anchor="end"><tspan class="elbg">timeout</tspan></text>
+<path class="ed" d="M855.0,498 L855.0,520" marker-end="url(#ah)"/><text class="el" x="861.0" y="513.0" text-anchor="start"><tspan class="elbg">veto ×2</tspan></text>
+<path class="ed" d="M970,467 L994,467 L994,383 L970,383" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="1000" y="425" text-anchor="start"><tspan class="elbg">1st veto → retry</tspan></text>
+<path class="ed" d="M740,551 L660,551" marker-end="url(#ah)"/><text class="el" x="700.0" y="545" text-anchor="middle"><tspan class="elbg">fallback</tspan></text>
+<path class="ed" d="M740,467 L585.0,467 L585.0,520" marker-end="url(#ah)"/><text class="el" x="655.0" y="461" text-anchor="middle"><tspan class="elbg">pass</tspan></text>
+<path class="ed" d="M430,383 L396,383 L396,635 L430,635" marker-end="url(#ah)"/><text class="el" x="388" y="470" text-anchor="end"><tspan class="elbg">frozen — skip generation</tspan></text>
+<path class="ed" d="M545.0,582 L545.0,604" marker-end="url(#ah)"/>
+<path class="ed" d="M545.0,666 L545.0,688" marker-end="url(#ah)"/>
+<path class="ed" d="M545.0,750 L545.0,772" marker-end="url(#ah)"/><text class="el" x="551.0" y="765.0" text-anchor="start"><tspan class="elbg">▶ or 5 s</tspan></text>
+<path class="ed" d="M660,803 L740,803" marker-end="url(#ah)"/><text class="el" x="700.0" y="797" text-anchor="middle"><tspan class="elbg">item left</tspan></text>
+<path class="ed" d="M855.0,834 L855.0,862 L710,862 L710,790 L740,790" marker-end="url(#ah)"/><text class="el" x="704" y="880" text-anchor="end"><tspan class="elbg">mastered / parked → next</tspan></text>
+<path class="ed" d="M430,803 L235.0,803 L235.0,856" marker-end="url(#ah)"/><text class="el" x="390.0" y="797" text-anchor="middle"><tspan class="elbg">exhausted</tspan></text>
+<path class="ed" d="M430,719 L235.0,719 L235.0,856" marker-end="url(#ah)"/><text class="el" x="335.0" y="713" text-anchor="middle"><tspan class="elbg">child stops</tspan></text>
+</svg></div>
+<div class="note">
+<p><b>SG.06 → SG.11 is the freeze rule.</b> A plan is generated once per
+<code>(child_id, plan_date)</code> and read thereafter. Refresh, re-login and back-navigation
+all take that edge. Without it the planner agent produces a slightly different plan every time
+and the child never builds a routine.</p>
+<p><b>SG.08 → SG.07 is the only retry in the system.</b> One retry, then deterministic. Three
+retries on an eight-second agent is a twenty-four-second wait for a four-year-old.</p>
+</div>
+</section>
+
+<section class="card">
+<div class="sec"><span class="num">TA</span><h2>Teacher Agent — 8 nodes</h2></div>
+<p>A bounded ReAct loop: at most four steps, six read-only tools, a 2.5 s deadline, one
+schema retry, and a guaranteed abort edge to the deterministic branch engine.</p>
+<div class="scroll"><svg viewBox="0 0 1060 400" width="100%" role="img" aria-label="Teacher agent graph: bounded ReAct loop with tool calls, validation and a deterministic abort">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"/></marker></defs>
+<g class="nd" data-t="build_context">
+<rect x="40" y="40" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="53" y="58">TA.01</text>
+<text class="ntt" x="53" y="76">build_context</text>
+<text class="nsb" x="53" y="92">answer key stripped · R6</text>
+</g>
+<g class="nd" data-t="model_step">
+<rect x="400" y="40" width="230" height="62" rx="9" fill="var(--agt-bg)" stroke="var(--agt)" stroke-width="1.4"/>
+<rect x="404" y="44" width="222" height="54" rx="6" fill="none" stroke="var(--agt)" stroke-width="1" opacity=".55"/>
+<text class="nid" x="413" y="58">TA.02</text>
+<text class="ntt" x="413" y="76">model_step</text>
+<text class="nsb" x="413" y="92">≤ 4 steps · 600 ms</text>
+</g>
+<g class="nd" data-t="route_action">
+<polygon points="775,40 975,40 990,71.0 975,102 775,102 760,71.0" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="773" y="58">TA.03</text>
+<text class="ntt" x="773" y="76">route_action</text>
+<text class="nsb" x="773" y="92">tool or final?</text>
+</g>
+<g class="nd" data-t="check_budget">
+<rect x="760" y="168" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text class="nid" x="773" y="186">TA.04</text>
+<text class="ntt" x="773" y="204">check_budget</text>
+<text class="nsb" x="773" y="220">steps · allowlist</text>
+</g>
+<g class="nd" data-t="execute_tool">
+<rect x="400" y="168" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4"/>
+<text class="nid" x="413" y="186">TA.05</text>
+<text class="ntt" x="413" y="204">execute_tool</text>
+<text class="nsb" x="413" y="220">6 read-only tools</text>
+</g>
+<g class="nd" data-t="validate_output">
+<rect x="760" y="296" width="230" height="62" rx="9" fill="var(--det-bg)" stroke="var(--det)" stroke-width="1.4" stroke-dasharray="6 4"/>
+<text class="nid" x="773" y="314">TA.06</text>
+<text class="ntt" x="773" y="332">validate_output</text>
+<text class="nsb" x="773" y="348">schema · 1 retry</text>
+</g>
+<g class="nd" data-t="abort → deterministic">
+<rect x="40" y="296" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="53" y="314">TA.07</text>
+<text class="ntt" x="53" y="332">abort → deterministic</text>
+<text class="nsb" x="53" y="348">branch engine takes over</text>
+</g>
+<g class="nd" data-t="emit_decision">
+<rect x="400" y="296" width="230" height="62" rx="31.0" fill="var(--term-bg)" stroke="var(--term)" stroke-width="1.4"/>
+<text class="nid" x="413" y="314">TA.08</text>
+<text class="ntt" x="413" y="332">emit_decision</text>
+<text class="nsb" x="413" y="348">AgentDecision</text>
+</g>
+<path class="ed" d="M270,71 L400,71" marker-end="url(#ah)"/>
+<path class="ed" d="M630,71 L760,71" marker-end="url(#ah)"/>
+<path class="ed" d="M875.0,102 L875.0,168" marker-end="url(#ah)"/><text class="el" x="881.0" y="140" text-anchor="start"><tspan class="elbg">tool call</tspan></text>
+<path class="ed" d="M760,199 L630,199" marker-end="url(#ah)"/><text class="el" x="695.0" y="192" text-anchor="middle"><tspan class="elbg">ok</tspan></text>
+<path class="ed" d="M515.0,168 L515.0,102" marker-end="url(#ah)"/><text class="el" x="521.0" y="140" text-anchor="start"><tspan class="elbg">result</tspan></text>
+<path class="ed" d="M990,102 L1012,102 L1012,327 L990,327" marker-end="url(#ah)"/><text class="el" x="1018" y="215" text-anchor="start"><tspan class="elbg">final</tspan></text>
+<path class="ed" d="M760,327 L630,327" marker-end="url(#ah)"/><text class="el" x="695.0" y="320" text-anchor="middle"><tspan class="elbg">valid</tspan></text>
+<path class="ed" d="M760,307 L734,307 L734,86 L630,86" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="728" y="196" text-anchor="end"><tspan class="elbg">invalid · retry 1</tspan></text>
+<path class="ed" d="M400,340 L270,340" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="335.0" y="356" text-anchor="middle"><tspan class="elbg">abort</tspan></text>
+<path class="ed" d="M515.0,40 L515.0,20 L20,20 L20,327 L40,327" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="505.0" y="14" text-anchor="end"><tspan class="elbg">deadline / budget</tspan></text>
+<path class="ed" d="M875.0,230 L875.0,262 L320,262 L320,296 L270,320" stroke-dasharray="5 4" marker-end="url(#ah)"/><text class="el" x="328" y="258" text-anchor="start"><tspan class="elbg">over budget</tspan></text>
+</svg></div>
+<div class="note">
+<p><b>TA.01 <code>build_context</code> is the single choke point.</b> Every LLM call in the
+system passes through it. It excludes <code>correct_answer</code> and
+<code>accepted_answers</code> — so the model cannot reveal an answer even if a child asks
+directly, which is the first thing a four-year-old asks a guide.</p>
+<p>The model is told <b>what was decided</b> and asked to <b>say it</b>. It is never asked what
+to do. That inversion is what makes "the LLM is never a source of truth" structurally true
+rather than aspirational.</p>
+</div>
+</section>
+
+<section class="card">
+<div class="sec"><span class="num">∑</span><h2>Node inventory</h2></div>
+<div class="scroll"><table>
+<thead><tr><th>Graph</th><th class="n">Nodes</th><th class="n">compute</th><th class="n">io</th>
+<th class="n">guard</th><th class="n">router</th><th class="n">agent</th><th class="n">policy</th>
+<th class="n">terminal</th></tr></thead>
+<tbody>
+<tr><td>SG · session</td><td class="n">15</td><td class="n">2</td><td class="n">4</td><td class="n">2</td><td class="n">3</td><td class="n">2</td><td class="n">0</td><td class="n">2</td></tr>
+<tr><td>CG · concept</td><td class="n">25</td><td class="n">8</td><td class="n">6</td><td class="n">2</td><td class="n">4</td><td class="n">1</td><td class="n">2</td><td class="n">2</td></tr>
+<tr><td>TA · teacher agent</td><td class="n">8</td><td class="n">1</td><td class="n">1</td><td class="n">2</td><td class="n">1</td><td class="n">1</td><td class="n">0</td><td class="n">2</td></tr>
+<tr><td>PA · planner agent</td><td class="n">6</td><td class="n">1</td><td class="n">1</td><td class="n">1</td><td class="n">1</td><td class="n">1</td><td class="n">0</td><td class="n">1</td></tr>
+<tr><td>ID · idle ladder</td><td class="n">6</td><td class="n">4</td><td class="n">0</td><td class="n">0</td><td class="n">0</td><td class="n">1</td><td class="n">0</td><td class="n">1</td></tr>
+<tr><td><b>Total</b></td><td class="n"><b>60</b></td><td class="n">16</td><td class="n">12</td><td class="n">7</td><td class="n">9</td><td class="n">6</td><td class="n">2</td><td class="n">8</td></tr>
+</tbody></table></div>
+
+<div class="scroll"><table>
+<thead><tr><th>Owner</th><th class="n">Nodes</th><th class="n">Share</th><th>Which</th></tr></thead>
+<tbody>
+<tr><td>D — deterministic</td><td class="n">51</td><td class="n">85%</td><td>everything else, including all 8 terminals</td></tr>
+<tr><td>A — agent decides</td><td class="n">5</td><td class="n">8%</td><td><code>SG.07 CG.20 TA.02 PA.02 ID.03</code></td></tr>
+<tr><td>H — agent writes, guard validates</td><td class="n">2</td><td class="n">3%</td><td><code>SG.11 CG.07</code></td></tr>
+<tr><td>RL — learned policy</td><td class="n">2</td><td class="n">3%</td><td><code>CG.06 CG.19</code></td></tr>
+</tbody></table></div>
+<div class="note">
+<p><b>85% of the graph is deterministic, and no path from entry to any terminal requires a
+model to complete.</b> Set <code>LLM_PROVIDER=none</code> and every node still routes — only
+the wording changes from agent-authored to template.</p>
+</div>
+</section>
+
+<section class="card">
+<div class="sec"><span class="num">✓</span><h2>Five tests the graph form makes possible</h2></div>
+<p>This is the real argument for writing the system as an explicit node/edge table rather than
+a pile of service calls: these checks are trivial against a graph and near-impossible against
+call sites.</p>
+<div class="scroll"><table>
+<thead><tr><th>Test</th><th>Asserts</th></tr></thead>
+<tbody>
+<tr><td><code>test_truth_node_isolation</code></td><td>CG.13 reaches no LLM through any import path (AST walk, not mocks)</td></tr>
+<tr><td><code>test_commit_precedes_every_agent</code></td><td>no agent node is reachable from entry without passing CG.15</td></tr>
+<tr><td><code>test_every_agent_has_failure_edge</code></td><td>every agent node has an <code>on_fail</code> edge to a deterministic node</td></tr>
+<tr><td><code>test_no_unbounded_cycle</code></td><td>every cycle contains a node that increments a counter (CG.18 or CG.22)</td></tr>
+<tr><td><code>test_attempt_cap</code></td><td>worst-case traversal reaches at most 4 attempts on one concept</td></tr>
+</tbody></table></div>
+</section>
+
+<footer>
+Saksham IQ · Teaching Graph v1.0 · 2026-08-19<br>
+Full spec: <code>docs/TEACHING-GRAPH-SPEC.md</code> (state schema, edge tables, Mermaid sources,
+reference implementation)
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const tip=document.getElementById('tip');
+document.querySelectorAll('.nd[data-t]').forEach(el=>{
+  el.addEventListener('mousemove',e=>{
+    tip.textContent=el.dataset.t; tip.style.opacity=1;
+    let x=e.clientX+14,y=e.clientY+14; const r=tip.getBoundingClientRect();
+    if(x+r.width>innerWidth-8)x=e.clientX-r.width-14;
+    if(y+r.height>innerHeight-8)y=e.clientY-r.height-14;
+    tip.style.left=x+'px'; tip.style.top=y+'px';
+  });
+  el.addEventListener('mouseleave',()=>{tip.style.opacity=0});
+});
+</script></body></html>

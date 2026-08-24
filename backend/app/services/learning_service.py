@@ -7,12 +7,20 @@ of it.
 """
 
 import random
-from datetime import date
-from uuid import uuid4
+from uuid import UUID, uuid4
 
+from app.schemas.child import ChildProfile
 from app.schemas.curriculum import Topic
 from app.schemas.learning import Activity, LearningAnswerRequest, LearningResponse, LearningStartRequest
-from app.services import activity_evaluators, curriculum_service
+from app.db.repositories import awards
+from app.db.session import session_scope
+from app.services import (
+    activity_evaluators,
+    child_store,
+    curriculum_service,
+    plan_service,
+    retention_service,
+)
 from app.services.avatar_service import learning_avatar
 from app.services.child_service import (
     get_child_record,
@@ -24,7 +32,14 @@ from app.config import get_settings
 from app.services.errors import app_error
 from app.services.history_service import record_attempt
 from app.services.learning_memory_service import record_completed_lesson
-from app.services.mock_storage import mock_certificates, mock_learning_sessions
+
+# One sitting, in flight. This is the only thing about a lesson that is still
+# kept in memory, and it is the right thing to keep there: it is the cursor into
+# a lesson the child is playing right now, and it is rebuilt by starting the
+# topic again. Everything a restart must not lose - the answers, the mastery
+# they moved, the stars, the unlock board, the certificate - is written to the
+# database as it happens.
+_active_lessons: dict[str, dict] = {}
 
 CORRECT_FEEDBACK = [
     "Great work! Here is the next one.",
@@ -71,7 +86,7 @@ PERFECT_SCORE_BONUS = 3
 LESSON_LENGTH = 6
 
 
-def _lesson_activities(topic: Topic, seed: str) -> list[Activity]:
+def lesson_activities(topic: Topic, seed: str) -> list[Activity]:
     """One lesson is a sample of its topic, not the whole of it.
 
     A topic holds many examples of the same skill so that the adventure and
@@ -111,8 +126,23 @@ def _session_activities(session: dict) -> list[Activity]:
     return [by_id[activity_id] for activity_id in session["activity_ids"] if activity_id in by_id]
 
 
-def _skill_slug(topic: Topic) -> str:
+def skill_slug(topic: Topic) -> str:
     return f"{topic.subject_id}:{topic.topic_id}"
+
+
+def forms_available(topic: Topic) -> int:
+    """Distinct question forms the curriculum holds for this topic.
+
+    The mastery gate asks for two forms where two exist and one where only one
+    does. This is where "how many exist" is known - the repository deliberately
+    does not read the curriculum - so it is counted here and stored on the row.
+    """
+    types = {
+        activity.type
+        for activity in curriculum_service.get_activities(topic.topic_id)
+        if activity_evaluators.requires_answer(activity.type)
+    }
+    return max(1, len(types))
 
 
 def _check_access(child: dict, topic: Topic) -> None:
@@ -127,6 +157,13 @@ def _check_access(child: dict, topic: Topic) -> None:
     if topic.topic_id not in subject_progress(child, topic.subject_id)["unlocked_topics"]:
         raise app_error("LOCKED_STAGE", "This topic is not unlocked yet.", 403)
 
+    # Unlocked is not the same as today's. Finishing a level opens the next one,
+    # and the next one is in tomorrow's plan - so the child comes back to it
+    # tomorrow instead of running through a subject in one sitting.
+    gate = plan_service.may_open(ChildProfile(**child), topic.topic_id)
+    if not gate.allowed:
+        raise app_error("NOT_TODAYS_PLAN", gate.message, 403)
+
 
 def _next_topic(topic: Topic) -> Topic | None:
     """The next topic in the same subject, by sort order."""
@@ -137,13 +174,25 @@ def _next_topic(topic: Topic) -> Topic | None:
 
 
 def start_learning(payload: LearningStartRequest) -> LearningResponse:
+    """Open a sitting on one topic.
+
+    The child record is written back before the response is returned: the
+    services above mutate the record in place, exactly as they did when it was a
+    dictionary, and this is what makes the mutation outlive the process.
+    """
+    response = _start_learning(payload)
+    child_store.save(get_child_record(payload.child_id))
+    return response
+
+
+def _start_learning(payload: LearningStartRequest) -> LearningResponse:
     child = get_child_record(payload.child_id)
     topic = curriculum_service.get_topic(payload.topic_id)
     _check_access(child, topic)
 
     session_id = f"learn_{uuid4()}"
-    activities = _lesson_activities(topic, session_id)
-    mock_learning_sessions[session_id] = {
+    activities = lesson_activities(topic, session_id)
+    _active_lessons[session_id] = {
         "session_id": session_id,
         "child_id": payload.child_id,
         "class_id": topic.class_id,
@@ -167,7 +216,7 @@ def start_learning(payload: LearningStartRequest) -> LearningResponse:
     # subject in the manifest, so this needs no per-subject special case.
     tutor_response = generator.tutor_intro(child["name"], topic.title, topic.language)
     return _response(
-        mock_learning_sessions[session_id],
+        _active_lessons[session_id],
         topic,
         activity=activities[0],
         tutor_response=tutor_response,
@@ -187,13 +236,21 @@ def retry_learning(session_id: str) -> LearningResponse:
 
 
 def _session(session_id: str) -> dict:
-    session = mock_learning_sessions.get(session_id)
+    session = _active_lessons.get(session_id)
     if not session:
         raise app_error("EXPIRED_LEARNING_SESSION", "Let us start this topic again.", 404)
     return session
 
 
 def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
+    """Grade one answer. Stars, unlocks and the certificate all move under here,
+    so the record is saved once, on the way out, whichever branch answered."""
+    response = _answer_learning(payload)
+    child_store.save(get_child_record(response.child_id))
+    return response
+
+
+def _answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
     session = _session(payload.session_id)
     if session["topic_completed"]:
         return continue_learning(payload.session_id)
@@ -215,16 +272,31 @@ def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
     )
 
     next_attempt_number = 0 if is_correct else session["attempt_number"] + 1
+    skill_id = skill_slug(topic)
     record_attempt(
         child_id=session["child_id"],
         session_id=session["session_id"],
         activity_id=activity.activity_id,
         topic=topic.topic_id,
-        skill=_skill_slug(topic),
+        skill=skill_id,
         level_id=topic.subject_id,
         child_answer=normalized_answer,
         is_correct=is_correct,
         attempt_number=next_attempt_number,
+        # The question's *form*, not its id. Two forms of the same skill are
+        # what the mastery gate asks for, and what makes a passed retention
+        # probe evidence of transfer rather than of recall.
+        form_signature=activity.type,
+        forms_available=forms_available(topic),
+    )
+    # A correct answer schedules the probe that will pay for however the child
+    # was taught this skill; an answer to a probe that has come due settles it.
+    # Neither happens inside this turn: the reward is deliberately days late.
+    retention_service.on_attempt(
+        child_id=session["child_id"],
+        skill_id=skill_id,
+        form_signature=activity.type,
+        is_correct=is_correct,
     )
 
     if is_correct:
@@ -253,7 +325,7 @@ def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
     session["correct_streak"] = 0
 
     if session["attempt_number"] >= 4:
-        _mark_weak(child, topic)
+        mark_weak(child, topic)
         session["attempt_number"] = 0
         session["activity_index"] = (session["activity_index"] + 1) % len(activities)
         return _response(
@@ -272,7 +344,7 @@ def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
     elif session["attempt_number"] == 2:
         feedback = random.choice(WRONG_ATTEMPT_2) + activity.hint
     else:
-        _mark_weak(child, topic)
+        mark_weak(child, topic)
         feedback = random.choice(WRONG_ATTEMPT_3_PLUS)
 
     return _response(
@@ -285,8 +357,8 @@ def answer_learning(payload: LearningAnswerRequest) -> LearningResponse:
     )
 
 
-def _mark_weak(child: dict, topic: Topic) -> None:
-    skill = _skill_slug(topic)
+def mark_weak(child: dict, topic: Topic) -> None:
+    skill = skill_slug(topic)
     if skill not in child["weak_skills"]:
         child["weak_skills"].append(skill)
 
@@ -300,10 +372,39 @@ def _complete_topic(
 ) -> LearningResponse:
     score = round((session["correct_count"] / len(activities)) * 100)
     session["score"] = score
-    session["topic_completed"] = score >= topic.passing_score
+    award = award_topic_completion(child, topic, score=score)
+    session["topic_completed"] = award["passed"]
 
+    return _response(
+        session,
+        topic,
+        activity=None,
+        is_correct=True,
+        feedback=award["feedback"],
+        stars_earned=stars_earned + award["topic_reward"] + award["perfect_bonus"],
+        topic_completed=award["passed"],
+        next_topic_id=award["next_topic_id"],
+        next_topic_unlocked=award["next_topic_unlocked"],
+        recommended_practice=award["recommended_practice"],
+        complete=True,
+    )
+
+
+def award_topic_completion(child: dict, topic: Topic, *, score: int) -> dict:
+    """Score a finished lesson: stars, completion, the next topic, the certificate.
+
+    Extracted so the Conductor can end a lesson through exactly the same code the
+    older `/learning` endpoints use. Two implementations of "did this topic
+    pass?" would be two answers to the only question the child actually cares
+    about, and one of them would drift.
+
+    Every line of it is deterministic - the topic's own `passing_score` decides,
+    the manifest's `star_reward` pays, and the next topic in sort order opens. No
+    model is consulted, here or anywhere upstream.
+    """
     progress = subject_progress(child, topic.subject_id)
     progress["scores"][topic.topic_id] = score
+    passed = score >= topic.passing_score
 
     topic_reward = 0
     perfect_bonus = 0
@@ -314,7 +415,7 @@ def _complete_topic(
         perfect_bonus = PERFECT_SCORE_BONUS
         child["stars"] += perfect_bonus
 
-    if session["topic_completed"]:
+    if passed:
         if topic.topic_id not in progress["completed_topics"]:
             progress["completed_topics"].append(topic.topic_id)
         topic_reward = topic.star_reward
@@ -330,7 +431,7 @@ def _complete_topic(
             _complete_subject(child, topic.subject_id)
 
         record_completed_lesson(
-            child_id=session["child_id"],
+            child_id=child["child_id"],
             subject_id=topic.subject_id,
             topic_id=topic.topic_id,
             title=topic.title,
@@ -344,23 +445,20 @@ def _complete_topic(
         )
         recommended_practice = 70 <= score < 80
     else:
-        _mark_weak(child, topic)
+        mark_weak(child, topic)
         feedback = random.choice(TOPIC_COMPLETE_NEEDS_PRACTICE)
         recommended_practice = True
 
-    return _response(
-        session,
-        topic,
-        activity=None,
-        is_correct=True,
-        feedback=feedback,
-        stars_earned=stars_earned + topic_reward + perfect_bonus,
-        topic_completed=session["topic_completed"],
-        next_topic_id=next_topic.topic_id if next_topic else None,
-        next_topic_unlocked=next_topic_unlocked,
-        recommended_practice=recommended_practice,
-        complete=True,
-    )
+    return {
+        "passed": passed,
+        "score": score,
+        "topic_reward": topic_reward,
+        "perfect_bonus": perfect_bonus,
+        "next_topic_id": next_topic.topic_id if next_topic else None,
+        "next_topic_unlocked": next_topic_unlocked,
+        "feedback": feedback,
+        "recommended_practice": recommended_practice,
+    }
 
 
 def _complete_subject(child: dict, subject_id: str) -> None:
@@ -378,19 +476,22 @@ def _complete_subject(child: dict, subject_id: str) -> None:
 
 
 def _refresh_certificate(child: dict) -> None:
+    """Issue the class certificate once every playable topic is complete.
+
+    Eligibility is a pure function of the child's own completed topics -
+    `refresh_certificate_eligibility` - and the row is written from that verdict.
+    No model is consulted, here or upstream of here.
+    """
     if not refresh_certificate_eligibility(child):
         return
-    if child["child_id"] in mock_certificates:
-        return
     detail = curriculum_service.get_class(child["class_id"])
-    mock_certificates[child["child_id"]] = {
-        "unlocked": True,
-        "certificate_id": f"cert_{uuid4().hex[:8]}",
-        "child_name": child["name"],
-        "completion_message": f"Completed the {detail.title} curriculum",
-        "completion_date": date.today().isoformat(),
-        "stars_earned": child["stars"],
-    }
+    with session_scope() as session:
+        awards.issue(
+            session,
+            child_id=UUID(child["child_id"]),
+            subject_id=child["class_id"],
+            title=f"Completed the {detail.title} curriculum",
+        )
 
 
 def seed_demo_child(child_id: str) -> dict:
@@ -409,6 +510,7 @@ def seed_demo_child(child_id: str) -> dict:
             _complete_subject(child, subject.subject_id)
     child["stars"] = max(child["stars"], 80)
     _refresh_certificate(child)
+    child_store.save(child)
     from app.services.child_service import get_child
 
     return get_child(child_id).model_dump()

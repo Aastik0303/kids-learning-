@@ -368,154 +368,1362 @@
           ]
         },
         {
-          "topic_id": "pg_maths_numbers",
-          "title": "Numbers 1 to 5",
-          "emoji": "5️⃣",
+          "topic_id": "pg_maths_number_1",
+          "title": "Number 1",
+          "emoji": "🍎",
           "sort_order": 3,
           "delivery": "digital",
-          "objective": "Oral counting 1-5, number recognition, counting objects, finger counting",
-          "intro_message": "Let us count on our fingers! ✋",
-          "star_reward": 5,
+          "objective": "Meet 1, see what one means, draw 1, say it and match it",
+          "intro_message": "Let us count to 1! 🍎",
+          "star_reward": 3,
+          "lesson_flow": "complete",
           "activities": [
             {
-              "activity_id": "pg_nm_1",
-              "type": "introduce",
-              "emoji": "1️⃣",
+              "activity_id": "pg_num_1_1",
+              "type": "introduce_number",
               "skill_id": "number_1",
-              "prompt": "This is one! 1️⃣ One sun. ☀️",
+              "prompt": "This is 1. Look at it with me — one line straight down.",
               "visual_items": [
-                "sun"
+                "1"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Just one.",
+              "hint": "1 is said 'one'.",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_nm_2",
-              "type": "count_objects",
-              "emoji": "🎈",
-              "skill_id": "count_to_2",
-              "prompt": "How many balloons? 🎈🎈",
+              "activity_id": "pg_num_1_2",
+              "type": "introduce_number",
+              "skill_id": "number_1_means",
+              "prompt": "1 means one thing. Here is one apple. 🍎",
               "visual_items": [
-                "balloon",
-                "balloon"
+                "1",
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One apple, and the number is 1.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_1_3",
+              "type": "introduce_number",
+              "skill_id": "number_1_count",
+              "prompt": "Count them with me: 1. That is 1!",
+              "visual_items": [
+                "1",
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_1_4",
+              "type": "trace",
+              "skill_id": "number_1_write",
+              "prompt": "Now draw 1 with your finger.",
+              "visual_items": [
+                "number_1"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One line straight down.",
+              "difficulty": "easy",
+              "trace_target": "1",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_1_5",
+              "type": "repeat_number",
+              "skill_id": "number_1_say",
+              "prompt": "You drew it! Now say it with me: one.",
+              "visual_items": [
+                "1"
+              ],
+              "options": [],
+              "correct_answer": "1",
+              "hint": "1 is said 'one'.",
+              "difficulty": "easy",
+              "accept": [
+                "one",
+                "1"
+              ]
+            },
+            {
+              "activity_id": "pg_num_1_6",
+              "type": "match",
+              "skill_id": "number_1_match_count",
+              "prompt": "Match the picture to its number. How many apples? 🍎",
+              "visual_items": [
+                "apple"
               ],
               "options": [
                 "1",
                 "2"
               ],
-              "option_emojis": [
-                "1️⃣",
-                "2️⃣"
+              "correct_answer": "1",
+              "hint": "Touch each one and count: 1.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_1_7",
+              "type": "match",
+              "skill_id": "number_1_match_new",
+              "prompt": "Now these balloons. 🎈 Match them to the right number.",
+              "visual_items": [
+                "balloon"
               ],
-              "correct_answer": "2",
-              "hint": "One, two.",
+              "options": [
+                "2",
+                "1"
+              ],
+              "correct_answer": "1",
+              "hint": "Touch each one and count: 1.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_2",
+          "title": "Number 2",
+          "emoji": "⚽",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Meet 2, see what two means, draw 2, say it and match it",
+          "intro_message": "Let us count to 2! ⚽",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_2_1",
+              "type": "introduce_number",
+              "skill_id": "number_2",
+              "prompt": "This is 2. Look at it with me — a curve and a line along the floor.",
+              "visual_items": [
+                "2"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "2 is said 'two'.",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_nm_3",
-              "type": "count_objects",
-              "emoji": "⭐",
-              "skill_id": "count_to_3",
-              "prompt": "How many stars? ⭐⭐⭐",
+              "activity_id": "pg_num_2_2",
+              "type": "introduce_number",
+              "skill_id": "number_2_means",
+              "prompt": "2 means two things. Here are two balls. ⚽⚽",
               "visual_items": [
-                "star",
-                "star",
-                "star"
+                "2",
+                "ball",
+                "ball"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Two balls, and the number is 2.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_2_3",
+              "type": "introduce_number",
+              "skill_id": "number_2_count",
+              "prompt": "Count them with me: 1, 2. That is 2!",
+              "visual_items": [
+                "2",
+                "ball",
+                "ball"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_2_4",
+              "type": "trace",
+              "skill_id": "number_2_write",
+              "prompt": "Now draw 2 with your finger.",
+              "visual_items": [
+                "number_2"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A curve and a line along the floor.",
+              "difficulty": "easy",
+              "trace_target": "2",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_2_5",
+              "type": "repeat_number",
+              "skill_id": "number_2_say",
+              "prompt": "You drew it! Now say it with me: two.",
+              "visual_items": [
+                "2"
+              ],
+              "options": [],
+              "correct_answer": "2",
+              "hint": "2 is said 'two'.",
+              "difficulty": "easy",
+              "accept": [
+                "two",
+                "2"
+              ]
+            },
+            {
+              "activity_id": "pg_num_2_6",
+              "type": "match",
+              "skill_id": "number_2_match_count",
+              "prompt": "Match the picture to its number. How many balls? ⚽",
+              "visual_items": [
+                "ball",
+                "ball"
+              ],
+              "options": [
+                "1",
+                "2"
+              ],
+              "correct_answer": "2",
+              "hint": "Touch each one and count: 1, 2.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_2_7",
+              "type": "match",
+              "skill_id": "number_2_match_new",
+              "prompt": "Now these birds. 🐦 Match them to the right number.",
+              "visual_items": [
+                "bird",
+                "bird"
+              ],
+              "options": [
+                "2",
+                "1"
+              ],
+              "correct_answer": "2",
+              "hint": "Touch each one and count: 1, 2.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_3",
+          "title": "Number 3",
+          "emoji": "🐱",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "Meet 3, see what three means, draw 3, say it and match it",
+          "intro_message": "Let us count to 3! 🐱",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_3_1",
+              "type": "introduce_number",
+              "skill_id": "number_3",
+              "prompt": "This is 3. Look at it with me — two little curves, one on the other.",
+              "visual_items": [
+                "3"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "3 is said 'three'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_3_2",
+              "type": "introduce_number",
+              "skill_id": "number_3_means",
+              "prompt": "3 means three things. Here are three cats. 🐱🐱🐱",
+              "visual_items": [
+                "3",
+                "cat",
+                "cat",
+                "cat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Three cats, and the number is 3.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_3_3",
+              "type": "introduce_number",
+              "skill_id": "number_3_count",
+              "prompt": "Count them with me: 1, 2, 3. That is 3!",
+              "visual_items": [
+                "3",
+                "cat",
+                "cat",
+                "cat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_3_4",
+              "type": "trace",
+              "skill_id": "number_3_write",
+              "prompt": "Now draw 3 with your finger.",
+              "visual_items": [
+                "number_3"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Two little curves, one on the other.",
+              "difficulty": "easy",
+              "trace_target": "3",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_3_5",
+              "type": "repeat_number",
+              "skill_id": "number_3_say",
+              "prompt": "You drew it! Now say it with me: three.",
+              "visual_items": [
+                "3"
+              ],
+              "options": [],
+              "correct_answer": "3",
+              "hint": "3 is said 'three'.",
+              "difficulty": "easy",
+              "accept": [
+                "three",
+                "3"
+              ]
+            },
+            {
+              "activity_id": "pg_num_3_6",
+              "type": "match",
+              "skill_id": "number_3_match_count",
+              "prompt": "Match the picture to its number. How many cats? 🐱",
+              "visual_items": [
+                "cat",
+                "cat",
+                "cat"
+              ],
+              "options": [
+                "3",
+                "2"
+              ],
+              "correct_answer": "3",
+              "hint": "Touch each one and count: 1, 2, 3.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_3_7",
+              "type": "match",
+              "skill_id": "number_3_match_new",
+              "prompt": "Now these ducks. 🦆 Match them to the right number.",
+              "visual_items": [
+                "duck",
+                "duck",
+                "duck"
               ],
               "options": [
                 "2",
                 "3"
               ],
-              "option_emojis": [
-                "2️⃣",
-                "3️⃣"
-              ],
               "correct_answer": "3",
-              "hint": "One, two, three.",
+              "hint": "Touch each one and count: 1, 2, 3.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_4",
+          "title": "Number 4",
+          "emoji": "⭐",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Meet 4, see what four means, draw 4, say it and match it",
+          "intro_message": "Let us count to 4! ⭐",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_4_1",
+              "type": "introduce_number",
+              "skill_id": "number_4",
+              "prompt": "This is 4. Look at it with me — down, across, then one line down.",
+              "visual_items": [
+                "4"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "4 is said 'four'.",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_nm_4",
-              "type": "count_objects",
-              "emoji": "🍎",
-              "skill_id": "count_to_5",
-              "prompt": "How many apples? 🍎🍎🍎🍎",
+              "activity_id": "pg_num_4_2",
+              "type": "introduce_number",
+              "skill_id": "number_4_means",
+              "prompt": "4 means four things. Here are four stars. ⭐⭐⭐⭐",
               "visual_items": [
-                "apple",
-                "apple",
-                "apple",
-                "apple"
+                "4",
+                "star",
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Four stars, and the number is 4.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_4_3",
+              "type": "introduce_number",
+              "skill_id": "number_4_count",
+              "prompt": "Count them with me: 1, 2, 3, 4. That is 4!",
+              "visual_items": [
+                "4",
+                "star",
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_4_4",
+              "type": "trace",
+              "skill_id": "number_4_write",
+              "prompt": "Now draw 4 with your finger.",
+              "visual_items": [
+                "number_4"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down, across, then one line down.",
+              "difficulty": "easy",
+              "trace_target": "4",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_4_5",
+              "type": "repeat_number",
+              "skill_id": "number_4_say",
+              "prompt": "You drew it! Now say it with me: four.",
+              "visual_items": [
+                "4"
+              ],
+              "options": [],
+              "correct_answer": "4",
+              "hint": "4 is said 'four'.",
+              "difficulty": "easy",
+              "accept": [
+                "four",
+                "4"
+              ]
+            },
+            {
+              "activity_id": "pg_num_4_6",
+              "type": "match",
+              "skill_id": "number_4_match_count",
+              "prompt": "Match the picture to its number. How many stars? ⭐",
+              "visual_items": [
+                "star",
+                "star",
+                "star",
+                "star"
               ],
               "options": [
                 "3",
                 "4"
               ],
-              "option_emojis": [
-                "3️⃣",
-                "4️⃣"
-              ],
               "correct_answer": "4",
-              "hint": "Touch each apple as you count.",
+              "hint": "Touch each one and count: 1, 2, 3, 4.",
               "difficulty": "easy"
             },
             {
-              "activity_id": "pg_nm_5",
-              "type": "count_objects",
-              "emoji": "✋",
-              "skill_id": "count_to_5",
-              "prompt": "How many fingers? ✋",
+              "activity_id": "pg_num_4_7",
+              "type": "match",
+              "skill_id": "number_4_match_new",
+              "prompt": "Now these balls. ⚽ Match them to the right number.",
               "visual_items": [
-                "hand"
+                "ball",
+                "ball",
+                "ball",
+                "ball"
+              ],
+              "options": [
+                "4",
+                "3"
+              ],
+              "correct_answer": "4",
+              "hint": "Touch each one and count: 1, 2, 3, 4.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_5",
+          "title": "Number 5",
+          "emoji": "🌼",
+          "sort_order": 7,
+          "delivery": "digital",
+          "objective": "Meet 5, see what five means, draw 5, say it and match it",
+          "intro_message": "Let us count to 5! 🌼",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_5_1",
+              "type": "introduce_number",
+              "skill_id": "number_5",
+              "prompt": "This is 5. Look at it with me — a hat, a tummy, and a line.",
+              "visual_items": [
+                "5"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "5 is said 'five'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_5_2",
+              "type": "introduce_number",
+              "skill_id": "number_5_means",
+              "prompt": "5 means five things. Here are five flowers. 🌼🌼🌼🌼🌼",
+              "visual_items": [
+                "5",
+                "flower",
+                "flower",
+                "flower",
+                "flower",
+                "flower"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Five flowers, and the number is 5.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_5_3",
+              "type": "introduce_number",
+              "skill_id": "number_5_count",
+              "prompt": "Count them with me: 1, 2, 3, 4, 5. That is 5!",
+              "visual_items": [
+                "5",
+                "flower",
+                "flower",
+                "flower",
+                "flower",
+                "flower"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_5_4",
+              "type": "trace",
+              "skill_id": "number_5_write",
+              "prompt": "Now draw 5 with your finger.",
+              "visual_items": [
+                "number_5"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A hat, a tummy, and a line.",
+              "difficulty": "easy",
+              "trace_target": "5",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_5_5",
+              "type": "repeat_number",
+              "skill_id": "number_5_say",
+              "prompt": "You drew it! Now say it with me: five.",
+              "visual_items": [
+                "5"
+              ],
+              "options": [],
+              "correct_answer": "5",
+              "hint": "5 is said 'five'.",
+              "difficulty": "easy",
+              "accept": [
+                "five",
+                "5"
+              ]
+            },
+            {
+              "activity_id": "pg_num_5_6",
+              "type": "match",
+              "skill_id": "number_5_match_count",
+              "prompt": "Match the picture to its number. How many flowers? 🌼",
+              "visual_items": [
+                "flower",
+                "flower",
+                "flower",
+                "flower",
+                "flower"
+              ],
+              "options": [
+                "5",
+                "4"
+              ],
+              "correct_answer": "5",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_5_7",
+              "type": "match",
+              "skill_id": "number_5_match_new",
+              "prompt": "Now these balloons. 🎈 Match them to the right number.",
+              "visual_items": [
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon"
               ],
               "options": [
                 "4",
                 "5"
               ],
-              "option_emojis": [
-                "4️⃣",
-                "5️⃣"
-              ],
               "correct_answer": "5",
-              "hint": "One hand has five fingers.",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5.",
               "difficulty": "easy"
-            },
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_6",
+          "title": "Number 6",
+          "emoji": "🐟",
+          "sort_order": 8,
+          "delivery": "digital",
+          "objective": "Meet 6, see what six means, draw 6, say it and match it",
+          "intro_message": "Let us count to 6! 🐟",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
             {
-              "activity_id": "pg_nm_6",
-              "type": "select_number",
-              "emoji": "2️⃣",
-              "skill_id": "number_recognition_1_5",
-              "prompt": "Tap the number 2! 2️⃣",
+              "activity_id": "pg_num_6_1",
+              "type": "introduce_number",
+              "skill_id": "number_6",
+              "prompt": "This is 6. Look at it with me — a curve down into a little loop.",
               "visual_items": [
-                "1",
-                "2"
-              ],
-              "options": [
-                "1",
-                "2"
-              ],
-              "option_emojis": [
-                "1️⃣",
-                "2️⃣"
-              ],
-              "correct_answer": "2",
-              "hint": "Two comes after one.",
-              "difficulty": "easy"
-            },
-            {
-              "activity_id": "pg_nm_7",
-              "type": "story_listen",
-              "emoji": "🎵",
-              "skill_id": "number_rhymes",
-              "prompt": "Sing with me: One, two, buckle my shoe! 👞",
-              "visual_items": [
-                "shoe"
+                "6"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Clap along!",
+              "hint": "6 is said 'six'.",
               "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_6_2",
+              "type": "introduce_number",
+              "skill_id": "number_6_means",
+              "prompt": "6 means six things. Here are six fish. 🐟🐟🐟🐟🐟",
+              "visual_items": [
+                "6",
+                "fish",
+                "fish",
+                "fish",
+                "fish",
+                "fish",
+                "fish"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Six fish, and the number is 6.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_6_3",
+              "type": "introduce_number",
+              "skill_id": "number_6_count",
+              "prompt": "Count them with me: 1, 2, 3, 4, 5, 6. That is 6!",
+              "visual_items": [
+                "6",
+                "fish",
+                "fish",
+                "fish",
+                "fish",
+                "fish",
+                "fish"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_6_4",
+              "type": "trace",
+              "skill_id": "number_6_write",
+              "prompt": "Now draw 6 with your finger.",
+              "visual_items": [
+                "number_6"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A curve down into a little loop.",
+              "difficulty": "easy",
+              "trace_target": "6",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_6_5",
+              "type": "repeat_number",
+              "skill_id": "number_6_say",
+              "prompt": "You drew it! Now say it with me: six.",
+              "visual_items": [
+                "6"
+              ],
+              "options": [],
+              "correct_answer": "6",
+              "hint": "6 is said 'six'.",
+              "difficulty": "easy",
+              "accept": [
+                "six",
+                "6"
+              ]
+            },
+            {
+              "activity_id": "pg_num_6_6",
+              "type": "match",
+              "skill_id": "number_6_match_count",
+              "prompt": "Match the picture to its number. How many fish? 🐟",
+              "visual_items": [
+                "fish",
+                "fish",
+                "fish",
+                "fish",
+                "fish",
+                "fish"
+              ],
+              "options": [
+                "5",
+                "6"
+              ],
+              "correct_answer": "6",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_6_7",
+              "type": "match",
+              "skill_id": "number_6_match_new",
+              "prompt": "Now these birds. 🐦 Match them to the right number.",
+              "visual_items": [
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird"
+              ],
+              "options": [
+                "6",
+                "5"
+              ],
+              "correct_answer": "6",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_7",
+          "title": "Number 7",
+          "emoji": "🎈",
+          "sort_order": 9,
+          "delivery": "digital",
+          "objective": "Meet 7, see what seven means, draw 7, say it and match it",
+          "intro_message": "Let us count to 7! 🎈",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_7_1",
+              "type": "introduce_number",
+              "skill_id": "number_7",
+              "prompt": "This is 7. Look at it with me — across the top, then slide down.",
+              "visual_items": [
+                "7"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "7 is said 'seven'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_7_2",
+              "type": "introduce_number",
+              "skill_id": "number_7_means",
+              "prompt": "7 means seven things. Here are seven balloons. 🎈🎈🎈🎈🎈",
+              "visual_items": [
+                "7",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Seven balloons, and the number is 7.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_7_3",
+              "type": "introduce_number",
+              "skill_id": "number_7_count",
+              "prompt": "Count them with me: 1, 2, 3, 4, 5, 6, 7. That is 7!",
+              "visual_items": [
+                "7",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_7_4",
+              "type": "trace",
+              "skill_id": "number_7_write",
+              "prompt": "Now draw 7 with your finger.",
+              "visual_items": [
+                "number_7"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Across the top, then slide down.",
+              "difficulty": "easy",
+              "trace_target": "7",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_7_5",
+              "type": "repeat_number",
+              "skill_id": "number_7_say",
+              "prompt": "You drew it! Now say it with me: seven.",
+              "visual_items": [
+                "7"
+              ],
+              "options": [],
+              "correct_answer": "7",
+              "hint": "7 is said 'seven'.",
+              "difficulty": "easy",
+              "accept": [
+                "seven",
+                "7"
+              ]
+            },
+            {
+              "activity_id": "pg_num_7_6",
+              "type": "match",
+              "skill_id": "number_7_match_count",
+              "prompt": "Match the picture to its number. How many balloons? 🎈",
+              "visual_items": [
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon"
+              ],
+              "options": [
+                "7",
+                "6"
+              ],
+              "correct_answer": "7",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_7_7",
+              "type": "match",
+              "skill_id": "number_7_match_new",
+              "prompt": "Now these ducks. 🦆 Match them to the right number.",
+              "visual_items": [
+                "duck",
+                "duck",
+                "duck",
+                "duck",
+                "duck",
+                "duck",
+                "duck"
+              ],
+              "options": [
+                "6",
+                "7"
+              ],
+              "correct_answer": "7",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_8",
+          "title": "Number 8",
+          "emoji": "🍃",
+          "sort_order": 10,
+          "delivery": "digital",
+          "objective": "Meet 8, see what eight means, draw 8, say it and match it",
+          "intro_message": "Let us count to 8! 🍃",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_8_1",
+              "type": "introduce_number",
+              "skill_id": "number_8",
+              "prompt": "This is 8. Look at it with me — two circles, like a snowman.",
+              "visual_items": [
+                "8"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "8 is said 'eight'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_8_2",
+              "type": "introduce_number",
+              "skill_id": "number_8_means",
+              "prompt": "8 means eight things. Here are eight leaves. 🍃🍃🍃🍃🍃",
+              "visual_items": [
+                "8",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Eight leaves, and the number is 8.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_8_3",
+              "type": "introduce_number",
+              "skill_id": "number_8_count",
+              "prompt": "Count them with me: 1, 2, 3, 4, 5, 6, 7, 8. That is 8!",
+              "visual_items": [
+                "8",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_8_4",
+              "type": "trace",
+              "skill_id": "number_8_write",
+              "prompt": "Now draw 8 with your finger.",
+              "visual_items": [
+                "number_8"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Two circles, like a snowman.",
+              "difficulty": "easy",
+              "trace_target": "8",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_8_5",
+              "type": "repeat_number",
+              "skill_id": "number_8_say",
+              "prompt": "You drew it! Now say it with me: eight.",
+              "visual_items": [
+                "8"
+              ],
+              "options": [],
+              "correct_answer": "8",
+              "hint": "8 is said 'eight'.",
+              "difficulty": "easy",
+              "accept": [
+                "eight",
+                "8"
+              ]
+            },
+            {
+              "activity_id": "pg_num_8_6",
+              "type": "match",
+              "skill_id": "number_8_match_count",
+              "prompt": "Match the picture to its number. How many leaves? 🍃",
+              "visual_items": [
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf",
+                "leaf"
+              ],
+              "options": [
+                "7",
+                "8"
+              ],
+              "correct_answer": "8",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_8_7",
+              "type": "match",
+              "skill_id": "number_8_match_new",
+              "prompt": "Now these balls. ⚽ Match them to the right number.",
+              "visual_items": [
+                "ball",
+                "ball",
+                "ball",
+                "ball",
+                "ball",
+                "ball",
+                "ball",
+                "ball"
+              ],
+              "options": [
+                "8",
+                "7"
+              ],
+              "correct_answer": "8",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_9",
+          "title": "Number 9",
+          "emoji": "🐦",
+          "sort_order": 11,
+          "delivery": "digital",
+          "objective": "Meet 9, see what nine means, draw 9, say it and match it",
+          "intro_message": "Let us count to 9! 🐦",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_9_1",
+              "type": "introduce_number",
+              "skill_id": "number_9",
+              "prompt": "This is 9. Look at it with me — a loop on top and a line down.",
+              "visual_items": [
+                "9"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "9 is said 'nine'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_9_2",
+              "type": "introduce_number",
+              "skill_id": "number_9_means",
+              "prompt": "9 means nine things. Here are nine birds. 🐦🐦🐦🐦🐦",
+              "visual_items": [
+                "9",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Nine birds, and the number is 9.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_9_3",
+              "type": "introduce_number",
+              "skill_id": "number_9_count",
+              "prompt": "Count them with me: 1, 2, 3, 4, 5, 6, 7, 8, 9. That is 9!",
+              "visual_items": [
+                "9",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8, 9.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_9_4",
+              "type": "trace",
+              "skill_id": "number_9_write",
+              "prompt": "Now draw 9 with your finger.",
+              "visual_items": [
+                "number_9"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A loop on top and a line down.",
+              "difficulty": "easy",
+              "trace_target": "9",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_9_5",
+              "type": "repeat_number",
+              "skill_id": "number_9_say",
+              "prompt": "You drew it! Now say it with me: nine.",
+              "visual_items": [
+                "9"
+              ],
+              "options": [],
+              "correct_answer": "9",
+              "hint": "9 is said 'nine'.",
+              "difficulty": "easy",
+              "accept": [
+                "nine",
+                "9"
+              ]
+            },
+            {
+              "activity_id": "pg_num_9_6",
+              "type": "match",
+              "skill_id": "number_9_match_count",
+              "prompt": "Match the picture to its number. How many birds? 🐦",
+              "visual_items": [
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird"
+              ],
+              "options": [
+                "9",
+                "8"
+              ],
+              "correct_answer": "9",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8, 9.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_9_7",
+              "type": "match",
+              "skill_id": "number_9_match_new",
+              "prompt": "Now these balloons. 🎈 Match them to the right number.",
+              "visual_items": [
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon",
+                "balloon"
+              ],
+              "options": [
+                "8",
+                "9"
+              ],
+              "correct_answer": "9",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8, 9.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_maths_number_10",
+          "title": "Number 10",
+          "emoji": "⭐",
+          "sort_order": 12,
+          "delivery": "digital",
+          "objective": "Meet 10, see what ten means, draw 10, say it and match it",
+          "intro_message": "Let us count to 10! ⭐",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_num_10_1",
+              "type": "introduce_number",
+              "skill_id": "number_10",
+              "prompt": "This is 10. Look at it with me — a one and a zero, side by side.",
+              "visual_items": [
+                "10"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "10 is said 'ten'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_10_2",
+              "type": "introduce_number",
+              "skill_id": "number_10_means",
+              "prompt": "10 means ten things. Here are ten stars. ⭐⭐⭐⭐⭐",
+              "visual_items": [
+                "10",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Ten stars, and the number is 10.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_10_3",
+              "type": "introduce_number",
+              "skill_id": "number_10_count",
+              "prompt": "Count them with me: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10. That is 10!",
+              "visual_items": [
+                "10",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_num_10_4",
+              "type": "trace",
+              "skill_id": "number_10_write",
+              "prompt": "Now draw 10 with your finger.",
+              "visual_items": [
+                "number_10"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A one and a zero, side by side.",
+              "difficulty": "easy",
+              "trace_target": "10",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_num_10_5",
+              "type": "repeat_number",
+              "skill_id": "number_10_say",
+              "prompt": "You drew it! Now say it with me: ten.",
+              "visual_items": [
+                "10"
+              ],
+              "options": [],
+              "correct_answer": "10",
+              "hint": "10 is said 'ten'.",
+              "difficulty": "easy",
+              "accept": [
+                "ten",
+                "10"
+              ]
+            },
+            {
+              "activity_id": "pg_num_10_6",
+              "type": "match",
+              "skill_id": "number_10_match_count",
+              "prompt": "Match the picture to its number. How many stars? ⭐",
+              "visual_items": [
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star",
+                "star"
+              ],
+              "options": [
+                "9",
+                "10"
+              ],
+              "correct_answer": "10",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_num_10_7",
+              "type": "match",
+              "skill_id": "number_10_match_new",
+              "prompt": "Now these birds. 🐦 Match them to the right number.",
+              "visual_items": [
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird",
+                "bird"
+              ],
+              "options": [
+                "10",
+                "9"
+              ],
+              "correct_answer": "10",
+              "hint": "Touch each one and count: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10.",
+              "difficulty": "easy"
             }
           ]
         },
@@ -523,7 +1731,7 @@
           "topic_id": "pg_maths_prenumber",
           "title": "Pre-Number Concepts",
           "emoji": "⚖️",
-          "sort_order": 4,
+          "sort_order": 13,
           "delivery": "digital",
           "objective": "Big/small, tall/short, long/short, heavy/light, more/less",
           "intro_message": "Some things are big, some are small! 🐘 🐭",
@@ -647,7 +1855,7 @@
           "topic_id": "pg_maths_positions",
           "title": "Positions",
           "emoji": "📦",
-          "sort_order": 5,
+          "sort_order": 14,
           "delivery": "digital",
           "objective": "In/out, up/down, open/close, front/back",
           "intro_message": "Where is it? Let us look! 👀",
@@ -745,7 +1953,7 @@
           "topic_id": "pg_maths_matching",
           "title": "Matching & Sorting",
           "emoji": "🧩",
-          "sort_order": 6,
+          "sort_order": 15,
           "delivery": "digital",
           "objective": "Same and different, match the pair, sort by colour and size",
           "intro_message": "Let us find the matching pairs! 🧩",
@@ -924,6 +2132,50 @@
               "min_accuracy": 0.4
             },
             {
+              "activity_id": "pg_st_6",
+              "type": "multiple_choice",
+              "emoji": "⬇️",
+              "skill_id": "stroke_standing",
+              "prompt": "Which one is the standing line? ⬇️",
+              "visual_items": [
+                "standing_line",
+                "sleeping_line"
+              ],
+              "options": [
+                "standing_line",
+                "sleeping_line"
+              ],
+              "option_emojis": [
+                "⬇️",
+                "➡️"
+              ],
+              "correct_answer": "standing_line",
+              "hint": "A standing line goes up and down.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_st_7",
+              "type": "multiple_choice",
+              "emoji": "➡️",
+              "skill_id": "stroke_sleeping",
+              "prompt": "Which one is the sleeping line? ➡️",
+              "visual_items": [
+                "sleeping_line",
+                "standing_line"
+              ],
+              "options": [
+                "sleeping_line",
+                "standing_line"
+              ],
+              "option_emojis": [
+                "➡️",
+                "⬇️"
+              ],
+              "correct_answer": "sleeping_line",
+              "hint": "A sleeping line lies down flat.",
+              "difficulty": "very_easy"
+            },
+            {
               "activity_id": "pg_st_5",
               "type": "parent_activity",
               "emoji": "🖍️",
@@ -942,155 +2194,3095 @@
           ]
         },
         {
-          "topic_id": "pg_eng_letters",
-          "title": "Capital Letters (A-E)",
-          "emoji": "🅰️",
+          "topic_id": "pg_english_letters_a",
+          "title": "Letter A",
+          "emoji": "🍎",
           "sort_order": 2,
           "delivery": "digital",
-          "objective": "Oral identification and sound of A to E, one object per letter",
-          "intro_message": "Let us meet our first letters! 🅰️",
-          "star_reward": 5,
-          "letter_object_map": {
-            "A": "apple 🍎",
-            "B": "ball ⚽",
-            "C": "cat 🐱",
-            "D": "dog 🐶",
-            "E": "egg 🥚"
-          },
+          "objective": "Meet A, hear its sound, draw A, say it and match it",
+          "intro_message": "Let us meet the letter A! 🍎",
+          "star_reward": 3,
+          "lesson_flow": "complete",
           "activities": [
             {
-              "activity_id": "pg_lt_A1",
-              "type": "introduce",
-              "emoji": "🍎",
+              "activity_id": "pg_let_a_1",
+              "type": "introduce_letter",
               "skill_id": "letter_A",
-              "prompt": "This is A! 🅰️ A for apple. 🍎",
+              "prompt": "This is A. Look at it with me — down, down, and a little belt.",
+              "visual_items": [
+                "letter_A"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter A.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_a_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_A_sound",
+              "prompt": "A says 'aa'. Listen — aa... aa...",
+              "visual_items": [
+                "letter_A"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A says 'aa'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_a_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_A_word",
+              "prompt": "aa... apple! A is for apple. 🍎",
               "visual_items": [
                 "letter_A",
                 "apple"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Say 'aa' with me.",
+              "hint": "A for apple. 🍎",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_lt_A2",
-              "type": "select_letter",
-              "emoji": "🅰️",
-              "skill_id": "letter_A",
-              "prompt": "Tap the letter A! 🅰️",
+              "activity_id": "pg_let_a_4",
+              "type": "trace",
+              "skill_id": "letter_A_write",
+              "prompt": "Now draw A with your finger.",
               "visual_items": [
-                "A",
-                "B"
+                "letter_A"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down, down, and a little belt.",
+              "difficulty": "easy",
+              "trace_target": "A",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_a_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_A_say",
+              "prompt": "You drew it! Now say it with me: A.",
+              "visual_items": [
+                "letter_A",
+                "apple"
+              ],
+              "options": [],
+              "correct_answer": "a",
+              "hint": "A says 'aa', like in apple.",
+              "difficulty": "easy",
+              "accept": [
+                "a",
+                "aa"
+              ]
+            },
+            {
+              "activity_id": "pg_let_a_6",
+              "type": "match",
+              "skill_id": "letter_A_match_picture",
+              "prompt": "Match A with its picture. Which one starts with A?",
+              "visual_items": [
+                "letter_A"
               ],
               "options": [
-                "A",
-                "B"
+                "apple",
+                "ball"
               ],
-              "option_emojis": [
-                "▫️",
-                "▫️"
+              "correct_answer": "apple",
+              "hint": "A is for apple. 🍎",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_a_7",
+              "type": "match",
+              "skill_id": "letter_A_match_letter",
+              "prompt": "Here is the apple. 🍎 Which letter does it start with?",
+              "visual_items": [
+                "apple"
+              ],
+              "options": [
+                "B",
+                "A"
               ],
               "correct_answer": "A",
-              "hint": "A looks like a tent ⛺",
+              "hint": "Apple starts with A.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_b",
+          "title": "Letter B",
+          "emoji": "⚽",
+          "sort_order": 3,
+          "delivery": "digital",
+          "objective": "Meet B, hear its sound, draw B, say it and match it",
+          "intro_message": "Let us meet the letter B! ⚽",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_b_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_B",
+              "prompt": "This is B. Look at it with me — a long line and two tummies.",
+              "visual_items": [
+                "letter_B"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter B.",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_lt_B1",
-              "type": "introduce",
-              "emoji": "⚽",
-              "skill_id": "letter_B",
-              "prompt": "This is B! 🅱️ B for ball. ⚽",
+              "activity_id": "pg_let_b_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_B_sound",
+              "prompt": "B says 'buh'. Listen — buh... buh...",
+              "visual_items": [
+                "letter_B"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "B says 'buh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_b_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_B_word",
+              "prompt": "buh... ball! B is for ball. ⚽",
               "visual_items": [
                 "letter_B",
                 "ball"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Say 'buh' with me.",
+              "hint": "B for ball. ⚽",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_lt_B2",
-              "type": "multiple_choice",
-              "emoji": "⚽",
-              "skill_id": "letter_B_object",
-              "prompt": "Which one starts with B? ⚽ or 🍎",
+              "activity_id": "pg_let_b_4",
+              "type": "trace",
+              "skill_id": "letter_B_write",
+              "prompt": "Now draw B with your finger.",
               "visual_items": [
-                "ball",
-                "apple"
+                "letter_B"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A long line and two tummies.",
+              "difficulty": "easy",
+              "trace_target": "B",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_b_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_B_say",
+              "prompt": "You drew it! Now say it with me: B.",
+              "visual_items": [
+                "letter_B",
+                "ball"
+              ],
+              "options": [],
+              "correct_answer": "b",
+              "hint": "B says 'buh', like in ball.",
+              "difficulty": "easy",
+              "accept": [
+                "b",
+                "bb",
+                "buh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_b_6",
+              "type": "match",
+              "skill_id": "letter_B_match_picture",
+              "prompt": "Match B with its picture. Which one starts with B?",
+              "visual_items": [
+                "letter_B"
               ],
               "options": [
-                "ball",
-                "apple"
-              ],
-              "option_emojis": [
-                "⚽",
-                "🍎"
+                "apple",
+                "ball"
               ],
               "correct_answer": "ball",
-              "hint": "B for ball.",
+              "hint": "B is for ball. ⚽",
               "difficulty": "easy"
             },
             {
-              "activity_id": "pg_lt_C1",
-              "type": "introduce",
-              "emoji": "🐱",
+              "activity_id": "pg_let_b_7",
+              "type": "match",
+              "skill_id": "letter_B_match_letter",
+              "prompt": "Here is the ball. ⚽ Which letter does it start with?",
+              "visual_items": [
+                "ball"
+              ],
+              "options": [
+                "B",
+                "A"
+              ],
+              "correct_answer": "B",
+              "hint": "Ball starts with B.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_c",
+          "title": "Letter C",
+          "emoji": "🐱",
+          "sort_order": 4,
+          "delivery": "digital",
+          "objective": "Meet C, hear its sound, draw C, say it and match it",
+          "intro_message": "Let us meet the letter C! 🐱",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_c_1",
+              "type": "introduce_letter",
               "skill_id": "letter_C",
-              "prompt": "This is C! C for cat. 🐱",
+              "prompt": "This is C. Look at it with me — one big curve, like the moon.",
+              "visual_items": [
+                "letter_C"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter C.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_c_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_C_sound",
+              "prompt": "C says 'kuh'. Listen — kuh... kuh...",
+              "visual_items": [
+                "letter_C"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "C says 'kuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_c_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_C_word",
+              "prompt": "kuh... cat! C is for cat. 🐱",
               "visual_items": [
                 "letter_C",
                 "cat"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Say 'kuh' with me.",
+              "hint": "C for cat. 🐱",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_lt_D1",
-              "type": "introduce",
-              "emoji": "🐶",
+              "activity_id": "pg_let_c_4",
+              "type": "trace",
+              "skill_id": "letter_C_write",
+              "prompt": "Now draw C with your finger.",
+              "visual_items": [
+                "letter_C"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One big curve, like the moon.",
+              "difficulty": "easy",
+              "trace_target": "C",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_c_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_C_say",
+              "prompt": "You drew it! Now say it with me: C.",
+              "visual_items": [
+                "letter_C",
+                "cat"
+              ],
+              "options": [],
+              "correct_answer": "c",
+              "hint": "C says 'kuh', like in cat.",
+              "difficulty": "easy",
+              "accept": [
+                "c",
+                "cc",
+                "kuh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_c_6",
+              "type": "match",
+              "skill_id": "letter_C_match_picture",
+              "prompt": "Match C with its picture. Which one starts with C?",
+              "visual_items": [
+                "letter_C"
+              ],
+              "options": [
+                "cat",
+                "ball"
+              ],
+              "correct_answer": "cat",
+              "hint": "C is for cat. 🐱",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_c_7",
+              "type": "match",
+              "skill_id": "letter_C_match_letter",
+              "prompt": "Here is the cat. 🐱 Which letter does it start with?",
+              "visual_items": [
+                "cat"
+              ],
+              "options": [
+                "B",
+                "C"
+              ],
+              "correct_answer": "C",
+              "hint": "Cat starts with C.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_d",
+          "title": "Letter D",
+          "emoji": "🐶",
+          "sort_order": 5,
+          "delivery": "digital",
+          "objective": "Meet D, hear its sound, draw D, say it and match it",
+          "intro_message": "Let us meet the letter D! 🐶",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_d_1",
+              "type": "introduce_letter",
               "skill_id": "letter_D",
-              "prompt": "This is D! D for dog. 🐶",
+              "prompt": "This is D. Look at it with me — a line and one big tummy.",
+              "visual_items": [
+                "letter_D"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter D.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_d_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_D_sound",
+              "prompt": "D says 'duh'. Listen — duh... duh...",
+              "visual_items": [
+                "letter_D"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "D says 'duh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_d_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_D_word",
+              "prompt": "duh... dog! D is for dog. 🐶",
               "visual_items": [
                 "letter_D",
                 "dog"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Say 'duh' with me.",
+              "hint": "D for dog. 🐶",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_lt_E1",
-              "type": "introduce",
-              "emoji": "🥚",
+              "activity_id": "pg_let_d_4",
+              "type": "trace",
+              "skill_id": "letter_D_write",
+              "prompt": "Now draw D with your finger.",
+              "visual_items": [
+                "letter_D"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A line and one big tummy.",
+              "difficulty": "easy",
+              "trace_target": "D",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_d_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_D_say",
+              "prompt": "You drew it! Now say it with me: D.",
+              "visual_items": [
+                "letter_D",
+                "dog"
+              ],
+              "options": [],
+              "correct_answer": "d",
+              "hint": "D says 'duh', like in dog.",
+              "difficulty": "easy",
+              "accept": [
+                "d",
+                "dd",
+                "duh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_d_6",
+              "type": "match",
+              "skill_id": "letter_D_match_picture",
+              "prompt": "Match D with its picture. Which one starts with D?",
+              "visual_items": [
+                "letter_D"
+              ],
+              "options": [
+                "cat",
+                "dog"
+              ],
+              "correct_answer": "dog",
+              "hint": "D is for dog. 🐶",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_d_7",
+              "type": "match",
+              "skill_id": "letter_D_match_letter",
+              "prompt": "Here is the dog. 🐶 Which letter does it start with?",
+              "visual_items": [
+                "dog"
+              ],
+              "options": [
+                "D",
+                "C"
+              ],
+              "correct_answer": "D",
+              "hint": "Dog starts with D.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_e",
+          "title": "Letter E",
+          "emoji": "🥚",
+          "sort_order": 6,
+          "delivery": "digital",
+          "objective": "Meet E, hear its sound, draw E, say it and match it",
+          "intro_message": "Let us meet the letter E! 🥚",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_e_1",
+              "type": "introduce_letter",
               "skill_id": "letter_E",
-              "prompt": "This is E! E for egg. 🥚",
+              "prompt": "This is E. Look at it with me — a line and three little arms.",
+              "visual_items": [
+                "letter_E"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter E.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_e_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_E_sound",
+              "prompt": "E says 'eh'. Listen — eh... eh...",
+              "visual_items": [
+                "letter_E"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "E says 'eh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_e_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_E_word",
+              "prompt": "eh... egg! E is for egg. 🥚",
               "visual_items": [
                 "letter_E",
                 "egg"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Say 'eh' with me.",
+              "hint": "E for egg. 🥚",
               "difficulty": "very_easy"
             },
             {
-              "activity_id": "pg_lt_E2",
-              "type": "parent_activity",
-              "emoji": "🏖️",
-              "skill_id": "letter_tracing_sand",
-              "prompt": "Draw the letter A in sand or on a slate! 🅰️",
+              "activity_id": "pg_let_e_4",
+              "type": "trace",
+              "skill_id": "letter_E_write",
+              "prompt": "Now draw E with your finger.",
               "visual_items": [
-                "letter_A"
+                "letter_E"
               ],
               "options": [],
               "correct_answer": null,
-              "hint": "Use one finger.",
+              "hint": "A line and three little arms.",
               "difficulty": "easy",
-              "parent_note": "A tray of atta or rice works well. Touching the shape teaches it faster than looking at it."
+              "trace_target": "E",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_e_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_E_say",
+              "prompt": "You drew it! Now say it with me: E.",
+              "visual_items": [
+                "letter_E",
+                "egg"
+              ],
+              "options": [],
+              "correct_answer": "e",
+              "hint": "E says 'eh', like in egg.",
+              "difficulty": "easy",
+              "accept": [
+                "e",
+                "ee",
+                "eh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_e_6",
+              "type": "match",
+              "skill_id": "letter_E_match_picture",
+              "prompt": "Match E with its picture. Which one starts with E?",
+              "visual_items": [
+                "letter_E"
+              ],
+              "options": [
+                "egg",
+                "dog"
+              ],
+              "correct_answer": "egg",
+              "hint": "E is for egg. 🥚",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_e_7",
+              "type": "match",
+              "skill_id": "letter_E_match_letter",
+              "prompt": "Here is the egg. 🥚 Which letter does it start with?",
+              "visual_items": [
+                "egg"
+              ],
+              "options": [
+                "D",
+                "E"
+              ],
+              "correct_answer": "E",
+              "hint": "Egg starts with E.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_f",
+          "title": "Letter F",
+          "emoji": "🐟",
+          "sort_order": 7,
+          "delivery": "digital",
+          "objective": "Meet F, hear its sound, draw F, say it and match it",
+          "intro_message": "Let us meet the letter F! 🐟",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_f_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_F",
+              "prompt": "This is F. Look at it with me — a line and two little arms.",
+              "visual_items": [
+                "letter_F"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter F.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_f_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_F_sound",
+              "prompt": "F says 'fuh'. Listen — fuh... fuh...",
+              "visual_items": [
+                "letter_F"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "F says 'fuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_f_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_F_word",
+              "prompt": "fuh... fish! F is for fish. 🐟",
+              "visual_items": [
+                "letter_F",
+                "fish"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "F for fish. 🐟",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_f_4",
+              "type": "trace",
+              "skill_id": "letter_F_write",
+              "prompt": "Now draw F with your finger.",
+              "visual_items": [
+                "letter_F"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A line and two little arms.",
+              "difficulty": "easy",
+              "trace_target": "F",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_f_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_F_say",
+              "prompt": "You drew it! Now say it with me: F.",
+              "visual_items": [
+                "letter_F",
+                "fish"
+              ],
+              "options": [],
+              "correct_answer": "f",
+              "hint": "F says 'fuh', like in fish.",
+              "difficulty": "easy",
+              "accept": [
+                "f",
+                "ff",
+                "fuh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_f_6",
+              "type": "match",
+              "skill_id": "letter_F_match_picture",
+              "prompt": "Match F with its picture. Which one starts with F?",
+              "visual_items": [
+                "letter_F"
+              ],
+              "options": [
+                "egg",
+                "fish"
+              ],
+              "correct_answer": "fish",
+              "hint": "F is for fish. 🐟",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_f_7",
+              "type": "match",
+              "skill_id": "letter_F_match_letter",
+              "prompt": "Here is the fish. 🐟 Which letter does it start with?",
+              "visual_items": [
+                "fish"
+              ],
+              "options": [
+                "F",
+                "E"
+              ],
+              "correct_answer": "F",
+              "hint": "Fish starts with F.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_g",
+          "title": "Letter G",
+          "emoji": "🐐",
+          "sort_order": 8,
+          "delivery": "digital",
+          "objective": "Meet G, hear its sound, draw G, say it and match it",
+          "intro_message": "Let us meet the letter G! 🐐",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_g_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_G",
+              "prompt": "This is G. Look at it with me — a curve with a little shelf.",
+              "visual_items": [
+                "letter_G"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter G.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_g_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_G_sound",
+              "prompt": "G says 'guh'. Listen — guh... guh...",
+              "visual_items": [
+                "letter_G"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "G says 'guh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_g_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_G_word",
+              "prompt": "guh... goat! G is for goat. 🐐",
+              "visual_items": [
+                "letter_G",
+                "goat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "G for goat. 🐐",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_g_4",
+              "type": "trace",
+              "skill_id": "letter_G_write",
+              "prompt": "Now draw G with your finger.",
+              "visual_items": [
+                "letter_G"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A curve with a little shelf.",
+              "difficulty": "easy",
+              "trace_target": "G",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_g_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_G_say",
+              "prompt": "You drew it! Now say it with me: G.",
+              "visual_items": [
+                "letter_G",
+                "goat"
+              ],
+              "options": [],
+              "correct_answer": "g",
+              "hint": "G says 'guh', like in goat.",
+              "difficulty": "easy",
+              "accept": [
+                "g",
+                "gg",
+                "guh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_g_6",
+              "type": "match",
+              "skill_id": "letter_G_match_picture",
+              "prompt": "Match G with its picture. Which one starts with G?",
+              "visual_items": [
+                "letter_G"
+              ],
+              "options": [
+                "goat",
+                "fish"
+              ],
+              "correct_answer": "goat",
+              "hint": "G is for goat. 🐐",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_g_7",
+              "type": "match",
+              "skill_id": "letter_G_match_letter",
+              "prompt": "Here is the goat. 🐐 Which letter does it start with?",
+              "visual_items": [
+                "goat"
+              ],
+              "options": [
+                "F",
+                "G"
+              ],
+              "correct_answer": "G",
+              "hint": "Goat starts with G.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_h",
+          "title": "Letter H",
+          "emoji": "🎩",
+          "sort_order": 9,
+          "delivery": "digital",
+          "objective": "Meet H, hear its sound, draw H, say it and match it",
+          "intro_message": "Let us meet the letter H! 🎩",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_h_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_H",
+              "prompt": "This is H. Look at it with me — two lines and a bridge.",
+              "visual_items": [
+                "letter_H"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter H.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_h_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_H_sound",
+              "prompt": "H says 'huh'. Listen — huh... huh...",
+              "visual_items": [
+                "letter_H"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "H says 'huh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_h_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_H_word",
+              "prompt": "huh... hat! H is for hat. 🎩",
+              "visual_items": [
+                "letter_H",
+                "hat"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "H for hat. 🎩",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_h_4",
+              "type": "trace",
+              "skill_id": "letter_H_write",
+              "prompt": "Now draw H with your finger.",
+              "visual_items": [
+                "letter_H"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Two lines and a bridge.",
+              "difficulty": "easy",
+              "trace_target": "H",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_h_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_H_say",
+              "prompt": "You drew it! Now say it with me: H.",
+              "visual_items": [
+                "letter_H",
+                "hat"
+              ],
+              "options": [],
+              "correct_answer": "h",
+              "hint": "H says 'huh', like in hat.",
+              "difficulty": "easy",
+              "accept": [
+                "h",
+                "hh",
+                "huh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_h_6",
+              "type": "match",
+              "skill_id": "letter_H_match_picture",
+              "prompt": "Match H with its picture. Which one starts with H?",
+              "visual_items": [
+                "letter_H"
+              ],
+              "options": [
+                "goat",
+                "hat"
+              ],
+              "correct_answer": "hat",
+              "hint": "H is for hat. 🎩",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_h_7",
+              "type": "match",
+              "skill_id": "letter_H_match_letter",
+              "prompt": "Here is the hat. 🎩 Which letter does it start with?",
+              "visual_items": [
+                "hat"
+              ],
+              "options": [
+                "H",
+                "G"
+              ],
+              "correct_answer": "H",
+              "hint": "Hat starts with H.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_i",
+          "title": "Letter I",
+          "emoji": "🍨",
+          "sort_order": 10,
+          "delivery": "digital",
+          "objective": "Meet I, hear its sound, draw I, say it and match it",
+          "intro_message": "Let us meet the letter I! 🍨",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_i_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_I",
+              "prompt": "This is I. Look at it with me — one straight line, up and down.",
+              "visual_items": [
+                "letter_I"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter I.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_i_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_I_sound",
+              "prompt": "I says 'ih'. Listen — ih... ih...",
+              "visual_items": [
+                "letter_I"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "I says 'ih'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_i_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_I_word",
+              "prompt": "ih... ice cream! I is for ice cream. 🍨",
+              "visual_items": [
+                "letter_I",
+                "icecream"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "I for ice cream. 🍨",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_i_4",
+              "type": "trace",
+              "skill_id": "letter_I_write",
+              "prompt": "Now draw I with your finger.",
+              "visual_items": [
+                "letter_I"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One straight line, up and down.",
+              "difficulty": "easy",
+              "trace_target": "I",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_i_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_I_say",
+              "prompt": "You drew it! Now say it with me: I.",
+              "visual_items": [
+                "letter_I",
+                "icecream"
+              ],
+              "options": [],
+              "correct_answer": "i",
+              "hint": "I says 'ih', like in ice cream.",
+              "difficulty": "easy",
+              "accept": [
+                "i",
+                "ih",
+                "ii"
+              ]
+            },
+            {
+              "activity_id": "pg_let_i_6",
+              "type": "match",
+              "skill_id": "letter_I_match_picture",
+              "prompt": "Match I with its picture. Which one starts with I?",
+              "visual_items": [
+                "letter_I"
+              ],
+              "options": [
+                "icecream",
+                "hat"
+              ],
+              "correct_answer": "icecream",
+              "hint": "I is for ice cream. 🍨",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_i_7",
+              "type": "match",
+              "skill_id": "letter_I_match_letter",
+              "prompt": "Here is the ice cream. 🍨 Which letter does it start with?",
+              "visual_items": [
+                "icecream"
+              ],
+              "options": [
+                "H",
+                "I"
+              ],
+              "correct_answer": "I",
+              "hint": "Ice cream starts with I.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_j",
+          "title": "Letter J",
+          "emoji": "🫗",
+          "sort_order": 11,
+          "delivery": "digital",
+          "objective": "Meet J, hear its sound, draw J, say it and match it",
+          "intro_message": "Let us meet the letter J! 🫗",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_j_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_J",
+              "prompt": "This is J. Look at it with me — a line with a hook at the bottom.",
+              "visual_items": [
+                "letter_J"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter J.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_j_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_J_sound",
+              "prompt": "J says 'juh'. Listen — juh... juh...",
+              "visual_items": [
+                "letter_J"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "J says 'juh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_j_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_J_word",
+              "prompt": "juh... jug! J is for jug. 🫗",
+              "visual_items": [
+                "letter_J",
+                "jug"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "J for jug. 🫗",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_j_4",
+              "type": "trace",
+              "skill_id": "letter_J_write",
+              "prompt": "Now draw J with your finger.",
+              "visual_items": [
+                "letter_J"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A line with a hook at the bottom.",
+              "difficulty": "easy",
+              "trace_target": "J",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_j_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_J_say",
+              "prompt": "You drew it! Now say it with me: J.",
+              "visual_items": [
+                "letter_J",
+                "jug"
+              ],
+              "options": [],
+              "correct_answer": "j",
+              "hint": "J says 'juh', like in jug.",
+              "difficulty": "easy",
+              "accept": [
+                "j",
+                "jj",
+                "juh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_j_6",
+              "type": "match",
+              "skill_id": "letter_J_match_picture",
+              "prompt": "Match J with its picture. Which one starts with J?",
+              "visual_items": [
+                "letter_J"
+              ],
+              "options": [
+                "icecream",
+                "jug"
+              ],
+              "correct_answer": "jug",
+              "hint": "J is for jug. 🫗",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_j_7",
+              "type": "match",
+              "skill_id": "letter_J_match_letter",
+              "prompt": "Here is the jug. 🫗 Which letter does it start with?",
+              "visual_items": [
+                "jug"
+              ],
+              "options": [
+                "J",
+                "I"
+              ],
+              "correct_answer": "J",
+              "hint": "Jug starts with J.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_k",
+          "title": "Letter K",
+          "emoji": "🪁",
+          "sort_order": 12,
+          "delivery": "digital",
+          "objective": "Meet K, hear its sound, draw K, say it and match it",
+          "intro_message": "Let us meet the letter K! 🪁",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_k_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_K",
+              "prompt": "This is K. Look at it with me — a line and two arms poking out.",
+              "visual_items": [
+                "letter_K"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter K.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_k_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_K_sound",
+              "prompt": "K says 'kuh'. Listen — kuh... kuh...",
+              "visual_items": [
+                "letter_K"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "K says 'kuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_k_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_K_word",
+              "prompt": "kuh... kite! K is for kite. 🪁",
+              "visual_items": [
+                "letter_K",
+                "kite"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "K for kite. 🪁",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_k_4",
+              "type": "trace",
+              "skill_id": "letter_K_write",
+              "prompt": "Now draw K with your finger.",
+              "visual_items": [
+                "letter_K"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A line and two arms poking out.",
+              "difficulty": "easy",
+              "trace_target": "K",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_k_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_K_say",
+              "prompt": "You drew it! Now say it with me: K.",
+              "visual_items": [
+                "letter_K",
+                "kite"
+              ],
+              "options": [],
+              "correct_answer": "k",
+              "hint": "K says 'kuh', like in kite.",
+              "difficulty": "easy",
+              "accept": [
+                "k",
+                "kk",
+                "kuh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_k_6",
+              "type": "match",
+              "skill_id": "letter_K_match_picture",
+              "prompt": "Match K with its picture. Which one starts with K?",
+              "visual_items": [
+                "letter_K"
+              ],
+              "options": [
+                "kite",
+                "jug"
+              ],
+              "correct_answer": "kite",
+              "hint": "K is for kite. 🪁",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_k_7",
+              "type": "match",
+              "skill_id": "letter_K_match_letter",
+              "prompt": "Here is the kite. 🪁 Which letter does it start with?",
+              "visual_items": [
+                "kite"
+              ],
+              "options": [
+                "J",
+                "K"
+              ],
+              "correct_answer": "K",
+              "hint": "Kite starts with K.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_l",
+          "title": "Letter L",
+          "emoji": "🦁",
+          "sort_order": 13,
+          "delivery": "digital",
+          "objective": "Meet L, hear its sound, draw L, say it and match it",
+          "intro_message": "Let us meet the letter L! 🦁",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_l_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_L",
+              "prompt": "This is L. Look at it with me — down, then a foot to the side.",
+              "visual_items": [
+                "letter_L"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter L.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_l_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_L_sound",
+              "prompt": "L says 'luh'. Listen — luh... luh...",
+              "visual_items": [
+                "letter_L"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "L says 'luh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_l_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_L_word",
+              "prompt": "luh... lion! L is for lion. 🦁",
+              "visual_items": [
+                "letter_L",
+                "lion"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "L for lion. 🦁",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_l_4",
+              "type": "trace",
+              "skill_id": "letter_L_write",
+              "prompt": "Now draw L with your finger.",
+              "visual_items": [
+                "letter_L"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down, then a foot to the side.",
+              "difficulty": "easy",
+              "trace_target": "L",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_l_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_L_say",
+              "prompt": "You drew it! Now say it with me: L.",
+              "visual_items": [
+                "letter_L",
+                "lion"
+              ],
+              "options": [],
+              "correct_answer": "l",
+              "hint": "L says 'luh', like in lion.",
+              "difficulty": "easy",
+              "accept": [
+                "l",
+                "ll",
+                "luh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_l_6",
+              "type": "match",
+              "skill_id": "letter_L_match_picture",
+              "prompt": "Match L with its picture. Which one starts with L?",
+              "visual_items": [
+                "letter_L"
+              ],
+              "options": [
+                "kite",
+                "lion"
+              ],
+              "correct_answer": "lion",
+              "hint": "L is for lion. 🦁",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_l_7",
+              "type": "match",
+              "skill_id": "letter_L_match_letter",
+              "prompt": "Here is the lion. 🦁 Which letter does it start with?",
+              "visual_items": [
+                "lion"
+              ],
+              "options": [
+                "L",
+                "K"
+              ],
+              "correct_answer": "L",
+              "hint": "Lion starts with L.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_m",
+          "title": "Letter M",
+          "emoji": "🥭",
+          "sort_order": 14,
+          "delivery": "digital",
+          "objective": "Meet M, hear its sound, draw M, say it and match it",
+          "intro_message": "Let us meet the letter M! 🥭",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_m_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_M",
+              "prompt": "This is M. Look at it with me — up, down, up, down — like mountains.",
+              "visual_items": [
+                "letter_M"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter M.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_m_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_M_sound",
+              "prompt": "M says 'muh'. Listen — muh... muh...",
+              "visual_items": [
+                "letter_M"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "M says 'muh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_m_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_M_word",
+              "prompt": "muh... mango! M is for mango. 🥭",
+              "visual_items": [
+                "letter_M",
+                "mango"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "M for mango. 🥭",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_m_4",
+              "type": "trace",
+              "skill_id": "letter_M_write",
+              "prompt": "Now draw M with your finger.",
+              "visual_items": [
+                "letter_M"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Up, down, up, down — like mountains.",
+              "difficulty": "easy",
+              "trace_target": "M",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_m_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_M_say",
+              "prompt": "You drew it! Now say it with me: M.",
+              "visual_items": [
+                "letter_M",
+                "mango"
+              ],
+              "options": [],
+              "correct_answer": "m",
+              "hint": "M says 'muh', like in mango.",
+              "difficulty": "easy",
+              "accept": [
+                "m",
+                "mm",
+                "muh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_m_6",
+              "type": "match",
+              "skill_id": "letter_M_match_picture",
+              "prompt": "Match M with its picture. Which one starts with M?",
+              "visual_items": [
+                "letter_M"
+              ],
+              "options": [
+                "mango",
+                "lion"
+              ],
+              "correct_answer": "mango",
+              "hint": "M is for mango. 🥭",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_m_7",
+              "type": "match",
+              "skill_id": "letter_M_match_letter",
+              "prompt": "Here is the mango. 🥭 Which letter does it start with?",
+              "visual_items": [
+                "mango"
+              ],
+              "options": [
+                "L",
+                "M"
+              ],
+              "correct_answer": "M",
+              "hint": "Mango starts with M.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_n",
+          "title": "Letter N",
+          "emoji": "🩹",
+          "sort_order": 15,
+          "delivery": "digital",
+          "objective": "Meet N, hear its sound, draw N, say it and match it",
+          "intro_message": "Let us meet the letter N! 🩹",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_n_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_N",
+              "prompt": "This is N. Look at it with me — up, slide down, up again.",
+              "visual_items": [
+                "letter_N"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter N.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_n_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_N_sound",
+              "prompt": "N says 'nuh'. Listen — nuh... nuh...",
+              "visual_items": [
+                "letter_N"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "N says 'nuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_n_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_N_word",
+              "prompt": "nuh... nest! N is for nest. 🩹",
+              "visual_items": [
+                "letter_N",
+                "nest"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "N for nest. 🩹",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_n_4",
+              "type": "trace",
+              "skill_id": "letter_N_write",
+              "prompt": "Now draw N with your finger.",
+              "visual_items": [
+                "letter_N"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Up, slide down, up again.",
+              "difficulty": "easy",
+              "trace_target": "N",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_n_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_N_say",
+              "prompt": "You drew it! Now say it with me: N.",
+              "visual_items": [
+                "letter_N",
+                "nest"
+              ],
+              "options": [],
+              "correct_answer": "n",
+              "hint": "N says 'nuh', like in nest.",
+              "difficulty": "easy",
+              "accept": [
+                "n",
+                "nn",
+                "nuh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_n_6",
+              "type": "match",
+              "skill_id": "letter_N_match_picture",
+              "prompt": "Match N with its picture. Which one starts with N?",
+              "visual_items": [
+                "letter_N"
+              ],
+              "options": [
+                "mango",
+                "nest"
+              ],
+              "correct_answer": "nest",
+              "hint": "N is for nest. 🩹",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_n_7",
+              "type": "match",
+              "skill_id": "letter_N_match_letter",
+              "prompt": "Here is the nest. 🩹 Which letter does it start with?",
+              "visual_items": [
+                "nest"
+              ],
+              "options": [
+                "N",
+                "M"
+              ],
+              "correct_answer": "N",
+              "hint": "Nest starts with N.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_o",
+          "title": "Letter O",
+          "emoji": "🍊",
+          "sort_order": 16,
+          "delivery": "digital",
+          "objective": "Meet O, hear its sound, draw O, say it and match it",
+          "intro_message": "Let us meet the letter O! 🍊",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_o_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_O",
+              "prompt": "This is O. Look at it with me — one big round circle.",
+              "visual_items": [
+                "letter_O"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter O.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_o_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_O_sound",
+              "prompt": "O says 'oh'. Listen — oh... oh...",
+              "visual_items": [
+                "letter_O"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "O says 'oh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_o_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_O_word",
+              "prompt": "oh... orange! O is for orange. 🍊",
+              "visual_items": [
+                "letter_O",
+                "orangefruit"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "O for orange. 🍊",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_o_4",
+              "type": "trace",
+              "skill_id": "letter_O_write",
+              "prompt": "Now draw O with your finger.",
+              "visual_items": [
+                "letter_O"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "One big round circle.",
+              "difficulty": "easy",
+              "trace_target": "O",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_o_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_O_say",
+              "prompt": "You drew it! Now say it with me: O.",
+              "visual_items": [
+                "letter_O",
+                "orangefruit"
+              ],
+              "options": [],
+              "correct_answer": "o",
+              "hint": "O says 'oh', like in orange.",
+              "difficulty": "easy",
+              "accept": [
+                "o",
+                "oh",
+                "oo"
+              ]
+            },
+            {
+              "activity_id": "pg_let_o_6",
+              "type": "match",
+              "skill_id": "letter_O_match_picture",
+              "prompt": "Match O with its picture. Which one starts with O?",
+              "visual_items": [
+                "letter_O"
+              ],
+              "options": [
+                "orangefruit",
+                "nest"
+              ],
+              "correct_answer": "orangefruit",
+              "hint": "O is for orange. 🍊",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_o_7",
+              "type": "match",
+              "skill_id": "letter_O_match_letter",
+              "prompt": "Here is the orange. 🍊 Which letter does it start with?",
+              "visual_items": [
+                "orangefruit"
+              ],
+              "options": [
+                "N",
+                "O"
+              ],
+              "correct_answer": "O",
+              "hint": "Orange starts with O.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_p",
+          "title": "Letter P",
+          "emoji": "🦜",
+          "sort_order": 17,
+          "delivery": "digital",
+          "objective": "Meet P, hear its sound, draw P, say it and match it",
+          "intro_message": "Let us meet the letter P! 🦜",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_p_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_P",
+              "prompt": "This is P. Look at it with me — a line and one tummy on top.",
+              "visual_items": [
+                "letter_P"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter P.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_p_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_P_sound",
+              "prompt": "P says 'puh'. Listen — puh... puh...",
+              "visual_items": [
+                "letter_P"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "P says 'puh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_p_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_P_word",
+              "prompt": "puh... parrot! P is for parrot. 🦜",
+              "visual_items": [
+                "letter_P",
+                "parrot"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "P for parrot. 🦜",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_p_4",
+              "type": "trace",
+              "skill_id": "letter_P_write",
+              "prompt": "Now draw P with your finger.",
+              "visual_items": [
+                "letter_P"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A line and one tummy on top.",
+              "difficulty": "easy",
+              "trace_target": "P",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_p_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_P_say",
+              "prompt": "You drew it! Now say it with me: P.",
+              "visual_items": [
+                "letter_P",
+                "parrot"
+              ],
+              "options": [],
+              "correct_answer": "p",
+              "hint": "P says 'puh', like in parrot.",
+              "difficulty": "easy",
+              "accept": [
+                "p",
+                "pp",
+                "puh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_p_6",
+              "type": "match",
+              "skill_id": "letter_P_match_picture",
+              "prompt": "Match P with its picture. Which one starts with P?",
+              "visual_items": [
+                "letter_P"
+              ],
+              "options": [
+                "orangefruit",
+                "parrot"
+              ],
+              "correct_answer": "parrot",
+              "hint": "P is for parrot. 🦜",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_p_7",
+              "type": "match",
+              "skill_id": "letter_P_match_letter",
+              "prompt": "Here is the parrot. 🦜 Which letter does it start with?",
+              "visual_items": [
+                "parrot"
+              ],
+              "options": [
+                "P",
+                "O"
+              ],
+              "correct_answer": "P",
+              "hint": "Parrot starts with P.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_q",
+          "title": "Letter Q",
+          "emoji": "👸",
+          "sort_order": 18,
+          "delivery": "digital",
+          "objective": "Meet Q, hear its sound, draw Q, say it and match it",
+          "intro_message": "Let us meet the letter Q! 👸",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_q_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_Q",
+              "prompt": "This is Q. Look at it with me — a circle with a little tail.",
+              "visual_items": [
+                "letter_Q"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter Q.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_q_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_Q_sound",
+              "prompt": "Q says 'kwuh'. Listen — kwuh... kwuh...",
+              "visual_items": [
+                "letter_Q"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Q says 'kwuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_q_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_Q_word",
+              "prompt": "kwuh... queen! Q is for queen. 👸",
+              "visual_items": [
+                "letter_Q",
+                "queen"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Q for queen. 👸",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_q_4",
+              "type": "trace",
+              "skill_id": "letter_Q_write",
+              "prompt": "Now draw Q with your finger.",
+              "visual_items": [
+                "letter_Q"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A circle with a little tail.",
+              "difficulty": "easy",
+              "trace_target": "Q",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_q_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_Q_say",
+              "prompt": "You drew it! Now say it with me: Q.",
+              "visual_items": [
+                "letter_Q",
+                "queen"
+              ],
+              "options": [],
+              "correct_answer": "q",
+              "hint": "Q says 'kwuh', like in queen.",
+              "difficulty": "easy",
+              "accept": [
+                "kwuh",
+                "q",
+                "qq"
+              ]
+            },
+            {
+              "activity_id": "pg_let_q_6",
+              "type": "match",
+              "skill_id": "letter_Q_match_picture",
+              "prompt": "Match Q with its picture. Which one starts with Q?",
+              "visual_items": [
+                "letter_Q"
+              ],
+              "options": [
+                "queen",
+                "parrot"
+              ],
+              "correct_answer": "queen",
+              "hint": "Q is for queen. 👸",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_q_7",
+              "type": "match",
+              "skill_id": "letter_Q_match_letter",
+              "prompt": "Here is the queen. 👸 Which letter does it start with?",
+              "visual_items": [
+                "queen"
+              ],
+              "options": [
+                "P",
+                "Q"
+              ],
+              "correct_answer": "Q",
+              "hint": "Queen starts with Q.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_r",
+          "title": "Letter R",
+          "emoji": "🐰",
+          "sort_order": 19,
+          "delivery": "digital",
+          "objective": "Meet R, hear its sound, draw R, say it and match it",
+          "intro_message": "Let us meet the letter R! 🐰",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_r_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_R",
+              "prompt": "This is R. Look at it with me — a line, a tummy, and a leg.",
+              "visual_items": [
+                "letter_R"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter R.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_r_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_R_sound",
+              "prompt": "R says 'ruh'. Listen — ruh... ruh...",
+              "visual_items": [
+                "letter_R"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "R says 'ruh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_r_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_R_word",
+              "prompt": "ruh... rabbit! R is for rabbit. 🐰",
+              "visual_items": [
+                "letter_R",
+                "rabbit"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "R for rabbit. 🐰",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_r_4",
+              "type": "trace",
+              "skill_id": "letter_R_write",
+              "prompt": "Now draw R with your finger.",
+              "visual_items": [
+                "letter_R"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A line, a tummy, and a leg.",
+              "difficulty": "easy",
+              "trace_target": "R",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_r_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_R_say",
+              "prompt": "You drew it! Now say it with me: R.",
+              "visual_items": [
+                "letter_R",
+                "rabbit"
+              ],
+              "options": [],
+              "correct_answer": "r",
+              "hint": "R says 'ruh', like in rabbit.",
+              "difficulty": "easy",
+              "accept": [
+                "r",
+                "rr",
+                "ruh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_r_6",
+              "type": "match",
+              "skill_id": "letter_R_match_picture",
+              "prompt": "Match R with its picture. Which one starts with R?",
+              "visual_items": [
+                "letter_R"
+              ],
+              "options": [
+                "queen",
+                "rabbit"
+              ],
+              "correct_answer": "rabbit",
+              "hint": "R is for rabbit. 🐰",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_r_7",
+              "type": "match",
+              "skill_id": "letter_R_match_letter",
+              "prompt": "Here is the rabbit. 🐰 Which letter does it start with?",
+              "visual_items": [
+                "rabbit"
+              ],
+              "options": [
+                "R",
+                "Q"
+              ],
+              "correct_answer": "R",
+              "hint": "Rabbit starts with R.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_s",
+          "title": "Letter S",
+          "emoji": "☀️",
+          "sort_order": 20,
+          "delivery": "digital",
+          "objective": "Meet S, hear its sound, draw S, say it and match it",
+          "intro_message": "Let us meet the letter S! ☀️",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_s_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_S",
+              "prompt": "This is S. Look at it with me — a wiggle, like a sleepy snake.",
+              "visual_items": [
+                "letter_S"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter S.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_s_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_S_sound",
+              "prompt": "S says 'suh'. Listen — suh... suh...",
+              "visual_items": [
+                "letter_S"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "S says 'suh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_s_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_S_word",
+              "prompt": "suh... sun! S is for sun. ☀️",
+              "visual_items": [
+                "letter_S",
+                "sun"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "S for sun. ☀️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_s_4",
+              "type": "trace",
+              "skill_id": "letter_S_write",
+              "prompt": "Now draw S with your finger.",
+              "visual_items": [
+                "letter_S"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A wiggle, like a sleepy snake.",
+              "difficulty": "easy",
+              "trace_target": "S",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_s_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_S_say",
+              "prompt": "You drew it! Now say it with me: S.",
+              "visual_items": [
+                "letter_S",
+                "sun"
+              ],
+              "options": [],
+              "correct_answer": "s",
+              "hint": "S says 'suh', like in sun.",
+              "difficulty": "easy",
+              "accept": [
+                "s",
+                "ss",
+                "suh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_s_6",
+              "type": "match",
+              "skill_id": "letter_S_match_picture",
+              "prompt": "Match S with its picture. Which one starts with S?",
+              "visual_items": [
+                "letter_S"
+              ],
+              "options": [
+                "sun",
+                "rabbit"
+              ],
+              "correct_answer": "sun",
+              "hint": "S is for sun. ☀️",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_s_7",
+              "type": "match",
+              "skill_id": "letter_S_match_letter",
+              "prompt": "Here is the sun. ☀️ Which letter does it start with?",
+              "visual_items": [
+                "sun"
+              ],
+              "options": [
+                "R",
+                "S"
+              ],
+              "correct_answer": "S",
+              "hint": "Sun starts with S.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_t",
+          "title": "Letter T",
+          "emoji": "🌳",
+          "sort_order": 21,
+          "delivery": "digital",
+          "objective": "Meet T, hear its sound, draw T, say it and match it",
+          "intro_message": "Let us meet the letter T! 🌳",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_t_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_T",
+              "prompt": "This is T. Look at it with me — a hat on a straight line.",
+              "visual_items": [
+                "letter_T"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter T.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_t_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_T_sound",
+              "prompt": "T says 'tuh'. Listen — tuh... tuh...",
+              "visual_items": [
+                "letter_T"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "T says 'tuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_t_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_T_word",
+              "prompt": "tuh... tree! T is for tree. 🌳",
+              "visual_items": [
+                "letter_T",
+                "tree"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "T for tree. 🌳",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_t_4",
+              "type": "trace",
+              "skill_id": "letter_T_write",
+              "prompt": "Now draw T with your finger.",
+              "visual_items": [
+                "letter_T"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "A hat on a straight line.",
+              "difficulty": "easy",
+              "trace_target": "T",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_t_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_T_say",
+              "prompt": "You drew it! Now say it with me: T.",
+              "visual_items": [
+                "letter_T",
+                "tree"
+              ],
+              "options": [],
+              "correct_answer": "t",
+              "hint": "T says 'tuh', like in tree.",
+              "difficulty": "easy",
+              "accept": [
+                "t",
+                "tt",
+                "tuh"
+              ]
+            },
+            {
+              "activity_id": "pg_let_t_6",
+              "type": "match",
+              "skill_id": "letter_T_match_picture",
+              "prompt": "Match T with its picture. Which one starts with T?",
+              "visual_items": [
+                "letter_T"
+              ],
+              "options": [
+                "sun",
+                "tree"
+              ],
+              "correct_answer": "tree",
+              "hint": "T is for tree. 🌳",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_t_7",
+              "type": "match",
+              "skill_id": "letter_T_match_letter",
+              "prompt": "Here is the tree. 🌳 Which letter does it start with?",
+              "visual_items": [
+                "tree"
+              ],
+              "options": [
+                "T",
+                "S"
+              ],
+              "correct_answer": "T",
+              "hint": "Tree starts with T.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_u",
+          "title": "Letter U",
+          "emoji": "☂️",
+          "sort_order": 22,
+          "delivery": "digital",
+          "objective": "Meet U, hear its sound, draw U, say it and match it",
+          "intro_message": "Let us meet the letter U! ☂️",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_u_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_U",
+              "prompt": "This is U. Look at it with me — down, around, and up — like a cup.",
+              "visual_items": [
+                "letter_U"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter U.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_u_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_U_sound",
+              "prompt": "U says 'uh'. Listen — uh... uh...",
+              "visual_items": [
+                "letter_U"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "U says 'uh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_u_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_U_word",
+              "prompt": "uh... umbrella! U is for umbrella. ☂️",
+              "visual_items": [
+                "letter_U",
+                "umbrella"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "U for umbrella. ☂️",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_u_4",
+              "type": "trace",
+              "skill_id": "letter_U_write",
+              "prompt": "Now draw U with your finger.",
+              "visual_items": [
+                "letter_U"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down, around, and up — like a cup.",
+              "difficulty": "easy",
+              "trace_target": "U",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_u_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_U_say",
+              "prompt": "You drew it! Now say it with me: U.",
+              "visual_items": [
+                "letter_U",
+                "umbrella"
+              ],
+              "options": [],
+              "correct_answer": "u",
+              "hint": "U says 'uh', like in umbrella.",
+              "difficulty": "easy",
+              "accept": [
+                "u",
+                "uh",
+                "uu"
+              ]
+            },
+            {
+              "activity_id": "pg_let_u_6",
+              "type": "match",
+              "skill_id": "letter_U_match_picture",
+              "prompt": "Match U with its picture. Which one starts with U?",
+              "visual_items": [
+                "letter_U"
+              ],
+              "options": [
+                "umbrella",
+                "tree"
+              ],
+              "correct_answer": "umbrella",
+              "hint": "U is for umbrella. ☂️",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_u_7",
+              "type": "match",
+              "skill_id": "letter_U_match_letter",
+              "prompt": "Here is the umbrella. ☂️ Which letter does it start with?",
+              "visual_items": [
+                "umbrella"
+              ],
+              "options": [
+                "T",
+                "U"
+              ],
+              "correct_answer": "U",
+              "hint": "Umbrella starts with U.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_v",
+          "title": "Letter V",
+          "emoji": "🚐",
+          "sort_order": 23,
+          "delivery": "digital",
+          "objective": "Meet V, hear its sound, draw V, say it and match it",
+          "intro_message": "Let us meet the letter V! 🚐",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_v_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_V",
+              "prompt": "This is V. Look at it with me — down and up, like a bird's beak.",
+              "visual_items": [
+                "letter_V"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter V.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_v_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_V_sound",
+              "prompt": "V says 'vuh'. Listen — vuh... vuh...",
+              "visual_items": [
+                "letter_V"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "V says 'vuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_v_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_V_word",
+              "prompt": "vuh... van! V is for van. 🚐",
+              "visual_items": [
+                "letter_V",
+                "van"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "V for van. 🚐",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_v_4",
+              "type": "trace",
+              "skill_id": "letter_V_write",
+              "prompt": "Now draw V with your finger.",
+              "visual_items": [
+                "letter_V"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down and up, like a bird's beak.",
+              "difficulty": "easy",
+              "trace_target": "V",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_v_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_V_say",
+              "prompt": "You drew it! Now say it with me: V.",
+              "visual_items": [
+                "letter_V",
+                "van"
+              ],
+              "options": [],
+              "correct_answer": "v",
+              "hint": "V says 'vuh', like in van.",
+              "difficulty": "easy",
+              "accept": [
+                "v",
+                "vuh",
+                "vv"
+              ]
+            },
+            {
+              "activity_id": "pg_let_v_6",
+              "type": "match",
+              "skill_id": "letter_V_match_picture",
+              "prompt": "Match V with its picture. Which one starts with V?",
+              "visual_items": [
+                "letter_V"
+              ],
+              "options": [
+                "umbrella",
+                "van"
+              ],
+              "correct_answer": "van",
+              "hint": "V is for van. 🚐",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_v_7",
+              "type": "match",
+              "skill_id": "letter_V_match_letter",
+              "prompt": "Here is the van. 🚐 Which letter does it start with?",
+              "visual_items": [
+                "van"
+              ],
+              "options": [
+                "V",
+                "U"
+              ],
+              "correct_answer": "V",
+              "hint": "Van starts with V.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_w",
+          "title": "Letter W",
+          "emoji": "⌚",
+          "sort_order": 24,
+          "delivery": "digital",
+          "objective": "Meet W, hear its sound, draw W, say it and match it",
+          "intro_message": "Let us meet the letter W! ⌚",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_w_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_W",
+              "prompt": "This is W. Look at it with me — down, up, down, up.",
+              "visual_items": [
+                "letter_W"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter W.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_w_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_W_sound",
+              "prompt": "W says 'wuh'. Listen — wuh... wuh...",
+              "visual_items": [
+                "letter_W"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "W says 'wuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_w_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_W_word",
+              "prompt": "wuh... watch! W is for watch. ⌚",
+              "visual_items": [
+                "letter_W",
+                "watch"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "W for watch. ⌚",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_w_4",
+              "type": "trace",
+              "skill_id": "letter_W_write",
+              "prompt": "Now draw W with your finger.",
+              "visual_items": [
+                "letter_W"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Down, up, down, up.",
+              "difficulty": "easy",
+              "trace_target": "W",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_w_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_W_say",
+              "prompt": "You drew it! Now say it with me: W.",
+              "visual_items": [
+                "letter_W",
+                "watch"
+              ],
+              "options": [],
+              "correct_answer": "w",
+              "hint": "W says 'wuh', like in watch.",
+              "difficulty": "easy",
+              "accept": [
+                "w",
+                "wuh",
+                "ww"
+              ]
+            },
+            {
+              "activity_id": "pg_let_w_6",
+              "type": "match",
+              "skill_id": "letter_W_match_picture",
+              "prompt": "Match W with its picture. Which one starts with W?",
+              "visual_items": [
+                "letter_W"
+              ],
+              "options": [
+                "watch",
+                "van"
+              ],
+              "correct_answer": "watch",
+              "hint": "W is for watch. ⌚",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_w_7",
+              "type": "match",
+              "skill_id": "letter_W_match_letter",
+              "prompt": "Here is the watch. ⌚ Which letter does it start with?",
+              "visual_items": [
+                "watch"
+              ],
+              "options": [
+                "V",
+                "W"
+              ],
+              "correct_answer": "W",
+              "hint": "Watch starts with W.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_x",
+          "title": "Letter X",
+          "emoji": "🎼",
+          "sort_order": 25,
+          "delivery": "digital",
+          "objective": "Meet X, hear its sound, draw X, say it and match it",
+          "intro_message": "Let us meet the letter X! 🎼",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_x_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_X",
+              "prompt": "This is X. Look at it with me — two lines crossing, like a kiss.",
+              "visual_items": [
+                "letter_X"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter X.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_x_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_X_sound",
+              "prompt": "X says 'ks'. Listen — ks... ks...",
+              "visual_items": [
+                "letter_X"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "X says 'ks'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_x_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_X_word",
+              "prompt": "ks... xylophone! X is for xylophone. 🎼",
+              "visual_items": [
+                "letter_X",
+                "xylophone"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "X for xylophone. 🎼",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_x_4",
+              "type": "trace",
+              "skill_id": "letter_X_write",
+              "prompt": "Now draw X with your finger.",
+              "visual_items": [
+                "letter_X"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Two lines crossing, like a kiss.",
+              "difficulty": "easy",
+              "trace_target": "X",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_x_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_X_say",
+              "prompt": "You drew it! Now say it with me: X.",
+              "visual_items": [
+                "letter_X",
+                "xylophone"
+              ],
+              "options": [],
+              "correct_answer": "x",
+              "hint": "X says 'ks', like in xylophone.",
+              "difficulty": "easy",
+              "accept": [
+                "ks",
+                "x",
+                "xx"
+              ]
+            },
+            {
+              "activity_id": "pg_let_x_6",
+              "type": "match",
+              "skill_id": "letter_X_match_picture",
+              "prompt": "Match X with its picture. Which one starts with X?",
+              "visual_items": [
+                "letter_X"
+              ],
+              "options": [
+                "watch",
+                "xylophone"
+              ],
+              "correct_answer": "xylophone",
+              "hint": "X is for xylophone. 🎼",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_x_7",
+              "type": "match",
+              "skill_id": "letter_X_match_letter",
+              "prompt": "Here is the xylophone. 🎼 Which letter does it start with?",
+              "visual_items": [
+                "xylophone"
+              ],
+              "options": [
+                "X",
+                "W"
+              ],
+              "correct_answer": "X",
+              "hint": "Xylophone starts with X.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_y",
+          "title": "Letter Y",
+          "emoji": "🐃",
+          "sort_order": 26,
+          "delivery": "digital",
+          "objective": "Meet Y, hear its sound, draw Y, say it and match it",
+          "intro_message": "Let us meet the letter Y! 🐃",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_y_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_Y",
+              "prompt": "This is Y. Look at it with me — two arms and one leg.",
+              "visual_items": [
+                "letter_Y"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter Y.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_y_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_Y_sound",
+              "prompt": "Y says 'yuh'. Listen — yuh... yuh...",
+              "visual_items": [
+                "letter_Y"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Y says 'yuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_y_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_Y_word",
+              "prompt": "yuh... yak! Y is for yak. 🐃",
+              "visual_items": [
+                "letter_Y",
+                "yak"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Y for yak. 🐃",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_y_4",
+              "type": "trace",
+              "skill_id": "letter_Y_write",
+              "prompt": "Now draw Y with your finger.",
+              "visual_items": [
+                "letter_Y"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Two arms and one leg.",
+              "difficulty": "easy",
+              "trace_target": "Y",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_y_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_Y_say",
+              "prompt": "You drew it! Now say it with me: Y.",
+              "visual_items": [
+                "letter_Y",
+                "yak"
+              ],
+              "options": [],
+              "correct_answer": "y",
+              "hint": "Y says 'yuh', like in yak.",
+              "difficulty": "easy",
+              "accept": [
+                "y",
+                "yuh",
+                "yy"
+              ]
+            },
+            {
+              "activity_id": "pg_let_y_6",
+              "type": "match",
+              "skill_id": "letter_Y_match_picture",
+              "prompt": "Match Y with its picture. Which one starts with Y?",
+              "visual_items": [
+                "letter_Y"
+              ],
+              "options": [
+                "yak",
+                "xylophone"
+              ],
+              "correct_answer": "yak",
+              "hint": "Y is for yak. 🐃",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_y_7",
+              "type": "match",
+              "skill_id": "letter_Y_match_letter",
+              "prompt": "Here is the yak. 🐃 Which letter does it start with?",
+              "visual_items": [
+                "yak"
+              ],
+              "options": [
+                "X",
+                "Y"
+              ],
+              "correct_answer": "Y",
+              "hint": "Yak starts with Y.",
+              "difficulty": "easy"
+            }
+          ]
+        },
+        {
+          "topic_id": "pg_english_letters_z",
+          "title": "Letter Z",
+          "emoji": "🦓",
+          "sort_order": 27,
+          "delivery": "digital",
+          "objective": "Meet Z, hear its sound, draw Z, say it and match it",
+          "intro_message": "Let us meet the letter Z! 🦓",
+          "star_reward": 3,
+          "lesson_flow": "complete",
+          "activities": [
+            {
+              "activity_id": "pg_let_z_1",
+              "type": "introduce_letter",
+              "skill_id": "letter_Z",
+              "prompt": "This is Z. Look at it with me — across, slide down, across again.",
+              "visual_items": [
+                "letter_Z"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "This is the letter Z.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_z_2",
+              "type": "introduce_letter",
+              "skill_id": "letter_Z_sound",
+              "prompt": "Z says 'zuh'. Listen — zuh... zuh...",
+              "visual_items": [
+                "letter_Z"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Z says 'zuh'.",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_z_3",
+              "type": "introduce_letter",
+              "skill_id": "letter_Z_word",
+              "prompt": "zuh... zebra! Z is for zebra. 🦓",
+              "visual_items": [
+                "letter_Z",
+                "zebra"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Z for zebra. 🦓",
+              "difficulty": "very_easy"
+            },
+            {
+              "activity_id": "pg_let_z_4",
+              "type": "trace",
+              "skill_id": "letter_Z_write",
+              "prompt": "Now draw Z with your finger.",
+              "visual_items": [
+                "letter_Z"
+              ],
+              "options": [],
+              "correct_answer": null,
+              "hint": "Across, slide down, across again.",
+              "difficulty": "easy",
+              "trace_target": "Z",
+              "min_accuracy": 0.5
+            },
+            {
+              "activity_id": "pg_let_z_5",
+              "type": "repeat_letter",
+              "skill_id": "letter_Z_say",
+              "prompt": "You drew it! Now say it with me: Z.",
+              "visual_items": [
+                "letter_Z",
+                "zebra"
+              ],
+              "options": [],
+              "correct_answer": "z",
+              "hint": "Z says 'zuh', like in zebra.",
+              "difficulty": "easy",
+              "accept": [
+                "z",
+                "zuh",
+                "zz"
+              ]
+            },
+            {
+              "activity_id": "pg_let_z_6",
+              "type": "match",
+              "skill_id": "letter_Z_match_picture",
+              "prompt": "Match Z with its picture. Which one starts with Z?",
+              "visual_items": [
+                "letter_Z"
+              ],
+              "options": [
+                "yak",
+                "zebra"
+              ],
+              "correct_answer": "zebra",
+              "hint": "Z is for zebra. 🦓",
+              "difficulty": "easy"
+            },
+            {
+              "activity_id": "pg_let_z_7",
+              "type": "match",
+              "skill_id": "letter_Z_match_letter",
+              "prompt": "Here is the zebra. 🦓 Which letter does it start with?",
+              "visual_items": [
+                "zebra"
+              ],
+              "options": [
+                "Z",
+                "Y"
+              ],
+              "correct_answer": "Z",
+              "hint": "Zebra starts with Z.",
+              "difficulty": "easy"
             }
           ]
         },
@@ -1098,7 +5290,7 @@
           "topic_id": "pg_eng_listening",
           "title": "Listening & Speaking",
           "emoji": "👂",
-          "sort_order": 3,
+          "sort_order": 28,
           "delivery": "digital",
           "objective": "Greetings, own name and age, naming objects, one-step instructions",
           "intro_message": "Let us talk together! 💬",
@@ -1201,7 +5393,7 @@
           "topic_id": "pg_eng_rhymes",
           "title": "Rhymes & Stories",
           "emoji": "🎵",
-          "sort_order": 4,
+          "sort_order": 29,
           "delivery": "digital",
           "objective": "10-12 action rhymes, picture stories, animal and bird sounds",
           "intro_message": "Story time! Listen carefully. 📖",

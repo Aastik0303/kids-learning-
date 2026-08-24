@@ -27,7 +27,9 @@ export function AuthForm({ mode, isSubmitting, error, onSubmit }: AuthFormProps)
 
   const isRegister = mode === "register";
   const emailValid = /.+@.+\..+/.test(values.email.trim());
-  const passwordValid = values.password.length >= 4;
+  // Eight, matching the server. A form that accepts four only turns a
+  // rejected password into a 422 the parent cannot read.
+  const passwordValid = values.password.length >= (isRegister ? 8 : 4);
   const nameValid = !isRegister || values.name.trim().length > 0;
   const canSubmit = emailValid && passwordValid && nameValid && !isSubmitting;
 
@@ -98,11 +100,11 @@ export function AuthForm({ mode, isSubmitting, error, onSubmit }: AuthFormProps)
         })}
 
         {field("Password", "password", {
-          placeholder: "At least 4 characters",
+          placeholder: isRegister ? "At least 8 characters" : "Your password",
           secure: true,
           autoComplete: isRegister ? "new-password" : "password",
           invalid: !passwordValid,
-          hint: "Use at least 4 characters.",
+          hint: isRegister ? "Use at least 8 characters." : "Enter your password.",
         })}
 
         {error ? (

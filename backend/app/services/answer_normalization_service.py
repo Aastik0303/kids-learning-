@@ -275,10 +275,12 @@ def answers_match(child_answer: str, correct_answer: str, answer_type: str | Non
         # Comparing empty to empty would call every option right, so when either
         # side is emptied the literal answers are compared instead.
         return child_answer.strip().lower() == correct_answer.strip().lower()
-    if normalized_child == normalized_correct:
-        return True
-    # Fuzzy fallback: if normalized answers are very close (distance <= 1), accept
-    if len(normalized_child) >= 3 and len(normalized_correct) >= 3:
-        if _levenshtein_distance(normalized_child, normalized_correct) <= 1:
-            return True
-    return False
+    # Grading is exact. There used to be an edit-distance-1 fallback here, and it
+    # accepted every rhyming pair nursery phonics is built out of: bat/cat,
+    # hat/cat, pen/hen, log/dog, red/bed, fan/van, ball/bell, goat/coat. Those
+    # are not near misses, they are the distractors the question is testing —
+    # and because this runs on the final comparison, a child who *tapped* "bat"
+    # was marked right too. A mishearing belongs in the phonetic map and in
+    # SPEECH_CORRECTIONS, where it is explicit, auditable and per-word; it does
+    # not belong in the comparison that decides a star.
+    return normalized_child == normalized_correct

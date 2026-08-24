@@ -2,6 +2,7 @@
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ActivityView } from "@/components/curriculum/ActivityView";
 import { ComingSoon } from "@/components/curriculum/ComingSoon";
 import { AppShell } from "@/components/shared/AppShell";
@@ -19,6 +20,9 @@ import {
   visualTargetsForActivity
 } from "@/services/guide";
 import { answerLearning, startLearning } from "@/services/learning";
+import { announcePlanChanged } from "@/lib/useTodayPlan";
+import { getTodayPlan } from "@/services/plan";
+import { ApiRequestError } from "@/services/api";
 import { getProgress } from "@/services/child";
 import { getChild, saveChild } from "@/services/session";
 import type { Activity, ExperienceMode, GuideEvent, LearningResponse, Topic } from "@/types";
@@ -44,10 +48,12 @@ export default function TopicLessonPage({
   params: Promise<{ subjectId: string; topicId: string }>;
 }) {
   const { subjectId, topicId } = use(params);
+  const router = useRouter();
   const [topic, setTopic] = useState<Topic | null>(null);
   const [mode, setMode] = useState<ExperienceMode>(FALLBACK_MODE);
   const [session, setSession] = useState<LearningResponse | null>(null);
   const [error, setError] = useState("");
+  const [notToday, setNotToday] = useState("");
   const [busy, setBusy] = useState(false);
 
   // --- the guide, inside the lesson ---------------------------------------
@@ -176,7 +182,16 @@ export default function TopicLessonPage({
         setSession(started);
         if (started.avatar) setAvatar({ ...started.avatar, speak: false });
       })
-      .catch((err: unknown) => setError(err instanceof Error ? err.message : "We could not open that topic."));
+      .catch((err: unknown) => {
+        // "Saved for tomorrow" is the schedule doing its job, not a failure.
+        // The server already words it for a child; the page keeps that wording
+        // and points at what the day *does* hold.
+        if (err instanceof ApiRequestError && err.code === "NOT_TODAYS_PLAN") {
+          setNotToday(err.message);
+          return;
+        }
+        setError(err instanceof Error ? err.message : "We could not open that topic.");
+      });
   }, [topicId, subjectId, setAvatar]);
 
   const activity = session?.activity ?? null;
@@ -247,6 +262,25 @@ export default function TopicLessonPage({
           // never moves.
           const refreshed = await getProgress(next.child_id);
           saveChild(refreshed.child);
+          // Today's plan just moved on. The schedule strip is mounted on every
+          // screen, so it is told rather than left showing the lesson that was
+          // current a moment ago.
+          announcePlanChanged();
+
+          // A Play Group child does not go back to a menu. If the day still has
+          // work in it, the home screen is where the next lesson opens itself,
+          // so they are carried there after a beat of celebration. The server
+          // decides who that applies to; `autopilot` is false for older
+          // children and for a day that is finished, and they keep the summary
+          // screen and its button.
+          try {
+            const today = await getTodayPlan(next.child_id);
+            if (today.autopilot) {
+              window.setTimeout(() => router.push("/"), 2600);
+            }
+          } catch {
+            // The summary screen is a perfectly good place to end up.
+          }
           clearPointing();
           if (next.avatar) setAvatar({ ...next.avatar, speak: true });
           setGuideMessage(next.feedback || "");
@@ -302,6 +336,24 @@ export default function TopicLessonPage({
         <Link href={`/adventure/${subjectId}`} className="font-bold text-ink/60">
           ← Back
         </Link>
+
+        {notToday ? (
+          // The schedule doing its job, not a failure: this level is unlocked
+          // and waiting for the day the plan gives it. Said in the server's own
+          // words, with a way back to what today actually holds.
+          <section className="grid gap-4 rounded-3xl bg-white/85 p-6 text-center shadow-soft">
+            <p className="text-5xl" aria-hidden>
+              🌙
+            </p>
+            <h1 className="text-xl font-black text-ink sm:text-2xl">{notToday}</h1>
+            <Link
+              href="/"
+              className="pressable rounded-3xl bg-leaf px-6 py-4 text-lg font-black text-white shadow-soft"
+            >
+              🗓️ See today&apos;s plan
+            </Link>
+          </section>
+        ) : null}
 
         {error ? <p className="rounded-2xl bg-berry/10 p-4 font-bold text-berry">{error}</p> : null}
 

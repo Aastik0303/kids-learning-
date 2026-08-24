@@ -7,3 +7,7 @@ frontend/node_modules/
 *.log
 *.pyc
 *.tsbuildinfo
+
+# Local SQLite development database (PostgreSQL is the real one)
+*.db
+backend/saksham.db

@@ -47,6 +47,20 @@ type WindowWithSpeechRecognition = Window &
     webkitSpeechRecognition?: SpeechRecognitionConstructor;
   };
 
+/** Stage 1 of the child speech pipeline — `child_speech_service.py`.
+ *
+ * Says what the child most likely said, never whether it was right.
+ * `retry_suggested` means ask them to say it again; it is not a wrong answer. */
+export type ChildSpeechResult = {
+  token: string;
+  confidence: number;
+  status: "resolved" | "needs_enhancement" | "retry" | "empty";
+  reason_code: string;
+  self_corrected: boolean;
+  needs_enhancement: boolean;
+  retry_suggested: boolean;
+};
+
 export type SpeechTranscription = {
   raw_transcript: string;
   normalized: string;
@@ -55,6 +69,7 @@ export type SpeechTranscription = {
   ambiguous: boolean;
   matched_candidate: string | null;
   input_kind: "answer" | "unresolved" | "empty";
+  child_speech?: ChildSpeechResult | null;
 };
 
 export type VoiceProvider = "browser" | "elevenlabs";

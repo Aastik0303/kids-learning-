@@ -27,37 +27,13 @@ STREAK_MESSAGES = [
     "Nice streak! Keep going.",
 ]
 
-# A Hindi lesson is narrated in Hindi. The subject declares its language in the
-# manifest and it arrives here; nothing looks at a subject id.
-HINDI_TUTOR_INTRO_TEMPLATES = [
-    "आज हम {topic} सीखेंगे। तैयार हो, {name}? चलो शुरू करें!",
-    "अब आया {topic}। चलो {name}, साथ में करते हैं।",
-    "{topic} का समय है! तैयार हो, {name}?",
-    "चलो {name}, {topic} सीखते हैं। एक-एक करके।",
-    "{topic} बहुत मज़ेदार है, {name}! शुरू करें?",
-]
-
-HINDI_HINT_TEMPLATES = [
-    "अच्छी कोशिश! {hint}",
-    "लगभग सही! {hint}",
-    "एक बार और देखो। {hint}",
-    "ऐसे सोचो: {hint}",
-]
-
-HINDI_STREAK_MESSAGES = [
-    "वाह! ऐसे ही करते रहो।",
-    "बहुत बढ़िया सुना! आगे बढ़ो।",
-    "क्या बात है! एक और सही।",
-    "शाबाश! चलते रहो।",
-]
-
+# Every lesson is narrated in English, the Hindi-language subjects included:
+# there, Hindi is the content being taught, quoted inside an English sentence,
+# not the language the tutor speaks in. These pools used to have Devanagari
+# twins keyed on the subject's declared language; `language` survives as an
+# argument so callers do not all have to change, and every value maps here.
 TEMPLATES: dict[str, dict[str, list[str]]] = {
     "en": {"intro": TUTOR_INTRO_TEMPLATES, "hint": HINT_TEMPLATES, "streak": STREAK_MESSAGES},
-    "hi": {
-        "intro": HINDI_TUTOR_INTRO_TEMPLATES,
-        "hint": HINDI_HINT_TEMPLATES,
-        "streak": HINDI_STREAK_MESSAGES,
-    },
 }
 
 
@@ -76,7 +52,16 @@ class ContentGenerator(Protocol):
         ...
 
 
-class MockContentGenerator:
+class TemplateContentGenerator:
+    """The lesson's own copy: an intro, a hint wrapper, a streak line.
+
+    None of it is worth a model call. The intro is the child's name and the
+    topic title - both of which the server already holds - and the hint is an
+    authored hint with a warm opening in front of it. Sending those to a
+    provider buys latency and one more place a bad answer could reach a child,
+    and buys nothing back.
+    """
+
     def tutor_intro(self, child_name: str, topic_title: str, language: str = "en") -> str:
         template = random.choice(_pool(language, "intro"))
         return safe_text(template.format(topic=topic_title, name=child_name))
@@ -89,10 +74,22 @@ class MockContentGenerator:
         return safe_text(random.choice(_pool(language, "streak")))
 
 
-class LLMContentGenerator(MockContentGenerator):
-    # PROTOTYPE: live providers are intentionally not called unless this adapter is replaced.
-    pass
-
-
 def get_content_generator(provider: str = "none") -> ContentGenerator:
-    return MockContentGenerator() if provider == "none" else LLMContentGenerator()
+    """The lesson's copy generator. There is only one, whatever the provider is.
+
+    There used to be a second class here - `LLMContentGenerator` - returned
+    whenever a provider was configured. It was an empty subclass of this one, so
+    "the LLM content generator" produced the same templates while reading as
+    though a model were writing them.
+
+    It is gone rather than implemented, and that is the design rather than a
+    shortcut. Model-written child-facing wording has exactly one path in this
+    codebase - the guide, reached through the conductor - and that path is where
+    the safety filter, the answer-leak check, the early-mode word cap and the
+    strategy validation live. A second, weaker path to the same child's ears is
+    not something to add for a greeting.
+
+    `provider` is still accepted so callers need not care, and is deliberately
+    ignored.
+    """
+    return TemplateContentGenerator()

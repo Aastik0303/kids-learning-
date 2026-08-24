@@ -7,7 +7,7 @@ names, so adding a subject changes the greeting without touching this file.
 from typing import Literal
 
 from app.schemas.child import ChildProfile
-from app.services import curriculum_service
+from app.services import curriculum_service, plan_service
 
 RecommendationKind = Literal[
     "start_next_topic",
@@ -57,7 +57,12 @@ def choose_recommendation(child: ChildProfile | None) -> dict:
             "label": "Open Certificate",
         }
 
-    subject_id, topic_id = next_topic(child)
+    # Today's frozen plan first, so the app offers the same lesson all day.
+    # `next_topic` is the fallback: a child with no durable row, a plan that has
+    # been worked through, or a database that is not answering.
+    subject_id, topic_id = plan_service.todays_topic(child)
+    if not (subject_id and topic_id):
+        subject_id, topic_id = next_topic(child)
     if subject_id and topic_id:
         return {
             "kind": "start_next_topic",

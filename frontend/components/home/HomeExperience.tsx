@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAvatar } from "@/components/avatar/AvatarProvider";
 import { AppShell } from "@/components/shared/AppShell";
+import { AutoOpenGate } from "@/components/home/AutoOpenGate";
 import { avatarForPage } from "@/services/avatar";
 import { isSafeGuideTarget, startCompanionSession } from "@/services/companion";
 import { useActiveChild } from "@/lib/useActiveChild";
@@ -55,9 +56,12 @@ export function HomeExperience() {
 
   return (
     <AppShell>
+      {/* Play Group and Nursery do not navigate: their lesson opens itself.
+          Renders nothing at all for older children and for a finished day. */}
+      <AutoOpenGate />
       <section className="world-entrance grid content-between gap-6 p-5 sm:p-7">
         <div className="relative z-10 max-w-4xl">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             <span className="rounded-full bg-white/80 px-4 py-2 text-sm font-black text-leaf shadow-soft">{guest ? "🎒 Guest Adventure" : "🗺️ Saved Adventure"}</span>
             <span className="rounded-full bg-sunshine px-4 py-2 text-sm font-black text-ink shadow-soft">⭐ Stars {child?.stars ?? 0}</span>
           </div>

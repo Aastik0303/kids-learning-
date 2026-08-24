@@ -1,51 +1,34 @@
+"""What the guide remembers about finished lessons.
+
+One row per child per topic - the last one they completed and how it went - so a
+returning child is greeted with "you finished Shapes yesterday" instead of as a
+stranger.
+
+This module used to speak psycopg directly: its own connection, its own
+`CREATE TABLE IF NOT EXISTS`, its own hand-written SQL, and a `postgres_enabled`
+flag that turned the whole feature off whenever `DATABASE_URL` was not
+PostgreSQL. It was the last thing in the codebase outside the SQLAlchemy layer,
+which meant it had its own failure modes, its own connection pool, no migration
+covering its table, and nothing on SQLite - so a developer running locally never
+exercised the code at all.
+
+It now goes through `app/db/repositories/memories.py` like everything else. The
+table shape is unchanged, so an existing `topic_memories` is picked up as it is.
+
+The in-process fallback stays for one reason: this is a greeting. If the
+database is unreachable, the right behaviour is a slightly less personal hello,
+not a failed lesson.
+"""
+
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from threading import Lock
-from uuid import uuid4
 
-from app.config import get_settings
+from app.db.repositories import memories
+from app.db.session import database_url, session_scope
 
 
 logger = logging.getLogger(__name__)
-
-CREATE_TABLE_SQL = """
-CREATE TABLE IF NOT EXISTS topic_memories (
-    id UUID PRIMARY KEY,
-    child_id TEXT NOT NULL,
-    subject_id TEXT NOT NULL,
-    topic_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    score INTEGER NOT NULL CHECK (score BETWEEN 0 AND 100),
-    completed_at TIMESTAMPTZ NOT NULL,
-    UNIQUE (child_id, topic_id)
-)
-"""
-
-CREATE_INDEX_SQL = """
-CREATE INDEX IF NOT EXISTS topic_memories_child_completed_idx
-ON topic_memories (child_id, completed_at DESC)
-"""
-
-UPSERT_SQL = """
-INSERT INTO topic_memories (
-    id, child_id, subject_id, topic_id, title, score, completed_at
-)
-VALUES (%s, %s, %s, %s, %s, %s, %s)
-ON CONFLICT (child_id, topic_id) DO UPDATE SET
-    subject_id = EXCLUDED.subject_id,
-    title = EXCLUDED.title,
-    score = EXCLUDED.score,
-    completed_at = EXCLUDED.completed_at
-"""
-
-LATEST_SQL = """
-SELECT child_id, subject_id, topic_id, title, score, completed_at
-FROM topic_memories
-WHERE child_id = %s
-ORDER BY completed_at DESC
-LIMIT 1
-"""
 
 
 @dataclass(frozen=True)
@@ -58,48 +41,33 @@ class LearningMemory:
     completed_at: datetime
 
 
+# Last resort only: what this process has seen since it started. Used when the
+# database cannot be reached, so the guide degrades to a warm greeting rather
+# than an error in front of a child.
 _session_fallback: dict[str, LearningMemory] = {}
-_schema_ready = False
-_schema_lock = Lock()
 
 
-def postgres_enabled() -> bool:
-    return bool(get_settings().database_url.strip())
-
-
-def _connect():
-    try:
-        import psycopg
-    except ImportError as exc:
-        raise RuntimeError("PostgreSQL memory needs the psycopg package") from exc
-
-    settings = get_settings()
-    return psycopg.connect(
-        settings.database_url,
-        connect_timeout=settings.database_connect_timeout,
-    )
+def store_enabled() -> bool:
+    """There is always a database now - PostgreSQL in production, a local SQLite
+    file otherwise - so the store is always on."""
+    return bool(database_url())
 
 
 def initialize_learning_memory_store() -> bool:
-    global _schema_ready
+    """Kept for the startup hook. The schema is Alembic's job, or
+    `db.bootstrap`'s on SQLite; there is nothing to create here any more."""
+    return store_enabled()
 
-    if not postgres_enabled():
-        return False
-    if _schema_ready:
-        return True
 
-    with _schema_lock:
-        if _schema_ready:
-            return True
-        try:
-            with _connect() as connection:
-                connection.execute(CREATE_TABLE_SQL)
-                connection.execute(CREATE_INDEX_SQL)
-            _schema_ready = True
-        except Exception:
-            logger.exception("Could not initialize PostgreSQL learning memory")
-            return False
-    return True
+def _as_memory(row) -> LearningMemory:
+    return LearningMemory(
+        child_id=row.child_id,
+        subject_id=row.subject_id,
+        topic_id=row.topic_id,
+        title=row.title,
+        score=row.score,
+        completed_at=row.completed_at,
+    )
 
 
 def record_completed_lesson(
@@ -109,6 +77,7 @@ def record_completed_lesson(
     topic_id: str,
     title: str,
     score: int,
+    completed_at: datetime | None = None,
 ) -> LearningMemory:
     memory = LearningMemory(
         child_id=child_id,
@@ -116,48 +85,48 @@ def record_completed_lesson(
         topic_id=topic_id,
         title=title,
         score=score,
-        completed_at=datetime.now(timezone.utc),
+        completed_at=completed_at or datetime.now(timezone.utc),
     )
     _session_fallback[child_id] = memory
 
-    if not initialize_learning_memory_store():
-        return memory
-
     try:
-        with _connect() as connection:
-            connection.execute(
-                UPSERT_SQL,
-                (
-                    uuid4(),
-                    memory.child_id,
-                    memory.subject_id,
-                    memory.topic_id,
-                    memory.title,
-                    memory.score,
-                    memory.completed_at,
-                ),
+        with session_scope() as session:
+            memories.record_completed_lesson(
+                session,
+                child_id=child_id,
+                subject_id=subject_id,
+                topic_id=topic_id,
+                title=title,
+                score=score,
+                completed_at=memory.completed_at,
             )
     except Exception:
-        logger.exception("Could not save completed lesson to PostgreSQL")
+        # The lesson itself is already saved - the attempt log and the mastery
+        # roll-up were committed before this was called. Losing the greeting is
+        # not worth failing the response for.
+        logger.exception("Could not save the completed lesson to the memory store")
     return memory
 
 
 def get_latest_learning_memory(child_id: str) -> LearningMemory | None:
-    if initialize_learning_memory_store():
-        try:
-            with _connect() as connection:
-                row = connection.execute(LATEST_SQL, (child_id,)).fetchone()
-            if row:
-                memory = LearningMemory(
-                    child_id=row[0],
-                    subject_id=row[1],
-                    topic_id=row[2],
-                    title=row[3],
-                    score=row[4],
-                    completed_at=row[5],
-                )
-                _session_fallback[child_id] = memory
-                return memory
-        except Exception:
-            logger.exception("Could not read latest learning memory from PostgreSQL")
+    try:
+        with session_scope() as session:
+            row = memories.latest_for(session, child_id=child_id)
+        if row is not None:
+            memory = _as_memory(row)
+            _session_fallback[child_id] = memory
+            return memory
+    except Exception:
+        logger.exception("Could not read the latest learning memory")
     return _session_fallback.get(child_id)
+
+
+def recent_learning_memories(child_id: str, limit: int = 5) -> list[LearningMemory]:
+    """The last few finished topics, newest first. Read by the parent digest."""
+    try:
+        with session_scope() as session:
+            return [_as_memory(row) for row in memories.memories_for(session, child_id=child_id, limit=limit)]
+    except Exception:
+        logger.exception("Could not read learning memories")
+        remembered = _session_fallback.get(child_id)
+        return [remembered] if remembered else []

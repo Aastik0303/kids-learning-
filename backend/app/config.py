@@ -24,6 +24,18 @@ class Settings(BaseSettings):
     elevenlabs_optimize_streaming_latency: str = "3"
     database_url: str = ""
     database_connect_timeout: int = 5
+    # PBKDF2 rounds for a parent password. The OWASP floor for
+    # PBKDF2-HMAC-SHA256; only the test suite turns it down.
+    password_hash_rounds: int = 600_000
+    # Fraction of teaching turns on which the policy tries a strategy its
+    # table does not already favour. Small on purpose: this explores on
+    # real children.
+    policy_explore_rate: float = 0.08
+    # The Planner Agent runs itself: a background sweep freezes today's plan for
+    # every child who does not have one yet, so a plan exists before the child
+    # opens the app rather than being built by their first request.
+    planner_auto_run: bool = True
+    planner_interval_seconds: int = 900
     cors_origins: str = "http://localhost:5000,http://127.0.0.1:5000"
 
     @property

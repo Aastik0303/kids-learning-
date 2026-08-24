@@ -11,7 +11,10 @@ import type { GuideRequest, GuideResponse } from "@/types/guide";
  */
 export const guideApi = {
   ask(payload: GuideRequest, signal?: AbortSignal) {
-    return apiClient.post<GuideResponse>("/agent/guide", payload, {
+    // Stamped here rather than at each call site, so every guide event carries
+    // the child's real local hour and no greeting can drift to server time.
+    const body: GuideRequest = { local_hour: new Date().getHours(), ...payload };
+    return apiClient.post<GuideResponse>("/agent/guide", body, {
       timeoutMs: env.guideTimeoutMs,
       // One retry only. A child waiting on the avatar would rather get a
       // static fallback line than sit through three backoffs.

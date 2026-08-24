@@ -97,10 +97,13 @@ export function progressContext(child: ChildProfile | null, currentSubject?: str
 }
 
 export function guideAgent(payload: GuideRequest) {
+  // Stamped here rather than at each call site, so every guide event carries
+  // the child's real local hour and no greeting can drift to server time.
+  const body: GuideRequest = { local_hour: new Date().getHours(), ...payload };
   return api<GuideResponse>("/agent/guide", {
     method: "POST",
-    body: JSON.stringify(payload)
-  }).catch(() => localGuide(payload));
+    body: JSON.stringify(body)
+  }).catch(() => localGuide(body));
 }
 
 export function askGuideQuestion({

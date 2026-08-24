@@ -5,11 +5,12 @@ may move them one class up or down from the parent surface; a child can never
 change it, because nothing in the child-facing API accepts a class.
 """
 
+from uuid import UUID
+
 from app.schemas.child import ChildCreateRequest, ChildProfile, ChildUpdateRequest, SubjectProgress
-from app.services import curriculum_service
+from app.services import child_store, curriculum_service
+from app.services.auth_service import get_user_for_token
 from app.services.errors import app_error
-from app.services.mock_auth import get_user_for_token
-from app.services.mock_storage import mock_child_profiles
 
 
 def _seed_progress(class_id: str) -> dict[str, dict]:
@@ -51,10 +52,7 @@ def _apply_class(child: dict, class_id: str, default_class_id: str, age: float) 
 def create_child(payload: ChildCreateRequest) -> ChildProfile:
     user = get_user_for_token(payload.session_token)
     resolution = curriculum_service.resolve_class_for_child(payload.birth_year, payload.birth_month)
-    child_id = f"child_{len(mock_child_profiles) + 101}"
-    child = {
-        "child_id": child_id,
-        "user_id": user["id"],
+    state = {
         "name": payload.name,
         "birth_year": payload.birth_year,
         "birth_month": payload.birth_month,
@@ -66,8 +64,17 @@ def create_child(payload: ChildCreateRequest) -> ChildProfile:
         "certificate_unlocked": False,
         "class_id": None,
     }
-    _apply_class(child, resolution.class_id, resolution.default_class_id, resolution.age_years)
-    mock_child_profiles[child_id] = child
+    _apply_class(state, resolution.class_id, resolution.default_class_id, resolution.age_years)
+    child = child_store.create(
+        parent_id=UUID(user["id"]),
+        name=payload.name,
+        birth_year=payload.birth_year,
+        birth_month=payload.birth_month,
+        class_id=state["class_id"],
+        experience_mode=state["experience_mode"],
+        preferred_language=payload.preferred_language,
+        state=state,
+    )
     return ChildProfile(**child)
 
 
@@ -75,8 +82,7 @@ def list_children(session_token: str) -> list[ChildProfile]:
     user = get_user_for_token(session_token)
     return [
         ChildProfile(**sync_class_progress(child))
-        for child in mock_child_profiles.values()
-        if child["user_id"] == user["id"]
+        for child in child_store.records_for_parent(UUID(user["id"]))
     ]
 
 
@@ -85,9 +91,7 @@ def get_child(child_id: str) -> ChildProfile:
 
 
 def get_child_record(child_id: str) -> dict:
-    child = mock_child_profiles.get(child_id)
-    if not child:
-        raise app_error("INVALID_CHILD", "We could not find that child profile.", 404)
+    child = child_store.get(child_id)
     # A subject added to the curriculum after this child was created has no
     # progress of its own yet. Fill it in here, so every read of a child sees
     # the class as it is now rather than as it was on the day they signed up.
@@ -96,7 +100,7 @@ def get_child_record(child_id: str) -> dict:
 
 def _owned_child(child_id: str, session_token: str) -> dict:
     user = get_user_for_token(session_token)
-    child = mock_child_profiles.get(child_id)
+    child = child_store.find(child_id)
     if not child or child["user_id"] != user["id"]:
         raise app_error("INVALID_CHILD", "We could not find that child profile.", 404)
     return sync_class_progress(child)
@@ -121,6 +125,7 @@ def update_child(child_id: str, payload: ChildUpdateRequest) -> ChildProfile:
         resolution = curriculum_service.resolve_class_for_child(child["birth_year"], child["birth_month"])
 
     _apply_class(child, resolution.class_id, resolution.default_class_id, resolution.age_years)
+    child_store.save(child)
     return ChildProfile(**child)
 
 
@@ -133,6 +138,7 @@ def set_class_override(child_id: str, session_token: str, class_id: str) -> Chil
     )
     child["class_override"] = class_id if resolution.overridden else None
     _apply_class(child, resolution.class_id, resolution.default_class_id, resolution.age_years)
+    child_store.save(child)
     return ChildProfile(**child)
 
 
@@ -141,6 +147,7 @@ def clear_class_override(child_id: str, session_token: str) -> ChildProfile:
     child["class_override"] = None
     resolution = curriculum_service.resolve_class_for_child(child["birth_year"], child["birth_month"])
     _apply_class(child, resolution.class_id, resolution.default_class_id, resolution.age_years)
+    child_store.save(child)
     return ChildProfile(**child)
 
 

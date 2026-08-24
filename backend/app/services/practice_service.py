@@ -14,12 +14,17 @@ from app.schemas.practice import (
     PracticeStartResponse,
     PracticeSubject,
 )
-from app.services import activity_evaluators, curriculum_service
+from app.services import activity_evaluators, curriculum_service, retention_service
 from app.services.avatar_service import learning_avatar
 from app.services.child_service import get_child_record, subject_progress
 from app.services.errors import app_error
 from app.services.history_service import record_attempt
-from app.services.mock_storage import mock_practice_sessions
+
+# One practice sitting, in flight - the same shape as the lesson cursor in
+# `learning_service`, and kept in memory for the same reason: it is rebuilt by
+# starting practice again, while everything it produces (attempts, mastery,
+# settled retention probes) is written to the database as it happens.
+_active_practice: dict[str, dict] = {}
 
 QUESTIONS_PER_SESSION = 5
 
@@ -103,15 +108,22 @@ def start_practice(payload: PracticeStartRequest) -> PracticeStartResponse:
     if not introduced:
         raise app_error("LOCKED_STAGE", "Practice opens after a topic is introduced.", 403)
 
-    activities, selection_reason = _weighted_activities(child, subject.subject_id, introduced, progress)
+    activities, selection_reason, topic_by_activity = _weighted_activities(
+        child, subject.subject_id, introduced, progress
+    )
     if not activities:
         raise app_error("MISSING_CURRICULUM", "Practice needs activities before it can start.", 404)
 
     session_id = f"practice_{uuid4()}"
-    mock_practice_sessions[session_id] = {
+    _active_practice[session_id] = {
         "child_id": payload.child_id,
         "subject_id": subject.subject_id,
         "activities": [a.model_dump() for a in activities],
+        # Practice draws across topics, so the topic a question came from has to
+        # travel with the session. Without it every practice answer was filed
+        # under its activity *type*, which put rows like "identify_colour" in
+        # the mastery table next to real skills.
+        "topic_by_activity": topic_by_activity,
         "selection_reason": selection_reason,
         "attempts": {},
         "correct_streak": 0,
@@ -129,7 +141,7 @@ def start_practice(payload: PracticeStartRequest) -> PracticeStartResponse:
 
 def _weighted_activities(
     child: dict, subject_id: str, introduced: list[Topic], progress: dict
-) -> tuple[list, str]:
+) -> tuple[list, str, dict[str, str]]:
     """Weak topics come up most, then recent ones, then mastered ones."""
     completed = set(progress["completed_topics"])
     weak_skills = set(child["weak_skills"])
@@ -147,6 +159,7 @@ def _weighted_activities(
     rng = random.Random(seed)
 
     chosen: list = []
+    topic_by_activity: dict[str, str] = {}
     seen_activity_ids: set[str] = set()
     attempts = 0
     while len(chosen) < QUESTIONS_PER_SESSION and attempts < 60:
@@ -167,6 +180,7 @@ def _weighted_activities(
         # Still deterministic: the rng is seeded from the child's own state.
         activity = rng.choice(candidates)
         chosen.append(activity)
+        topic_by_activity[activity.activity_id] = topic.topic_id
         seen_activity_ids.add(activity.activity_id)
 
     if weak:
@@ -175,7 +189,7 @@ def _weighted_activities(
         reason = "recent_skills_25_mastered_15"
     else:
         reason = "introduced_skills"
-    return chosen[:QUESTIONS_PER_SESSION], reason
+    return chosen[:QUESTIONS_PER_SESSION], reason, topic_by_activity
 
 
 def _pick_incorrect_feedback(attempt_number: int) -> str:
@@ -187,7 +201,7 @@ def _pick_incorrect_feedback(attempt_number: int) -> str:
 
 
 def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
-    session = mock_practice_sessions.get(payload.practice_session_id)
+    session = _active_practice.get(payload.practice_session_id)
     if not session:
         raise app_error("EXPIRED_LEARNING_SESSION", "Let us start practice again.", 404)
     activity = next(
@@ -213,15 +227,28 @@ def answer_practice(payload: PracticeAnswerRequest) -> PracticeAnswerResponse:
     attempts[payload.activity_id] = 0 if is_correct or question_changed else attempt_number
     session["correct_streak"] = session.get("correct_streak", 0) + 1 if is_correct else 0
 
+    topic_id = session.get("topic_by_activity", {}).get(payload.activity_id, session["subject_id"])
+    skill_id = f"{session['subject_id']}:{topic_id}"
     record_attempt(
         child_id=session["child_id"],
         session_id=payload.practice_session_id,
         activity_id=payload.activity_id,
-        topic=session["subject_id"],
-        skill=activity["type"],
+        topic=topic_id,
+        skill=skill_id,
+        level_id=session["subject_id"],
         child_answer=normalized_answer,
         is_correct=is_correct,
         attempt_number=attempt_number,
+        form_signature=activity["type"],
+    )
+    # Practice is where a retention probe naturally comes due: it re-asks a
+    # skill days after the lesson taught it, usually in a different form. That
+    # is what pays the teaching strategy the child was given at the time.
+    retention_service.on_attempt(
+        child_id=session["child_id"],
+        skill_id=skill_id,
+        form_signature=activity["type"],
+        is_correct=is_correct,
     )
 
     if is_correct:

@@ -2843,6 +2843,14 @@ select:focus-visible {
   background: linear-gradient(135deg, #d8f3ff, #ffffff 55%, #c9f0dc);
 }
 
+/* A level the schedule has not reached yet is asleep, not barred: it keeps its
+   colour and gets a night sky behind it, because the child *will* play it -
+   tomorrow. Grey is what a level looks like when it is not theirs yet. */
+.topic-symbol-tomorrow {
+  background: linear-gradient(135deg, #e7e2ff, #ffffff 60%, #dfe9ff);
+  filter: saturate(0.85);
+}
+
 .topic-symbol-locked,
 .topic-symbol-coming-soon {
   background: rgba(255, 255, 255, 0.7);
@@ -2899,6 +2907,11 @@ select:focus-visible {
 .topic-chip-ready {
   background: var(--sun);
   color: var(--ink);
+}
+
+.topic-chip-tomorrow {
+  background: rgba(124, 106, 214, 0.16);
+  color: #4b3f9e;
 }
 
 .topic-chip-locked,
@@ -3027,3 +3040,4 @@ select:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+

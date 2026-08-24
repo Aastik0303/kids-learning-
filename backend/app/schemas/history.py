@@ -6,7 +6,9 @@ from pydantic import BaseModel
 class ActivityAttempt(BaseModel):
     id: str
     child_id: str
-    session_id: str
+    # Empty when the attempt is read back from the durable log: a sitting is
+    # not part of what makes an attempt true.
+    session_id: str = ""
     activity_id: str
     topic: str
     skill: str

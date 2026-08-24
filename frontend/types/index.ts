@@ -130,6 +130,37 @@ export type ChildProfile = {
   certificate_unlocked: boolean;
 };
 
+/** One item in today's plan. The server decides the order; the client renders it. */
+export type PlanItem = {
+  topic_id: string;
+  /** "<subject>:<topic>" — the id the attempt log and the mastery roll-up use. */
+  skill_id: string;
+  title: string;
+  /** Why the planner put it in today: "new", "revisit" or "prerequisite". */
+  reason: string;
+  done: boolean;
+  current: boolean;
+};
+
+/**
+ * Today's frozen plan. Written once per child per day, so a refresh, a
+ * back-navigation and a second tab all show the same three things.
+ */
+export type TodayPlan = {
+  child_id: string;
+  plan_date: string;
+  /** "planner_agent" when the LangGraph planner ordered the day, else "deterministic". */
+  source: string;
+  items: PlanItem[];
+  current_topic_id: string | null;
+  completed: number;
+  total: number;
+  /** Every item done. What comes next is tomorrow's plan, not the next level. */
+  complete: boolean;
+  /** Play Group and Nursery: the app opens today's lesson itself. */
+  autopilot: boolean;
+};
+
 /** How an activity is answered. Decided by the server's evaluator registry. */
 export type AnswerKind = "choice" | "spoken" | "presentational";
 
@@ -260,6 +291,8 @@ export type GuideRequest = {
   class_id?: string | null;
   experience_mode?: string;
   preferred_language?: string;
+  /** The child's own clock hour (0-23), so greetings match their morning. */
+  local_hour?: number;
   conversation?: Array<{
     role: "user" | "assistant";
     content: string;

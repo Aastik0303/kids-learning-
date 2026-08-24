@@ -55,6 +55,23 @@ GuideVisualActionType = Literal[
     "show_example",
 ]
 
+# How the guide taught this turn, as opposed to how the client renders the turn
+# (`GuideResponse.strategy`). The two were one flat enum, which mixed rendering
+# categories ("navigation", "celebrate") with teaching ones ("hint",
+# "re_explain") and left "never repeat a strategy on the same question" with no
+# field to check itself against. Rendering keeps `strategy`; teaching gets this.
+TeachingStrategy = Literal[
+    "S1_TELL",
+    "S2_SHOW",
+    "S3_EXAMPLE",
+    "S4_STORY",
+    "S5_CONTRAST",
+    "S6_DO_TOGETHER",
+    "S7_SENSE_SWITCH",
+    "S8_PREREQUISITE",
+    "S9_PARK",
+]
+
 
 class GuideConversationTurn(BaseModel):
     role: Literal["user", "assistant"]
@@ -78,6 +95,11 @@ class GuideQuestionContext(BaseModel):
     recent_answers: list[str] = Field(default_factory=list)
     example: str | None = None
     difficulty: str | None = None
+    # Which teaching strategies the guide has already spent on this question.
+    # Filled in server-side from earlier turns and never trusted from the
+    # client, the same boundary as the answer key: a client that could write
+    # this could steer the guide away from every strategy that works.
+    strategies_used: list[str] = Field(default_factory=list)
 
 
 class GuideProgressContext(BaseModel):
@@ -103,6 +125,10 @@ class GuideRequest(BaseModel):
     # Presentation mode from the manifest: "early" or "standard".
     experience_mode: str = "standard"
     preferred_language: str = "en"
+    # The child's own clock. The server may sit in another timezone (or in UTC),
+    # so a greeting derived from server time can wish a child good evening at
+    # breakfast. Optional: older clients simply fall back to server local time.
+    local_hour: int | None = Field(default=None, ge=0, le=23)
     conversation: list[GuideConversationTurn] = Field(default_factory=list, max_length=8)
     question: GuideQuestionContext | None = None
     progress: GuideProgressContext | None = None
@@ -124,6 +150,9 @@ class GuideVisualAction(BaseModel):
 class GuideResponse(BaseModel):
     message: str
     strategy: Literal["welcome", "navigation", "read_question", "visual_explanation", "hint", "re_explain", "celebrate", "help", "none"]
+    # Set only on turns that teach or repair; None on navigation, welcome and
+    # celebration turns, which do not consume a strategy.
+    teaching_strategy: TeachingStrategy | None = None
     avatar: AvatarPayload
     ui_action: GuideUiAction
     visual_action: GuideVisualAction = Field(default_factory=GuideVisualAction)

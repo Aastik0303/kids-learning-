@@ -121,10 +121,10 @@ to bring it back.
 
 | Class | Subjects | Topics | Activities |
 |---|---|---|---|
-| Play Group | 6 | 30 | 296 |
-| Nursery | 6 | 52 | 503 |
+| Play Group | 3 | 58 | 421 |
+| Nursery | 6 | 52 | 585 |
 | LKG | 5 | 23 | 98 |
-| UKG | 5 | 17 | 87 |
+| UKG | 6 | 23 | 118 |
 
 All four classes are authored. Play Group and Nursery carry the most activities,
 and deliberately so, for two reasons.
@@ -135,14 +135,23 @@ same topic. With one example per topic, a child would meet the identical
 question on both surfaces.
 
 English and Maths go further in both classes and are taught **one at a time**,
-through the same four steps:
+through the same steps: the one thing is explained properly, then drawn, then
+said out loud, and only then asked about.
 
 | Step | Type | What the child does |
 |---|---|---|
-| meet it | `introduce_letter` / `introduce_number` | "This is B. B is for ball. ⚽" |
-| find it | `select_letter` / `count_objects` | taps it among three |
+| look at it | `introduce_letter` / `introduce_number` | "This is B. Look at it with me — a long line and two tummies." |
+| hear it | `introduce_letter` / `introduce_number` | "B says 'buh'. Listen — buh... buh..." |
+| use it | `introduce_letter` / `introduce_number` | "buh... ball! B is for ball. ⚽" |
+| draw it | `trace` | draws it with a finger on the tracing canvas |
 | say it | `repeat_letter` / `repeat_number` | says it into the microphone |
-| write it | `trace` | writes it with a finger on the tracing canvas |
+| match it | `match` | matches the letter to its picture, and the picture back to its letter |
+
+Three teaching cards rather than one is the point of the shape: a letter gets
+its own card for how it looks, one for how it sounds, and one for a word it
+starts, so nothing is explained in passing on the way to a question. Drawing
+comes before saying and matching on purpose — a child who has just made the
+shape with a finger has something to say it about.
 
 These topics carry `"lesson_flow": "complete"`, so the lesson plays every step
 and the level passes only at the end of them. Sampling would drop one of the
@@ -152,9 +161,18 @@ cards and samples the questions.
 
 ### Play Group
 
-The alphabet is nine topics of three letters (`pg_english_letters_abc` … `_yz`)
-and counting is four topics from 1 to 10, each unlocking the next. Twelve steps
-per level.
+One letter a level and one number a level: twenty-six alphabet topics
+(`pg_english_letters_a` … `_z`) and ten counting topics (`pg_maths_number_1` …
+`_10`), each unlocking the next. Seven steps per level — three explaining cards,
+the drawing, saying it, and two matching questions — so a level is that one
+thing explained and checked, and nothing else. The second matching question
+counts a different picture (four flowers after four stars) so that four is
+learned rather than "the star question".
+
+Two and a half years old is the reason. Three letters in a sitting means a child
+meets B while still working out A, and the level ends without either being
+learned. A level here is short enough to finish, and the next letter waits until
+this one is written.
 
 ### Nursery
 
@@ -163,19 +181,21 @@ Nursery meets the whole alphabet again, but as **thirteen levels of two letters*
 
 | Step | What the child does |
 |---|---|
-| meet it | "This is Aa. Big A and small a are the same letter. A for apple! 🍎" |
-| find it | taps the big **A** among three capitals |
-| match it | sees small **a** and taps the capital it belongs to |
+| meet it | "This is Aa. Big A and small a are the same letter." |
+| hear it | "Aa says 'aa'. A is for apple! 🍎" |
+| see how it is made | "Look how we make Aa. Big A — two slanting lines and a belt. Small a is little, like a baby A." |
+| draw it | traces **A**, and traces **a** as well for a–j |
 | say it | says the sound "aa" into the microphone |
-| write it | traces **A**, and traces **a** as well for a–j |
+| match it | sees small **a** and taps the capital it belongs to |
+| match it again | taps the picture that starts with **A** |
 
 Teaching Aa on one card is the whole point: the published syllabus separates
 capitals and small letters by months, but a three-year-old shown "A" and "a"
-apart learns two unrelated squiggles. Levels a–j are twelve steps and k–z are
-ten, because the syllabus introduces writing for small letters only up to j.
+apart learns two unrelated squiggles. Levels a–j are sixteen steps and k–z are
+fourteen, because the syllabus introduces writing for small letters only up to j.
 
-Counting is four levels — 1·2·3, 4·5, 6·7·8, 9·10 — each number met, counted,
-said and written before the next one arrives.
+Counting is four levels — 1·2·3, 4·5, 6·7·8, 9·10 — each number explained,
+drawn, said and matched before the next one arrives.
 
 **Hindi runs the same method with the writing taken out**, because the published
 syllabus is speaking and listening only this year — "Is saal Hindi likhna nahi

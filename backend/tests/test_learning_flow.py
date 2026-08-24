@@ -14,13 +14,14 @@ from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services import curriculum_service
-from app.services.mock_storage import mock_certificates
 
-# Play Group Maths: `early` mode, so at most two choices per screen. The first
-# two topics teach 1-2-3 then 4-5-6, so the second is what the first unlocks.
+# Play Group Maths: `early` mode, so at most two choices per screen. These are
+# the subject's first two topics in the manifest, which is what makes the pair
+# usable here: the first is the one a new child has open, and the second is the
+# one completing it unlocks.
 SUBJECT_ID = "pg_maths"
-FIRST_TOPIC = "pg_maths_number_123"
-SECOND_TOPIC = "pg_maths_number_456"
+FIRST_TOPIC = "pg_maths_colours"
+SECOND_TOPIC = "pg_maths_shapes"
 
 
 def activity(index: int, correct: str, other: str) -> dict:
@@ -67,6 +68,11 @@ def authored(tmp_path, monkeypatch):
     monkeypatch.setattr(curriculum_service, "ACTIVITIES_DIR", activities_dir)
     curriculum_service.reload_curriculum()
     yield
+    # Undo the path patch *before* reloading. Fixture finalisers run before
+    # `monkeypatch`'s own, so a reload here would otherwise re-read the
+    # temporary activities directory and leave that cached for every test in
+    # every module after this one.
+    monkeypatch.undo()
     curriculum_service.reload_curriculum()
 
 
@@ -250,7 +256,6 @@ def test_attempts_are_recorded_in_history(client: TestClient):
 
 def test_seed_completes_the_class_and_unlocks_the_certificate(client: TestClient):
     _, child_id = make_playgroup_child(client, "seed@example.com")
-    mock_certificates.pop(child_id, None)
     seeded = client.post(f"/dev/seed/{child_id}").json()
     # Only pg_maths has activities in this fixture, and it is fully completed,
     # so every playable topic in the class is done.

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AvatarDock } from "@/components/avatar/AvatarDock";
+import { TodayPlanChip } from "@/components/home/TodayPlanBlock";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { getClassForChild } from "@/services/curriculum";
 import { clearSession, getUser, isGuestSession } from "@/services/session";
@@ -243,6 +244,10 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
             })}
           </nav>
           <div className="flex items-center gap-2">
+            {/* The day's plan, beside the stars. It is the rule the whole app
+                follows now, so it belongs in the chrome that every screen
+                carries rather than on the home page alone. */}
+            <TodayPlanChip />
             <span className="rounded-full bg-sunshine px-4 py-3 text-sm font-black text-ink shadow-soft">⭐ {child?.stars ?? 0}</span>
             {guest ? (
               <Link className="pressable hidden rounded-full bg-leaf px-4 py-3 text-sm font-black text-white shadow-soft sm:inline-flex" href="/signup">

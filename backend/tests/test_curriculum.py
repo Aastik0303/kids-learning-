@@ -17,8 +17,8 @@ from app.services.curriculum_service import CurriculumManifestError
 
 EXPECTED_CLASSES = ["playgroup", "nursery", "lkg", "ukg"]
 EXPECTED_SUBJECTS = 20
-EXPECTED_TOPICS = 122
-EXPECTED_SUBTOPICS = 436
+EXPECTED_TOPICS = 156
+EXPECTED_SUBTOPICS = 645
 
 
 @pytest.fixture()
@@ -84,7 +84,9 @@ def test_per_class_counts_match_the_published_syllabus(client: TestClient):
         # are recorded under `removed_subjects`. General Awareness delivers its
         # six published topics as fourteen levels of three things each, so a
         # two-year-old meets one thing at a time and a level fits one sitting.
-        "playgroup": (3, 24),
+        # English and Early Mathematics follow the same rule the hardest way:
+        # one level per letter A-Z and one per number 1-10.
+        "playgroup": (3, 58),
         # Nursery's published units become levels: the two counting units are
         # four number levels, Capital Letters plus Small Letters are thirteen Aa
         # levels, and restored Hindi adds a sixth subject of nine letter levels

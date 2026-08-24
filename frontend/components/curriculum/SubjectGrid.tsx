@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ChildProfile, SubjectProgress, ClassDetail, Subject, Topic } from "@/types";
 import { learningTargetStyle } from "@/lib/experience";
+import { useTodayPlan } from "@/lib/useTodayPlan";
 
 type Props = {
   detail: ClassDetail;
@@ -78,18 +79,33 @@ function paletteOf(subject: Subject) {
  * Null means there is nothing left to resume — every playable topic is done —
  * so the tap falls back to the levels, where the child can replay any of them.
  */
-function resumeTopic(subject: Subject, progress: SubjectProgress | undefined): Topic | null {
+function resumeTopic(
+  subject: Subject,
+  progress: SubjectProgress | undefined,
+  planned: Set<string>
+): Topic | null {
   const completed = new Set(progress?.completed_topics ?? []);
   const unlocked = new Set(progress?.unlocked_topics ?? []);
   const playable = subject.topics.filter(
     (topic) => topic.available && unlocked.has(topic.topic_id) && !completed.has(topic.topic_id)
   );
+
+  // Today's plan wins over the bookmark. The server refuses a topic the day
+  // does not hold, so sending a child straight into the next unlocked level
+  // would land them on "we saved that one for tomorrow" instead of a lesson.
+  // With nothing planned for this subject today the card opens the level map,
+  // where the sleeping levels explain themselves.
+  if (planned.size > 0) {
+    return playable.find((topic) => planned.has(topic.topic_id)) ?? null;
+  }
+
   const bookmarked = playable.find((topic) => topic.topic_id === progress?.current_topic_id);
   return bookmarked ?? playable[0] ?? null;
 }
 
 export function SubjectGrid({ detail, child }: Props) {
   const mode = detail.experience;
+  const { plannedTopicIds } = useTodayPlan(child);
   const totalDone = Object.values(child?.subject_progress ?? {}).reduce(
     (sum, progress) => sum + progress.completed_topics.length,
     0
@@ -126,7 +142,8 @@ export function SubjectGrid({ detail, child }: Props) {
           const finished = done > 0 && done === subject.topic_count;
           // Straight into the lesson; the levels are only where a finished
           // subject can send them, since there is nothing left to carry on with.
-          const resume = resumeTopic(subject, progress);
+          const resume = resumeTopic(subject, progress, plannedTopicIds);
+          const isToday = subject.topics.some((topic) => plannedTopicIds.has(topic.topic_id));
           const href = resume
             ? (`/adventure/${subject.subject_id}/${resume.topic_id}` as const)
             : (`/adventure/${subject.subject_id}` as const);
@@ -143,8 +160,17 @@ export function SubjectGrid({ detail, child }: Props) {
                 <div className="grid gap-1">
                   {/* The child reads the fun name; the syllabus title stays
                       underneath it for the grown-up sitting alongside. */}
-                  <h2 className="text-3xl font-black leading-tight text-ink">
+                  <h2 className="flex flex-wrap items-center gap-2 text-3xl font-black leading-tight text-ink">
                     {subject.fun_name ?? subject.title}
+                    {isToday ? (
+                      // Which subjects the day actually holds. A day is a few
+                      // lessons and a class has more subjects than that, so the
+                      // subjects take turns - this is how a child sees whose
+                      // turn it is.
+                      <span className="rounded-full bg-leaf/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-leaf">
+                        🗓️ Today
+                      </span>
+                    ) : null}
                   </h2>
                   {subject.fun_name ? (
                     <p className="text-sm font-black uppercase tracking-wide text-ink/40">

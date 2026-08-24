@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Saksham IQ — Teaching Loop Workflow</title>
+<style>
+:root{
+  color-scheme: light dark;
+  --page:#f9f9f7; --surface:#fcfcfb; --surface-2:#f3f2ee;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --det:#2a78d6;   /* deterministic */
+  --agt:#eb6834;   /* agent / LLM  */
+  --rl:#1baf7a;    /* policy / RL  */
+  --crit:#d03b3b; --good:#0ca30c; --warn:#fab219;
+  --o1:#86b6ef; --o2:#5598e7; --o3:#2a78d6; --o4:#1c5cab;  /* ordinal ramp */
+  --radius:14px;
+  --font:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    --page:#0d0d0d; --surface:#1a1a19; --surface-2:#222220;
+    --ink:#fff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --det:#3987e5; --agt:#d95926; --rl:#199e70;
+    --o1:#9ec5f4; --o2:#6da7ec; --o3:#3987e5; --o4:#256abf;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);
+     font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding:40px 22px 80px}
+h1{font-size:30px;line-height:1.2;margin:0 0 6px;letter-spacing:-.02em}
+h2{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
+h3{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+p{margin:0 0 12px;color:var(--ink-2)}
+.sub{color:var(--ink-2);font-size:15px;margin-bottom:4px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+      padding:24px;margin:18px 0}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.num{font:700 12px/1 var(--mono);color:var(--muted);border:1px solid var(--border);
+     border-radius:6px;padding:5px 7px}
+code,.mono{font-family:var(--mono);font-size:.88em}
+
+/* legend chips */
+.legend{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+      background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:5px 11px 5px 8px}
+.dot{width:11px;height:11px;border-radius:3px;flex:none}
+.dot.d{background:var(--det)} .dot.a{background:var(--agt)} .dot.r{background:var(--rl)}
+.dot.h{background:linear-gradient(135deg,var(--det) 0 50%,var(--agt) 50% 100%)}
+
+/* pipeline band */
+.band{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.step{background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:13px 14px;position:relative}
+.step .k{font:700 10.5px/1 var(--mono);color:var(--muted);letter-spacing:.06em}
+.step .t{font-weight:700;font-size:14px;margin:7px 0 4px}
+.step .d{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.step::after{content:"";position:absolute;right:-9px;top:50%;width:8px;height:2px;background:var(--axis)}
+.step:last-child::after{display:none}
+@media(max-width:760px){.step::after{display:none}}
+.bar-t{height:3px;border-radius:3px 3px 0 0;margin:-13px -14px 10px}
+
+/* loop diagram */
+.loop{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:860px){.loop{grid-template-columns:1fr}}
+.node{border:1px solid var(--border);border-radius:11px;padding:13px 15px;background:var(--surface-2)}
+.node.lead{border-left:4px solid var(--det)}
+.node.lead-a{border-left:4px solid var(--agt)}
+.node.lead-r{border-left:4px solid var(--rl)}
+.node.lead-x{border-left:4px solid var(--crit)}
+.node.lead-g{border-left:4px solid var(--good)}
+.node .h{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.node .b{font-size:12.5px;color:var(--ink-2);line-height:1.5}
+.tag{font:700 9.5px/1 var(--mono);padding:3px 5px;border-radius:4px;letter-spacing:.05em;
+     border:1px solid var(--border);color:var(--ink-2);background:var(--surface)}
+.flowcol{display:flex;flex-direction:column;gap:9px}
+.arrow{color:var(--muted);font-size:15px;text-align:center;line-height:1;margin:-2px 0}
+.colhead{font:700 11px/1 var(--mono);color:var(--muted);letter-spacing:.07em;
+         padding:0 0 3px 2px;text-transform:uppercase}
+.orsep{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px;
+       font-weight:700;letter-spacing:.06em;margin:1px 0}
+.orsep::before,.orsep::after{content:"";flex:1;height:1px;background:var(--grid)}
+
+/* strategies */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:11px}
+.s{border:1px solid var(--border);border-radius:11px;padding:13px 14px;background:var(--surface-2)}
+.s .id{font:700 11px/1 var(--mono);color:var(--det);letter-spacing:.05em}
+.s .n{font-weight:700;font-size:14px;margin:6px 0 5px}
+.s .x{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.s .e{font-size:12px;color:var(--muted);margin-top:7px;font-style:italic;line-height:1.4}
+.s.term{background:transparent;border-style:dashed}
+
+/* charts */
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media(max-width:900px){.charts{grid-template-columns:1fr}}
+.axis-l{font:500 11px var(--font);fill:var(--muted)}
+.val{font:700 11px var(--font);fill:var(--ink)}
+.gl{stroke:var(--grid);stroke-width:1}
+.bl{stroke:var(--axis);stroke-width:1}
+.mk{transition:opacity .12s}
+svg:hover .mk{opacity:.45}
+svg .mk:hover{opacity:1}
+.tip{position:fixed;pointer-events:none;background:var(--surface);color:var(--ink);
+     border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12.5px;
+     box-shadow:0 6px 20px rgba(0,0,0,.16);opacity:0;transition:opacity .1s;z-index:50;white-space:nowrap}
+details{margin-top:12px}
+summary{cursor:pointer;font-size:12.5px;color:var(--muted);font-weight:600}
+table{border-collapse:collapse;width:100%;margin-top:10px;font-size:12.5px}
+th,td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--grid)}
+th{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td.n{font-variant-numeric:tabular-nums;text-align:right}
+
+/* callout */
+.call{border:1px solid var(--border);border-left:4px solid var(--crit);border-radius:11px;
+      padding:16px 18px;background:var(--surface-2);margin:16px 0}
+.call .h{font-weight:700;font-size:14px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.call.ok{border-left-color:var(--good)}
+.call p{margin:0 0 8px;font-size:13.5px}
+.call p:last-child{margin:0}
+
+/* dials */
+.dials{display:grid;gap:8px}
+.dial{display:grid;grid-template-columns:150px 1fr;gap:14px;align-items:center;
+      border:1px solid var(--border);border-radius:10px;padding:10px 13px;background:var(--surface-2)}
+@media(max-width:700px){.dial{grid-template-columns:1fr;gap:5px}}
+.dial .nm{font-weight:700;font-size:13px}
+.dial .nm small{display:block;color:var(--muted);font-weight:500;font-size:11.5px;margin-top:1px}
+.ramp{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--ink-2);flex-wrap:wrap}
+.ramp b{font-weight:700;color:var(--ink)}
+.ramp .g{flex:1;height:5px;border-radius:3px;min-width:44px;
+         background:linear-gradient(90deg,var(--o1),var(--o4))}
+
+/* rl stages */
+.stages{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px}
+.stg{border:1px solid var(--border);border-radius:11px;padding:14px 15px;background:var(--surface-2);
+     border-top:3px solid var(--rl)}
+.stg.zero{border-top-color:var(--det)}
+.stg.never{border-top-color:var(--crit);background:transparent;border-style:dashed;grid-column:1/-1}
+.stg .l{font:700 10.5px/1 var(--mono);color:var(--muted);letter-spacing:.06em}
+.stg .t{font-weight:700;font-size:14.5px;margin:7px 0 5px}
+.stg .w{font-size:12.5px;color:var(--ink-2);line-height:1.45}
+.stg .m{font-size:11.5px;color:var(--muted);margin-top:9px;padding-top:9px;border-top:1px solid var(--grid)}
+footer{color:var(--muted);font-size:12.5px;margin-top:34px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Teaching Loop — poora workflow</h1>
+  <p class="sub">Bachcha app kholta hai → AI schedule banata hai → class khud khulti hai →
+     concept padhaya jaata hai → response ke hisaab se aage ya dobara. Saksham IQ, 2&ndash;6 saal.</p>
+  <div class="legend">
+    <span class="chip"><span class="dot d"></span>Deterministic — code decide karta hai</span>
+    <span class="chip"><span class="dot a"></span>Agent — LLM decide karta hai</span>
+    <span class="chip"><span class="dot h"></span>Hybrid — agent likhta, envelope checkti</span>
+    <span class="chip"><span class="dot r"></span>RL policy — strategy chunti hai</span>
+  </div>
+</header>
+
+<!-- ============ 1. DAY ============ -->
+<section class="card">
+  <div class="sec-head"><span class="num">01</span><h2>Ek din, shuru se aakhir tak</h2></div>
+  <div class="band">
+    <div class="step"><div class="bar-t" style="background:var(--det)"></div>
+      <div class="k">A · ENTRY</div><div class="t">Bachcha aata hai</div>
+      <div class="d">Auth + ownership check. Koi menu nahi, koi login screen bachche ke liye nahi.</div></div>
+    <div class="step"><div class="bar-t" style="background:var(--det)"></div>
+      <div class="k">B · HISTORY</div><div class="t">Pichhla data</div>
+      <div class="d">mastery · revisit_queue · learner_profile · kal ka adhoora plan</div></div>
+    <div class="step"><div class="bar-t" style="background:var(--agt)"></div>
+      <div class="k">C · PLAN</div><div class="t">Aaj ka schedule</div>
+      <div class="d">Planner Agent decide karta hai. Envelope check karti hai. Din bhar ke liye freeze.</div></div>
+    <div class="step"><div class="bar-t" style="background:var(--det)"></div>
+      <div class="k">D · OPEN</div><div class="t">Class khud khulti</div>
+      <div class="d">Greeting → 5 second → class start. Zero navigation tap.</div></div>
+    <div class="step"><div class="bar-t" style="background:linear-gradient(90deg,var(--det),var(--rl),var(--agt))"></div>
+      <div class="k">E · TEACH</div><div class="t">Concept loop</div>
+      <div class="d">Neeche section 02. Yahi asli class hai.</div></div>
+    <div class="step"><div class="bar-t" style="background:var(--det)"></div>
+      <div class="k">F · CLOSE</div><div class="t">Recap &amp; ruk jao</div>
+      <div class="d">"Kal milte hain." Aur koi CTA nahi — na "ek aur", na streak pressure.</div></div>
+    <div class="step"><div class="bar-t" style="background:var(--rl)"></div>
+      <div class="k">G · NIGHTLY</div><div class="t">Seekhna</div>
+      <div class="d">Kal ka retention reward → policy update → offline eval → promote ya reject.</div></div>
+  </div>
+</section>
+
+<!-- ============ 2. CONCEPT LOOP ============ -->
+<section class="card">
+  <div class="sec-head"><span class="num">02</span><h2>Concept Loop — "A" padhana</h2></div>
+  <p>Aapka loop, exactly: <b>samjhao → poochho → suno → judge karo → decide karo</b>.
+     Galat hone par nayi strategy, wahi shabd nahi.</p>
+
+  <div class="loop">
+    <div class="flowcol">
+      <div class="colhead">Teaching sequence</div>
+      <div class="node lead"><div class="h"><span class="tag">D</span>PRE-CHECK</div>
+        <div class="b">Prerequisite aata hai? A pehle se toh nahi aata? Jo aata hai use padhana time waste hai.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node lead-a"><div class="h"><span class="tag">H</span>S1 TELL &nbsp;+&nbsp; S2 SHOW</div>
+        <div class="b">Pehla exposure hamesha fixed hai — "Yeh A hai", phir A chamakta hai aur ungli uska shape banati hai.
+        <b>Yahan RL kuch nahi chunta</b> — abhi koi galti hui hi nahi jise theek karna ho.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node lead"><div class="h"><span class="tag">D</span>ASK</div>
+        <div class="b">Ek check question. Difficulty engine chunta hai — kitne options, kitne milte-julte, kitna scaffold.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node lead"><div class="h"><span class="tag">D</span>LISTEN → JUDGE → COMMIT</div>
+        <div class="b"><code>activity_evaluators.py</code> — pure functions, 37 types.
+        <b>Yahi sach hai.</b> Na agent, na RL is box ko chhoota hai. Mastery update hoti hai aur
+        <b>commit ho jaati hai</b> — uske baad hi AI bulaya jaata hai.</div></div>
+    </div>
+
+    <div class="flowcol">
+      <div class="colhead">JUDGE ke baad — do raaste</div>
+      <div class="node lead-g"><div class="h"><span class="tag">D</span>SAHI → CONCEPT GATE</div>
+        <div class="b"><code>mastery ≥ 0.75</code> <b>aur</b> <code>attempts ≥ 4</code>
+        <b>aur</b> 2 alag question forms <b>aur</b> 2 alag din.<br>
+        Pura → A ho gaya, aage wale concepts unlock.<br>
+        Adhoora → ek aur form, thodi mushkil. Loop.</div></div>
+      <div class="orsep">ya</div>
+      <div class="node lead-x"><div class="h"><span class="tag">D</span>GALAT → 0 ms ACK</div>
+        <div class="b">Turant: "Hmm, saath dekhte hain…" Bachche ko silence nahi milta.
+        Agent peeche soch raha hota hai.</div></div>
+      <div class="arrow">↓</div>
+      <div class="node lead-r"><div class="h"><span class="tag">RL</span>attempts &lt; 4 → NAYI STRATEGY</div>
+        <div class="b">Legal actions = 9 strategies − jo use ho chuki − jo is class mein allowed nahi.
+        Policy chunti hai. Agent usko <b>shabd</b> deta hai. Envelope check karti hai.
+        Difficulty ek step neeche. Loop wapas ASK pe.</div></div>
+      <div class="orsep">ya</div>
+      <div class="node lead-x"><div class="h"><span class="tag">D</span>attempts = 4 → PARK</div>
+        <div class="b">"A thoda shaitan hai! Kal pakdenge use 😊"<br>
+        A <b>seekha hua mark nahi hota</b>. revisit_queue mein jaata hai, kal sabse pehle aayega.
+        A ke aage wala sab <b>locked</b> rehta hai. Koi shame, koi fail, koi score nahi gira.</div></div>
+    </div>
+  </div>
+
+  <div class="call">
+    <div class="h">⚠ "Jab tak sahi na kare, move mat karo" — ek zaroori sudhaar</div>
+    <p>Aapka <b>irada sahi hai</b>: bachcha A seekhe bina aage na jaaye. Par agar rule
+       <i>ek sawaal</i> pe lagaya jaaye, toh woh loop <b>hamesha</b> khatam hota hai — chahe
+       bachche ne kuch na seekha ho. Neeche chart dekhiye: playgroup ke saare sawaal 2-option hain,
+       toh 3 koshish mein <b>87.5%</b> bachche sirf luck se "pass" ho jaayenge.</p>
+    <p>Aur ek 3-saal ka bachcha jo 3 baar fail ho chuka hai, <b>jaanboojh kar random tap</b> karne
+       lagta hai — sirf loop se nikalne ke liye. Toh data bhi galat, aur seekhne ka anubhav bhi.</p>
+  </div>
+  <div class="call ok">
+    <div class="h">✓ Sudhaar: gate <i>baithak</i> pe nahi, <i>concept</i> pe</div>
+    <p><b>Baithak aage badhti hai. Curriculum nahi.</b> A park ho jaata hai par
+       "seekha hua" nahi banta — woh kal wapas aata hai, aur parso bhi, jab tak sach mein na aa jaaye.
+       A pe depend karne wala har concept tab tak locked rehta hai (<code>skill_graph.json</code>).</p>
+    <p>Aapko jo chahiye tha woh mil gaya — bachcha bhi bach gaya.</p>
+  </div>
+</section>
+
+<!-- ============ 3. CHARTS ============ -->
+<section class="charts">
+
+  <div class="card" style="margin:0">
+    <h3>Sirf luck se "sahi" hone ka chance</h3>
+    <p style="font-size:13px">Ek bachcha jise kuch nahi aata, bas random tap kar raha hai.</p>
+    <svg viewBox="0 0 460 260" width="100%" height="260" role="img"
+         aria-label="Grouped bar chart: probability of a random tap being correct, by number of attempts, for 2-option and 3-option questions">
+      <g class="gl">
+        <line x1="52" y1="30"  x2="446" y2="30"/>
+        <line x1="52" y1="72"  x2="446" y2="72"/>
+        <line x1="52" y1="114" x2="446" y2="114"/>
+        <line x1="52" y1="156" x2="446" y2="156"/>
+        <line x1="52" y1="198" x2="446" y2="198"/>
+      </g>
+      <g class="axis-l" text-anchor="end">
+        <text x="44" y="34">100%</text><text x="44" y="76">75%</text>
+        <text x="44" y="118">50%</text><text x="44" y="160">25%</text><text x="44" y="202">0</text>
+      </g>
+      <line class="bl" x1="52" y1="198" x2="446" y2="198"/>
+
+      <!-- attempt 1 -->
+      <rect class="mk" x="66"  y="114" width="34" height="84"  rx="4" fill="var(--det)" data-t="2 options · 1 try — 50.0%"/>
+      <rect class="mk" x="104" y="142" width="34" height="56"  rx="4" fill="var(--agt)" data-t="3 options · 1 try — 33.3%"/>
+      <!-- attempt 2 -->
+      <rect class="mk" x="164" y="72"  width="34" height="126" rx="4" fill="var(--det)" data-t="2 options · 2 tries — 75.0%"/>
+      <rect class="mk" x="202" y="105" width="34" height="93"  rx="4" fill="var(--agt)" data-t="3 options · 2 tries — 55.6%"/>
+      <!-- attempt 3 -->
+      <rect class="mk" x="262" y="51"  width="34" height="147" rx="4" fill="var(--det)" data-t="2 options · 3 tries — 87.5%"/>
+      <rect class="mk" x="300" y="80"  width="34" height="118" rx="4" fill="var(--agt)" data-t="3 options · 3 tries — 70.4%"/>
+      <!-- attempt 4 -->
+      <rect class="mk" x="360" y="40"  width="34" height="158" rx="4" fill="var(--det)" data-t="2 options · 4 tries — 93.8%"/>
+      <rect class="mk" x="398" y="63"  width="34" height="135" rx="4" fill="var(--agt)" data-t="3 options · 4 tries — 80.2%"/>
+
+      <text class="val" x="279" y="45" text-anchor="middle">87.5%</text>
+      <g class="axis-l" text-anchor="middle">
+        <text x="102" y="216">1 try</text><text x="200" y="216">2 tries</text>
+        <text x="298" y="216">3 tries</text><text x="396" y="216">4 tries</text>
+      </g>
+      <g transform="translate(58,240)">
+        <rect width="11" height="11" rx="3" fill="var(--det)"/>
+        <text class="axis-l" x="18" y="10">2 options — playgroup ke <tspan font-weight="700">saare</tspan> sawaal</text>
+        <rect x="250" width="11" height="11" rx="3" fill="var(--agt)"/>
+        <text class="axis-l" x="268" y="10">3 options — nursery</text>
+      </g>
+    </svg>
+    <details><summary>Table view</summary>
+      <table><thead><tr><th>Attempts</th><th class="n">2 options</th><th class="n">3 options</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td class="n">50.0%</td><td class="n">33.3%</td></tr>
+        <tr><td>2</td><td class="n">75.0%</td><td class="n">55.6%</td></tr>
+        <tr><td>3</td><td class="n">87.5%</td><td class="n">70.4%</td></tr>
+        <tr><td>4</td><td class="n">93.8%</td><td class="n">80.2%</td></tr>
+        <tr><td>Unlimited</td><td class="n">100%</td><td class="n">100%</td></tr>
+      </tbody></table>
+    </details>
+    <p style="font-size:12.5px;margin-top:12px;color:var(--muted)">
+      Isliye mastery <b>pehli koshish</b> ke sahi jawab se milti hai (OP-05: attempt 1 → 1.0,
+      attempt 2 → 0.6, attempt 3+ → 0.3). Lagataar 4 first-try correct sirf luck se:
+      <b>6.25%</b> (2 options), <b>1.2%</b> (3 options). Yeh acceptable hai.
+    </p>
+  </div>
+
+  <div class="card" style="margin:0">
+    <h3>Hardness class ke hisaab se — pehle se authored</h3>
+    <p style="font-size:13px">Aapke apne activity files mein gradient maujood hai. Engine isko
+       use karega, replace nahi.</p>
+    <svg viewBox="0 0 460 260" width="100%" height="260" role="img"
+         aria-label="Stacked bar chart: share of activity difficulty levels by class, from playgroup to UKG">
+      <g class="axis-l">
+        <text x="0" y="42">playgroup</text><text x="0" y="92">nursery</text>
+        <text x="0" y="142">lkg</text><text x="0" y="192">ukg</text>
+        <text x="0" y="57" fill="var(--muted)" font-size="10">2–3 saal</text>
+        <text x="0" y="107" fill="var(--muted)" font-size="10">3–4 saal</text>
+        <text x="0" y="157" fill="var(--muted)" font-size="10">4–5 saal</text>
+        <text x="0" y="207" fill="var(--muted)" font-size="10">5–6 saal</text>
+      </g>
+      <!-- 300px wide track from x=76 -->
+      <g>
+        <!-- playgroup 56/44/0/0 -->
+        <rect class="mk" x="76"  y="26" width="166" height="26" rx="4" fill="var(--o1)" data-t="playgroup · very_easy — 173 (56%)"/>
+        <rect class="mk" x="244" y="26" width="130" height="26" rx="4" fill="var(--o2)" data-t="playgroup · easy — 138 (44%)"/>
+        <!-- nursery 26/74/0/0 -->
+        <rect class="mk" x="76"  y="76" width="76"  height="26" rx="4" fill="var(--o1)" data-t="nursery · very_easy — 131 (26%)"/>
+        <rect class="mk" x="154" y="76" width="220" height="26" rx="4" fill="var(--o2)" data-t="nursery · easy — 372 (74%)"/>
+        <!-- lkg 16/44/37/3 -->
+        <rect class="mk" x="76"  y="126" width="46"  height="26" rx="4" fill="var(--o1)" data-t="lkg · very_easy — 16 (16%)"/>
+        <rect class="mk" x="124" y="126" width="130" height="26" rx="4" fill="var(--o2)" data-t="lkg · easy — 43 (44%)"/>
+        <rect class="mk" x="256" y="126" width="109" height="26" rx="4" fill="var(--o3)" data-t="lkg · medium — 36 (37%)"/>
+        <rect class="mk" x="367" y="126" width="7"   height="26" rx="3" fill="var(--o4)" data-t="lkg · hard — 3 (3%)"/>
+        <!-- ukg 4/33/53/10 -->
+        <rect class="mk" x="76"  y="176" width="10"  height="26" rx="3" fill="var(--o1)" data-t="ukg · very_easy — 5 (4%)"/>
+        <rect class="mk" x="88"  y="176" width="96"  height="26" rx="4" fill="var(--o2)" data-t="ukg · easy — 39 (33%)"/>
+        <rect class="mk" x="186" y="176" width="157" height="26" rx="4" fill="var(--o3)" data-t="ukg · medium — 62 (53%)"/>
+        <rect class="mk" x="345" y="176" width="29"  height="26" rx="4" fill="var(--o4)" data-t="ukg · hard — 12 (10%)"/>
+      </g>
+      <g transform="translate(76,232)">
+        <rect width="11" height="11" rx="3" fill="var(--o1)"/><text class="axis-l" x="17" y="10">very easy</text>
+        <rect x="82" width="11" height="11" rx="3" fill="var(--o2)"/><text class="axis-l" x="99" y="10">easy</text>
+        <rect x="146" width="11" height="11" rx="3" fill="var(--o3)"/><text class="axis-l" x="163" y="10">medium</text>
+        <rect x="228" width="11" height="11" rx="3" fill="var(--o4)"/><text class="axis-l" x="245" y="10">hard</text>
+      </g>
+    </svg>
+    <details><summary>Table view</summary>
+      <table><thead><tr><th>Class</th><th class="n">very easy</th><th class="n">easy</th><th class="n">medium</th><th class="n">hard</th><th class="n">Total</th></tr></thead>
+      <tbody>
+        <tr><td>playgroup</td><td class="n">173</td><td class="n">138</td><td class="n">0</td><td class="n">0</td><td class="n">311</td></tr>
+        <tr><td>nursery</td><td class="n">131</td><td class="n">372</td><td class="n">0</td><td class="n">0</td><td class="n">503</td></tr>
+        <tr><td>lkg</td><td class="n">16</td><td class="n">43</td><td class="n">36</td><td class="n">3</td><td class="n">98</td></tr>
+        <tr><td>ukg</td><td class="n">5</td><td class="n">39</td><td class="n">62</td><td class="n">12</td><td class="n">118</td></tr>
+      </tbody></table>
+    </details>
+    <p style="font-size:12.5px;margin-top:12px;color:var(--muted)">
+      Ek gap dikha: <b>lkg ke paas sirf 98 activities hain, nursery ke 503.</b>
+      Ek poora saal 98 activities mein nahi aata — content gap detector isko nightly report karega.
+    </p>
+  </div>
+</section>
+
+<!-- ============ 4. STRATEGIES ============ -->
+<section class="card">
+  <div class="sec-head"><span class="num">03</span><h2>9 strategies — "story ya example" ka poora set</h2></div>
+  <p>Aapne kaha galat hone par <b>story ya example</b> do. Bilkul — par ek concept ko do tarah se
+     samjhana kaafi nahi. Yeh poora set hai. <b>Ek session mein ek strategy dobara nahi chalti.</b></p>
+  <div class="grid">
+    <div class="s"><div class="id">S1 · TELL</div><div class="n">Seedha bata do</div>
+      <div class="x">Koi sawaal nahi. Sirf naam aur pehchan.</div><div class="e">"Yeh A hai. A."</div></div>
+    <div class="s"><div class="id">S2 · SHOW</div><div class="n">Dikhao, batao mat</div>
+      <div class="x">A chamakta hai, ungli uska shape banati hai, baaki dim.</div><div class="e">↗ ↘ — beech mein patti</div></div>
+    <div class="s"><div class="id">S3 · EXAMPLE</div><div class="n">Bachche ki duniya se</div>
+      <div class="x">Authored bank se — LLM invent nahi karta.</div><div class="e">"A se Apple 🍎, A se Aam 🥭"</div></div>
+    <div class="s"><div class="id">S4 · STORY</div><div class="n">Chhoti kahani</div>
+      <div class="x">≤3 vaakya. Har kahani ka ek <code>feature</code> — woh cheez jo woh sikha rahi hai.</div>
+      <div class="e">"Ek Apple apna naam bhool gaya…"</div></div>
+    <div class="s"><div class="id">S5 · CONTRAST</div><div class="n">Sahi vs galat, saath</div>
+      <div class="x">Discrimination sikhata hai — b/d, 6/9, circle/oval.</div><div class="e">"Yeh A ✅ · Yeh B ❌"</div></div>
+    <div class="s"><div class="id">S6 · DO-TOGETHER</div><div class="n">Haath pakad ke</div>
+      <div class="x"><code>demo_tap</code> — Pip tap karta hai, submit nahi karta. Phir bachcha.</div>
+      <div class="e">Template-only, kabhi LLM-worded nahi</div></div>
+    <div class="s"><div class="id">S7 · SENSE-SWITCH</div><div class="n">Indriya badlo</div>
+      <div class="x">Dekh ke nahi aaya? Ab chhuo, bolo, banao. <b>Zero naya content chahiye.</b></div>
+      <div class="e">tap ✕✕ → ab ungli se trace karo</div></div>
+    <div class="s"><div class="id">S8 · PREREQUISITE</div><div class="n">Peeche jao</div>
+      <div class="x">Neev kamzor hai. Lesson pause, prereq micro-lesson, wapas wahi jagah.</div>
+      <div class="e">A se pehle "khadi lakeer"</div></div>
+    <div class="s term"><div class="id" style="color:var(--crit)">S9 · PARK</div><div class="n">Aaj bas</div>
+      <div class="x">Terminal action. Concept locked rehta hai, kal wapas aata hai.</div>
+      <div class="e">"Kal pakdenge use 😊"</div></div>
+  </div>
+  <p style="margin-top:14px;font-size:13px">
+    <b>Playgroup (2–3 saal) mein S4 aur S5 legal hi nahi hain</b> — us umar mein narrative
+    comprehension aur fine discrimination abhi bane nahi hote. Yeh <code>bands</code> field se enforce hota hai,
+    prompt ki guzarish se nahi.</p>
+</section>
+
+<!-- ============ 5. DIALS ============ -->
+<section class="card">
+  <div class="sec-head"><span class="num">04</span><h2>6 hardness dials</h2></div>
+  <p><code>difficulty: "easy"</code> ek <i>label</i> hai — woh nahi batata ki ek hi activity ko
+     aage badhte bachche ke liye <b>kaise</b> mushkil banaya jaaye. Yeh 6 dials runtime pe move
+     karte hain, content badle bina.</p>
+  <div class="dials">
+    <div class="dial"><div class="nm">H1 · Distractors<small>kitne options</small></div>
+      <div class="ramp"><b>2</b><span class="g"></span><b>4</b></div></div>
+    <div class="dial"><div class="nm">H2 · Similarity<small>kitne milte-julte</small></div>
+      <div class="ramp"><b>circle vs star</b><span class="g"></span><b>circle vs oval</b></div></div>
+    <div class="dial"><div class="nm">H3 · Scaffold<small>kitni madad</small></div>
+      <div class="ramp"><b>S4 dikha ke bolo</b><span class="g"></span><b>S0 chup</b></div></div>
+    <div class="dial"><div class="nm">H4 · Modality<small>kya karna hai</small></div>
+      <div class="ramp"><b>pehchano (tap)</b><span class="g"></span><b>banao (likho)</b></div></div>
+    <div class="dial"><div class="nm">H5 · Delay<small>kitni der baad</small></div>
+      <div class="ramp"><b>turant</b><span class="g"></span><b>21 din baad</b></div></div>
+    <div class="dial"><div class="nm">H6 · Support<small>kitna sahara</small></div>
+      <div class="ramp"><b>narration + hint + visual</b><span class="g"></span><b>sirf prompt</b></div></div>
+  </div>
+  <p style="margin-top:14px;font-size:13px">
+    <b>H2 sabse under-rated hai.</b> "Circle tap karo" with <code>[circle, star]</code> aasan hai.
+    Wahi sawaal with <code>[circle, oval]</code> ek asli discrimination task hai.
+    Ek hi authored activity, do bilkul alag difficulty — sirf distractor badalne se.
+    Yeh muft range hai jo aaj use nahi ho rahi.</p>
+  <p style="font-size:13px;margin:0">
+    <b>Step-down ka order ulta hai step-up se</b>, aur woh ulta hona zaroori hai: jab bachcha atka hai
+    pehle <i>task aasan karo</i> (H2 → H1), phir <i>madad badhao</i> (H6 → H3). Ulta karne se aap ek
+    confusing task pe zyada madad de rahe hote ho — jo kaam nahi karta.</p>
+</section>
+
+<!-- ============ 6. RL ============ -->
+<section class="card">
+  <div class="sec-head"><span class="num">05</span><h2>Reinforcement learning — haan, par kaunsa</h2></div>
+  <p>Aapka loop ek asli MDP hai: <b>state</b> = bachche ki haalat is concept pe, <b>action</b> = 9 strategies,
+     <b>reward</b> = seekha ya nahi, <b>episode</b> = ek concept pehle exposure se mastery tak.
+     Yeh RL hai — bas isme LLM ke weights nahi badalte, <b>teaching policy</b> badalti hai.</p>
+  <div class="stages">
+    <div class="stg zero"><div class="l">STAGE 0 · DIN 1</div><div class="t">Heuristic ladder</div>
+      <div class="w">S1→S2→ASK→S3→S4→S5→S6→S7→PARK. Fixed order, deterministic.
+      <b>Yeh aapki baseline hai</b> — iske bina aap kabhi jaan nahi paoge ki RL kaam kar raha hai.</div>
+      <div class="m">Data chahiye: <b>0</b></div></div>
+    <div class="stg"><div class="l">STAGE 1 · ~2 HAFTE</div><div class="t">Contextual bandit</div>
+      <div class="w">Context coarse: (attempt × skill_type) = 16 buckets × 9 arms = 144 cells.
+      Thompson sampling, nightly update, kill switch.</div>
+      <div class="m">~4,300 events · pilot pe ~14 din · 6k DAU pe ~6 ghante</div></div>
+    <div class="stg"><div class="l">STAGE 2 · ~2 MAHINE</div><div class="t">Context refinement</div>
+      <div class="w">Jis bucket mein 200+ pulls ho gaye use split karo — age_band, phir mastery, phir fatigue.
+      Sirf wahan split karo jahan data hai.</div>
+      <div class="m">Poora state space kabhi pehle se nahi</div></div>
+    <div class="stg"><div class="l">STAGE 3 · ~4–6 MAHINE</div><div class="t">Tabular Q-learning</div>
+      <div class="w">864 states × 9 actions. γ=0.9. Ab delayed reward kaam karta hai — jo strategy
+      <i>agli</i> strategy ko kaam karne deti hai, usko credit milta hai.</div>
+      <div class="m">~78,000 events · Q warm-started from Stage 0</div></div>
+    <div class="stg never"><div class="l">RLHF</div><div class="t">Is list mein nahi</div>
+      <div class="w">10,000+ human-ranked pairs, GPU training, apne weights serve karna — 12–18 mahine.
+      Aur reward "bachche ne sahi jawab diya" ko maximise karne ka sabse tez raasta hai
+      <b>bachche ko jawab bata dena</b>.</div>
+      <div class="m">Stage 3 saturate hone ke baad socho — DPO, PPO nahi</div></div>
+  </div>
+
+  <div class="call ok" style="margin-top:18px">
+    <div class="h">✓ Do lines jo poori RL design ko bachati hain</div>
+    <p><code>−0.15</code> <b>per extra attempt.</b> Iske bina policy "efficiently padhana" nahi,
+       <b>"ragadna"</b> seekhegi — kyunki agar sirf "aakhir mein sahi hua" ka reward hai, toh
+       8 koshish 2 koshish jitni hi achhi hain.</p>
+    <p><code>+0.80</code> <b>agar kal yaad tha.</b> Ek strategy jo aaj turant kaam karti hai par
+       kal bhula di jaati hai, woh achhi teaching nahi hai. Isliye update <b>nightly</b> hai —
+       yeh signal aane mein 24 ghante lagte hain.</p>
+  </div>
+  <p style="font-size:13px;margin:14px 0 0">
+    <b>Warm start optional nahi hai.</b> Din 1 pe Q table random nahi, heuristic ladder hoti hai.
+    Aap kabhi ek randomly-initialised policy bachchon pe nahi chalayenge. Worst case = baseline.<br>
+    <b>Exploration ε = 0.10</b>, aur <b>ε = 0</b> jab: attempt ≥ 3 · frustration ≥ 0.5 · pehla exposure ·
+    class = playgroup. Atka hua ya pareshaan bachcha experiment ki jagah nahi hai.</p>
+</section>
+
+<!-- ============ 7. WHAT NEVER MOVES ============ -->
+<section class="card">
+  <div class="sec-head"><span class="num">06</span><h2>Jo kabhi agent ya RL ke paas nahi jaata</h2></div>
+  <div class="grid">
+    <div class="s" style="border-left:4px solid var(--det)"><div class="n">Jawab sahi hai ya galat</div>
+      <div class="x"><code>activity_evaluators.py</code> — 37 registered types, pure functions.</div></div>
+    <div class="s" style="border-left:4px solid var(--det)"><div class="n">Mastery ka number</div>
+      <div class="x">EWMA + lazy decay. Arithmetic hai, judgement nahi.</div></div>
+    <div class="s" style="border-left:4px solid var(--det)"><div class="n">Stars, unlock, certificate</div>
+      <div class="x">Parent ko explain karna padta hai. "Model ka mood" jawab nahi hai.</div></div>
+    <div class="s" style="border-left:4px solid var(--det)"><div class="n">Ownership &amp; consent</div>
+      <div class="x">Security aur kanoon. Kabhi inferred nahi.</div></div>
+  </div>
+  <p style="margin-top:14px;font-size:13px">
+    Baaki <b>sab kuch</b> agent aur policy ke paas hai — plan, branch, strategy, example, scaffold,
+    difficulty, UI, aur kab rukna hai. Beech mein ek <b>Envelope</b> hai: 26 deterministic rules
+    jo veto kar sakti hain (attempt cap, answer-leak, repeat, shame, floors, budget, deadline).
+    Har veto ek metric hai — aur veto rate hi aapka prompt-quality signal hai.</p>
+</section>
+
+<footer>
+  Saksham IQ · Teaching Loop Workflow v1.0 · 2026-08-19<br>
+  Poori detail: <code>docs/TEACHING-LOOP-WORKFLOW.md</code> ·
+  <code>docs/AGENT-FLOW.md</code> · <code>docs/AI-100-PERCENT-AUTOMATION.md</code>
+</footer>
+
+</div>
+<div class="tip" id="tip"></div>
+<script>
+const tip = document.getElementById('tip');
+document.querySelectorAll('.mk[data-t]').forEach(el=>{
+  el.addEventListener('mousemove', e=>{
+    tip.textContent = el.dataset.t;
+    tip.style.opacity = 1;
+    const pad = 14;
+    let x = e.clientX + pad, y = e.clientY + pad;
+    const r = tip.getBoundingClientRect();
+    if (x + r.width  > innerWidth  - 8) x = e.clientX - r.width  - pad;
+    if (y + r.height > innerHeight - 8) y = e.clientY - r.height - pad;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  });
+  el.addEventListener('mouseleave', ()=>{ tip.style.opacity = 0; });
+});
+</script>
+</body>
+</html>

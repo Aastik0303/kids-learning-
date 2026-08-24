@@ -147,6 +147,8 @@ export type GuideRequest = {
   age?: number | null;
   learning_mode?: string;
   preferred_language?: string;
+  /** The child's own clock hour (0-23), so greetings match their morning. */
+  local_hour?: number;
   conversation?: GuideConversationTurn[];
   question?: GuideQuestionContext | null;
   progress?: GuideProgressContext | null;

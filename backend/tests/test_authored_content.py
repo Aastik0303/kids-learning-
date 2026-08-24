@@ -12,9 +12,10 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
+from app.services.guide_agent_service import FREE_DRAW_TARGETS
 from app.services import activity_evaluators, curriculum_service
 from app.services.learning_service import LESSON_LENGTH
-from app.services.mock_storage import mock_child_profiles
+from app.services import child_store
 
 
 @pytest.fixture()
@@ -111,7 +112,7 @@ def make_play_group_child(client: TestClient, email: str):
 # --------------------------------------------------------------------------
 
 
-AUTHORED_CLASSES = {"playgroup": 182, "nursery": 503, "lkg": 98, "ukg": 118}
+AUTHORED_CLASSES = {"playgroup": 421, "nursery": 585, "lkg": 98, "ukg": 118}
 
 HINDI_SWAR = ["अ", "आ", "इ", "ई", "उ", "ऊ", "ए", "ऐ", "ओ", "औ", "अं", "अः"]
 HINDI_VYANJAN = ["क", "ख", "ग", "घ", "ङ"]
@@ -131,7 +132,7 @@ def test_play_group_content_uses_the_requested_subjects(client: TestClient):
     assert [subject["subject_id"] for subject in detail["subjects"]] == [
         "pg_english", "pg_maths", "pg_ga"
     ]
-    assert detail["activity_count"] == 182
+    assert detail["activity_count"] == 421
 
 
 def test_general_awareness_teaches_three_things_a_level(client: TestClient):
@@ -272,7 +273,9 @@ def test_the_move_to_art_kept_every_published_lkg_subtopic(client: TestClient):
 
 def rewind_english_progress(child_id: str, **stored) -> None:
     """Put a child's LKG English progress back to a shape an older release wrote."""
-    mock_child_profiles[child_id]["subject_progress"]["lkg_english"].update(stored)
+    record = child_store.get(child_id)
+    record["subject_progress"]["lkg_english"].update(stored)
+    child_store.save(record)
 
 
 def test_a_topic_leaving_a_subject_does_not_lock_the_child_out(client: TestClient):
@@ -488,7 +491,14 @@ def test_a_child_can_play_shapes_from_start_to_finish(client: TestClient):
     assert response["next_topic_unlocked"] is True
 
 
-def test_the_next_topic_really_opens_after_completion(client: TestClient):
+def test_the_next_topic_really_opens_after_completion(client: TestClient, next_day):
+    """Finishing a level unlocks the next one, and the next one is tomorrow's.
+
+    Unlocked is not the same as today's: the day's plan holds one level per
+    subject, so a child who finishes Shapes does not walk straight into Colours.
+    They come back for it in the morning, which is what makes the schedule a
+    routine rather than a list to be raced through.
+    """
     _, child_id = make_nursery_child(client, "unlocked@example.com")
     # Colours is locked until Shapes is done.
     blocked = client.post("/learning/start", json={"child_id": child_id, "topic_id": "nur_maths_colours"})
@@ -509,6 +519,14 @@ def test_the_next_topic_really_opens_after_completion(client: TestClient):
         ).json()
         activity = response.get("activity")
 
+    # Unlocked now, but not today's work.
+    same_day = client.post("/learning/start", json={"child_id": child_id, "topic_id": "nur_maths_colours"})
+    assert same_day.status_code == 403
+    assert same_day.json()["error"]["code"] == "NOT_TODAYS_PLAN"
+
+    # It opens on the day the plan comes round to it. A day is three lessons and
+    # nursery has six subjects, so the subjects take turns.
+    next_day.until_planned(client, child_id, "nur_maths_colours")
     opened = client.post("/learning/start", json={"child_id": child_id, "topic_id": "nur_maths_colours"})
     assert opened.status_code == 200
 
@@ -525,29 +543,33 @@ def test_practice_draws_only_answerable_activities(client: TestClient):
 
 
 def test_play_group_meets_the_alphabet_one_letter_at_a_time(client: TestClient):
-    """A to Z in order, three letters per lesson, each one shown before it is asked.
+    """A to Z in order, one letter per level, explained before it is asked.
 
-    A two-year-old cannot be handed six letters sampled at random. Every letter
-    gets its own "this is B, B is for ball" card, and that card is never sampled
-    away — being asked to find a letter nobody introduced is the failure this
-    guards against.
+    A two-year-old cannot be handed several letters at once, so a level is one
+    letter and nothing else: A is looked at, sounded out, drawn, said and
+    matched before B is named at all. Three teaching cards explain the one
+    letter — its shape, its sound, and the word it starts — and they are never
+    sampled away, because being asked to match a letter nobody explained is the
+    failure this guards against.
     """
     subject = client.get("/curriculum/subjects/pg_english").json()
     letter_topics = [t for t in subject["topics"] if t["topic_id"].startswith("pg_english_letters_")]
-    assert len(letter_topics) == 9
+    assert len(letter_topics) == 26
 
     taught = ""
     for topic in letter_topics:
         activities = client.get(f"/curriculum/topics/{topic['topic_id']}/activities").json()
         introductions = [a for a in activities if a["type"] == "introduce_letter"]
-        # Every letter is introduced, and introducing comes before asking.
+        # Explaining comes first, all of it, before anything is asked.
+        assert len(introductions) == 3, topic["topic_id"]
         assert activities[: len(introductions)] == introductions
         assert len(introductions) <= LESSON_LENGTH, topic["topic_id"]
-        for card in introductions:
-            taught += card["prompt"].split()[2].rstrip(".")
-        # Each letter of the group is also checked.
-        for letter in {a["correct_answer"] for a in activities if a["correct_answer"]}:
-            assert letter.lower() in topic["topic_id"]
+        taught += introductions[0]["prompt"].split()[2].rstrip(".")
+        # Every answer belongs to this letter: the letter itself, or the picture
+        # its own teaching card named.
+        picture = introductions[2]["visual_items"][1]
+        for answer in {a["correct_answer"] for a in activities if a["correct_answer"]}:
+            assert answer == picture or answer.lower() in topic["topic_id"], answer
 
     assert taught == "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -569,23 +591,32 @@ def test_nursery_meets_every_letter_as_one_big_and_small_pair(client: TestClient
     for topic in letter_topics:
         activities = client.get(f"/curriculum/topics/{topic['topic_id']}/activities").json()
         introductions = [a for a in activities if a["type"] == "introduce_letter"]
-        assert len(introductions) == 2, topic["topic_id"]
-        for card in introductions:
+        # Three teaching cards per letter: the pair, its sound and word, and how
+        # the two forms are drawn.
+        assert len(introductions) == 6, topic["topic_id"]
+        openers = [a for a in introductions if a["prompt"].startswith("This is ")]
+        assert len(openers) == 2, topic["topic_id"]
+        for card in openers:
             pair = card["prompt"].split()[2].rstrip(".")
             # "This is Aa." — the capital and its small letter, on one card.
             assert len(pair) == 2 and pair[0].isupper() and pair[1] == pair[0].lower(), pair
             assert f"letter_small_{pair[1]}" in card["visual_items"], pair
             taught += pair[0]
-        # Both forms are practised: find the capital, then match the small one.
-        assert {a["type"] for a in activities} >= {"select_letter", "match", "repeat_letter", "trace"}
-        for letter in {a["correct_answer"] for a in activities if a["correct_answer"]}:
-            assert len(letter) == 1
+        # Both forms are practised: the small letter is matched back to its
+        # capital, and the pair is matched to the picture it starts.
+        assert {a["type"] for a in activities} >= {"match", "repeat_letter", "trace"}
+        assert len([a for a in activities if a["type"] == "match"]) == 4, topic["topic_id"]
+        pictures = {
+            card["visual_items"][2] for card in introductions if len(card["visual_items"]) > 2
+        }
+        for answer in {a["correct_answer"] for a in activities if a["correct_answer"]}:
+            assert len(answer) == 1 or answer in pictures, answer
 
     assert taught == "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 
-def test_a_nursery_letter_level_is_played_in_full(client: TestClient):
-    """Meet Aa, find the big A, match the small a, say the sound, write both.
+def test_a_nursery_letter_level_is_played_in_full(client: TestClient, next_day):
+    """Explain Aa three ways, draw both forms, say the sound, then match twice.
 
     The level is a method, not a pool, so it carries `complete` and every step
     is played. Sampling it would drop one of the steps for one of the letters,
@@ -594,14 +625,17 @@ def test_a_nursery_letter_level_is_played_in_full(client: TestClient):
     _, child_id = make_nursery_child(client, "nurletters@example.com")
     topic = client.get("/curriculum/topics/nur_eng_letters_ab").json()
     assert topic["lesson_flow"] == "complete"
-    # Letters open after the pre-writing strokes, which come first in English.
+    # Letters open after the pre-writing strokes, which come first in English -
+    # and open on a later day, because a day holds one level per subject.
+    next_day.until_planned(client, child_id, "nur_eng_strokes")
     play_topic(client, child_id, "nur_eng_strokes")
+    next_day.until_planned(client, child_id, "nur_eng_letters_ab")
 
     started = client.post(
         "/learning/start", json={"child_id": child_id, "topic_id": "nur_eng_letters_ab"}
     ).json()
-    # Six steps per letter: a-j write their small letter too, as the syllabus asks.
-    assert started["activity_total"] == 12
+    # Eight steps per letter: a-j draw their small letter too, as the syllabus asks.
+    assert started["activity_total"] == 16
 
     played, activity, response = [], started["activity"], started
     while activity is not None:
@@ -613,10 +647,12 @@ def test_a_nursery_letter_level_is_played_in_full(client: TestClient):
         activity = response.get("activity")
 
     assert played == [
-        ("introduce_letter", None), ("select_letter", "A"), ("match", "A"),
-        ("repeat_letter", "a"), ("trace", "A"), ("trace", "small_a"),
-        ("introduce_letter", None), ("select_letter", "B"), ("match", "B"),
-        ("repeat_letter", "b"), ("trace", "B"), ("trace", "small_b"),
+        ("introduce_letter", None), ("introduce_letter", None), ("introduce_letter", None),
+        ("trace", "A"), ("trace", "small_a"),
+        ("repeat_letter", "a"), ("match", "A"), ("match", "apple"),
+        ("introduce_letter", None), ("introduce_letter", None), ("introduce_letter", None),
+        ("trace", "B"), ("trace", "small_b"),
+        ("repeat_letter", "b"), ("match", "B"), ("match", "ball"),
     ]
     assert response["complete"] is True and response["topic_completed"] is True
     assert response["next_topic_id"] == "nur_eng_letters_cd"
@@ -651,12 +687,14 @@ def test_nursery_counts_one_to_ten_one_number_at_a_time(client: TestClient):
         assert topic["lesson_flow"] == "complete"
         activities = client.get(f"/curriculum/topics/{topic['topic_id']}/activities").json()
         for index, card in enumerate(activities):
-            if card["type"] != "introduce_number":
+            if card["type"] != "introduce_number" or not card["prompt"].startswith("This is "):
                 continue
             counted.append(int(card["visual_items"][0]))
-            # Meet it, count it, say it, write it — in that order, every time.
-            assert [a["type"] for a in activities[index: index + 4]] == [
-                "introduce_number", "count_objects", "repeat_number", "trace"
+            # Explain it three ways, draw it, say it, then match it twice — in
+            # that order, every time.
+            assert [a["type"] for a in activities[index: index + 7]] == [
+                "introduce_number", "introduce_number", "introduce_number",
+                "trace", "repeat_number", "match", "match",
             ]
     assert counted == list(range(1, 11))
 
@@ -697,8 +735,9 @@ def test_nursery_hindi_never_asks_a_child_to_write(client: TestClient):
             assert not activity["trace_target"], activity["activity_id"]
 
 
-def test_a_nursery_hindi_level_is_played_in_full(client: TestClient):
+def test_a_nursery_hindi_level_is_played_in_full(client: TestClient, next_day):
     _, child_id = make_nursery_child(client, "nurhindi@example.com")
+    next_day.until_planned(client, child_id, "nur_hindi_swar_a_aa")
     started = client.post(
         "/learning/start", json={"child_id": child_id, "topic_id": "nur_hindi_swar_a_aa"}
     ).json()
@@ -747,11 +786,10 @@ def test_hindi_letters_are_accepted_when_said_in_either_script(client: TestClien
 def test_play_group_counts_one_to_ten_in_order(client: TestClient):
     subject = client.get("/curriculum/subjects/pg_maths").json()
     number_topics = [t for t in subject["topics"] if t["topic_id"].startswith("pg_maths_number_")]
+    # One number per level, in order — the same one-thing-at-a-time rule the
+    # alphabet follows.
     assert [t["topic_id"] for t in number_topics] == [
-        "pg_maths_number_123",
-        "pg_maths_number_456",
-        "pg_maths_number_789",
-        "pg_maths_number_10",
+        f"pg_maths_number_{number}" for number in range(1, 11)
     ]
 
     counted = []
@@ -759,25 +797,33 @@ def test_play_group_counts_one_to_ten_in_order(client: TestClient):
         activities = client.get(f"/curriculum/topics/{topic['topic_id']}/activities").json()
         introductions = [a for a in activities if a["type"] == "introduce_number"]
         assert activities[: len(introductions)] == introductions
-        counted += [int(card["visual_items"][0]) for card in introductions]
+        openers = [a for a in introductions if a["prompt"].startswith("This is ")]
+        counted += [int(card["visual_items"][0]) for card in openers]
     assert counted == list(range(1, 11))
 
 
-def test_a_letter_level_teaches_finds_says_and_writes_every_letter(client: TestClient):
-    """Four steps per letter, and the level passes only at the end of them.
+def test_a_letter_level_explains_draws_says_and_matches_its_letter(client: TestClient, next_day):
+    """The one letter is explained, drawn, said and matched, in that order.
 
-    Meet the letter, find it, say it out loud, write it with a finger. A level
-    of three letters is twelve steps and is played in full — sampling it would
-    drop one of the four steps of the method for some letter.
+    Three teaching cards — its shape, its sound, the word it starts — then the
+    child draws it with a finger, says it out loud, and only then answers the
+    two matching questions. The level is a method, not a pool, so it is played
+    in full: sampling it would drop one of the steps and leave a child asked to
+    match a letter nobody explained.
     """
     _, child_id = make_play_group_child(client, "pgletters@example.com")
-    topic = client.get("/curriculum/topics/pg_english_letters_abc").json()
+    topic = client.get("/curriculum/topics/pg_english_letters_a").json()
     assert topic["lesson_flow"] == "complete"
+    # Letters open after the pre-writing strokes, which come first in English -
+    # and on a later day, because a day holds one level per subject.
+    next_day.until_planned(client, child_id, "pg_eng_strokes")
+    play_topic(client, child_id, "pg_eng_strokes")
+    next_day.until_planned(client, child_id, "pg_english_letters_a")
 
     started = client.post(
-        "/learning/start", json={"child_id": child_id, "topic_id": "pg_english_letters_abc"}
+        "/learning/start", json={"child_id": child_id, "topic_id": "pg_english_letters_a"}
     ).json()
-    assert started["activity_total"] == 12
+    assert started["activity_total"] == 7
 
     played, activity, response = [], started["activity"], started
     while activity is not None:
@@ -789,24 +835,43 @@ def test_a_letter_level_teaches_finds_says_and_writes_every_letter(client: TestC
         activity = response.get("activity")
 
     assert played == [
-        ("introduce_letter", None), ("introduce_letter", None), ("introduce_letter", None),
-        ("select_letter", "a"), ("select_letter", "b"), ("select_letter", "c"),
-        ("repeat_letter", "a"), ("repeat_letter", "b"), ("repeat_letter", "c"),
-        ("trace", "A"), ("trace", "B"), ("trace", "C"),
+        ("introduce_letter", None),
+        ("introduce_letter", None),
+        ("introduce_letter", None),
+        ("trace", "A"),
+        ("repeat_letter", "a"),
+        ("match", "apple"),
+        ("match", "A"),
     ]
     assert response["complete"] is True and response["topic_completed"] is True
-    assert response["next_topic_id"] == "pg_english_letters_def"
+    assert response["next_topic_id"] == "pg_english_letters_b"
     assert response["next_topic_unlocked"] is True
 
-    # And the level it unlocked really opens.
+    # And the level it unlocked really opens - tomorrow. Unlocking is what the
+    # lesson earns; the day it is played on is the plan's to decide.
+    today = client.post(
+        "/learning/start", json={"child_id": child_id, "topic_id": "pg_english_letters_b"}
+    )
+    assert today.status_code == 403
+    assert today.json()["error"]["code"] == "NOT_TODAYS_PLAN"
+
+    next_day.until_planned(client, child_id, "pg_english_letters_b")
     opened = client.post(
-        "/learning/start", json={"child_id": child_id, "topic_id": "pg_english_letters_def"}
+        "/learning/start", json={"child_id": child_id, "topic_id": "pg_english_letters_b"}
     )
     assert opened.status_code == 200
 
 
 def test_every_writing_step_carries_something_to_trace(client: TestClient):
-    """A trace activity with no target would render an empty drawing box."""
+    """A trace activity with no target would render an empty drawing box.
+
+    A free page is the one exception, and it is a deliberate one: "scribble
+    anywhere you like" has no shape to follow and no accuracy to reach, which is
+    the whole point of it for a two-year-old holding a crayon for the first
+    time. The guide knows the same set by name (`FREE_DRAW_TARGETS`) and
+    narrates those pages differently rather than describing a shape that is not
+    there.
+    """
     for class_id in AUTHORED_CLASSES:
         detail = client.get(f"/curriculum/classes/{class_id}").json()
         for subject in detail["subjects"]:
@@ -815,6 +880,9 @@ def test_every_writing_step_carries_something_to_trace(client: TestClient):
                     if activity["type"] != "trace":
                         continue
                     assert activity["trace_target"], activity["activity_id"]
+                    if activity["trace_target"] in FREE_DRAW_TARGETS:
+                        assert activity["min_accuracy"] in (None, 0.0), activity["activity_id"]
+                        continue
                     assert 0 < activity["min_accuracy"] <= 1, activity["activity_id"]
 
 

@@ -1,0 +1,132 @@
+{
+  "version": 2,
+  "notes": [
+    "Which skill has to be held before another can be taught.",
+    "Ids are '<subject_id>:<topic_id>', the same ids the attempt log and the",
+    "mastery roll-up use. The Branch Decision Engine reads this: a child who",
+    "answers wrong while the weakest prerequisite here sits below 0.40 is",
+    "taken back to that prerequisite for a short micro-lesson instead of",
+    "being re-explained the thing they were never ready for.",
+    "",
+    "Two authoring rules, both of which the file keeps:",
+    "1. Only chains where the skill genuinely grows - counting bands, the",
+    "   Hindi vowel and consonant order, letters before words before",
+    "   reading. Letters of the alphabet are NOT chained to each other: not",
+    "   knowing C does not make B unteachable.",
+    "2. A prerequisite must be a topic that can actually gain mastery. A",
+    "   topic whose activities are all watch-and-trace never produces a",
+    "   graded attempt, so an edge to it would send a child backwards for",
+    "   ever. Those edges are left out on purpose.",
+    "",
+    "The loader validates this at startup: ids must parse, no self",
+    "references, no cycles."
+  ],
+  "prerequisites": {
+    "lkg_english:lkg_eng_phonetics": [
+      "lkg_english:lkg_eng_capitals"
+    ],
+    "lkg_english:lkg_eng_smalls": [
+      "lkg_english:lkg_eng_capitals"
+    ],
+    "lkg_maths:lkg_maths_comparing": [
+      "lkg_maths:lkg_maths_count_10"
+    ],
+    "lkg_maths:lkg_maths_count_10": [
+      "lkg_maths:lkg_maths_count_5"
+    ],
+    "lkg_maths:lkg_maths_count_5": [
+      "lkg_maths:lkg_maths_count_3"
+    ],
+    "lkg_maths:lkg_maths_money": [
+      "lkg_maths:lkg_maths_count_10"
+    ],
+    "nur_hindi:nur_hindi_swar_am_ah": [
+      "nur_hindi:nur_hindi_swar_o_au"
+    ],
+    "nur_hindi:nur_hindi_swar_e_ai": [
+      "nur_hindi:nur_hindi_swar_u_uu"
+    ],
+    "nur_hindi:nur_hindi_swar_i_ii": [
+      "nur_hindi:nur_hindi_swar_a_aa"
+    ],
+    "nur_hindi:nur_hindi_swar_o_au": [
+      "nur_hindi:nur_hindi_swar_e_ai"
+    ],
+    "nur_hindi:nur_hindi_swar_u_uu": [
+      "nur_hindi:nur_hindi_swar_i_ii"
+    ],
+    "nur_hindi:nur_hindi_vyanjan_ga_gha": [
+      "nur_hindi:nur_hindi_vyanjan_ka_kha"
+    ],
+    "nur_hindi:nur_hindi_vyanjan_ka_kha": [
+      "nur_hindi:nur_hindi_swar_am_ah"
+    ],
+    "nur_hindi:nur_hindi_vyanjan_nga": [
+      "nur_hindi:nur_hindi_vyanjan_ga_gha"
+    ],
+    "nur_maths:nur_maths_comparing": [
+      "nur_maths:nur_maths_count_45"
+    ],
+    "nur_maths:nur_maths_count_45": [
+      "nur_maths:nur_maths_count_123"
+    ],
+    "nur_maths:nur_maths_count_678": [
+      "nur_maths:nur_maths_count_45"
+    ],
+    "nur_maths:nur_maths_count_910": [
+      "nur_maths:nur_maths_count_678"
+    ],
+    "pg_maths:pg_maths_number_10": [
+      "pg_maths:pg_maths_number_9"
+    ],
+    "pg_maths:pg_maths_number_2": [
+      "pg_maths:pg_maths_number_1"
+    ],
+    "pg_maths:pg_maths_number_3": [
+      "pg_maths:pg_maths_number_2"
+    ],
+    "pg_maths:pg_maths_number_4": [
+      "pg_maths:pg_maths_number_3"
+    ],
+    "pg_maths:pg_maths_number_5": [
+      "pg_maths:pg_maths_number_4"
+    ],
+    "pg_maths:pg_maths_number_6": [
+      "pg_maths:pg_maths_number_5"
+    ],
+    "pg_maths:pg_maths_number_7": [
+      "pg_maths:pg_maths_number_6"
+    ],
+    "pg_maths:pg_maths_number_8": [
+      "pg_maths:pg_maths_number_7"
+    ],
+    "pg_maths:pg_maths_number_9": [
+      "pg_maths:pg_maths_number_8"
+    ],
+    "ukg_english:ukg_eng_grammar": [
+      "ukg_english:ukg_eng_words"
+    ],
+    "ukg_english:ukg_eng_reading": [
+      "ukg_english:ukg_eng_words"
+    ],
+    "ukg_english:ukg_eng_words": [
+      "ukg_english:ukg_eng_letters"
+    ],
+    "ukg_language:ukg_lang_matra": [
+      "ukg_language:ukg_lang_vyanjan",
+      "ukg_language:ukg_lang_swar"
+    ],
+    "ukg_language:ukg_lang_vyanjan": [
+      "ukg_language:ukg_lang_swar"
+    ],
+    "ukg_maths:ukg_maths_addsub": [
+      "ukg_maths:ukg_maths_numbers"
+    ],
+    "ukg_maths:ukg_maths_money_time": [
+      "ukg_maths:ukg_maths_numbers"
+    ],
+    "ukg_maths:ukg_maths_numbers": [
+      "ukg_maths:ukg_maths_premaths"
+    ]
+  }
+}

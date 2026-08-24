@@ -6,3 +6,9 @@ python-dotenv
 pytest
 httpx
 psycopg[binary]>=3.2,<4
+sqlalchemy>=2.0,<3
+alembic>=1.13,<2
+# The Planner Agent runs as a LangGraph state graph. langchain-core comes with
+# it and is the only other thing it pulls in.
+langgraph>=1.0.8,<2
+langchain-core>=1.6,<2

@@ -79,21 +79,582 @@
               ]
             },
             {
-              "topic_id": "pg_eng_letters",
-              "title": "Capital Letters (A-E)",
-              "icon": "🅰️",
+              "topic_id": "pg_english_letters_a",
+              "title": "Letter A",
+              "icon": "🍎",
               "sort_order": 2,
               "subtopics": [
-                "Oral identification of A to E",
-                "Sound of each letter",
-                "One object per letter"
+                "Meet A",
+                "The sound of A",
+                "A is for apple",
+                "Draw A",
+                "Say A",
+                "Match A"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_b",
+              "title": "Letter B",
+              "icon": "⚽",
+              "sort_order": 3,
+              "subtopics": [
+                "Meet B",
+                "The sound of B",
+                "B is for ball",
+                "Draw B",
+                "Say B",
+                "Match B"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_c",
+              "title": "Letter C",
+              "icon": "🐱",
+              "sort_order": 4,
+              "subtopics": [
+                "Meet C",
+                "The sound of C",
+                "C is for cat",
+                "Draw C",
+                "Say C",
+                "Match C"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_d",
+              "title": "Letter D",
+              "icon": "🐶",
+              "sort_order": 5,
+              "subtopics": [
+                "Meet D",
+                "The sound of D",
+                "D is for dog",
+                "Draw D",
+                "Say D",
+                "Match D"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_e",
+              "title": "Letter E",
+              "icon": "🥚",
+              "sort_order": 6,
+              "subtopics": [
+                "Meet E",
+                "The sound of E",
+                "E is for egg",
+                "Draw E",
+                "Say E",
+                "Match E"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_f",
+              "title": "Letter F",
+              "icon": "🐟",
+              "sort_order": 7,
+              "subtopics": [
+                "Meet F",
+                "The sound of F",
+                "F is for fish",
+                "Draw F",
+                "Say F",
+                "Match F"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_g",
+              "title": "Letter G",
+              "icon": "🐐",
+              "sort_order": 8,
+              "subtopics": [
+                "Meet G",
+                "The sound of G",
+                "G is for goat",
+                "Draw G",
+                "Say G",
+                "Match G"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_h",
+              "title": "Letter H",
+              "icon": "🎩",
+              "sort_order": 9,
+              "subtopics": [
+                "Meet H",
+                "The sound of H",
+                "H is for hat",
+                "Draw H",
+                "Say H",
+                "Match H"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_i",
+              "title": "Letter I",
+              "icon": "🍨",
+              "sort_order": 10,
+              "subtopics": [
+                "Meet I",
+                "The sound of I",
+                "I is for ice cream",
+                "Draw I",
+                "Say I",
+                "Match I"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_j",
+              "title": "Letter J",
+              "icon": "🫗",
+              "sort_order": 11,
+              "subtopics": [
+                "Meet J",
+                "The sound of J",
+                "J is for jug",
+                "Draw J",
+                "Say J",
+                "Match J"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_k",
+              "title": "Letter K",
+              "icon": "🪁",
+              "sort_order": 12,
+              "subtopics": [
+                "Meet K",
+                "The sound of K",
+                "K is for kite",
+                "Draw K",
+                "Say K",
+                "Match K"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_l",
+              "title": "Letter L",
+              "icon": "🦁",
+              "sort_order": 13,
+              "subtopics": [
+                "Meet L",
+                "The sound of L",
+                "L is for lion",
+                "Draw L",
+                "Say L",
+                "Match L"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_m",
+              "title": "Letter M",
+              "icon": "🥭",
+              "sort_order": 14,
+              "subtopics": [
+                "Meet M",
+                "The sound of M",
+                "M is for mango",
+                "Draw M",
+                "Say M",
+                "Match M"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_n",
+              "title": "Letter N",
+              "icon": "🩹",
+              "sort_order": 15,
+              "subtopics": [
+                "Meet N",
+                "The sound of N",
+                "N is for nest",
+                "Draw N",
+                "Say N",
+                "Match N"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_o",
+              "title": "Letter O",
+              "icon": "🍊",
+              "sort_order": 16,
+              "subtopics": [
+                "Meet O",
+                "The sound of O",
+                "O is for orange",
+                "Draw O",
+                "Say O",
+                "Match O"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_p",
+              "title": "Letter P",
+              "icon": "🦜",
+              "sort_order": 17,
+              "subtopics": [
+                "Meet P",
+                "The sound of P",
+                "P is for parrot",
+                "Draw P",
+                "Say P",
+                "Match P"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_q",
+              "title": "Letter Q",
+              "icon": "👸",
+              "sort_order": 18,
+              "subtopics": [
+                "Meet Q",
+                "The sound of Q",
+                "Q is for queen",
+                "Draw Q",
+                "Say Q",
+                "Match Q"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_r",
+              "title": "Letter R",
+              "icon": "🐰",
+              "sort_order": 19,
+              "subtopics": [
+                "Meet R",
+                "The sound of R",
+                "R is for rabbit",
+                "Draw R",
+                "Say R",
+                "Match R"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_s",
+              "title": "Letter S",
+              "icon": "☀️",
+              "sort_order": 20,
+              "subtopics": [
+                "Meet S",
+                "The sound of S",
+                "S is for sun",
+                "Draw S",
+                "Say S",
+                "Match S"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_t",
+              "title": "Letter T",
+              "icon": "🌳",
+              "sort_order": 21,
+              "subtopics": [
+                "Meet T",
+                "The sound of T",
+                "T is for tree",
+                "Draw T",
+                "Say T",
+                "Match T"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_u",
+              "title": "Letter U",
+              "icon": "☂️",
+              "sort_order": 22,
+              "subtopics": [
+                "Meet U",
+                "The sound of U",
+                "U is for umbrella",
+                "Draw U",
+                "Say U",
+                "Match U"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_v",
+              "title": "Letter V",
+              "icon": "🚐",
+              "sort_order": 23,
+              "subtopics": [
+                "Meet V",
+                "The sound of V",
+                "V is for van",
+                "Draw V",
+                "Say V",
+                "Match V"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_w",
+              "title": "Letter W",
+              "icon": "⌚",
+              "sort_order": 24,
+              "subtopics": [
+                "Meet W",
+                "The sound of W",
+                "W is for watch",
+                "Draw W",
+                "Say W",
+                "Match W"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_x",
+              "title": "Letter X",
+              "icon": "🎼",
+              "sort_order": 25,
+              "subtopics": [
+                "Meet X",
+                "The sound of X",
+                "X is for xylophone",
+                "Draw X",
+                "Say X",
+                "Match X"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_y",
+              "title": "Letter Y",
+              "icon": "🐃",
+              "sort_order": 26,
+              "subtopics": [
+                "Meet Y",
+                "The sound of Y",
+                "Y is for yak",
+                "Draw Y",
+                "Say Y",
+                "Match Y"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_english_letters_z",
+              "title": "Letter Z",
+              "icon": "🦓",
+              "sort_order": 27,
+              "subtopics": [
+                "Meet Z",
+                "The sound of Z",
+                "Z is for zebra",
+                "Draw Z",
+                "Say Z",
+                "Match Z"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "👂",
+                "💡",
+                "✍️",
+                "🗣️",
+                "🧩"
               ]
             },
             {
               "topic_id": "pg_eng_listening",
               "title": "Listening & Speaking",
               "icon": "👂",
-              "sort_order": 3,
+              "sort_order": 28,
               "subtopics": [
                 "Greetings",
                 "Own name and age",
@@ -105,7 +666,7 @@
               "topic_id": "pg_eng_rhymes",
               "title": "Rhymes & Stories",
               "icon": "🎵",
-              "sort_order": 4,
+              "sort_order": 29,
               "subtopics": [
                 "Action rhymes",
                 "Picture stories",
@@ -144,22 +705,230 @@
               ]
             },
             {
-              "topic_id": "pg_maths_numbers",
-              "title": "Numbers 1 to 5",
-              "icon": "5️⃣",
+              "topic_id": "pg_maths_number_1",
+              "title": "Number 1",
+              "icon": "1️⃣",
               "sort_order": 3,
               "subtopics": [
-                "Oral counting 1-5",
-                "Number recognition",
-                "Counting objects",
-                "Finger counting"
+                "Meet 1",
+                "What 1 means",
+                "Count 1 apple",
+                "Draw 1",
+                "Say one",
+                "Match 1"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_2",
+              "title": "Number 2",
+              "icon": "2️⃣",
+              "sort_order": 4,
+              "subtopics": [
+                "Meet 2",
+                "What 2 means",
+                "Count 2 balls",
+                "Draw 2",
+                "Say two",
+                "Match 2"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_3",
+              "title": "Number 3",
+              "icon": "3️⃣",
+              "sort_order": 5,
+              "subtopics": [
+                "Meet 3",
+                "What 3 means",
+                "Count 3 cats",
+                "Draw 3",
+                "Say three",
+                "Match 3"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_4",
+              "title": "Number 4",
+              "icon": "4️⃣",
+              "sort_order": 6,
+              "subtopics": [
+                "Meet 4",
+                "What 4 means",
+                "Count 4 stars",
+                "Draw 4",
+                "Say four",
+                "Match 4"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_5",
+              "title": "Number 5",
+              "icon": "5️⃣",
+              "sort_order": 7,
+              "subtopics": [
+                "Meet 5",
+                "What 5 means",
+                "Count 5 flowers",
+                "Draw 5",
+                "Say five",
+                "Match 5"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_6",
+              "title": "Number 6",
+              "icon": "6️⃣",
+              "sort_order": 8,
+              "subtopics": [
+                "Meet 6",
+                "What 6 means",
+                "Count 6 fish",
+                "Draw 6",
+                "Say six",
+                "Match 6"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_7",
+              "title": "Number 7",
+              "icon": "7️⃣",
+              "sort_order": 9,
+              "subtopics": [
+                "Meet 7",
+                "What 7 means",
+                "Count 7 balloons",
+                "Draw 7",
+                "Say seven",
+                "Match 7"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_8",
+              "title": "Number 8",
+              "icon": "8️⃣",
+              "sort_order": 10,
+              "subtopics": [
+                "Meet 8",
+                "What 8 means",
+                "Count 8 leaves",
+                "Draw 8",
+                "Say eight",
+                "Match 8"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_9",
+              "title": "Number 9",
+              "icon": "9️⃣",
+              "sort_order": 11,
+              "subtopics": [
+                "Meet 9",
+                "What 9 means",
+                "Count 9 birds",
+                "Draw 9",
+                "Say nine",
+                "Match 9"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
+              ]
+            },
+            {
+              "topic_id": "pg_maths_number_10",
+              "title": "Number 10",
+              "icon": "🔟",
+              "sort_order": 12,
+              "subtopics": [
+                "Meet 10",
+                "What 10 means",
+                "Count 10 stars",
+                "Draw 10",
+                "Say ten",
+                "Match 10"
+              ],
+              "subtopic_icons": [
+                "👀",
+                "💡",
+                "🔢",
+                "✍️",
+                "🗣️",
+                "🧩"
               ]
             },
             {
               "topic_id": "pg_maths_prenumber",
               "title": "Pre-Number Concepts",
               "icon": "⚖️",
-              "sort_order": 4,
+              "sort_order": 13,
               "subtopics": [
                 "Big and small",
                 "Tall and short",
@@ -172,7 +941,7 @@
               "topic_id": "pg_maths_positions",
               "title": "Positions",
               "icon": "📦",
-              "sort_order": 5,
+              "sort_order": 14,
               "subtopics": [
                 "In and out",
                 "Up and down",
@@ -184,7 +953,7 @@
               "topic_id": "pg_maths_matching",
               "title": "Matching & Sorting",
               "icon": "🧩",
-              "sort_order": 6,
+              "sort_order": 15,
               "subtopics": [
                 "Same and different",
                 "Match the pair",
@@ -526,7 +1295,7 @@
               ]
             }
           ],
-          "note": "Count to 5 and Count to 10 are published as two units. They are delivered as four number levels so that one sitting is one short level: every number is met, counted, said aloud and written before the next one arrives. All ten published subtopics are preserved across the four levels."
+          "note": "Count to 5 and Count to 10 are published as two units. They are delivered as four number levels so that one sitting is one short level: every number is explained on three cards, drawn with a finger, said aloud and then matched - to its own picture and to a different one - before the next number arrives. All ten published subtopics are preserved across the four levels."
         },
         {
           "subject_id": "nur_english",
@@ -716,7 +1485,7 @@
               ]
             }
           ],
-          "note": "The published syllabus lists Capital Letters (A-Z) and Small Letters (a-z) as two separate units. They are delivered here as 13 levels of two letters, each teaching the big and the small form of the same letter together — Aa, not A now and a much later — because that is what a three-year-old is being asked to recognise. Every published subtopic survives inside the levels: identification, letter sounds, one object per letter, matching capital with small, and writing (capitals throughout, small letters a-j, as published)."
+          "note": "The published syllabus lists Capital Letters (A-Z) and Small Letters (a-z) as two separate units. They are delivered here as 13 levels of two letters, each teaching the big and the small form of the same letter together — Aa, not A now and a much later — because that is what a three-year-old is being asked to recognise. Every published subtopic survives inside the levels: identification, letter sounds, one object per letter, matching capital with small, and writing (capitals throughout, small letters a-j, as published). Inside a level a letter is explained on three cards - the pair, its sound and word, and how both forms are made - then drawn, said aloud, and matched twice: small letter back to its capital, and the pair to the picture it starts."
         },
         {
           "subject_id": "nur_ga",

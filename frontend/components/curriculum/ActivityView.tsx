@@ -262,6 +262,9 @@ export function ActivityView({
 
   // --- said aloud ---------------------------------------------------------
   if (activity.answer_kind === "spoken") {
+    // Some say-it-back activities also carry the options they were built from.
+    // When the microphone fails, those become the tap fallback below.
+    const spokenChoices = limitChoices(activity.options, mode);
     return (
       <section
         id="activity-area"
@@ -299,16 +302,54 @@ export function ActivityView({
         {speechError ? (
           // Speech can be unavailable — no permission, no browser support. The
           // lesson must not become a dead end because of it.
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onAnswer(activity.open_ended ? "spoken" : activity.correct_answer ?? "spoken")}
-            style={learningTargetStyle(mode)}
-            data-testid="activity-spoken-fallback"
-            className="pressable rounded-3xl bg-sky px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-50"
-          >
-            🙂 I said it out loud
-          </button>
+          //
+          // What it must NOT do is answer on the child's behalf. This button
+          // used to submit `activity.correct_answer`, and it appears on every
+          // speech failure including "I did not hear anything" — so tapping the
+          // mic, saying nothing, and tapping here awarded the star. It is also
+          // the first thing a stuck child finds. An open-ended prompt ("tell me
+          // your name") has no key to leak and any real attempt counts, so the
+          // self-report stands there; everything else falls back to tapping a
+          // real choice, and if there are no choices the child simply tries the
+          // mic again.
+          activity.open_ended ? (
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onAnswer("spoken")}
+              style={learningTargetStyle(mode)}
+              data-testid="activity-spoken-fallback"
+              className="pressable rounded-3xl bg-sky px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-50"
+            >
+              🙂 I said it out loud
+            </button>
+          ) : spokenChoices.length > 0 ? (
+            <div
+              data-testid="activity-spoken-fallback-choices"
+              data-choice-count={spokenChoices.length}
+              className={`activity-answers grid gap-3 sm:gap-4 ${
+                spokenChoices.length > 2 ? "grid-cols-2 md:grid-cols-3" : "grid-cols-1 xs:grid-cols-2"
+              }`}
+            >
+              {spokenChoices.map((choice) => (
+                <button
+                  key={choice}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => onAnswer(choice)}
+                  style={learningTargetStyle(mode)}
+                  data-testid="answer-option"
+                  aria-label={choice}
+                  className="pressable flex flex-col items-center justify-center gap-1 rounded-3xl border-2 border-transparent bg-white p-3 font-black shadow-soft transition hover:border-ink/10 disabled:opacity-50 sm:p-4"
+                >
+                  <span aria-hidden className="text-4xl leading-none sm:text-5xl">
+                    {isTextToken(choice) ? displayToken(choice) : visualIcon(choice)}
+                  </span>
+                  {withText ? <span className="text-base capitalize sm:text-lg">{choice}</span> : null}
+                </button>
+              ))}
+            </div>
+          ) : null
         ) : null}
       </section>
     );

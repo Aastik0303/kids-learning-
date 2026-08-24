@@ -4,6 +4,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.services.answer_normalization_service import COLOURS, SHAPES, answers_match, normalize_answer
+from app.services.child_speech_service import ChildSpeechResult, clean_child_speech
 
 
 class AnswerResolutionContext(BaseModel):
@@ -23,10 +24,20 @@ class AnswerResolutionResult(BaseModel):
     ambiguous: bool = False
     matched_candidate: str | None = None
     input_kind: Literal["answer", "unresolved", "empty"] = "unresolved"
+    # What the deterministic child-speech cleaner made of the transcript, and how
+    # sure it is. `retry_suggested` means the app should ask the child to say it
+    # again rather than score what was heard.
+    child_speech: ChildSpeechResult | None = None
 
 
 def _candidate_pool(context: AnswerResolutionContext) -> list[str]:
-    candidates = [context.correct_answer, *context.accepted_answers, *context.options]
+    # The answer key goes LAST, never first. Several scans below return on their
+    # first hit, so whatever sits at index 0 wins every race — and when that was
+    # `correct_answer`, the same transcript resolved to whichever answer happened
+    # to be correct. "cat dog" resolved to cat when cat was right and to dog when
+    # dog was right. `child_speech_service` is careful never to see the key; this
+    # pool was handing it back.
+    candidates = [*context.options, *context.accepted_answers, context.correct_answer]
     seen: set[str] = set()
     unique = []
     for candidate in candidates:
@@ -82,6 +93,30 @@ def _semantic_answer(context: AnswerResolutionContext, raw: str, candidates: lis
 
 
 def resolve_answer(context: AnswerResolutionContext) -> AnswerResolutionResult:
+    """Resolve a spoken or tapped answer, with a child-speech rescue behind it.
+
+    The original resolution runs first and is kept whenever it settles on an
+    answer, so nothing that already worked changes. Only when it comes up
+    unresolved is the transcript run through the deterministic child-speech
+    cleaner and tried again — that is what lets "teen", "gol" and "do nahi teen"
+    reach the evaluator as 3, circle and 3.
+    """
+    raw = context.transcript.strip()
+    result = _resolve_core(context)
+
+    # Only the visible options are handed over. The correct answer stays out of
+    # the cleaner so it can never steer a vague transcript towards being right.
+    child = clean_child_speech(raw, context.answer_type, context.options)
+
+    if result.input_kind != "answer" and child.token and child.token != raw.lower():
+        rescued = _resolve_core(context.model_copy(update={"transcript": child.token}))
+        if rescued.input_kind == "answer":
+            result = rescued.model_copy(update={"raw_transcript": raw})
+
+    return result.model_copy(update={"child_speech": child})
+
+
+def _resolve_core(context: AnswerResolutionContext) -> AnswerResolutionResult:
     raw = context.transcript.strip()
 
     # A tapped answer arrives as the option's own text, so it needs none of the
@@ -130,18 +165,55 @@ def resolve_answer(context: AnswerResolutionContext) -> AnswerResolutionResult:
                 input_kind="answer",
             )
 
+    # Scanning the utterance for any offered answer is what rescues "umm the
+    # blue one". It is also how a child who reads the choices out loud —
+    # "cat? ...dog?", completely normal at three — used to be scored. More than
+    # one answer in one breath is not an answer; say so instead of picking.
     raw_tokens = _tokens(raw)
+    token_hits: list[tuple[str, str]] = []
+    hit_values: set[str] = set()
     for candidate, normalized_candidate in normalized_candidates:
-        if normalized_candidate and normalized_candidate in raw_tokens:
-            confidence = max(context.confidence, 0.9)
+        if normalized_candidate and normalized_candidate in raw_tokens and normalized_candidate not in hit_values:
+            hit_values.add(normalized_candidate)
+            token_hits.append((candidate, normalized_candidate))
+
+    if len(token_hits) > 1:
+        # Counting out loud is not ambiguity: "one, two, three" while pointing at
+        # apples means three. The domain rules below read the utterance itself
+        # (last number spoken, the single letter, the colour named) and never
+        # consult the answer key, so they are safe to trust here.
+        counted = _semantic_answer(context, raw, candidates)
+        if counted:
             return AnswerResolutionResult(
                 raw_transcript=raw,
-                normalized=normalized_candidate,
-                resolved_answer=normalized_candidate,
-                resolution_confidence=round(min(confidence, 1.0), 2),
-                matched_candidate=candidate,
+                normalized=normalized,
+                resolved_answer=counted,
+                resolution_confidence=round(max(context.confidence, 0.9), 2),
                 input_kind="answer",
             )
+        # Two different offered answers in one breath, and no domain rule to
+        # break the tie. Ask again rather than guess: guessing here is what
+        # scored the answer key every time.
+        return AnswerResolutionResult(
+            raw_transcript=raw,
+            normalized=normalized,
+            resolved_answer="",
+            resolution_confidence=0.0,
+            ambiguous=True,
+            input_kind="unresolved",
+        )
+
+    if token_hits:
+        candidate, normalized_candidate = token_hits[0]
+        confidence = max(context.confidence, 0.9)
+        return AnswerResolutionResult(
+            raw_transcript=raw,
+            normalized=normalized_candidate,
+            resolved_answer=normalized_candidate,
+            resolution_confidence=round(min(confidence, 1.0), 2),
+            matched_candidate=candidate,
+            input_kind="answer",
+        )
 
     semantic_answer = _semantic_answer(context, raw, candidates)
     if semantic_answer:

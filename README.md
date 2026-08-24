@@ -33,7 +33,7 @@ The curriculum is the CBSE 2026-27 syllabus, organised as four age classes:
 
 | Class | Age | Mode | Subjects | Topics |
 |---|---|---|---|---|
-| Play Group | 2-3 | `early` | 6 | 30 |
+| Play Group | 2-3 | `early` | 3 | 58 |
 | Nursery | 3-4 | `early` | 5 | 29 |
 | LKG | 4-5 | `standard` | 5 | 23 |
 | UKG | 5-6 | `standard` | 5 | 17 |
