@@ -9,7 +9,7 @@
  * Backend contracts stay untouched; new mobile-only kinds slot in beside them.
  */
 
-import type { Activity, ToddlerActivity } from "@/types/domain";
+import type { Activity, ConductorActivity, ToddlerActivity } from "@/types/domain";
 
 /** Every activity the renderer knows how to draw. */
 export const ACTIVITY_KINDS = [
@@ -194,4 +194,41 @@ export function isLocallyEvaluated(kind: ActivityKind): boolean {
   // Tracing and drawing accuracy is measured from stroke geometry on the
   // device. Spec section 14: the AI encourages, it does not grade the path.
   return kind === "letter_trace" || kind === "shape_trace" || kind === "free_draw";
+}
+
+/**
+ * A conductor directive's activity, ready to render.
+ *
+ * Two things differ from `toRenderableActivity`. The answer key is absent by
+ * design — the conductor never sends it — so `correctAnswer` is empty and the
+ * renderer must not look for it. And the options come from the directive's
+ * **scaffold**, already trimmed server-side for this child on this attempt:
+ * the client may not widen that list, so it is passed in rather than read off
+ * the activity.
+ */
+export function conductorToRenderableActivity(
+  activity: ConductorActivity,
+  optionsShown: string[],
+): RenderableActivity {
+  const kind = resolveActivityKind({ ...activity, correct_answer: "" });
+  const glyph = activity.visual_items[0] ?? activity.trace_target ?? "";
+  return {
+    id: activity.activity_id,
+    kind,
+    answerMode: ANSWER_MODE_BY_KIND[kind],
+    prompt: activity.prompt,
+    // The guide's line is spoken from the directive's own speech block, not
+    // from the prompt — on a Hindi level the prompt is Devanagari and what is
+    // *said* is an English sentence with the letter quoted inside it.
+    speech: "",
+    visualItems: activity.visual_items,
+    options: optionsShown.length > 0 ? optionsShown : activity.options,
+    correctAnswer: "",
+    acceptedAnswers: activity.accept ?? [],
+    hint: activity.hint,
+    difficulty: activity.difficulty,
+    concept: glyph,
+    glyph,
+    source: "standard",
+  };
 }

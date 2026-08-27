@@ -189,6 +189,74 @@ def card_for(topic: Topic, activity: Activity | None, activities: list[Activity]
     return ConceptCard(symbol=symbol, sound=sound, word=word, stroke=stroke, told=told)
 
 
+def spoken_form(concept: str, *, prompt: str = "", hint: str = "") -> str:
+    """How a concept should be *said*, when its answer key is a roman token.
+
+    Hindi levels name their pictures with asset tokens - "anar", "aam", "imli" -
+    because that is what a filename would be. That is fine on disk and wrong in
+    the guide's mouth: it made the app say "Tap anar", a Hindi word spelled in
+    Roman letters, which is precisely what this project does not do. The taught
+    word is quoted in Devanagari inside an English sentence, or it is not said.
+
+    The Devanagari is not guessed or transliterated - it is read back out of the
+    activity's own authored prompt, "अ से अनार। अनार कौन सा है?", which is
+    where the author already wrote it. When the prompt does not carry it, the
+    concept is returned untouched: saying the token is bad, and inventing a
+    spelling for a word the curriculum never wrote would be worse.
+    """
+    text = (concept or "").strip()
+    if not text or not text.isascii():
+        return text
+
+    authored = f"{prompt or ''} {hint or ''}"
+    if not DEVANAGARI.search(authored):
+        return text
+
+    # The danda and double danda sit inside the Devanagari block, so the
+    # character filter in `_first_word_after` keeps them and the word comes
+    # back as "अनार।" - a full stop read aloud in the middle of a sentence.
+    word = _first_word_after(authored, " से ").strip("।॥ ")
+    return word or text
+
+
+def _same_item(left: str | None, right: str | None) -> bool:
+    """Whether two skill ids are about the same taught thing.
+
+    `hindi_906` and `hindi_906_word` are; `hindi_905` and `hindi_906` are not.
+    The boundary is checked on an underscore so `letter_A` never matches
+    `letter_AB`.
+    """
+    first, second = (left or "").strip(), (right or "").strip()
+    if not first or not second:
+        return False
+    if first == second:
+        return True
+    longer, shorter = (first, second) if len(first) > len(second) else (second, first)
+    return longer.startswith(f"{shorter}_")
+
+
+def _item_activities(activity: Activity, activities: list[Activity]) -> list[Activity]:
+    """Just the cards about the thing *this* card is about.
+
+    A Hindi level teaches अ and then आ in one topic. Reading the concept from
+    the whole topic always finds अ - it is first - so every card in the second
+    half was introduced with the first half's letter: "This is अ. अ is for
+    अनार." in front of a question about आम. Scoped to the item, each card is
+    introduced with its own.
+
+    Falls back to the whole topic when the level does not use skill ids, which
+    is the behaviour every English level already had.
+    """
+    scoped = [item for item in activities if _same_item(item.skill_id, activity.skill_id)]
+    return scoped or activities
+
+
+def _is_spoken(activity: Activity) -> bool:
+    """Whether this card is answered out loud rather than with a finger."""
+    kind = (getattr(activity, "answer_kind", "") or "").lower()
+    return kind == "spoken" or (activity.type or "").lower().startswith("repeat_")
+
+
 def _words(text: str, limit: int = MAX_WORDS) -> str:
     parts = text.split()
     return text if len(parts) <= limit else " ".join(parts[:limit])
@@ -304,14 +372,23 @@ def question_intro(
     if activity is None or not activity.correct_answer:
         return ""
 
+    # The teaching card for *this* item. Matched on a skill-id prefix, not on
+    # equality: a level authors the card as `hindi_906` and the question about
+    # its picture as `hindi_906_word`, so exact matching found nothing and the
+    # intro fell back to the whole topic - which opens with the *previous*
+    # letter. That is how a card asking for आम came to be introduced with
+    # "This is अ. अ is for अनार": the right question, taught with the wrong item.
     taught = [
         item
         for item in activities
         if item.skill_id
-        and item.skill_id == activity.skill_id
+        and _same_item(item.skill_id, activity.skill_id)
         and not item.correct_answer
         and item.activity_id != activity.activity_id
     ]
+    # Longest match first, so `hindi_906_word` prefers a card authored for
+    # `hindi_906_word` over the broader `hindi_906` one when both exist.
+    taught.sort(key=lambda item: len(item.skill_id or ""), reverse=True)
 
     lines: list[str] = []
     if taught and _is_english(taught[0].prompt):
@@ -331,7 +408,10 @@ def question_intro(
         # the answer in front of the child. Built from the activity, a match
         # question whose answer is "apple" would open with "Meet apple!" - which
         # is the answer key, said out loud, before the question is even asked.
-        told = _tell(card_for(topic, None, activities), random.Random(activity.activity_id))
+        told = _tell(
+            card_for(topic, None, _item_activities(activity, activities)),
+            random.Random(activity.activity_id),
+        )
         if told:
             lines.append(told)
 
@@ -344,9 +424,18 @@ def question_intro(
         question = activity.prompt.strip()
     else:
         # A Devanagari prompt stays on the screen; what is *said* is English
-        # with the taught letter quoted in it.
-        symbol = card_for(topic, None, activities).symbol
-        question = f"Tap {symbol}." if symbol else ""
+        # with the taught word quoted in it.
+        #
+        # Two things this has to get right. The word is the one *this* question
+        # is about - a picture-match card asking for अनार was saying "Tap अ",
+        # the topic's letter, because it fell back to the topic card. And a card
+        # the child answers by *speaking* must not say "Tap": `repeat_letter`
+        # opens the microphone and then told them to tap something that was not
+        # on the screen.
+        asked = spoken_form(_clean(activity.correct_answer), prompt=activity.prompt, hint=activity.hint)
+        symbol = asked or card_for(topic, None, _item_activities(activity, activities)).symbol
+        verb = "Say" if _is_spoken(activity) else "Tap"
+        question = f"{verb} {symbol}." if symbol else ""
 
     if not question:
         return ""
@@ -434,7 +523,10 @@ def teaching_script(
     if not _is_english(prompt):
         # A Devanagari teaching card is shown on screen; the narration is built
         # in English around the symbol instead of repeating it.
-        prompt = _tell(card_for(topic, None, activities), random.Random(activity.activity_id))
+        prompt = _tell(
+            card_for(topic, None, _item_activities(activity, activities)),
+            random.Random(activity.activity_id),
+        )
 
     lines = [prompt] if prompt else []
 
@@ -505,6 +597,7 @@ __all__ = [
     "MAX_WORDS",
     "beat",
     "card_for",
+    "spoken_form",
     "question_intro",
     "script_for",
     "teaching_script",

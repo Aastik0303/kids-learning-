@@ -1,461 +1,175 @@
 "use client";
 
-import { use, useCallback, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { ActivityView } from "@/components/curriculum/ActivityView";
+
 import { ComingSoon } from "@/components/curriculum/ComingSoon";
 import { AppShell } from "@/components/shared/AppShell";
-import { useAvatar } from "@/components/avatar/AvatarProvider";
-import type { VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { FALLBACK_MODE, showsText } from "@/lib/experience";
+import { useActiveChild } from "@/lib/useActiveChild";
+import { useTodayPlan } from "@/lib/useTodayPlan";
 import { getExperienceMode, getTopic } from "@/services/curriculum";
-import {
-  activityQuestion,
-  askGuideQuestion,
-  GUIDE_TARGETS,
-  guideAgent,
-  isSafeGuideTarget,
-  progressContext,
-  visualTargetsForActivity
-} from "@/services/guide";
-import { answerLearning, startLearning } from "@/services/learning";
-import { announcePlanChanged } from "@/lib/useTodayPlan";
-import { getTodayPlan } from "@/services/plan";
-import { ApiRequestError } from "@/services/api";
-import { getProgress } from "@/services/child";
-import { getChild, saveChild } from "@/services/session";
-import type { Activity, ExperienceMode, GuideEvent, LearningResponse, Topic } from "@/types";
+import type { ExperienceMode, Topic } from "@/types";
 
-/** A beat, so praise for the last answer is not cut off by the next question. */
-const PRAISE_PAUSE_MS = 900;
-
-const QUESTION_TARGETS = [
-  GUIDE_TARGETS.QUESTION_AREA,
-  GUIDE_TARGETS.COUNTING_OBJECTS,
-  GUIDE_TARGETS.ANSWER_OPTIONS,
-  GUIDE_TARGETS.ACTIVITY_AREA,
-  GUIDE_TARGETS.VOICE_ANSWER_AREA
-];
-
-function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
-}
-
-export default function TopicLessonPage({
+/**
+ * A level on the Adventure map, and what it is.
+ *
+ * This page used to teach. First it drove `/learning` itself, then it rendered
+ * the conductor's sitting with the level named — either way, opening a level
+ * here was a second way into a lesson, running beside the class and able to
+ * finish a level the schedule had not reached.
+ *
+ * There is one class now and it is the AI Teacher: it runs one stage per item of
+ * today's frozen plan, marks the level done when the stage is through, and
+ * unlocks the next one. Adventure is where a child *sees* that happen. So this
+ * page says what the level is, where it stands — finished, today's, sleeping
+ * until its turn, or still locked — and offers no way to start it, because
+ * starting a level was never this page's decision to make. The way in is the
+ * class, and the schedule decides when.
+ */
+export default function TopicLevelPage({
   params
 }: {
   params: Promise<{ subjectId: string; topicId: string }>;
 }) {
   const { subjectId, topicId } = use(params);
-  const router = useRouter();
+  const { child } = useActiveChild();
+  const { plannedTopicIds, loaded } = useTodayPlan(child);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [mode, setMode] = useState<ExperienceMode>(FALLBACK_MODE);
-  const [session, setSession] = useState<LearningResponse | null>(null);
-  const [error, setError] = useState("");
-  const [notToday, setNotToday] = useState("");
-  const [busy, setBusy] = useState(false);
 
-  // --- the guide, inside the lesson ---------------------------------------
-  // A lesson used to run in silence: the question appeared and nothing said
-  // what it meant. Practice already had a guide doing exactly this, so the
-  // same one now teaches here — it explains every question aloud, hints after
-  // a miss, and points at what to look at. It never decides correctness: that
-  // is the server's, and only the server's.
-  const [guideMessage, setGuideMessage] = useState("");
-  const [guideBusy, setGuideBusy] = useState(false);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-  const [visualAction, setVisualAction] = useState<VisualGuideAction>(null);
-  const [countGuideEnabled, setCountGuideEnabled] = useState(false);
+  useEffect(() => {
+    getTopic(topicId)
+      .then(setTopic)
+      .catch(() => setTopic(null));
+  }, [topicId]);
 
-  const { setAvatar, speakMessage } = useAvatar();
-  // A late guide reply must never speak over a newer one.
-  const guideRequestRef = useRef(0);
-  const praisePauseRef = useRef(0);
-  const activityRef = useRef<Activity | null>(null);
-  const firstQuestionRef = useRef(true);
-
-  const route = `/adventure/${subjectId}/${topicId}`;
-
-  const clearPointing = useCallback(() => {
-    setHighlightId(null);
-    setVisualAction(null);
-    setCountGuideEnabled(false);
-  }, []);
+  useEffect(() => {
+    if (!child) return;
+    getExperienceMode(child.class_id)
+      .then(setMode)
+      .catch(() => setMode(FALLBACK_MODE));
+  }, [child]);
 
   /**
-   * One guide turn. Applies the reply only if it is still the newest one, and
-   * speaks it after any praise still in the air has had its moment.
+   * Where this level stands. The same four answers the map itself gives, read
+   * from the same two places: the child's own board says what is finished and
+   * what is open, and today's plan says which of the open ones is today's.
    */
-  const runGuide = useCallback(
-    async ({
-      event,
-      activity,
-      sessionId,
-      attempt = 0,
-      childAnswer,
-      pointing,
-      highlightOnly = false
-    }: {
-      event: GuideEvent;
-      activity: Activity | null;
-      sessionId: string;
-      attempt?: number;
-      childAnswer?: string;
-      /** Whether this turn may point at the pictures and number them. */
-      pointing: boolean;
-      /** Light up one button — what a finished lesson does, and nothing more. */
-      highlightOnly?: boolean;
-    }) => {
-      const child = getChild();
-      if (!child) return;
-      const requestId = ++guideRequestRef.current;
-      setGuideBusy(true);
-      try {
-        const guide = await guideAgent({
-          session_id: sessionId,
-          child_id: child.child_id,
-          mode: "learning",
-          event,
-          route,
-          screen: "topic_lesson",
-          feature: `${topicId}_lesson`,
-          class_id: child.class_id,
-          experience_mode: child.experience_mode,
-          preferred_language: child.preferred_language,
-          question: activity
-            ? activityQuestion(activity, {
-                topic: topicId,
-                concept: activity.type,
-                attempt,
-                child_answer: childAnswer,
-                recent_answers: childAnswer ? [childAnswer] : []
-              })
-            : undefined,
-          progress: progressContext(child, subjectId, topicId),
-          available_actions: pointing ? ["show_hint", "highlight", "repeat_instruction"] : ["highlight"],
-          available_targets: activity ? QUESTION_TARGETS : [GUIDE_TARGETS.OPEN_SUBJECTS],
-          allowed_visual_targets: activity ? visualTargetsForActivity(activity) : []
-        });
-        if (requestId !== guideRequestRef.current) return;
+  const standing = useMemo(() => {
+    const progress = child?.subject_progress?.[subjectId];
+    if (progress?.completed_topics.includes(topicId)) {
+      return { icon: "⭐", label: "Finished", detail: "You have already done this one." };
+    }
+    if (!progress?.unlocked_topics.includes(topicId)) {
+      return {
+        icon: "🔒",
+        label: "Locked",
+        detail: "Finish the levels before this one and it will open."
+      };
+    }
+    // Nothing is called tomorrow's on a guess: a slow read of the plan must not
+    // make today's own level look shut.
+    if (loaded && plannedTopicIds.size > 0 && !plannedTopicIds.has(topicId)) {
+      return {
+        icon: "🌙",
+        label: "Waiting for its turn",
+        detail: "It is not on today's list. Your class will bring you here."
+      };
+    }
+    return {
+      icon: "🎈",
+      label: "On today's list",
+      detail: "Your class is teaching this one today."
+    };
+  }, [child, subjectId, topicId, plannedTopicIds, loaded]);
 
-        setGuideMessage(guide.message);
-        setGuideBusy(false);
-        // The avatar carries the words; the speaking is done here so the pause
-        // after praise is honoured instead of two lines talking over each other.
-        setAvatar({ ...guide.avatar, speak: false });
-        if (pointing) {
-          setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-          setVisualAction(guide.visual_action);
-          setCountGuideEnabled(true);
-        } else if (highlightOnly) {
-          setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-          setVisualAction(null);
-          setCountGuideEnabled(false);
-        } else {
-          clearPointing();
-        }
-
-        const pause = praisePauseRef.current;
-        praisePauseRef.current = 0;
-        if (pause) await wait(pause);
-        if (requestId !== guideRequestRef.current) return;
-        speakMessage(guide.message);
-      } finally {
-        if (requestId === guideRequestRef.current) setGuideBusy(false);
-      }
-    },
-    [clearPointing, route, setAvatar, speakMessage, subjectId, topicId]
+  const backToLevels = (
+    <Link href={`/adventure/${subjectId}`} className="font-bold text-ink/60">
+      ← Back
+    </Link>
   );
 
-  useEffect(() => {
-    const child = getChild();
-    getTopic(topicId)
-      .then(async (next) => {
-        if (!child || next.class_id !== child.class_id || next.subject_id !== subjectId) {
-          throw new Error("This topic belongs to a different class.");
-        }
-        setTopic(next);
-        setMode(await getExperienceMode(next.class_id));
-        if (!next.available) return;
-        const started = await startLearning(child.child_id, next.topic_id);
-        setSession(started);
-        if (started.avatar) setAvatar({ ...started.avatar, speak: false });
-      })
-      .catch((err: unknown) => {
-        // "Saved for tomorrow" is the schedule doing its job, not a failure.
-        // The server already words it for a child; the page keeps that wording
-        // and points at what the day *does* hold.
-        if (err instanceof ApiRequestError && err.code === "NOT_TODAYS_PLAN") {
-          setNotToday(err.message);
-          return;
-        }
-        setError(err instanceof Error ? err.message : "We could not open that topic.");
-      });
-  }, [topicId, subjectId, setAvatar]);
-
-  const activity = session?.activity ?? null;
-  const activityId = activity?.activity_id ?? null;
-  const sessionId = session?.session_id ?? "";
-  activityRef.current = activity;
-
-  // Every question is explained when it arrives — the first one, and each one
-  // after it, including a question swapped in after too many misses.
-  useEffect(() => {
-    if (!activityId || !sessionId) return;
-    const current = activityRef.current;
-    if (!current) return;
-    clearPointing();
-    const event: GuideEvent = firstQuestionRef.current ? "TOPIC_STARTED" : "TOPIC_QUESTION_LOADED";
-    firstQuestionRef.current = false;
-    void runGuide({ event, activity: current, sessionId, pointing: false });
-  }, [activityId, sessionId, clearPointing, runGuide]);
-
-  /** The child asked something — by tapping Hint, or out loud into the mic. */
-  const askGuide = useCallback(
-    async (question: string) => {
-      const current = activityRef.current;
-      if (!sessionId) return;
-      const requestId = ++guideRequestRef.current;
-      setGuideBusy(true);
-      setAvatar({ state: "thinking", message: "Let me help with that…", animationEffect: "pulse", durationMs: null });
-      try {
-        const guide = await askGuideQuestion({
-          question,
-          route,
-          sessionId,
-          screen: "topic_lesson",
-          activity: current ?? undefined,
-          topic: topicId,
-          attempt: session?.attempt_number ?? 0
-        });
-        if (requestId !== guideRequestRef.current) return;
-        setGuideMessage(guide.message);
-        setGuideBusy(false);
-        setAvatar({ ...guide.avatar, speak: false });
-        setHighlightId(isSafeGuideTarget(guide.ui_action.target) ? guide.ui_action.target : null);
-        setVisualAction(guide.visual_action);
-        setCountGuideEnabled(true);
-        speakMessage(guide.message);
-      } finally {
-        if (requestId === guideRequestRef.current) setGuideBusy(false);
-      }
-    },
-    [route, session?.attempt_number, sessionId, setAvatar, speakMessage, topicId]
-  );
-
-  const submit = useCallback(
-    async (answer: string) => {
-      if (!session || busy) return;
-      setBusy(true);
-      // A hint still on its way must not land on top of the next question.
-      guideRequestRef.current += 1;
-      setGuideBusy(false);
-      try {
-        const next = await answerLearning(session.session_id, answer);
-        setSession(next);
-
-        if (next.complete) {
-          // The unlock and the new stars happen on the server. The stored child
-          // is a snapshot taken before this lesson, so without refreshing it the
-          // topic list still draws the next level as locked and the star count
-          // never moves.
-          const refreshed = await getProgress(next.child_id);
-          saveChild(refreshed.child);
-          // Today's plan just moved on. The schedule strip is mounted on every
-          // screen, so it is told rather than left showing the lesson that was
-          // current a moment ago.
-          announcePlanChanged();
-
-          // A Play Group child does not go back to a menu. If the day still has
-          // work in it, the home screen is where the next lesson opens itself,
-          // so they are carried there after a beat of celebration. The server
-          // decides who that applies to; `autopilot` is false for older
-          // children and for a day that is finished, and they keep the summary
-          // screen and its button.
-          try {
-            const today = await getTodayPlan(next.child_id);
-            if (today.autopilot) {
-              window.setTimeout(() => router.push("/"), 2600);
-            }
-          } catch {
-            // The summary screen is a perfectly good place to end up.
-          }
-          clearPointing();
-          if (next.avatar) setAvatar({ ...next.avatar, speak: true });
-          setGuideMessage(next.feedback || "");
-          praisePauseRef.current = PRAISE_PAUSE_MS;
-          void runGuide({
-            event: "TOPIC_COMPLETED",
-            activity: null,
-            sessionId: next.session_id,
-            pointing: false,
-            highlightOnly: true
-          });
-          return;
-        }
-
-        if (next.is_correct === true) {
-          clearPointing();
-          if (next.avatar) setAvatar({ ...next.avatar, speak: true });
-          setGuideMessage(next.feedback || "");
-          // The next question explains itself once it arrives; leave it room.
-          praisePauseRef.current = PRAISE_PAUSE_MS;
-          return;
-        }
-
-        if (next.is_correct === false && next.activity && !next.question_changed) {
-          // Wrong, same question: the guide coaches the retry. The server has
-          // already decided it was wrong — the guide only says what to look at.
-          void runGuide({
-            event: "TOPIC_ANSWER_INCORRECT",
-            activity: next.activity,
-            sessionId: next.session_id,
-            attempt: next.attempt_number,
-            childAnswer: answer,
-            pointing: next.attempt_number >= 2
-          });
-        }
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : "Let us try that again.");
-      } finally {
-        setBusy(false);
-      }
-    },
-    [session, busy, clearPointing, runGuide, setAvatar]
-  );
+  // A level with nothing authored behind it is said so plainly.
+  if (topic && !topic.available) {
+    return (
+      <AppShell>
+        <div className="grid gap-4">
+          {backToLevels}
+          <ComingSoon title={topic.title} mode={mode} />
+        </div>
+      </AppShell>
+    );
+  }
 
   const withText = showsText(mode);
-  const progressPercent = session?.activity_total
-    ? Math.round((session.activity_index / session.activity_total) * 100)
-    : 0;
 
   return (
     <AppShell>
-      <div className="grid gap-4 sm:gap-6">
-        <Link href={`/adventure/${subjectId}`} className="font-bold text-ink/60">
-          ← Back
-        </Link>
+      <div className="grid gap-5">
+        {backToLevels}
 
-        {notToday ? (
-          // The schedule doing its job, not a failure: this level is unlocked
-          // and waiting for the day the plan gives it. Said in the server's own
-          // words, with a way back to what today actually holds.
-          <section className="grid gap-4 rounded-3xl bg-white/85 p-6 text-center shadow-soft">
-            <p className="text-5xl" aria-hidden>
-              🌙
-            </p>
-            <h1 className="text-xl font-black text-ink sm:text-2xl">{notToday}</h1>
-            <Link
-              href="/"
-              className="pressable rounded-3xl bg-leaf px-6 py-4 text-lg font-black text-white shadow-soft"
-            >
-              🗓️ See today&apos;s plan
-            </Link>
-          </section>
-        ) : null}
+        <header className="surface-panel grid gap-3 rounded-[2rem] p-5">
+          <div className="flex flex-wrap items-center gap-3">
+            <span aria-hidden className="text-5xl">
+              {topic?.icon ?? "🎈"}
+            </span>
+            <div className="grid gap-1">
+              <h1 className="text-2xl font-black leading-tight sm:text-3xl md:text-4xl">
+                {topic?.title ?? "Your level"}
+              </h1>
+              <p
+                data-testid="level-standing"
+                className="text-base font-black uppercase tracking-wide text-ink/45"
+              >
+                {standing.icon} {standing.label}
+              </p>
+            </div>
+          </div>
 
-        {error ? <p className="rounded-2xl bg-berry/10 p-4 font-bold text-berry">{error}</p> : null}
+          {topic?.easy_line ? (
+            <p className="text-base font-bold text-ink/70 sm:text-lg">{topic.easy_line}</p>
+          ) : null}
 
-        {topic && !topic.available ? <ComingSoon title={topic.title} mode={mode} /> : null}
+          <div className="flex flex-wrap gap-2">
+            <span className="rounded-full bg-white px-4 py-2 font-black text-ink/70 shadow-soft">
+              {topic?.activity_count ?? 0} activities · ⭐ {topic?.star_reward ?? 0}
+            </span>
+          </div>
+        </header>
 
-        {session ? (
-          <section id="activity-area" data-testid="activity-area" className="grid gap-4 sm:gap-6">
-            <header className="grid gap-2">
-              <h1 className="text-2xl font-black leading-tight sm:text-3xl md:text-4xl">{session.topic_title}</h1>
-              {/* What this level is about, before the first question. A lesson
-                  that opens straight into a question never says what it is for. */}
-              {topic?.easy_line ? (
-                <p className="text-base font-bold text-ink/70 sm:text-lg">{topic.easy_line}</p>
-              ) : null}
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="font-bold text-ink/60">
-                  {session.activity_index} of {session.activity_total}
-                </p>
-                <div className="h-3 min-w-[8rem] flex-1 overflow-hidden rounded-full bg-sky/10">
-                  <div
-                    className="h-full rounded-full bg-leaf transition-[width] duration-300"
-                    style={{ width: `${Math.min(progressPercent, 100)}%` }}
-                  />
-                </div>
-              </div>
-            </header>
+        {/* Why there is no "start" button here, said plainly rather than left
+            as an absence for a grown-up to puzzle over. */}
+        <section className="lift-card grid gap-3 rounded-[2rem] p-5">
+          <p className="text-lg font-bold text-ink/70">{standing.detail}</p>
+          <Link
+            href="/ai-teacher"
+            data-testid="go-to-class"
+            className="pressable justify-self-start rounded-3xl bg-leaf px-6 py-4 text-lg font-black text-white shadow-soft sm:text-xl"
+          >
+            🧑‍🏫 Go to my class
+          </Link>
+        </section>
 
-            {/* The points this level covers, each in its own words. Folded away
-                by default so it explains the level without crowding it. */}
-            {withText && topic?.subtopics.length ? (
-              <details className="surface-panel rounded-[2rem] p-4">
-                <summary className="cursor-pointer text-lg font-black text-ink">
-                  🔎 What we will learn
-                </summary>
-                <ul className="mt-3 grid gap-2">
-                  {topic.subtopics.map((subtopic, position) => (
-                    <li key={subtopic} className="flex items-start gap-2 font-bold text-ink/70">
-                      <span aria-hidden>{topic.subtopic_icons?.[position] ?? "⭐"}</span>
-                      <span>
-                        {subtopic}
-                        {topic.subtopic_easy?.[position] ? (
-                          <span className="block font-bold text-ink/50">
-                            {topic.subtopic_easy[position]}
-                          </span>
-                        ) : null}
+        {/* What this level covers, each point in its own words. */}
+        {withText && topic?.subtopics.length ? (
+          <section className="surface-panel grid gap-3 rounded-[2rem] p-5">
+            <h2 className="text-lg font-black text-ink">🔎 What this level teaches</h2>
+            <ul className="grid gap-2">
+              {topic.subtopics.map((subtopic, position) => (
+                <li key={subtopic} className="flex items-start gap-2 font-bold text-ink/70">
+                  <span aria-hidden>{topic.subtopic_icons?.[position] ?? "⭐"}</span>
+                  <span>
+                    {subtopic}
+                    {topic.subtopic_easy?.[position] ? (
+                      <span className="block font-bold text-ink/50">
+                        {topic.subtopic_easy[position]}
                       </span>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-            ) : null}
-
-            <p className="text-xl font-black sm:text-2xl">{session.tutor_response}</p>
-
-            {session.activity ? (
-              <ActivityView
-                activity={session.activity}
-                mode={mode}
-                sessionId={session.session_id}
-                onAnswer={submit}
-                disabled={busy}
-                isCorrect={session.is_correct}
-                attemptNumber={session.attempt_number}
-                hint={session.feedback}
-                guideMessage={guideMessage}
-                guideBusy={guideBusy}
-                onHint={() => void askGuide("Can you give me a hint for this question?")}
-                onShowMe={() => void askGuide("I don't understand. Show me and count each one with me.")}
-                onGuideQuestion={askGuide}
-                highlightId={highlightId}
-                visualAction={visualAction}
-                countGuideEnabled={countGuideEnabled}
-              />
-            ) : null}
-
-            {session.feedback ? <p className="text-lg font-black sm:text-xl">{session.feedback}</p> : null}
-
-            {/* The end of a lesson is where the levels belong. A child comes
-                straight into their current lesson from the subject card, so the
-                map of levels is the reward at the finish — with the one that
-                just opened waiting on it — not a menu they had to get past
-                first. */}
-            {session.complete ? (
-              <div className="grid gap-3">
-                <p className="text-xl font-black sm:text-2xl">
-                  {session.topic_completed ? "Topic complete! ⭐" : "Let us practise this one more."}
-                </p>
-                {session.topic_completed && session.next_topic_unlocked ? (
-                  <p className="text-lg font-bold text-ink/70 sm:text-xl">🔓 A new level just opened!</p>
-                ) : null}
-                <Link
-                  href={`/adventure/${subjectId}`}
-                  data-testid="see-levels"
-                  data-guide-id="open-subjects"
-                  className={`pressable rounded-3xl bg-leaf px-6 py-4 text-center text-lg font-black text-white shadow-soft sm:text-xl ${
-                    highlightId === "open-subjects" ? "guide-glow" : ""
-                  }`}
-                >
-                  🗺️ See my levels
-                </Link>
-              </div>
-            ) : null}
+                    ) : null}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </section>
         ) : null}
       </div>

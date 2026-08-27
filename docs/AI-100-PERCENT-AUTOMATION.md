@@ -348,7 +348,7 @@ poori tarah maanta hai.
 
 | Column | Kya rakhta hai |
 |---|---|
-| `phase` | `greet\|set\|i_do\|we_do\|you_do\|check\|branch\|close` |
+| `phase` | `greet\|set\|i_do\|say_it\|we_do\|you_do\|check\|branch\|close` |
 | `scaffold_level` | `0..4` (§2.2) |
 | `ladder_rung` | `0..5` — is skill pe abhi tak kaunsa explanation chala (§4) |
 | `attempts_on_current` | `0..4` |
@@ -972,7 +972,7 @@ jaanboojh kar manual hain. §12 mein iski wajah likhi hai.
 id UUIDv7 PK
 session_id        FK -> sessions (UNIQUE — ek session, ek state)
 child_id          FK -> children
-phase             TEXT  greet|set|i_do|we_do|you_do|check|branch|close
+phase             TEXT  greet|set|i_do|say_it|we_do|you_do|check|branch|close
 current_skill_id  TEXT
 scaffold_level    SMALLINT  0..4
 ladder_rung       SMALLINT  0..5

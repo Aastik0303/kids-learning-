@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { getTodayPlan } from "@/services/plan";
+import { forgetTodayPlan, getTodayPlan } from "@/services/plan";
 import type { ChildProfile, TodayPlan } from "@/types";
 
 /** Fired by any screen that finishes a lesson, so the schedule redraws at once. */
@@ -9,6 +9,10 @@ export const PLAN_CHANGED_EVENT = "saksham-plan-changed";
 
 export function announcePlanChanged() {
   if (typeof window === "undefined") return;
+  // Drop the shared read first: the listeners fire synchronously, and a
+  // listener that re-read the plan from the cache would redraw the same day it
+  // was already showing.
+  forgetTodayPlan();
   window.dispatchEvent(new Event(PLAN_CHANGED_EVENT));
 }
 

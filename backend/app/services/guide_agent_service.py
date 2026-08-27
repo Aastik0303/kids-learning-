@@ -797,7 +797,17 @@ def _early_mode_guide(payload: GuideRequest) -> GuideResponse:
     primary action and speaking is optional. Copy stays under 14 words.
     """
     question = payload.question
-    concept = question.correct_answer if question else ""
+    # How the concept is *said*. A Hindi level's answer key is an asset token
+    # ("anar"), and speaking that token would have the guide say a Hindi word in
+    # Roman letters. `spoken_form` reads the Devanagari back out of the author's
+    # own prompt; everything else passes through untouched.
+    concept = (
+        explain.spoken_form(
+            question.correct_answer or "", prompt=question.prompt, hint=question.hint or ""
+        )
+        if question
+        else ""
+    )
     activity_type = (question.answer_type if question else "") or ""
     attempt_count = question.attempt if question else 0
     target_preferences = ["activity-area", "answer-options", "microphone-button", "continue-adventure", "start-practice"]
@@ -1127,6 +1137,13 @@ def _ladder_attempt(payload: GuideRequest) -> int:
     attempt = max(0, min(payload.question.attempt if payload.question else 0, 6))
     if payload.event == "HINT_REQUESTED":
         return max(2, attempt)
+    if attempt >= 1:
+        # Rung 1 was the clean second try: encouragement, nothing taught, no
+        # strategy spent. A question gets three repairs now, and none of them
+        # can afford to be a turn that teaches nothing - a child who has just
+        # got it wrong is told something new on the very next turn, chosen by
+        # the policy. So the first miss steps straight onto the ladder.
+        return min(attempt + 1, policy_actions.PARK_RUNG)
     return attempt
 
 
@@ -1346,25 +1363,23 @@ def _repair_instruction(payload: GuideRequest) -> str:
             're-explanation, and do not ask the question again. Set strategy to "re_explain" and '
             'next_expected_event to "wait_for_child" so the app can move the child on. '
         )
-    elif attempt <= 1:
+    elif attempt <= 2:
+        # The rung that used to be bare encouragement - "good try, go again" -
+        # is gone: a question gets three repairs and none of them can be a turn
+        # that teaches nothing.
         rung = (
-            "This is the child's first wrong answer. Give brief, varied encouragement only - no new teaching, "
-            'no hint, no answer - so the second try is clean. Set strategy to "hint" and next_expected_event '
-            'to "voice_answer_requested". '
-        )
-    elif attempt == 2:
-        rung = (
-            "This is the second attempt. Stop testing memory: use S1_TELL or S2_SHOW and say exactly what to "
-            "tap. "
+            "This is the child's first wrong answer. Stop testing memory: use S1_TELL or S2_SHOW and say "
+            "exactly what to tap. "
             if early
-            else "This is the second attempt. Give one small hint with S3_EXAMPLE or S5_CONTRAST, pointing at "
-            "what makes the child's answer different from what is being asked. "
+            else "This is the child's first wrong answer. Encouragement alone is not enough - give one "
+            "small hint with S3_EXAMPLE or S5_CONTRAST, pointing at what makes the child's answer "
+            "different from what is being asked. "
         ) + 'Set strategy to "hint" and next_expected_event to "voice_answer_requested". '
     else:
         rung = (
-            "This is the third attempt and the last turn you re-teach. Show what to tap and say it plainly. "
+            "This is the last turn you re-teach this question. Show what to tap and say it plainly. "
             if early
-            else "This is the third attempt and the last turn you re-teach. Switch how the idea is presented: "
+            else "This is the last turn you re-teach this question. Switch how the idea is presented: "
             "S4_STORY, S6_DO_TOGETHER or S7_SENSE_SWITCH. Make it easier and more visual. "
         ) + 'Set strategy to "re_explain" and next_expected_event to "voice_answer_requested". '
 

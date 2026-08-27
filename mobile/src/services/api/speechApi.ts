@@ -18,6 +18,10 @@ export const speechApi = {
       correct_answer: payload.correct_answer ?? null,
       accepted_answers: payload.accepted_answers ?? [],
       options: payload.options ?? [],
+      // The recogniser's runners-up. Only consulted server-side when the
+      // first guess resolves to nothing, so they can only rescue an answer,
+      // never override a clear one.
+      alternatives: payload.alternatives ?? [],
     });
   },
 

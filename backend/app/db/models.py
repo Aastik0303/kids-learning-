@@ -292,6 +292,10 @@ class LessonState(Base):
     retry_burst_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     unresolved_speech: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     speech_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # How many times the child has been asked to say the current concept back
+    # into the microphone. Reset with every new activity, and never a score:
+    # a failed echo re-explains, it does not mark anything wrong.
+    echo_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     idle_rungs_hit: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # "doubt" or "prerequisite", with the exact place to come back to.
     paused_for: Mapped[str | None] = mapped_column(String(16))
@@ -519,3 +523,105 @@ class Certificate(Base):
     issued_at: Mapped[datetime] = _now_column()
 
     __table_args__ = (UniqueConstraint("child_id", "subject_id", name="uq_certificates_child_subject"),)
+
+
+# --------------------------------------------------------------------------
+# The AI Teacher playground
+#
+# Two tables, prefixed and kept apart on purpose. The playground is a sandbox:
+# its bot retrieves, explains and asks, and none of what happens in it is a fact
+# about the child. Nothing here is read by the conductor, the branch engine, the
+# planner, the policy or the certificate, and the playground writes to nothing
+# outside these two tables - no attempts, no stars, no mastery, no daily plan.
+# --------------------------------------------------------------------------
+
+
+class PlaygroundSession(Base):
+    """One sitting with the AI Teacher: the child's class for the day.
+
+    A stage is one item of today's frozen plan and it lasts **five questions**.
+    There is no score here and there used to be: the points this table kept - +2
+    right, -1 wrong, ten to finish a stage - are gone, because a number that goes
+    down when a four-year-old is wrong teaches them to mind the number. Finishing
+    a stage hands the topic to `learning_service.award_topic_completion`, which
+    is what moves the Adventure map; running out of stages ends the day, and the
+    next one is tomorrow's.
+    """
+
+    __tablename__ = "playground_sessions"
+
+    id: Mapped[UUID] = _pk()
+    child_id: Mapped[UUID] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False)
+    session_id: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    # What today's frozen plan says the child is on. Read from the plan, never
+    # written back to it.
+    subject_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    topic_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    # The day this sitting belongs to. The class runs today's frozen plan and
+    # nothing else, so a sitting left open overnight is closed rather than
+    # carried on - yesterday's stages are not today's work.
+    plan_date: Mapped[date] = mapped_column(Date, nullable=False, default=date.today)
+    stage: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    # How many of this stage's five questions have been settled - answered right,
+    # or answered wrong twice and then explained. It only ever goes up.
+    questions_asked: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Where the lesson is inside one concept: explain, say it, draw it, match
+    # it, one more question. `step_tries` is how many times the question in front
+    # of the child has been asked - 0 plainly, 1 with a hint, and 2 meaning the
+    # turn that simply tells them the answer.
+    step_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    step_tries: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Today's plan, snapshotted when the sitting opened, and how far along it
+    # this child has come. A stage is a topic: five questions move them to the
+    # next thing the schedule holds, not to a harder version of the same one.
+    plan_topics: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    plan_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # This stage's own tally of answered questions. The score handed to
+    # `award_topic_completion` is computed from these two numbers in plain
+    # Python - it is what decides whether the level is marked done and the next
+    # one unlocks, so nothing that ever saw a model may be upstream of it.
+    topic_correct: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    topic_answered: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Which of the nine strategies this sitting has already spent on the
+    # question in front of the child.
+    strategies_spent: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    # The question the bot asked and the answer it expects, held server-side so
+    # the client cannot be the thing that knows the answer.
+    pending_question: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    pending_answer: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    pending_accept: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    # What the child may tap for the pending question. Held here so a reload
+    # offers the same choices rather than a different set beside the same words.
+    pending_options: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    # "in_progress", or "day_complete" once every stage of today's plan is
+    # through. A day_complete row is the lock: the class will not reopen until
+    # tomorrow's plan exists.
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="in_progress")
+    started_at: Mapped[datetime] = _now_column()
+    updated_at: Mapped[datetime] = _now_column()
+
+    __table_args__ = (Index("ix_playground_sessions_child", "child_id", "started_at"),)
+
+
+class PlaygroundTurn(Base):
+    """One turn: what the bot taught, what it asked, what came back.
+
+    Kept so a sitting can be read back and the model's contribution separated
+    from the app's own words - `source` is "llm" or "template" - and so the
+    strategy that was spent is recoverable. It is a log, not a ledger.
+    """
+
+    __tablename__ = "playground_turns"
+
+    id: Mapped[UUID] = _pk()
+    session_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    stage: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    strategy: Mapped[str] = mapped_column(String(32), nullable=False, default="")
+    source: Mapped[str] = mapped_column(String(16), nullable=False, default="template")
+    explanation: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    question: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    child_answer: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    is_correct: Mapped[bool | None] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = _now_column()
+
+    __table_args__ = (Index("ix_playground_turns_session", "session_id", "created_at"),)

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/shared/AppShell";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { getToken, getUser, isGuestSession, saveChild } from "@/services/session";
+import { updateChildProfile } from "@/services/child";
 import { getClassForChild, getClassOptions, setClassOverride } from "@/services/curriculum";
 import type { ChildProfile, ClassDetail, ClassSummary } from "@/types";
 
@@ -27,6 +28,12 @@ export default function ParentProfilePage() {
   const [error, setError] = useState("");
   const [guest, setGuest] = useState(true);
   const [user, setUser] = useState<ReturnType<typeof getUser>>(null);
+  // The child's own details. `PATCH /children/{id}` has always accepted these;
+  // nothing in the app ever sent them, so a name typed wrong at onboarding was
+  // permanent and a birth month could not be corrected.
+  const [name, setName] = useState("");
+  const [birthMonth, setBirthMonth] = useState(1);
+  const [birthYear, setBirthYear] = useState(new Date().getFullYear());
 
   useEffect(() => {
     setGuest(isGuestSession());
@@ -36,6 +43,9 @@ export default function ParentProfilePage() {
   useEffect(() => {
     if (!child) return;
     setSelectedClass(child.class_id);
+    setName(child.name);
+    setBirthMonth(child.birth_month);
+    setBirthYear(child.birth_year);
     getClassForChild(child.child_id).then(setDetail).catch(() => setDetail(null));
     getClassOptions(child.child_id).then(setOptions).catch(() => setOptions([]));
   }, [child]);
@@ -57,6 +67,27 @@ export default function ParentProfilePage() {
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "We could not change the class.");
+    }
+  }
+
+  async function saveDetails() {
+    const token = getToken();
+    if (!child || !token) return;
+    setError("");
+    try {
+      const updated = await updateChildProfile(token, child, {
+        name: name.trim() || child.name,
+        birth_month: birthMonth,
+        birth_year: birthYear
+      });
+      refresh();
+      // The birth date decides the class, so the class card is re-read rather
+      // than left showing the one the old date implied.
+      setDetail(await getClassForChild(updated.child_id));
+      setSelectedClass(updated.class_id);
+      setMessage("Saved.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "We could not save those details.");
     }
   }
 
@@ -139,6 +170,48 @@ export default function ParentProfilePage() {
                   </button>
                   {message ? <p className="rounded-2xl bg-leaf/10 p-3 font-black text-leaf">{message}</p> : null}
                   {error ? <p className="rounded-2xl bg-berry/10 p-3 font-black text-berry">{error}</p> : null}
+                </div>
+                <div className="lift-card grid gap-3 rounded-[2rem] p-6">
+                  <p className="font-black text-ink/70">Child&apos;s details</p>
+                  <label className="grid gap-2 font-black text-ink">
+                    Name
+                    <input
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      className="rounded-2xl border-2 border-leaf/20 bg-white px-4 py-3 font-black"
+                    />
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <label className="grid gap-2 font-black text-ink">
+                      Birth month
+                      <input
+                        type="number"
+                        min={1}
+                        max={12}
+                        value={birthMonth}
+                        onChange={(event) => setBirthMonth(Number(event.target.value))}
+                        className="rounded-2xl border-2 border-leaf/20 bg-white px-4 py-3 font-black"
+                      />
+                    </label>
+                    <label className="grid gap-2 font-black text-ink">
+                      Birth year
+                      <input
+                        type="number"
+                        min={2015}
+                        max={new Date().getFullYear()}
+                        value={birthYear}
+                        onChange={(event) => setBirthYear(Number(event.target.value))}
+                        className="rounded-2xl border-2 border-leaf/20 bg-white px-4 py-3 font-black"
+                      />
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    className="pressable rounded-3xl bg-sky px-5 py-4 text-xl font-black text-white shadow-soft"
+                    onClick={saveDetails}
+                  >
+                    Save details
+                  </button>
                 </div>
                 <div className="rounded-[2rem] bg-sunshine p-6 shadow-soft">
                   <p className="font-black text-ink/70">Stars</p>

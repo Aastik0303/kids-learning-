@@ -79,17 +79,38 @@ const NOUNS: Record<string, string> = {
   sleep: "😴", eat: "🍽️", drink: "🥤", wash: "🧼", read: "📖", write: "✍️",
   smile: "😊", pollution: "🏭", smoke: "💨", noise: "🔊", police: "👮",
   postoffice: "🏤", station: "🚉", market: "🏪", hospital: "🏥",
-  // Hindi picture words, alongside the ones already here (aam, imli, gamla,
-  // kamal, diya). The token is an asset name, so a Hindi lesson can ask for the
-  // picture it actually names.
-  anar: "🍎", eekh: "🎋", ullu: "🦉", oon: "🧶", ainak: "👓", namaste: "🙏",
+  // Hindi picture words, alongside the ones already here (aam, gamla, kamal,
+  // diya). The token is an asset name, so a Hindi lesson can ask for the
+  // picture it actually names. Words Unicode has no emoji for - anar, imli -
+  // are in HINDI_PICTURE_WORDS below rather than mapped to a near-miss.
+  eekh: "🎋", ullu: "🦉", oon: "🧶", ainak: "👓", namaste: "🙏",
   bat: "🏏", horn: "📯", kennel: "🏠", leaves: "🍃", lotus: "🪷", kamal: "🪷",
-  mat: "🧶", pomegranate: "🫐", queue: "🚶", raincoat: "🧥", rat: "🐀",
+  mat: "🧶", queue: "🚶", raincoat: "🧥", rat: "🐀",
   river: "🏞️", street: "🛣️", taxi: "🚕", toothbrush: "🪥", zip: "🤐",
-  imli: "🌰", aam: "🥭", mangoes: "🥭", colours: "🌈", twelve: "🕛",
+  aam: "🥭", mangoes: "🥭", colours: "🌈", twelve: "🕛",
 };
 
 /** Words that only qualify a noun, e.g. "red_ball" or "circle_outline". */
+/**
+ * Hindi picture words that Unicode has no emoji for.
+ *
+ * `anar` used to be mapped to the apple emoji and `imli` to a chestnut. Both
+ * are wrong, and wrong in the way that matters most: a level teaching
+ * अ से अनार showed the child an **apple**, which is सेब. The picture was
+ * teaching a different word than the guide was saying, on the one card the
+ * whole level exists for. Unicode has no pomegranate and no tamarind, so there
+ * was never an emoji here that would have been right.
+ *
+ * Until real illustrations exist, the word itself is shown in Devanagari. It is
+ * not a picture, and for a pre-reader that is a genuine loss - but it is the
+ * thing being taught rather than a different thing, and it is honest about the
+ * gap. Replace these with artwork, not with a nearer-looking fruit.
+ */
+const HINDI_PICTURE_WORDS: Record<string, string> = {
+  anar: "अनार",
+  imli: "इमली",
+};
+
 const MODIFIERS = new Set([
   "outline", "swatch", "group", "big", "small", "tall", "short", "long",
   "full", "empty", "near", "far", "front", "behind", "above", "below",
@@ -148,6 +169,8 @@ export function visualIcon(token: string | null | undefined): string {
 
   const key = clean(raw);
   if (!key) return FALLBACK;
+  // Checked before NOUNS: these are words no emoji says correctly.
+  if (HINDI_PICTURE_WORDS[key]) return HINDI_PICTURE_WORDS[key];
   if (NOUNS[key]) return NOUNS[key];
 
   const parts = key.split("_").filter(Boolean);

@@ -62,15 +62,18 @@ export function ChildHomeScreen() {
     }
   }, [consumePendingIntent, navigation]);
 
-  const startRecommended = useCallback(() => {
-    if (!recommendation) return;
-    navigation.navigate("Lesson", {
-      pathId: recommendation.pathId,
-      stageNumber: recommendation.stageNumber,
-      mode: isToddler ? "toddler" : "standard",
-      ...(isToddler ? { module: recommendation.toddlerModule } : {}),
-    });
-  }, [navigation, recommendation, isToddler]);
+  /**
+   * Open today's class.
+   *
+   * No topic, no level and no mode are passed, and that is the point: which
+   * lesson is played today is decided by the frozen daily plan on the server,
+   * and handing it a path from here would be the app choosing. The card above
+   * still uses `recommendation` for what it *says*, so the child sees what is
+   * coming - but what actually opens is the conductor's own answer.
+   */
+  const startClass = useCallback(() => {
+    navigation.navigate("Class");
+  }, [navigation]);
 
   if (!child) return null;
 
@@ -94,7 +97,7 @@ export function ChildHomeScreen() {
               icon="🎈"
               tone="primary"
               size="toddler"
-              onPress={startRecommended}
+              onPress={startClass}
             />
           </GuideHighlight>
         </View>
@@ -143,7 +146,7 @@ export function ChildHomeScreen() {
                 label={recommendation.isNew ? "Start learning" : "Keep going"}
                 icon="▶️"
                 tone="primary"
-                onPress={startRecommended}
+                onPress={startClass}
               />
             </Card>
           </GuideHighlight>

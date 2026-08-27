@@ -14,6 +14,11 @@ class AnswerResolutionContext(BaseModel):
     correct_answer: str | None = None
     accepted_answers: list[str] = Field(default_factory=list)
     options: list[str] = Field(default_factory=list)
+    # The recogniser's other guesses at the same utterance, best first. A child
+    # says "A" and the recogniser's first choice is "hey", with "A" sitting
+    # second in a list nobody read. They are tried only after the first guess
+    # has failed outright, so a clear answer is never overridden by one.
+    alternatives: list[str] = Field(default_factory=list, max_length=5)
 
 
 class AnswerResolutionResult(BaseModel):
@@ -112,6 +117,25 @@ def resolve_answer(context: AnswerResolutionContext) -> AnswerResolutionResult:
         rescued = _resolve_core(context.model_copy(update={"transcript": child.token}))
         if rescued.input_kind == "answer":
             result = rescued.model_copy(update={"raw_transcript": raw})
+
+    # Still nothing. The recogniser's own runners-up are the last thing tried,
+    # in the order it ranked them, and each one goes through the same cleaner.
+    # This cannot turn a wrong answer into a right one: an alternative resolves
+    # to whatever the child said, and is then evaluated like any other answer.
+    if result.input_kind != "answer":
+        for alternative in context.alternatives:
+            candidate = (alternative or "").strip()
+            if not candidate or candidate.lower() == raw.lower():
+                continue
+            probe = context.model_copy(update={"transcript": candidate, "alternatives": []})
+            rescued = _resolve_core(probe)
+            if rescued.input_kind != "answer":
+                cleaned = clean_child_speech(candidate, context.answer_type, context.options)
+                if cleaned.token:
+                    rescued = _resolve_core(probe.model_copy(update={"transcript": cleaned.token}))
+            if rescued.input_kind == "answer":
+                result = rescued.model_copy(update={"raw_transcript": raw})
+                break
 
     return result.model_copy(update={"child_speech": child})
 

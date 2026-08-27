@@ -16,7 +16,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.services import child_service, plan_service
+from app.services import child_service, child_store, curriculum_service, plan_service
 
 
 @pytest.fixture()
@@ -160,6 +160,39 @@ def test_a_day_holds_one_level_per_subject(client: TestClient):
 
     subjects = [item["skill_id"].split(":")[0] for item in items]
     assert len(subjects) == len(set(subjects))
+
+
+def test_two_shaky_levels_in_one_subject_still_cost_the_day_one_slot(client: TestClient):
+    """A subject gets one turn a day however many of its levels are shaky.
+
+    This is the case that broke it. Weak topics used to be collected across the
+    whole class and put in front of the fresh ones, so a child with two wobbly
+    English levels got a day of English, English, Maths - and General Awareness
+    never came up at all. The class runs one stage per planned item, so that day
+    is a class that spends two of its three stages on the same subject.
+    """
+    child_id = make_child(client, "schedule-weak@example.com")
+    child = child_store.get(child_id)
+
+    subject_id = client.get(f"/curriculum/children/{child_id}/class").json()["subjects"][0][
+        "subject_id"
+    ]
+    unlocked = child["subject_progress"][subject_id]["unlocked_topics"]
+    # Two levels of one subject, both marked weak, both unlocked.
+    for topic_id in unlocked[:1]:
+        child["weak_skills"].append(f"{subject_id}:{topic_id}")
+    subject = curriculum_service.get_subject(subject_id)
+    for topic in subject.topics[:3]:
+        if topic.available and topic.topic_id not in unlocked:
+            unlocked.append(topic.topic_id)
+            child["weak_skills"].append(f"{subject_id}:{topic.topic_id}")
+    child_store.save(child)
+
+    items = plan_of(client, child_id)["items"]
+
+    subjects = [item["skill_id"].split(":")[0] for item in items]
+    assert len(subjects) == len(set(subjects)), subjects
+    assert subjects.count(subject_id) <= 1
 
 
 def test_the_subjects_take_turns_across_days(client: TestClient, next_day):

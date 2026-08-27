@@ -24,7 +24,8 @@ export function SessionRecapScreen() {
   const theme = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<ChildStackParamList>>();
   const route = useRoute<RouteProp<ChildStackParamList, "SessionRecap">>();
-  const { pathId, stageNumber, starsEarned, correctCount, totalCount } = route.params;
+  const { pathId, stageNumber, starsEarned, correctCount, totalCount, fromClass, closeReason } =
+    route.params;
 
   const { dispatch } = useGuide();
   const child = useChildStore((state) => state.activeChild);
@@ -49,30 +50,38 @@ export function SessionRecapScreen() {
           </Text>
           <StarRow earned={Math.max(starsEarned, 1)} total={3} size={40} animate />
           <Text variant="subheading" align="center" muted>
-            {visual.label} — level {stageNumber}
+            {fromClass ? classLine(closeReason) : `${visual.label} — level ${stageNumber}`}
           </Text>
         </Card>
 
-        {/* The numbers, kept small and secondary. */}
-        <Card variant="lift" style={{ flexDirection: "row", justifyContent: "space-around" }}>
-          <Stat label="Right" value={String(correctCount)} icon="✅" />
-          <Stat label="Tried" value={String(totalCount)} icon="🎯" />
-          <Stat label="Stars" value={String(starsEarned)} icon="⭐" />
-        </Card>
+        {/* The numbers, kept small and secondary. A class does not show a
+            tally: nothing in it was a test the child could fail, and several
+            beats - the say-it-back one especially - are never scored at all. */}
+        {fromClass ? null : (
+          <Card variant="lift" style={{ flexDirection: "row", justifyContent: "space-around" }}>
+            <Stat label="Right" value={String(correctCount)} icon="✅" />
+            <Stat label="Tried" value={String(totalCount)} icon="🎯" />
+            <Stat label="Stars" value={String(starsEarned)} icon="⭐" />
+          </Card>
+        )}
 
         <View style={{ gap: theme.space[3] }}>
-          <Button
-            label="Next level"
-            icon="▶️"
-            tone="primary"
-            onPress={() =>
-              navigation.replace("Lesson", {
-                pathId,
-                stageNumber: nextStage,
-                mode: child?.learning_mode === "toddler" ? "toddler" : "standard",
-              })
-            }
-          />
+          {/* No "next level" after a class. When the next one is played is the
+              daily plan's decision, not a button's. */}
+          {fromClass ? null : (
+            <Button
+              label="Next level"
+              icon="▶️"
+              tone="primary"
+              onPress={() =>
+                navigation.replace("Lesson", {
+                  pathId,
+                  stageNumber: nextStage,
+                  mode: child?.learning_mode === "toddler" ? "toddler" : "standard",
+                })
+              }
+            />
+          )}
           <Button
             label="See my rewards"
             icon="🏆"
@@ -89,6 +98,13 @@ export function SessionRecapScreen() {
       </View>
     </Screen>
   );
+}
+
+/** What the class's own ending line says, in words a grown-up can read out. */
+function classLine(reason?: string): string {
+  if (reason === "day_complete") return "That is everything for today. See you tomorrow!";
+  if (reason === "end_kindly") return "We stopped for now — that is completely fine.";
+  return "Today's class is finished.";
 }
 
 function Stat({ label, value, icon }: { label: string; value: string; icon: string }) {

@@ -20,6 +20,7 @@ child hears the app's own words and keeps every star they earned.
 """
 
 import logging
+import random
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
@@ -27,10 +28,12 @@ from uuid import UUID, uuid4
 from sqlalchemy import select
 
 from app.conductor import branch as branch_engine
+from app.conductor import echo as echo_engine
 from app.conductor import explain
 from app.conductor import scaffold as scaffold_engine
 from app.conductor import signals as signal_engine
 from app.conductor import skill_graph
+from app.conductor import unexpected as unexpected_engine
 from app.conductor.phases import Phase, next_in_sequence, teaching_sequence
 from app.db.models import LessonState
 from app.db.repositories import truth
@@ -40,6 +43,7 @@ from app.schemas.conductor import (
     CloseBlock,
     ConductorDirective,
     ConductorInput,
+    ListenBlock,
     NextInput,
     PresentationBlock,
     ProgressBlock,
@@ -60,6 +64,8 @@ from app.services import (
     plan_service,
     retention_service,
 )
+from app.services.answer_resolution_service import AnswerResolutionContext, resolve_answer
+from app.services.child_speech_service import clean_child_speech
 from app.services.errors import app_error
 from app.services.history_service import record_attempt
 
@@ -111,6 +117,7 @@ class _State:
     retry_burst_count: int
     unresolved_speech: int
     speech_attempts: int
+    echo_attempts: int
     answers_counted: int
     activity_ids: list[str]
     explanations_used: list[str]
@@ -169,6 +176,7 @@ def _to_state(row: LessonState) -> _State:
         retry_burst_count=row.retry_burst_count,
         unresolved_speech=row.unresolved_speech,
         speech_attempts=row.speech_attempts,
+        echo_attempts=row.echo_attempts,
         answers_counted=len(row.recent_answers or []),
         activity_ids=list(row.activity_ids or []),
         explanations_used=list(row.explanations_used or []),
@@ -209,6 +217,7 @@ def _save_state(state: _State) -> None:
         row.retry_burst_count = state.retry_burst_count
         row.unresolved_speech = state.unresolved_speech
         row.speech_attempts = state.speech_attempts
+        row.echo_attempts = state.echo_attempts
         row.activity_ids = list(state.activity_ids)
         row.explanations_used = list(state.explanations_used)
         row.recent_answers = list(state.recent_answers)[-RECENT_ANSWER_WINDOW:]
@@ -251,6 +260,7 @@ def _open_state(child: dict, topic: Topic) -> _State:
             row.retry_burst_count = 0
             row.unresolved_speech = 0
             row.speech_attempts = 0
+            row.echo_attempts = 0
             row.idle_rung = 0
             row.idle_rungs_hit = 0
             row.consecutive_correct = 0
@@ -264,6 +274,12 @@ def _open_state(child: dict, topic: Topic) -> _State:
             # a first ever lesson goes straight to what today is about.
             row.phase = Phase.GREET.value if child.get("stars") else Phase.SET.value
             row.current_skill_id = learning_service.skill_slug(topic)
+            # English, maths and Hindi are taught out loud, so those sittings
+            # start in voice: the say-it-back beat runs, and an activity whose
+            # answer is spoken by design gets the microphone rather than a
+            # tap. Everything else starts tapping, exactly as before. The
+            # branch engine can still drop a struggling child back to taps.
+            row.modality = "voice" if echo_engine.subject_speaks(topic.subject_id) else "tap"
         session.flush()
         return _to_state(row)
 
@@ -290,9 +306,81 @@ def _needs_answer(activity: Activity | None) -> bool:
 
 
 def _sequence_for(state: _State, topic: Topic) -> tuple[Phase, ...]:
+    activity = _current_activity(state, topic)
     return teaching_sequence(
-        lesson_flow=topic.lesson_flow, needs_answer=_needs_answer(_current_activity(state, topic))
+        lesson_flow=topic.lesson_flow,
+        needs_answer=_needs_answer(activity),
+        echo=_echoes(state, topic, activity),
+        draw=_is_drawing(activity),
     )
+
+
+def _echoes(state: _State, topic: Topic, activity: Activity | None) -> bool:
+    """Whether this card stops and listens after it has been explained.
+
+    Three things all have to be true, and each of them is a boundary rather
+    than a preference:
+
+    * the subject is one that is taught out loud - English, maths, Hindi;
+    * the card is a teaching card, so there is no answer key anywhere near the
+      open microphone;
+    * it is the *last* teaching card of the run, so a level that explains a
+      letter over three cards - the shape, the sound, the word - is listened to
+      once when the explanation is finished, not after every sentence;
+    * the concept has a name worth saying back, which `echo.target_for` decides
+      from the level's own authored content rather than by guessing.
+
+    A drawing card is a teaching card by this codebase's reckoning - it has no
+    answer - and is deliberately excluded. The order the child is taught in is
+    explain, say it, draw; asking for the word again with a finger already on
+    the screen interrupts the drawing rather than teaching anything.
+
+    The modality is *not* one of them. A child who has been dropped back to
+    tapping because the recogniser could not hear them keeps taps, which is what
+    `state.modality` is for.
+    """
+    if state.echo_attempts >= echo_engine.ECHO_ASKS_PER_LESSON:
+        # Already listened once in this sitting. The microphone is a moment near
+        # the start of the lesson, not a checkpoint on every card: a class that
+        # reopens it after each thing it explains turns a question the child
+        # answers into something they have to get past.
+        return False
+    if state.modality == "tap" or _needs_answer(activity) or activity is None:
+        return False
+    if not echo_engine.subject_speaks(topic.subject_id):
+        return False
+    if _is_drawing(activity):
+        return False
+    if _is_teaching_card(_next_card(state, topic)):
+        # The explanation is still running. Let it finish.
+        return False
+    return _echo_target(state, topic, activity).is_askable
+
+
+def _is_drawing(activity: Activity | None) -> bool:
+    """A card the child answers with a finger rather than a voice."""
+    if activity is None:
+        return False
+    return bool(activity.trace_target) or "trace" in (activity.type or "").lower()
+
+
+def _is_teaching_card(activity: Activity | None) -> bool:
+    """A card that explains, as opposed to one that asks or one that is drawn."""
+    return activity is not None and not _needs_answer(activity) and not _is_drawing(activity)
+
+
+def _next_card(state: _State, topic: Topic) -> Activity | None:
+    activities = _activities(state, topic)
+    index = state.cursor + 1
+    return activities[index] if 0 <= index < len(activities) else None
+
+
+def _echo_target(state: _State, topic: Topic, activity: Activity | None) -> echo_engine.EchoTarget:
+    """What this card asks the child to say back."""
+    if activity is None:
+        return echo_engine.EchoTarget()
+    card = explain.card_for(topic, activity, _activities(state, topic))
+    return echo_engine.target_for(card)
 
 
 def _signals_of(state: _State) -> signal_engine.SessionSignals:
@@ -321,15 +409,28 @@ def _minutes_in(state: _State) -> float:
 # --------------------------------------------------------------------------
 
 
-def open_class(child_id: str) -> ConductorDirective:
+def open_class(child_id: str, topic_id: str | None = None) -> ConductorDirective:
     """Open today's class for this child. No menu, no choice, no taps.
 
     The topic comes from the frozen daily plan, so the app opens on the same
     lesson all day, and falls back to the next unlocked topic when there is no
     plan to read.
+
+    `topic_id` is the one exception, and it is not the child choosing: Adventure
+    is a browse of the map a grown-up sits through, and opening a level from
+    there has to run *this* loop rather than a second one. It changes which
+    topic is conducted and nothing else - the day's plan still decides whether
+    that topic may be opened at all, so an off-plan level is refused here
+    exactly as `/learning` refuses it.
     """
     child = child_service.get_child_record(child_id)
     profile = child_service.get_child(child_id)
+
+    if topic_id:
+        gate = plan_service.may_open(profile, topic_id)
+        if not gate.allowed:
+            raise app_error("NOT_TODAYS_PLAN", gate.message, 403)
+        return _conduct_topic(child, topic_id, subject_id=None)
 
     subject_id, topic_id = plan_service.todays_topic(profile)
     if not topic_id:
@@ -347,6 +448,11 @@ def open_class(child_id: str) -> ConductorDirective:
     if not gate.allowed:  # pragma: no cover - the plan cursor cannot point off-plan
         return _day_complete(child)
 
+    return _conduct_topic(child, topic_id, subject_id=subject_id)
+
+
+def _conduct_topic(child: dict, topic_id: str, *, subject_id: str | None) -> ConductorDirective:
+    """Start or resume the class on one topic, the gate already passed."""
     topic = curriculum_service.get_topic(topic_id)
     if not topic.available:
         return _nothing_to_do(child)
@@ -383,9 +489,10 @@ def resume(session_id: str) -> ConductorDirective:
             state=state,
             topic=topic,
             child=child,
-            activity=activity if phase in (Phase.I_DO, Phase.WE_DO, Phase.YOU_DO) else None,
+            activity=activity if phase in (Phase.I_DO, Phase.SAY_IT, Phase.WE_DO, Phase.YOU_DO) else None,
             event=_event_for_phase(phase),
-            expects_answer=phase == Phase.YOU_DO and _needs_answer(activity),
+            expects_answer=(phase == Phase.SAY_IT)
+            or (phase == Phase.YOU_DO and (_needs_answer(activity) or _is_drawing(activity))),
         )
     )
 
@@ -421,10 +528,16 @@ def send_input(session_id: str, payload: ConductorInput) -> ConductorDirective:
     child = child_service.get_child_record(state.child_id)
     topic = curriculum_service.get_topic(state.topic_id)
 
-    if payload.kind == "idle":
-        turn = _handle_idle(state, child, topic)
-    elif payload.kind == "doubt":
+    if payload.kind == "doubt":
         return pause(session_id)
+    elif state.phase == Phase.SAY_IT.value:
+        # The microphone is open and the class is waiting for the child to say
+        # the thing back. Silence is handled here too: in this beat it means
+        # "they did not say it", not "they wandered off", and the two are
+        # answered very differently.
+        turn = _handle_echo(state, child, topic, payload)
+    elif payload.kind == "idle":
+        turn = _handle_idle(state, child, topic)
     elif payload.kind == "ready" or not _needs_answer(_current_activity(state, topic)):
         turn = _advance_phase(state, child, topic)
     else:
@@ -470,6 +583,11 @@ def _advance_phase(state: _State, child: dict, topic: Topic) -> _Turn:
         return _next_activity(state, child, topic)
 
     state.phase = following.value
+    if following == Phase.SAY_IT:
+        # Counted here, where the class actually asks, so the one ask this
+        # sitting gets is spent by asking rather than by the child answering -
+        # a child who says nothing has still been asked.
+        state.echo_attempts += 1
     if following == Phase.WE_DO:
         state.scaffold_level = max(state.scaffold_level, 3)
     return _Turn(
@@ -478,7 +596,7 @@ def _advance_phase(state: _State, child: dict, topic: Topic) -> _Turn:
         child,
         activity,
         event="TOPIC_QUESTION_LOADED",
-        expects_answer=following == Phase.YOU_DO,
+        expects_answer=following in (Phase.YOU_DO, Phase.SAY_IT),
     )
 
 
@@ -515,6 +633,136 @@ def _handle_idle(state: _State, child: dict, topic: Topic) -> _Turn:
     )
 
 
+# What the guide says when the child says it back. Warm, short, and about the
+# saying rather than about being right - because nothing here was graded.
+ECHO_PRAISE = (
+    "Yes! You said it.",
+    "Lovely voice!",
+    "That is it - well said!",
+)
+
+
+def _handle_echo(state: _State, child: dict, topic: Topic, payload: ConductorInput) -> _Turn:
+    """The child was asked to say the thing back. This is what came back.
+
+    Nothing in this function records an attempt, touches mastery, awards a star
+    or moves a skill. An echo is evidence about the *explanation*, not about the
+    child: it either landed, in which case the class moves on, or it did not, in
+    which case the class explains it once more in different words and then moves
+    on anyway. The child is never asked a second time - a child who cannot say it
+    out loud today is not a child who may not do the drawing.
+    """
+    activity = _current_activity(state, topic)
+    target = _echo_target(state, topic, activity)
+    raw = (payload.answer or "").strip()
+
+    if payload.kind == "voice":
+        state.speech_attempts += 1
+
+    # The deterministic cleaner first: "ay", "tree", "do nahi teen". It is given
+    # the words this card would accept and never the answer to any question,
+    # because on a teaching card there is no question to have an answer to.
+    cleaned = clean_child_speech(raw, activity.type if activity else "", list(target.contextual_strings))
+    heard = cleaned.token or raw
+    if not heard and payload.alternatives:
+        # The recogniser's first guess was unusable; its second sometimes is not.
+        heard = next((alt for alt in payload.alternatives if alt.strip()), "")
+
+    verdict = echo_engine.judge(heard=heard, confidence=payload.confidence, target=target)
+
+    if verdict.landed:
+        state.unresolved_speech = 0
+        turn = _after_echo(state, child, topic)
+        turn.speech_override = random.choice(ECHO_PRAISE)
+        turn.notes = {"echo": "matched", "heard": verdict.heard}
+        return turn
+
+    if verdict.outcome == "no_speech":
+        state.unresolved_speech += 1
+
+    said = unexpected_engine.classify(
+        raw,
+        # No options: a teaching card shows the child a thing, it does not
+        # offer them a choice. Passing the accepted words here would let a
+        # near-miss be re-read as an answer after the judge has said it is not.
+        options=[],
+        prompt=(activity.prompt if activity else ""),
+        confidence=payload.confidence,
+        attempts=state.echo_attempts,
+    )
+    state.frustration_score = signal_engine.frustration(_signals_of(state))
+
+    if said.action == unexpected_engine.END_KINDLY:
+        # A child asking for their mother, or asking to stop, is answered as a
+        # person rather than as a wrong transcript.
+        turn = _close_lesson(state, child, topic, reason="end_kindly")
+        turn.speech_override = said.reply
+        turn.notes = {"echo": verdict.outcome, "heard_as": said.kind}
+        return turn
+
+    if state.modality == "voice" and state.unresolved_speech >= branch_engine.UNRESOLVED_SPEECH_LIMIT:
+        # Twice in a row the microphone heard nothing usable. That is a device
+        # problem, and the child has now been asked to speak twice for reasons
+        # that are not theirs. Put the mic away for this sitting and carry on.
+        state.modality = "tap"
+        state.unresolved_speech = 0
+        turn = _after_echo(state, child, topic)
+        turn.speech_override = "Let us keep going - I will do the talking!"
+        turn.notes = {"echo": verdict.outcome, "heard_as": "microphone_unavailable"}
+        return turn
+
+    # Explain it again, differently - and then carry on. The child is asked to
+    # say something back once in a lesson, so this does not come back round to
+    # the microphone: `_echoes` has already spent this sitting's one ask, and
+    # the class goes on to the drawing after this explanation.
+    #
+    # The rung and the spent-explanation list are what make the second
+    # explanation a different one: the teaching policy reads them and will not
+    # spend a strategy this child has already had.
+    state.ladder_rung = min(5, state.ladder_rung + 1)
+    state.scaffold_level = min(4, state.scaffold_level + 1)
+    rung_name = f"L{state.ladder_rung}"
+    if rung_name not in state.explanations_used:
+        state.explanations_used.append(rung_name)
+    state.phase = Phase.I_DO.value
+
+    return _Turn(
+        state,
+        topic,
+        child,
+        activity,
+        # The model is asked for words here, which is exactly where it belongs:
+        # the decision to re-explain was taken above, deterministically.
+        event="HINT_REQUESTED",
+        expects_answer=False,
+        notes={"echo": verdict.outcome, "heard_as": said.kind, "echo_attempt": state.echo_attempts},
+    )
+
+
+def _after_echo(state: _State, child: dict, topic: Topic) -> _Turn:
+    """Carry on from the listening beat, however it went.
+
+    A teaching card's sequence is (I DO, SAY IT), so there is normally nothing
+    after this and the class moves to the next activity - the drawing, then the
+    questions. `next_in_sequence` is still consulted so that a future sequence
+    with something after SAY IT needs no change here.
+    """
+    activity = _current_activity(state, topic)
+    following = next_in_sequence(_sequence_for(state, topic), Phase.SAY_IT)
+    if following is None:
+        return _next_activity(state, child, topic)
+
+    state.phase = following.value
+    return _Turn(
+        state,
+        topic,
+        child,
+        activity,
+        event="TOPIC_QUESTION_LOADED",
+        expects_answer=following in (Phase.YOU_DO, Phase.SAY_IT),
+    )
+
+
 def _handle_answer(state: _State, child: dict, topic: Topic, payload: ConductorInput) -> _Turn:
     """Evaluate, commit, branch. In that order, and the model is not in it."""
     activity = _current_activity(state, topic)
@@ -538,6 +786,29 @@ def _handle_answer(state: _State, child: dict, topic: Topic, payload: ConductorI
                 outcome=branch_engine.decide(_branch_input(state, topic, is_correct=False)),
                 is_correct=None,
             )
+
+    # An utterance that is not an answer must not be scored as a wrong one.
+    # "Pata nahi", the question read back, a story about a dog and forty seconds
+    # of humming are all things a three-year-old says into an open microphone,
+    # and all of them used to land in `attempts` as a failure. They are answered
+    # as what they are instead, and nothing is written against the child.
+    if payload.kind == "voice" and (activity.options or activity.accept):
+        resolution = resolve_answer(
+            AnswerResolutionContext(
+                transcript=payload.answer,
+                confidence=payload.confidence,
+                answer_type=activity.type,
+                correct_answer=activity.correct_answer,
+                accepted_answers=list(activity.accept),
+                options=list(activity.options),
+                alternatives=list(payload.alternatives),
+            )
+        )
+        # Only `input_kind` is read. The resolver is given the answer key so it
+        # can build its candidate pool; what comes back here is "was this an
+        # answer at all", never "was it the right one".
+        if resolution.input_kind != "answer":
+            return _handle_unexpected_answer(state, child, topic, activity, payload)
 
     is_correct, normalized = activity_evaluators.evaluate(
         activity_evaluators.EvaluationInput(
@@ -589,6 +860,85 @@ def _handle_answer(state: _State, child: dict, topic: Topic, payload: ConductorI
     return _apply_branch(state, child, topic, activity, outcome=outcome, is_correct=is_correct)
 
 
+def _handle_unexpected_answer(
+    state: _State,
+    child: dict,
+    topic: Topic,
+    activity: Activity,
+    payload: ConductorInput,
+) -> _Turn:
+    """The child spoke, and it was not an answer to this question.
+
+    This is a first-class outcome, not an error path. It is never recorded as an
+    attempt, so it cannot cost a star or move a mastery score, and the class
+    responds to the kind of thing that was said: a child who asked to hear it
+    again hears it again, a child who said "I don't know" is shown it rather
+    than asked again, and a child who wants their mother is allowed to stop.
+    """
+    said = unexpected_engine.classify(
+        payload.answer,
+        options=list(activity.options),
+        prompt=activity.prompt or "",
+        confidence=payload.confidence,
+        attempts=state.attempts_on_current,
+    )
+    if not payload.answer.strip():
+        state.unresolved_speech += 1
+    state.frustration_score = signal_engine.frustration(_signals_of(state))
+    notes = {"heard_as": said.kind, "blameless": said.blameless}
+
+    if said.action == unexpected_engine.END_KINDLY:
+        turn = _close_lesson(state, child, topic, reason="end_kindly")
+        turn.speech_override = said.reply
+        turn.notes = notes
+        return turn
+
+    if state.modality == "voice" and state.unresolved_speech >= branch_engine.UNRESOLVED_SPEECH_LIMIT:
+        # The microphone, not the child. Offer the same question as taps.
+        state.modality = "tap"
+        state.unresolved_speech = 0
+        state.phase = Phase.YOU_DO.value
+        return _Turn(
+            state,
+            topic,
+            child,
+            activity,
+            event="TOPIC_QUESTION_LOADED",
+            branch=branch_engine.Branch.SWITCH_MODALITY.value,
+            speech_override="Let us tap the answer this time.",
+            notes=notes,
+        )
+
+    if said.action == unexpected_engine.TOGETHER:
+        # Stop testing and do it together. The help goes up; the score does not
+        # move, because nothing was answered.
+        state.scaffold_level = min(4, state.scaffold_level + 1)
+        state.phase = Phase.WE_DO.value
+        return _Turn(
+            state,
+            topic,
+            child,
+            activity,
+            event="TOPIC_QUESTION_LOADED",
+            expects_answer=False,
+            speech_override=said.reply,
+            notes=notes,
+        )
+
+    # RETRY and REPEAT both leave the question exactly where it was, with the
+    # microphone open again and one kind sentence in front of it.
+    state.phase = Phase.YOU_DO.value
+    return _Turn(
+        state,
+        topic,
+        child,
+        activity,
+        event="HINT_REQUESTED" if said.action == unexpected_engine.REPEAT else "TOPIC_QUESTION_LOADED",
+        speech_override=said.reply,
+        notes=notes,
+    )
+
+
 def _branch_input(state: _State, topic: Topic, *, is_correct: bool) -> branch_engine.BranchInput:
     skill_id = learning_service.skill_slug(topic)
     with session_scope() as session:
@@ -629,9 +979,19 @@ def _apply_branch(
     decision = outcome.decision
 
     if decision == branch_engine.Branch.ADVANCE:
-        turn = _next_activity(state, child, topic, celebrate=True)
+        # Two different things arrive here: the child got it, or the three
+        # repairs are spent and the class is letting the question go. Only the
+        # first is celebrated, and only the second is remembered as weak.
+        moved_on_unsolved = outcome.reason == "attempts_exhausted"
+        if moved_on_unsolved:
+            learning_service.mark_weak(child, topic)
+        turn = _next_activity(state, child, topic, celebrate=not moved_on_unsolved)
         turn.branch = decision.value
-        turn.is_correct = True
+        turn.is_correct = False if moved_on_unsolved else True
+        if moved_on_unsolved:
+            # Never "you got that wrong": the child tried three times and the
+            # class is the thing that moves, not them.
+            turn.speech_override = "Good trying! Let us do the next one."
         return turn
 
     if decision == branch_engine.Branch.END_KINDLY:
@@ -729,6 +1089,9 @@ def _next_activity(state: _State, child: dict, topic: Topic, *, celebrate: bool 
     """Move to the next thing in the lesson, or end it."""
     state.cursor += 1
     state.attempts_on_current = 0
+    # `echo_attempts` is deliberately *not* reset: it counts the asks made in
+    # this sitting, and there is one. It goes back to zero when a new sitting
+    # opens the lesson state, in `_open_state`.
     state.ladder_rung = 0
     state.explanations_used = []
     state.idle_rung = 0
@@ -854,6 +1217,7 @@ def _event_for_phase(phase: Phase) -> str:
         Phase.GREET: "APP_OPENED",
         Phase.SET: "TOPIC_STARTED",
         Phase.I_DO: "TOPIC_QUESTION_LOADED",
+        Phase.SAY_IT: "TOPIC_QUESTION_LOADED",
         Phase.WE_DO: "TOPIC_QUESTION_LOADED",
         Phase.YOU_DO: "TOPIC_QUESTION_LOADED",
         Phase.CHECK: "TOPIC_QUESTION_LOADED",
@@ -996,14 +1360,26 @@ def _auto_advance_ms(text: str) -> int:
     return max(MIN_AUTO_ADVANCE_MS, min(MAX_AUTO_ADVANCE_MS, words * MS_PER_WORD + 900))
 
 
-def _expected_input(activity: Activity | None, modality: str) -> str:
+def _expected_input(activity: Activity | None, modality: str, phase: Phase) -> str:
+    if phase == Phase.SAY_IT:
+        # The whole point of the beat. It is only ever reached in a voice
+        # sitting, so there is no tap fallback to fall back to here - the
+        # fallback is leaving the beat entirely, which `_handle_echo` does.
+        return "voice"
     if activity is None:
         return "ready"
     kind = activity_evaluators.answer_kind(activity.type)
     if kind == "presentational":
         return "trace" if activity.trace_target else "ready"
     if kind == "spoken":
-        return "voice" if modality != "tap" else "tap"
+        if modality != "tap":
+            return "voice"
+        # Dropped back to tapping - but a spoken card like `repeat_letter` has
+        # no options, so "tap" here puts a child in front of a screen with
+        # nothing on it and no way forward. A microphone that may not hear them
+        # is worse than nothing to touch; the idle ladder is still the way out
+        # if it really cannot.
+        return "tap" if activity.options else "voice"
     return "tap"
 
 
@@ -1015,8 +1391,17 @@ def _build(turn: _Turn) -> ConductorDirective:
     activity = turn.activity
     voice = _guide_voice(turn)
 
-    text = turn.speech_override or _early_teaching_line(turn, voice) or voice.message
     phase = Phase(state.phase)
+    text = turn.speech_override or _early_teaching_line(turn, voice) or voice.message
+
+    listen_target = (
+        _echo_target(state, topic, activity) if phase == Phase.SAY_IT else echo_engine.EchoTarget()
+    )
+    if phase == Phase.SAY_IT:
+        # The guide does not improvise the ask. "Can you say A?" is a fixed,
+        # authored sentence built from the concept card, so a child is never
+        # asked to repeat something a model invented.
+        text = echo_engine.ask(listen_target, attempt=max(0, state.echo_attempts - 1)) or text
 
     scaffold = scaffold_engine.build(
         phase=phase,
@@ -1036,7 +1421,7 @@ def _build(turn: _Turn) -> ConductorDirective:
         options_shown=len(scaffold.options_shown),
     )
 
-    expects = _expected_input(activity, state.modality) if turn.expects_answer else "ready"
+    expects = _expected_input(activity, state.modality, phase) if turn.expects_answer else "ready"
     timeout_ms = signal_engine.idle_timeout_ms(mode.idle_thresholds_seconds, state.idle_rung)
     activities_total = len(state.activity_ids)
 
@@ -1062,6 +1447,20 @@ def _build(turn: _Turn) -> ConductorDirective:
             timeout_ms=timeout_ms,
             on_timeout="idle",
         ),
+        listen=ListenBlock(
+            active=expects == "voice",
+            expect=listen_target.thing,
+            # On a question, the recogniser is biased towards what is on the
+            # screen; on the say-it beat, towards the concept just taught. The
+            # answer key is in neither: the options are what the child can
+            # already see, and `scaffold.options_shown` is what they were given.
+            contextual_strings=list(listen_target.contextual_strings)
+            or list(scaffold.options_shown),
+            language=topic.language,
+            attempt=max(0, state.echo_attempts - 1),
+            max_attempts=echo_engine.ECHO_ASKS_PER_LESSON,
+            hold_open_ms=min(timeout_ms, 8000),
+        ),
         progress=ProgressBlock(filled=state.correct_count, total=activities_total),
         # The class carries on by itself whenever nothing is expected of the
         # child. This is where the "next" button used to be.
@@ -1069,4 +1468,5 @@ def _build(turn: _Turn) -> ConductorDirective:
         close=turn.close,
         branch=turn.branch,
         teaching_strategy=voice.teaching_strategy,
+        heard_as=turn.notes.get("heard_as"),
     )

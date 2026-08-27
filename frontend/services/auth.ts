@@ -23,3 +23,43 @@ export function login(email: string, password: string) {
     body: JSON.stringify({ email, password })
   });
 }
+
+/**
+ * End the session on the server too.
+ *
+ * "Logout" used to clear `sessionStorage` and reload, which left the row in
+ * `auth_sessions` alive and valid - a token that had supposedly been signed out
+ * still worked. The local clear stays (it is what the UI reads), and the server
+ * is told as well; a failure is swallowed, because a parent who pressed logout
+ * must end up signed out of this browser either way.
+ */
+export function logout(session_token: string) {
+  return api<{ ok: boolean }>("/auth/logout", {
+    method: "POST",
+    body: JSON.stringify({ session_token })
+  }).catch(() => ({ ok: false }));
+}
+
+/**
+ * Start a password reset.
+ *
+ * The answer is deliberately the same whether or not the address is
+ * registered, so this can never be used to find out who has an account. There
+ * is no mailer yet, so outside production the server hands the token back in
+ * `reset_token` and the page shows it - the honest shape of an unfinished
+ * feature, rather than a flow that cannot be completed at all.
+ */
+export function forgotPassword(email: string) {
+  return api<{ ok: boolean; message: string; reset_token: string | null }>("/auth/password/forgot", {
+    method: "POST",
+    body: JSON.stringify({ email })
+  });
+}
+
+/** Spend a reset token and set a new password. Every device is signed out. */
+export function resetPassword(token: string, password: string) {
+  return api<{ ok: boolean; message: string }>("/auth/password/reset", {
+    method: "POST",
+    body: JSON.stringify({ token, password })
+  });
+}

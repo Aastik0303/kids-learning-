@@ -6,6 +6,7 @@ import { Text } from "@/components/common/Text";
 import { ChildHomeScreen } from "@/screens/child/ChildHomeScreen";
 import { ClassesScreen } from "@/screens/child/ClassesScreen";
 import { ClassDetailScreen } from "@/screens/child/ClassDetailScreen";
+import { ClassScreen } from "@/screens/child/ClassScreen";
 import { LessonScreen } from "@/screens/child/LessonScreen";
 import { PracticeScreen } from "@/screens/child/PracticeScreen";
 import { PracticeTopicScreen } from "@/screens/child/PracticeTopicScreen";
@@ -89,6 +90,11 @@ export function ChildNavigator() {
       <Stack.Screen name="ClassDetail" component={ClassDetailScreen} />
       {/* Lessons animate up and own the full screen — no tab bar, no exit
           affordance beyond an explicit, deliberate control. */}
+      <Stack.Screen
+        name="Class"
+        component={ClassScreen}
+        options={{ animation: "slide_from_bottom", gestureEnabled: false }}
+      />
       <Stack.Screen
         name="Lesson"
         component={LessonScreen}

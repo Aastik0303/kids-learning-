@@ -122,16 +122,22 @@ def test_a_spent_strategy_survives_a_restart(client: TestClient):
     )
 
 
-def test_the_clean_second_try_spends_nothing(client: TestClient):
-    """Rung 1 is encouragement by design. Writing an episode for it would train
-    the table on a turn the policy never influenced."""
+def test_the_first_miss_already_spends_a_strategy(client: TestClient):
+    """The policy is consulted the moment a child gets something wrong.
+
+    There used to be an encouragement-only rung between the miss and the
+    ladder - "good try, go again" - which spent nothing and taught nothing. A
+    question gets three repairs, so the first one has to teach: a strategy is
+    chosen and an episode is written for it, waiting on the retention probe that
+    will eventually pay it.
+    """
     child_id = make_child(client)
 
     response = guide_agent_service.guide(teaching_turn(child_id, attempt=1))
 
-    assert response.teaching_strategy is None
+    assert response.teaching_strategy in actions.ALL_STRATEGIES
     with session_scope() as session:
-        assert session.query(PolicyEpisode).count() == 0
+        assert session.query(PolicyEpisode).count() == 1
 
 
 def test_a_parked_question_can_only_be_parked(client: TestClient):

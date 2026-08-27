@@ -12,3 +12,14 @@ alembic>=1.13,<2
 # it and is the only other thing it pulls in.
 langgraph>=1.0.8,<2
 langchain-core>=1.6,<2
+
+# The AI Teacher playground's retrieval: free HuggingFace sentence embeddings,
+# run locally. ~90MB of model, downloaded once and cached. `rag.py` falls back
+# to keyword search when this cannot be imported or loaded, so the playground
+# still works on a machine that has neither the model nor a network.
+sentence-transformers>=3.0,<6
+
+# The guide's voice: Microsoft Edge's free neural voices. No key and no cost, and
+# one voice reads English and Devanagari in the same sentence - which is how this
+# app narrates Hindi, so it replaces the browser's own robotic speechSynthesis.
+edge-tts>=6.1.9

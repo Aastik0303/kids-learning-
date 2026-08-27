@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Voice Assistant</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎙️</text></svg>"
+    />
+  </head>
+  <body>
+    <main class="app">
+      <header class="app__header">
+        <h1>AI Voice Assistant</h1>
+        <p class="app__subtitle">Press the microphone and just talk.</p>
+      </header>
+
+      <!-- What the server says about itself, filled in by /health on load. It is
+           here so a missing API key is visible before you speak, not after. -->
+      <p id="status" class="status" role="status" aria-live="polite">Connecting…</p>
+
+      <section class="mic">
+        <button
+          id="micButton"
+          class="mic__button"
+          type="button"
+          aria-label="Start recording"
+        >
+          <span class="mic__icon" aria-hidden="true">🎙️</span>
+        </button>
+        <p id="micHint" class="mic__hint">Click to start</p>
+
+        <label class="mic__language">
+          I will speak
+          <select id="language">
+            <option value="en-IN">English (India)</option>
+            <option value="en-US">English (US)</option>
+            <option value="hi-IN">हिंदी</option>
+          </select>
+        </label>
+      </section>
+
+      <!-- The loading indicator. Hidden until something is actually in flight. -->
+      <div id="loading" class="loading" hidden>
+        <span class="loading__dot"></span>
+        <span class="loading__dot"></span>
+        <span class="loading__dot"></span>
+        <span id="loadingLabel" class="loading__label">Thinking…</span>
+      </div>
+
+      <!-- Errors get their own box, so a failure is never a page that silently
+           does nothing. -->
+      <p id="error" class="error" role="alert" hidden></p>
+
+      <section class="panel" id="userPanel" hidden>
+        <h2 class="panel__title">You said</h2>
+        <p id="userText" class="panel__body"></p>
+      </section>
+
+      <section class="panel panel--ai" id="aiPanel" hidden>
+        <h2 class="panel__title">Assistant</h2>
+        <p id="aiText" class="panel__body"></p>
+        <!-- `controls` so the reply can be replayed, and so there is something
+             to press if the browser ever blocks autoplay. -->
+        <audio id="player" class="panel__audio" controls></audio>
+      </section>
+
+      <!-- The fallback. Shown automatically when the browser has no Web Speech
+           API (Firefox, most in-app browsers), and always available for anyone
+           who would rather type. -->
+      <section class="typed">
+        <form id="typedForm" class="typed__form">
+          <label class="typed__label" for="typedInput">Or type instead</label>
+          <div class="typed__row">
+            <input
+              id="typedInput"
+              class="typed__input"
+              type="text"
+              placeholder="Type a message and press Send"
+              autocomplete="off"
+            />
+            <button id="sendButton" class="typed__send" type="submit">Send</button>
+          </div>
+        </form>
+      </section>
+
+      <footer class="app__footer">
+        Browser microphone → Groq → Edge TTS
+      </footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

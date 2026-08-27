@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { useTodayPlan } from "@/lib/useTodayPlan";
-import { subjectOf } from "@/services/plan";
 
 /**
  * The app opening today's lesson by itself, for the children who cannot.
@@ -61,8 +60,10 @@ export function AutoOpenGate() {
     setPaused(readPaused());
   }, []);
 
-  const subjectId = current ? subjectOf(current.skill_id) : null;
-  const href = subjectId && current ? `/adventure/${subjectId}/${current.topic_id}` : null;
+  // The class, never a level. Adventure teaches nothing any more, and which
+  // level is taught is the frozen plan's decision — the same decision the class
+  // makes for itself the moment it opens.
+  const href = current ? "/ai-teacher" : null;
   const running = autopilot && Boolean(href) && !paused;
 
   useEffect(() => {

@@ -12,8 +12,19 @@ import { useAvatar } from "@/components/avatar/AvatarProvider";
  *
  * Everything a child can ask for is one tap, and each tap is spoken:
  *   Say it again  — repeats the current line, no network involved.
- *   Hint          — asks the guide for one small step, never the answer.
+ *   Ask           — the child asks the guide anything, out loud.
  *   Show me       — asks the guide to point at the pictures and count along.
+ *
+ * Ask replaced a fixed "Give me a hint" button. A hint was the only thing a
+ * child was allowed to want, and it was always the same request; what they
+ * actually want is to ask the thing they are wondering about - "what is that
+ * one?", "why?", "yeh kya hai?". The guide still answers a hint request when
+ * that is what they asked for, because now they can ask for it in words.
+ *
+ * It is a microphone, not a text box, because the children this is for cannot
+ * read or type. Everything they say goes through the guide's own safety
+ * filtering server-side, and the guide answers questions about the lesson or
+ * says, kindly, that it can help with letters and numbers instead.
  *
  * The buttons carry no size of their own: the surface floors in globals.css
  * give every control inside the child shell its 64px (or 96px in `early`)
@@ -22,15 +33,19 @@ import { useAvatar } from "@/components/avatar/AvatarProvider";
 export function GuideCoach({
   message,
   busy = false,
-  onHint,
+  onAsk,
   onShowMe,
-  disabled
+  disabled,
+  isAsking = false
 }: {
   message: string;
   busy?: boolean;
-  onHint?: () => void;
+  /** Opens the microphone so the child can ask the guide anything. */
+  onAsk?: () => void;
   onShowMe?: () => void;
   disabled?: boolean;
+  /** True while the microphone is open and waiting for the question. */
+  isAsking?: boolean;
 }) {
   const { speakMessage, setAvatar } = useAvatar();
   const line = busy ? "Let me think about this one…" : message;
@@ -71,15 +86,18 @@ export function GuideCoach({
         >
           🔊 Say it again
         </button>
-        {onHint ? (
+        {onAsk ? (
           <button
             type="button"
-            onClick={onHint}
-            disabled={disabled || busy}
-            data-testid="guide-hint"
-            className="pressable rounded-full bg-sunshine px-5 py-3 text-base font-black text-ink shadow-soft disabled:opacity-50"
+            onClick={onAsk}
+            disabled={disabled || busy || isAsking}
+            data-testid="guide-ask"
+            aria-label={isAsking ? "Listening to your question" : "Ask the guide a question"}
+            className={`pressable rounded-full px-5 py-3 text-base font-black text-ink shadow-soft disabled:opacity-50 ${
+              isAsking ? "animate-pulse bg-leaf text-white" : "bg-sunshine"
+            }`}
           >
-            💡 Give me a hint
+            {isAsking ? "🎤 I am listening…" : "🙋 Ask me anything"}
           </button>
         ) : null}
         {onShowMe ? (

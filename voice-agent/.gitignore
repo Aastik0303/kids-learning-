@@ -1,0 +1,14 @@
+# Secrets. The example file is committed; the real one never is.
+backend/.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

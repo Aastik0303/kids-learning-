@@ -23,48 +23,48 @@ router = APIRouter(prefix="/curriculum", tags=["curriculum"])
 
 
 @router.get("", response_model=CurriculumOverview)
-async def overview() -> CurriculumOverview:
+def overview() -> CurriculumOverview:
     return curriculum_service.overview()
 
 
 @router.get("/classes", response_model=list[ClassSummary])
-async def list_classes() -> list[ClassSummary]:
+def list_classes() -> list[ClassSummary]:
     return curriculum_service.list_classes()
 
 
 @router.get("/classes/{class_id}", response_model=ClassDetail)
-async def get_class(class_id: str) -> ClassDetail:
+def get_class(class_id: str) -> ClassDetail:
     return curriculum_service.get_class(class_id)
 
 
 @router.get("/classes/{class_id}/experience", response_model=ExperienceMode)
-async def get_experience(class_id: str) -> ExperienceMode:
+def get_experience(class_id: str) -> ExperienceMode:
     return curriculum_service.experience_mode_for_class(class_id)
 
 
 @router.get("/subjects/{subject_id}", response_model=Subject)
-async def get_subject(subject_id: str) -> Subject:
+def get_subject(subject_id: str) -> Subject:
     return curriculum_service.get_subject(subject_id)
 
 
 @router.get("/topics/{topic_id}", response_model=Topic)
-async def get_topic(topic_id: str) -> Topic:
+def get_topic(topic_id: str) -> Topic:
     return curriculum_service.get_topic(topic_id)
 
 
 @router.get("/topics/{topic_id}/activities", response_model=list[Activity])
-async def get_topic_activities(topic_id: str) -> list[Activity]:
+def get_topic_activities(topic_id: str) -> list[Activity]:
     return curriculum_service.get_activities(topic_id)
 
 
 @router.get("/children/{child_id}/class", response_model=ClassDetail)
-async def class_for_child(child_id: str) -> ClassDetail:
+def class_for_child(child_id: str) -> ClassDetail:
     child = child_service.get_child(child_id)
     return curriculum_service.get_class(child.class_id)
 
 
 @router.get("/children/{child_id}/class-options", response_model=list[ClassSummary])
-async def class_options(child_id: str) -> list[ClassSummary]:
+def class_options(child_id: str) -> list[ClassSummary]:
     """Classes a parent may move this child to.
 
     Anchored on the class the birth date implies, not on the current one, so an
@@ -77,12 +77,12 @@ async def class_options(child_id: str) -> list[ClassSummary]:
 
 
 @router.put("/children/{child_id}/class", response_model=ChildProfile)
-async def set_class_override(child_id: str, payload: ClassOverrideRequest) -> ChildProfile:
+def set_class_override(child_id: str, payload: ClassOverrideRequest) -> ChildProfile:
     """Parent surface only. Requires the parent's session token; a child never
     holds one, so a child cannot reach this."""
     return child_service.set_class_override(child_id, payload.session_token, payload.class_id)
 
 
 @router.delete("/children/{child_id}/class", response_model=ChildProfile)
-async def clear_class_override(child_id: str, session_token: str) -> ChildProfile:
+def clear_class_override(child_id: str, session_token: str) -> ChildProfile:
     return child_service.clear_class_override(child_id, session_token)

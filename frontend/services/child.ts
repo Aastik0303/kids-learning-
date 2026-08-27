@@ -1,4 +1,5 @@
 import { api } from "@/services/api";
+import { invalidate, shared } from "@/services/cache";
 import type { ChildProfile } from "@/types";
 import { saveChild } from "./session";
 
@@ -18,6 +19,7 @@ export function createChild(
     body: JSON.stringify({ session_token, name, birth_year, birth_month, preferred_language })
   }).then((child) => {
     saveChild(child);
+    forgetChildren();
     return child;
   });
 }
@@ -30,9 +32,18 @@ export function createChild(
  * show a class, subjects or progress.
  */
 export function listChildren(session_token: string) {
-  return api<ChildProfile[]>("/children", {
-    headers: { "X-Demo-Session": session_token }
-  });
+  // Every screen mounts `useActiveChild`, and so does the shell around it, so
+  // one navigation asked for the same list three or four times. They share one
+  // read; anything that changes the child - finishing a lesson, editing the
+  // profile - calls `forgetChildren`.
+  return shared(`children:${session_token}`, () =>
+    api<ChildProfile[]>("/children", { headers: { "X-Demo-Session": session_token } })
+  );
+}
+
+/** The stored child has changed on the server. Drop the shared read. */
+export function forgetChildren() {
+  invalidate("children");
 }
 
 /** Load the parent's first child into the session. Returns null when there is none yet. */
@@ -44,7 +55,12 @@ export async function loadActiveChild(session_token: string): Promise<ChildProfi
 }
 
 export function getProgress(childId: string) {
-  return api<{ child: ChildProfile }>(`/progress/${childId}`);
+  // Never shared: this is the call a finished lesson makes to find out what it
+  // earned, and a cached answer there would show the stars from before it.
+  return api<{ child: ChildProfile }>(`/progress/${childId}`).then((progress) => {
+    forgetChildren();
+    return progress;
+  });
 }
 
 export function updateChildProfile(
@@ -57,13 +73,7 @@ export function updateChildProfile(
     body: JSON.stringify({ session_token, ...updates })
   }).then((updated) => {
     saveChild(updated);
+    forgetChildren();
     return updated;
-  });
-}
-
-export function seedChild(childId: string) {
-  return api<ChildProfile>(`/dev/seed/${childId}`, { method: "POST" }).then((child) => {
-    saveChild(child);
-    return child;
   });
 }

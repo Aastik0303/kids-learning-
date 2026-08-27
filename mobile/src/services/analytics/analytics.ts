@@ -24,6 +24,9 @@ export type AnalyticsEvent =
   | { name: "guide_action_executed"; props: { action: string; target: string | null } }
   | { name: "guide_action_rejected"; props: { reason: string; action: string } }
   | { name: "voice_capture"; props: { outcome: string; confidence: number } }
+  // The conducted class: one sitting, opened and closed by the server.
+  | { name: "class_opened"; props: { topic_id: string; phase: string } }
+  | { name: "class_closed"; props: { reason: string; phase: string } }
   | { name: "network_error"; props: { kind: string; path: string } };
 
 type Sink = (name: string, props: Record<string, unknown>) => void;

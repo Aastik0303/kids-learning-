@@ -425,7 +425,7 @@ us budget ke against maayne rakhta hai. Par asli khatra overhead nahi hai:
 Aapka poora Class Teacher graph:
 
 ```
-8 nodes   : greet, set, i_do, we_do, you_do, check, branch, close
+9 nodes   : greet, set, i_do, say_it, we_do, you_do, check, branch, close
 edges     : linear, plus branch se 6 deterministic outcomes
 cycles    : ek (branch → we_do/you_do)
 LLM nodes : ek (voice), aur woh bhi commit ke *baad*
@@ -446,7 +446,7 @@ ka poora thesis hi yahi hai: *"infrastructure you maintain instead of product yo
 ```python
 # services/conductor_service.py — poora "graph runtime" itna hi hai
 
-Phase = Literal["greet","set","i_do","we_do","you_do","check","branch","close"]
+Phase = Literal["greet","set","i_do","say_it","we_do","you_do","check","branch","close"]
 
 HANDLERS: dict[Phase, Callable[[LessonState, ChildInput], StepResult]] = {
     "greet":  handle_greet,   "set":    handle_set,

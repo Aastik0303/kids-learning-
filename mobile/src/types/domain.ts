@@ -6,6 +6,8 @@
  * Source of truth per block is noted in the comment above it.
  */
 
+import type { GuideVisualAction } from "@/types/guide";
+
 // ─── auth.py ────────────────────────────────────────────────────────────
 
 export type User = {
@@ -336,6 +338,8 @@ export type SpeechNormalizeRequest = {
   correct_answer?: string | null;
   accepted_answers?: string[];
   options?: string[];
+  /** The recogniser's runners-up, best first. At most five are read. */
+  alternatives?: string[];
 };
 
 // ─── common.py ──────────────────────────────────────────────────────────
@@ -345,4 +349,128 @@ export type ApiErrorBody = {
     code: string;
     message: string;
   };
+};
+
+// ─── conductor.py ───────────────────────────────────────────────────────
+
+/**
+ * The conductor's one response shape. The class is run server-side and this
+ * is the whole of what the client is told about the current beat: what to
+ * show, what to say, what to wait for, and what to report when nothing comes.
+ *
+ * The client renders this and reports what the child did. It decides nothing —
+ * not whether an answer was right, not what comes next, and not what silence
+ * means.
+ */
+export type ConductorPhase =
+  | "greet"
+  | "set"
+  | "i_do"
+  | "say_it"
+  | "we_do"
+  | "you_do"
+  | "check"
+  | "branch"
+  | "close";
+
+export type ConductorInputKind = "tap" | "voice" | "trace" | "idle" | "doubt" | "ready";
+
+export type ConductorScaffold = {
+  level: number;
+  point_at: string[];
+  dim_others: boolean;
+  demo_tap: boolean;
+  /** Already trimmed server-side. The client may not add to or trim this. */
+  options_shown: string[];
+  co_narrate: string;
+};
+
+export type ConductorPresentation = {
+  choices_shown: number;
+  touch_target_px: number;
+  text_density: string;
+  decoration: string;
+  motion: string;
+  narration_speed: number;
+};
+
+export type ConductorSpeech = {
+  text: string;
+  language: string;
+  speak: boolean;
+  voice_speed: number;
+  source: "template" | "llm";
+};
+
+export type ConductorNextInput = {
+  expects: ConductorInputKind;
+  timeout_ms: number;
+  on_timeout: ConductorInputKind;
+};
+
+/** Set whenever the microphone should be open for this turn. */
+export type ConductorListen = {
+  active: boolean;
+  /** The thing the child is being asked to say, e.g. "A" or "अ". */
+  expect: string;
+  contextual_strings: string[];
+  language: string;
+  attempt: number;
+  max_attempts: number;
+  hold_open_ms: number;
+};
+
+export type ConductorProgress = { shape: string; filled: number; total: number };
+
+export type ConductorClose = {
+  reason: "completed" | "day_complete" | "end_kindly" | "paused" | "session_overrun";
+  stars_earned: number;
+  topic_completed: boolean;
+  revisit_skill_id: string | null;
+};
+
+/**
+ * The conductor's activity. Same shape as `Activity`, with two differences
+ * that matter: `correct_answer` is **always null** — the answer key never
+ * leaves the server during a class — and `accept` carries the extra spellings
+ * a spoken answer may arrive in.
+ */
+export type ConductorActivity = Omit<Activity, "correct_answer"> & {
+  correct_answer: string | null;
+  accept: string[];
+  answer_kind: string;
+  skill_id?: string | null;
+  trace_target?: string | null;
+  open_ended?: boolean;
+};
+
+export type ConductorDirective = {
+  session_id: string;
+  child_id: string;
+  topic_id: string;
+  phase: ConductorPhase;
+  activity: ConductorActivity | null;
+  scaffold: ConductorScaffold;
+  presentation: ConductorPresentation;
+  speech: ConductorSpeech;
+  avatar: AvatarPayload;
+  visual_action: GuideVisualAction;
+  next_input: ConductorNextInput;
+  listen: ConductorListen;
+  progress: ConductorProgress;
+  /** Set when the guide is talking and nothing is expected of the child. */
+  auto_advance_in_ms: number | null;
+  close: ConductorClose | null;
+  branch: string | null;
+  teaching_strategy: string | null;
+  /** What an utterance that was not an answer was taken to be. Diagnostics. */
+  heard_as: string | null;
+};
+
+export type ConductorInputPayload = {
+  kind: ConductorInputKind;
+  answer?: string;
+  latency_ms?: number;
+  confidence?: number;
+  alternatives?: string[];
 };

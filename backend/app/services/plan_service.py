@@ -38,6 +38,11 @@ logger = logging.getLogger(__name__)
 # inside one of them. What the plan deliberately does *not* contain is the topic
 # that today's lesson unlocks: that is tomorrow's, which is the whole point of
 # freezing a day.
+#
+# This is the ceiling on the candidate list, not the length of a day: the
+# planner takes the first `app.ai.planner.graph.MAX_ITEMS` of it. Since
+# `_candidates` now returns exactly one level per subject, both numbers count
+# subjects - the day is three subjects, and the class is three stages.
 PLAN_LENGTH = 8
 
 # What the child hears when they reach for something the day does not hold.
@@ -93,53 +98,67 @@ def _mastery_map(child_id: UUID) -> dict[str, float]:
 
 
 def _candidates(child: ChildProfile, today: date | None = None) -> list[PlannedItem]:
-    """What the child could do today: one live topic per subject, rotated.
+    """What the child could do today: **exactly one level per subject**, rotated.
 
-    Weak skills first - a topic the child struggled with is revisited before new
-    ground is broken - then the first unfinished topic of each subject.
+    One subject, one level, and never two. The day is a row of subjects - the
+    class runs one stage per planned item, so a day holding two English levels
+    and no General Awareness is a class that spends two of its three stages on
+    the same subject and never opens the third. A subject either has a level in
+    today's row or it does not.
+
+    Which level, inside a subject: a topic the child struggled with comes before
+    new ground, otherwise the first unfinished one. Only the *first* weak topic
+    counts - a subject with three shaky levels still gets one turn today and the
+    next one tomorrow.
 
     The rotation matters as much as the selection. The planner keeps a day to
-    three lessons, and a nursery child has six subjects; without rotation the
+    three lessons and a nursery child has six subjects; without rotation the
     first three in manifest order would be the only three ever planned, and
     Hindi, EVS and Art would wait until Maths ran out of topics. Rotating by the
     day number gives every subject its turn, and does it deterministically - the
     same child on the same date gets the same day, however many times the plan
-    is read.
+    is read. A Play Group child has exactly three subjects, so their day is all
+    three of them every day, in a rotating order.
     """
     detail = curriculum_service.get_class(child.class_id)
     weak = set(child.weak_skills)
-    revisit: list[PlannedItem] = []
-    fresh: list[PlannedItem] = []
+    per_subject: list[PlannedItem] = []
 
     for subject in detail.subjects:
         progress = child.subject_progress.get(subject.subject_id)
         completed = set(progress.completed_topics) if progress else set()
         unlocked = set(progress.unlocked_topics) if progress else set()
-        subject_weak: list[PlannedItem] = []
-        subject_fresh: PlannedItem | None = None
+        revisit: PlannedItem | None = None
+        fresh: PlannedItem | None = None
 
         for topic in subject.topics:
             if not topic.available or topic.topic_id not in unlocked:
                 continue
             skill_id = f"{subject.subject_id}:{topic.topic_id}"
             if skill_id in weak:
-                subject_weak.append(PlannedItem(topic_id=topic.topic_id, skill_id=skill_id, reason="revisit"))
-            elif topic.topic_id not in completed and subject_fresh is None:
+                if revisit is None:
+                    revisit = PlannedItem(
+                        topic_id=topic.topic_id, skill_id=skill_id, reason="revisit"
+                    )
+            elif topic.topic_id not in completed and fresh is None:
                 # The first unfinished topic in this subject, and only that one.
                 # Taking two would let a child finish a level and walk straight
                 # into the one it just unlocked, which is the thing the day is
                 # meant to hold back.
-                subject_fresh = PlannedItem(topic_id=topic.topic_id, skill_id=skill_id, reason="new")
+                fresh = PlannedItem(topic_id=topic.topic_id, skill_id=skill_id, reason="new")
+            if revisit is not None and fresh is not None:
+                break
 
-        revisit.extend(subject_weak)
-        if subject_fresh is not None:
-            fresh.append(subject_fresh)
+        # Shaky ground before new ground, and one of them either way.
+        chosen = revisit or fresh
+        if chosen is not None:
+            per_subject.append(chosen)
 
-    if fresh:
-        offset = (today or _today()).toordinal() % len(fresh)
-        fresh = fresh[offset:] + fresh[:offset]
+    if per_subject:
+        offset = (today or _today()).toordinal() % len(per_subject)
+        per_subject = per_subject[offset:] + per_subject[:offset]
 
-    return (revisit + fresh)[:PLAN_LENGTH]
+    return per_subject[:PLAN_LENGTH]
 
 
 def _candidate_menu(child: ChildProfile, items: list[PlannedItem]) -> list[dict]:

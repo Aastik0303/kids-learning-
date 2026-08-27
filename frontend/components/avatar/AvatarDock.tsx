@@ -9,7 +9,9 @@ import { AvatarControls } from "./AvatarControls";
 import { AvatarMessage } from "./AvatarMessage";
 import { useAvatar } from "./AvatarProvider";
 
-const hiddenRoutes = ["/login", "/signup", "/register", "/onboarding", "/parent", "/word-coach", "/sentence-coach"];
+// `/ai-teacher` has an avatar of its own, standing in the middle of the screen
+// and doing the talking. A second one in the corner would be two teachers.
+const hiddenRoutes = ["/login", "/signup", "/register", "/onboarding", "/parent", "/ai-teacher"];
 
 type ConversationMessage = {
   role: "user" | "assistant";

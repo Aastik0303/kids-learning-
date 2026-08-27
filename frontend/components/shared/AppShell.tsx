@@ -4,15 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AvatarDock } from "@/components/avatar/AvatarDock";
-import { TodayPlanChip } from "@/components/home/TodayPlanBlock";
+import { ScheduleStrip } from "@/components/shared/ScheduleStrip";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { getClassForChild } from "@/services/curriculum";
-import { clearSession, getUser, isGuestSession } from "@/services/session";
+import { logout } from "@/services/auth";
+import { clearSession, getToken, getUser, isGuestSession } from "@/services/session";
 import type { ChildProfile, ClassDetail, User } from "@/types";
 
 function progressPercent(child: ChildProfile, subjectId: string, topicCount: number) {
   const done = child.subject_progress?.[subjectId]?.completed_topics.length ?? 0;
   return topicCount ? Math.round((done / topicCount) * 100) : 0;
+}
+
+/** Sign out of the server as well as this browser, then start again at home. */
+async function signOut() {
+  const token = getToken();
+  if (token) await logout(token);
+  clearSession();
+  window.location.href = "/";
 }
 
 function ParentDrawer({
@@ -107,8 +116,7 @@ function ParentDrawer({
             <button
               className="pressable rounded-3xl bg-ink px-5 py-4 text-xl font-black text-white shadow-soft"
               onClick={() => {
-                clearSession();
-                window.location.href = "/";
+                void signOut();
               }}
             >
               Logout
@@ -134,8 +142,7 @@ function ParentDrawer({
             <button
               className="pressable rounded-3xl bg-ink px-5 py-4 text-xl font-black text-white shadow-soft"
               onClick={() => {
-                clearSession();
-                window.location.href = "/";
+                void signOut();
               }}
             >
               Logout
@@ -186,16 +193,25 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
     };
   }, []);
 
-  // `primary` rides the phone's bottom bar; the rest live behind its More
-  // button. All six stay in the desktop row exactly as before.
+  // Three destinations, and the first one is where the app already is: opening
+  // the site lands on the class, so this row is about the two places a child
+  // goes *away* to. Home and the conductor's own `/class` were both doors into
+  // a lesson, and there is one lesson now — `/` and `/class` both open the AI
+  // Teacher, so offering them as separate tabs would be three names for one
+  // room. Practice went the same way and is still reachable by URL.
   const navItems = [
-    { href: "/", label: "🏠 Home", icon: "🏠", short: "Home", guideId: "go-home", primary: true },
-    { href: "/practice", label: "🎨 Practice", icon: "🎨", short: "Practice", guideId: "start-practice", primary: true },
-    { href: "/adventure", label: "🗺️ Adventure", icon: "🗺️", short: "Adventure", guideId: "continue-adventure", primary: true },
-    { href: "/rewards", label: "🎁 Rewards", icon: "🎁", short: "Rewards", guideId: "open-rewards", primary: true },
-    { href: "/word-coach", label: "🔤 Word Coach", icon: "🔤", short: "Words", guideId: "word-coach", primary: false },
-    { href: "/sentence-coach", label: "📖 Sentence Coach", icon: "📖", short: "Sentences", guideId: "sentence-coach", primary: false }
+    // Today's class. It takes no topic: which levels are played today is the
+    // frozen daily plan's decision, so there is nothing to choose on the way in.
+    { href: "/ai-teacher", label: "🧑‍🏫 Class", icon: "🧑‍🏫", short: "Class", guideId: "ai-teacher", primary: true },
+    // The map. It teaches nothing — it is where a child sees the levels their
+    // class has opened and what is still asleep.
+    { href: "/adventure", label: "🗺️ My Levels", icon: "🗺️", short: "Levels", guideId: "continue-adventure", primary: true },
+    { href: "/rewards", label: "🎁 Rewards", icon: "🎁", short: "Rewards", guideId: "open-rewards", primary: true }
   ];
+
+  // What the More sheet would hold: the tabs that do not fit the phone row, and
+  // the sign-up a guest is offered.
+  const hasMore = navItems.some((item) => !item.primary) || guest;
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" || pathname === "/home" : pathname.startsWith(href);
@@ -244,10 +260,6 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
             })}
           </nav>
           <div className="flex items-center gap-2">
-            {/* The day's plan, beside the stars. It is the rule the whole app
-                follows now, so it belongs in the chrome that every screen
-                carries rather than on the home page alone. */}
-            <TodayPlanChip />
             <span className="rounded-full bg-sunshine px-4 py-3 text-sm font-black text-ink shadow-soft">⭐ {child?.stars ?? 0}</span>
             {guest ? (
               <Link className="pressable hidden rounded-full bg-leaf px-4 py-3 text-sm font-black text-white shadow-soft sm:inline-flex" href="/signup">
@@ -260,6 +272,10 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
           </div>
         </div>
       </header>
+      {/* The day's plan, on every screen and not only where a lesson is. The
+          class is built stage-for-item out of it, so it is the rule the child
+          is living inside rather than a page's decoration. */}
+      <ScheduleStrip />
       {children}
       <AvatarDock />
 
@@ -289,18 +305,23 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
             </Link>
           ))}
 
-        <button
-          type="button"
-          onClick={() => setMoreOpen((open) => !open)}
-          aria-expanded={moreOpen}
-          data-active={moreOpen ? "true" : undefined}
-          className="mobile-tab"
-        >
-          <span aria-hidden className="mobile-tab-icon">
-            {moreOpen ? "✕" : "✨"}
-          </span>
-          <span className="mobile-tab-label">More</span>
-        </button>
+        {/* Only when there is something behind it. The row is three tabs now,
+            and a More button that opens an empty sheet is a promise the app
+            cannot keep. */}
+        {hasMore ? (
+          <button
+            type="button"
+            onClick={() => setMoreOpen((open) => !open)}
+            aria-expanded={moreOpen}
+            data-active={moreOpen ? "true" : undefined}
+            className="mobile-tab"
+          >
+            <span aria-hidden className="mobile-tab-icon">
+              {moreOpen ? "✕" : "✨"}
+            </span>
+            <span className="mobile-tab-label">More</span>
+          </button>
+        ) : null}
 
         {moreOpen ? (
           <div className="mobile-more">

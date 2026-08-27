@@ -2,6 +2,7 @@ import * as Speech from "expo-speech";
 import { createAudioPlayer, type AudioPlayer } from "expo-audio";
 
 import { isEnabled } from "@/config/featureFlags";
+import { languageTag, segmentByScript } from "@/services/audio/language";
 import { speechApi } from "@/services/api/speechApi";
 
 /**
@@ -19,6 +20,11 @@ import { speechApi } from "@/services/api/speechApi";
 
 export type SpeakOptions = {
   language?: string;
+  /**
+   * An exact BCP-47 tag for this one utterance, overriding `language`. Set by
+   * the script splitter so a Devanagari run is read by a Hindi voice.
+   */
+  tag?: string;
   /** Slower than default: young children need time to parse each word. */
   rate?: number;
   pitch?: number;
@@ -31,18 +37,13 @@ const CHILD_PITCH = 1.08;
 
 let activePlayer: AudioPlayer | null = null;
 
-function languageTag(preferred?: string): string {
-  if (!preferred) return "en-US";
-  // Child profiles store a display name ("English"), not a BCP-47 tag.
-  const map: Record<string, string> = {
-    english: "en-US",
-    hindi: "hi-IN",
-    spanish: "es-ES",
-    french: "fr-FR",
-    arabic: "ar-SA",
-  };
-  return map[preferred.toLowerCase()] ?? preferred;
-}
+/**
+ * Bumped by every `speak` and every `stop`. A mixed-script line is spoken as
+ * several sequential utterances, and `Speech.stop()` only ends the one that is
+ * playing - without this the loop would calmly start the next segment, so a
+ * child tapping to interrupt would still hear the rest of the sentence.
+ */
+let utterance = 0;
 
 function speakOnDevice(text: string, options: SpeakOptions): Promise<void> {
   return new Promise((resolve) => {
@@ -55,7 +56,7 @@ function speakOnDevice(text: string, options: SpeakOptions): Promise<void> {
     };
 
     Speech.speak(text, {
-      language: languageTag(options.language),
+      language: options.tag ?? languageTag(options.language),
       rate: options.rate ?? CHILD_RATE,
       pitch: options.pitch ?? CHILD_PITCH,
       onStart: options.onStart,
@@ -108,17 +109,35 @@ export const tts = {
     if (!clean) return;
 
     await tts.stop();
+    const mine = ++utterance;
 
     if (provider === "hosted" && isEnabled("elevenLabsVoice")) {
+      // The hosted voice is multilingual, so a mixed line goes to it whole.
       const played = await speakHosted(clean, options);
       if (played) return;
       // Hosted failed — fall through to device rather than going silent.
     }
 
-    await speakOnDevice(clean, options);
+    // The device voice is not. An English engine handed "This is अ." reads
+    // "This is." and drops the letter the whole level is about, so the line is
+    // split and each run is spoken by a voice that can read it.
+    const base = languageTag(options.language);
+    const segments = segmentByScript(clean, base);
+
+    for (const [index, segment] of segments.entries()) {
+      if (mine !== utterance) return; // Interrupted between segments.
+      await speakOnDevice(segment.text, {
+        ...options,
+        tag: segment.tag,
+        // The callbacks belong to the utterance, not to each of its pieces.
+        onStart: index === 0 ? options.onStart : undefined,
+        onDone: index === segments.length - 1 ? options.onDone : undefined,
+      });
+    }
   },
 
   async stop(): Promise<void> {
+    utterance += 1;
     if (activePlayer) {
       try {
         activePlayer.remove();

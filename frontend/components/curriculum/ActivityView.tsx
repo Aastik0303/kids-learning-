@@ -6,10 +6,6 @@ import { GuideCoach } from "@/components/guide/GuideCoach";
 import { VisualGuideRenderer, visualGuideClass, type VisualGuideAction } from "@/components/guide/VisualGuideRenderer";
 import { TraceCanvas } from "@/components/learning/TraceCanvas";
 import { VisualTile } from "@/components/shared/VisualTile";
-import { SpeechErrorMessage } from "@/components/voice/SpeechErrorMessage";
-import { VoiceRecorder } from "@/components/voice/VoiceRecorder";
-import { VoiceStateIndicator, type VoiceInteractionState } from "@/components/voice/VoiceStateIndicator";
-import { VoiceTranscriptPreview } from "@/components/voice/VoiceTranscriptPreview";
 import type { Activity, ExperienceMode } from "@/types";
 import { learningTargetStyle, limitChoices, showsText } from "@/lib/experience";
 import { displayToken, isTextToken, visualIcon } from "@/lib/visualIcon";
@@ -28,8 +24,10 @@ type Props = {
   guideMessage?: string;
   /** A guide request is in flight — the coach says so rather than going blank. */
   guideBusy?: boolean;
-  /** Asks the guide for one small step. */
-  onHint?: () => void;
+  /** Opens the microphone so the child can ask the guide anything. */
+  onAsk?: () => void;
+  /** True while that microphone is open. */
+  isAsking?: boolean;
   /** Asks the guide to point at the pictures and work through them. */
   onShowMe?: () => void;
   /** A question the child asked out loud, routed to the guide. */
@@ -71,7 +69,8 @@ export function ActivityView({
   onAnswer,
   guideMessage = "",
   guideBusy = false,
-  onHint,
+  onAsk,
+  isAsking = false,
   onShowMe,
   onGuideQuestion,
   highlightId,
@@ -85,9 +84,6 @@ export function ActivityView({
   const isMultiPick = Boolean(activity.correct_answer?.includes(","));
   const [picked, setPicked] = useState<string[]>([]);
   const [lastTried, setLastTried] = useState<string | null>(null);
-  const [voiceState, setVoiceState] = useState<VoiceInteractionState>("ready_to_listen");
-  const [transcript, setTranscript] = useState("");
-  const [speechError, setSpeechError] = useState("");
   // Bumped whenever the child asks to be shown, so the writing canvas replays
   // its demo from the guide's button as well as its own.
   const [demoSignal, setDemoSignal] = useState(0);
@@ -95,9 +91,6 @@ export function ActivityView({
   useEffect(() => {
     setPicked([]);
     setLastTried(null);
-    setTranscript("");
-    setSpeechError("");
-    setVoiceState("ready_to_listen");
   }, [activity.activity_id]);
 
   // After a second miss the answer is pointed out rather than only described.
@@ -124,7 +117,8 @@ export function ActivityView({
       message={guideMessage}
       busy={guideBusy}
       disabled={disabled}
-      onHint={onHint}
+      onAsk={onAsk}
+      isAsking={isAsking}
       onShowMe={onShowMe ? showMe : undefined}
     />
   ) : null;
@@ -200,7 +194,11 @@ export function ActivityView({
   const shellClass = `activity-shell surface-panel grid gap-5 rounded-[2rem] p-4 sm:p-6 ${glow("activity-area")}`;
 
   // --- written with a finger ----------------------------------------------
-  if (activity.type === "trace") {
+  // A card with something to trace on it is a writing card, whatever its type
+  // is called. The server decides the same way — a `trace_target` or a type
+  // with "trace" in it — and the two must agree, or the class waits for a
+  // drawing on a screen that never offered one.
+  if (activity.type.includes("trace") || Boolean(activity.trace_target)) {
     return (
       <section
         id="activity-area"
@@ -262,9 +260,12 @@ export function ActivityView({
 
   // --- said aloud ---------------------------------------------------------
   if (activity.answer_kind === "spoken") {
-    // Some say-it-back activities also carry the options they were built from.
-    // When the microphone fails, those become the tap fallback below.
-    const spokenChoices = limitChoices(activity.options, mode);
+    // No microphone of its own, and that is the point. The conductor decides
+    // when the class listens and renders the one microphone for it; this card
+    // used to render a second recorder underneath, so a spoken turn showed two
+    // mics and a "Try again" panel next to a mic that was already open and
+    // waiting. What is left here is the thing being said, and the picture of
+    // it.
     return (
       <section
         id="activity-area"
@@ -278,79 +279,6 @@ export function ActivityView({
         {visuals}
         <VisualGuideRenderer visualAction={visualAction} />
         {helper}
-        <div
-          data-guide-id="voice-answer-area"
-          className={`activity-answers grid gap-4 rounded-[2rem] bg-sunshine/20 p-4 text-center sm:p-5 ${
-            highlightId === "voice-answer-area" || highlightId === "microphone-button" ? "guide-glow" : ""
-          }`}
-        >
-          <VoiceStateIndicator state={voiceState} />
-          <VoiceRecorder
-            sessionId={sessionId}
-            activity={activity}
-            state={voiceState}
-            disabled={disabled || voiceState === "speaking"}
-            onStateChange={setVoiceState}
-            onTranscript={setTranscript}
-            onSpeechError={setSpeechError}
-            onGuideQuestion={onGuideQuestion}
-            onVoiceAnswer={onAnswer}
-          />
-          <VoiceTranscriptPreview transcript={transcript} />
-          <SpeechErrorMessage message={speechError} />
-        </div>
-        {speechError ? (
-          // Speech can be unavailable — no permission, no browser support. The
-          // lesson must not become a dead end because of it.
-          //
-          // What it must NOT do is answer on the child's behalf. This button
-          // used to submit `activity.correct_answer`, and it appears on every
-          // speech failure including "I did not hear anything" — so tapping the
-          // mic, saying nothing, and tapping here awarded the star. It is also
-          // the first thing a stuck child finds. An open-ended prompt ("tell me
-          // your name") has no key to leak and any real attempt counts, so the
-          // self-report stands there; everything else falls back to tapping a
-          // real choice, and if there are no choices the child simply tries the
-          // mic again.
-          activity.open_ended ? (
-            <button
-              type="button"
-              disabled={disabled}
-              onClick={() => onAnswer("spoken")}
-              style={learningTargetStyle(mode)}
-              data-testid="activity-spoken-fallback"
-              className="pressable rounded-3xl bg-sky px-6 py-4 text-xl font-black text-white shadow-soft disabled:opacity-50"
-            >
-              🙂 I said it out loud
-            </button>
-          ) : spokenChoices.length > 0 ? (
-            <div
-              data-testid="activity-spoken-fallback-choices"
-              data-choice-count={spokenChoices.length}
-              className={`activity-answers grid gap-3 sm:gap-4 ${
-                spokenChoices.length > 2 ? "grid-cols-2 md:grid-cols-3" : "grid-cols-1 xs:grid-cols-2"
-              }`}
-            >
-              {spokenChoices.map((choice) => (
-                <button
-                  key={choice}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => onAnswer(choice)}
-                  style={learningTargetStyle(mode)}
-                  data-testid="answer-option"
-                  aria-label={choice}
-                  className="pressable flex flex-col items-center justify-center gap-1 rounded-3xl border-2 border-transparent bg-white p-3 font-black shadow-soft transition hover:border-ink/10 disabled:opacity-50 sm:p-4"
-                >
-                  <span aria-hidden className="text-4xl leading-none sm:text-5xl">
-                    {isTextToken(choice) ? displayToken(choice) : visualIcon(choice)}
-                  </span>
-                  {withText ? <span className="text-base capitalize sm:text-lg">{choice}</span> : null}
-                </button>
-              ))}
-            </div>
-          ) : null
-        ) : null}
       </section>
     );
   }

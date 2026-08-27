@@ -2291,109 +2291,108 @@ select:focus-visible {
   animation: avatar-idle 3.8s ease-in-out infinite;
 }
 
-.avatar-face {
-  position: absolute;
-  inset: 0.48rem;
-  z-index: 2;
-  border-radius: 46% 46% 42% 42%;
-  background:
-    radial-gradient(circle at 33% 42%, rgba(37, 49, 63, 0.9) 0 0.45rem, transparent 0.48rem),
-    radial-gradient(circle at 67% 42%, rgba(37, 49, 63, 0.9) 0 0.45rem, transparent 0.48rem),
-    #fff;
-  box-shadow:
-    inset 1rem -0.3rem 0 rgba(255, 238, 240, 0.8),
-    0 0.7rem 1.7rem rgba(37, 49, 63, 0.14);
+.panda {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0.55rem 1.1rem rgba(37, 49, 63, 0.18));
 }
 
-.avatar-ear {
-  position: absolute;
-  top: 0.15rem;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 999px;
-  background: var(--ink);
+/* An SVG transform is measured from the viewBox origin unless it is told
+ * otherwise, which throws every rotation across the canvas. */
+.panda-ear,
+.panda-eyes,
+.panda-paw-right,
+.panda-mouth-open {
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
-.avatar-ear-left {
-  left: 0.35rem;
+/* A face that never blinks is most of what made the old one look fake. */
+.panda-eyes {
+  animation: panda-blink 5.4s ease-in-out infinite;
 }
 
-.avatar-ear-right {
-  right: 0.35rem;
+.panda-mouth-open {
+  opacity: 0;
 }
 
-.avatar-eye {
-  position: absolute;
-  top: 2rem;
-  width: 1rem;
-  height: 1.15rem;
-  border-radius: 999px;
-  background: var(--ink);
+.avatar-speaking .panda-mouth-open,
+.avatar-is-speaking .panda-mouth-open {
+  opacity: 1;
+  animation: panda-talk 0.42s ease-in-out infinite;
 }
 
-.avatar-eye-left {
-  left: 1.45rem;
+.avatar-speaking .panda-mouth-closed,
+.avatar-is-speaking .panda-mouth-closed {
+  opacity: 0;
 }
 
-.avatar-eye-right {
-  right: 1.45rem;
+/* Listening: the ears turn towards the child, which is the one cue a
+ * pre-reader can read without any words. */
+.avatar-listening .panda-ear-left {
+  animation: panda-ear-left 1.7s ease-in-out infinite;
 }
 
-.avatar-nose {
-  position: absolute;
-  left: 50%;
-  top: 2.72rem;
-  width: 0.58rem;
-  height: 0.42rem;
-  border-radius: 999px;
-  background: var(--ink);
-  transform: translateX(-50%);
+.avatar-listening .panda-ear-right {
+  animation: panda-ear-right 1.7s ease-in-out infinite;
 }
 
-.avatar-mouth {
-  position: absolute;
-  left: 50%;
-  top: 3.18rem;
-  width: 0.82rem;
-  height: 0.42rem;
-  border-bottom: 3px solid var(--ink);
-  border-radius: 0 0 999px 999px;
-  transform: translateX(-50%);
+.avatar-sleeping .panda-eyes {
+  animation: none;
+  transform: scaleY(0.1);
 }
 
-.avatar-cheek {
-  position: absolute;
-  top: 3rem;
-  width: 0.75rem;
-  height: 0.45rem;
-  border-radius: 999px;
-  background: rgba(217, 79, 112, 0.28);
+.avatar-celebrating .panda-cheek,
+.avatar-happy .panda-cheek {
+  opacity: 0.72;
 }
 
-.avatar-cheek-left {
-  left: 0.8rem;
+@keyframes panda-blink {
+  0%,
+  91%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  94%,
+  96% {
+    transform: scaleY(0.08);
+  }
 }
 
-.avatar-cheek-right {
-  right: 0.8rem;
+@keyframes panda-talk {
+  0%,
+  100% {
+    transform: scaleY(0.5);
+  }
+
+  50% {
+    transform: scaleY(1.12);
+  }
 }
 
-.avatar-paw {
-  position: absolute;
-  z-index: 3;
-  bottom: 0.1rem;
-  width: 1.3rem;
-  height: 1.05rem;
-  border-radius: 999px 999px 0.7rem 0.7rem;
-  background: var(--ink);
+@keyframes panda-ear-left {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+
+  50% {
+    transform: rotate(-10deg) translateY(-4%);
+  }
 }
 
-.avatar-paw-left {
-  left: 1rem;
-}
+@keyframes panda-ear-right {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
 
-.avatar-paw-right {
-  right: 1rem;
+  50% {
+    transform: rotate(10deg) translateY(-4%);
+  }
 }
 
 .avatar-sparkle {
@@ -2415,10 +2414,10 @@ select:focus-visible {
   animation-delay: -0.55s;
 }
 
-.avatar-waving .avatar-paw-right,
-.avatar-speaking .avatar-paw-right,
-.avatar-is-speaking .avatar-paw-right {
-  transform-origin: 40% 90%;
+.avatar-waving .panda-paw-right,
+.avatar-speaking .panda-paw-right,
+.avatar-is-speaking .panda-paw-right {
+  transform-origin: 50% 88%;
   animation: avatar-wave 0.9s ease-in-out infinite;
 }
 
@@ -2431,10 +2430,8 @@ select:focus-visible {
   animation: avatar-celebrate 0.9s ease-in-out infinite;
 }
 
-.avatar-encouraging .avatar-face {
-  box-shadow:
-    inset 1rem -0.3rem 0 rgba(255, 238, 240, 0.9),
-    0 0.7rem 1.7rem rgba(47, 143, 107, 0.22);
+.avatar-encouraging .panda {
+  filter: drop-shadow(0 0.55rem 1.1rem rgba(47, 143, 107, 0.3));
 }
 
 .avatar-celebrating .avatar-sparkle,

@@ -9,6 +9,9 @@ export default function LoginPage() {
         <Link className="text-center font-bold text-leaf" href="/signup">
           Create demo account
         </Link>
+        <Link className="text-center font-bold text-ink/60" href="/forgot-password">
+          Forgot your password?
+        </Link>
       </div>
     </main>
   );

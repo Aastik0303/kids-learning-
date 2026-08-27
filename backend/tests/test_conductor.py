@@ -106,9 +106,28 @@ def send(client: TestClient, session_id: str, **payload) -> dict:
     return response.json()
 
 
+def say_it_back(client: TestClient, directive: dict) -> dict:
+    """Answer the say-it-back beat with the word it asked for."""
+    return send(
+        client,
+        directive["session_id"],
+        kind="voice",
+        answer=directive["listen"]["expect"],
+        confidence=0.95,
+    )
+
+
 def run_to_question(client: TestClient, directive: dict) -> dict:
-    """Let the class talk its way to the first thing it asks the child."""
-    for _ in range(12):
+    """Let the class talk its way to the first thing it *asks* the child.
+
+    The say-it-back beat is walked through rather than stopped at: it is the
+    child speaking, not the child being questioned, and every test below this
+    helper is about a question.
+    """
+    for _ in range(16):
+        if directive["phase"] == "say_it":
+            directive = say_it_back(client, directive)
+            continue
         if directive["next_input"]["expects"] != "ready":
             return directive
         directive = send(client, directive["session_id"], kind="ready")
@@ -138,15 +157,32 @@ def test_a_wrong_answer_re_explains_with_more_support():
     assert outcome.scaffold_delta == 1
 
 
-def test_the_third_attempt_stops_explaining_and_starts_simplifying():
-    outcome = decide(BranchInput(is_correct=False, attempts_on_current=3, skill_mastery=0.3))
+def test_the_last_of_the_three_tries_stops_explaining_and_starts_simplifying():
+    """Three repairs, and the third takes things away instead of adding them."""
+    outcome = decide(BranchInput(is_correct=False, attempts_on_current=2, skill_mastery=0.3))
     assert outcome.decision is Branch.SIMPLIFY
+    assert outcome.scaffold_delta == 1
 
 
-def test_the_fourth_attempt_ends_the_question_kindly():
-    outcome = decide(BranchInput(is_correct=False, attempts_on_current=4, skill_mastery=0.3))
-    assert outcome.decision is Branch.END_KINDLY
+def test_out_of_tries_moves_on_rather_than_ending_the_lesson():
+    """Spending the three repairs is not a reason to end the sitting.
+
+    It used to be: a fourth wrong answer closed the whole lesson, so a child who
+    could not do one question lost the rest of the day's work with it. The
+    question is let go of instead - `ADVANCE` with a reason that says the child
+    did not get there, so nothing celebrates it or counts it right.
+    """
+    outcome = decide(BranchInput(is_correct=False, attempts_on_current=3, skill_mastery=0.3))
+    assert outcome.decision is Branch.ADVANCE
     assert outcome.reason == "attempts_exhausted"
+
+
+def test_a_child_who_is_upset_still_stops_rather_than_being_moved_on():
+    """The one thing that must still end the sitting."""
+    outcome = decide(
+        BranchInput(is_correct=False, attempts_on_current=3, skill_mastery=0.3, frustration_score=0.9)
+    )
+    assert outcome.decision is Branch.END_KINDLY
 
 
 def test_safety_outranks_everything_else():
@@ -319,6 +355,26 @@ def test_we_do_is_skipped_for_a_designed_sequence():
     assert teaching_sequence(lesson_flow="sample", needs_answer=False) == (Phase.I_DO,)
 
 
+def test_the_class_waits_for_the_drawing_instead_of_advancing_past_it():
+    """A traced letter is not graded, but it is still the child's turn.
+
+    A writing card evaluates as presentational - there is no marking a finger
+    drawing right or wrong - and that used to make it I DO alone, so the one
+    step of a level that asks for a finger on the screen was shown for a few
+    seconds and then advanced past on a timer. YOU DO here means "your turn",
+    not "you will be marked".
+    """
+    assert teaching_sequence(lesson_flow="sample", needs_answer=False, draw=True) == (
+        Phase.I_DO,
+        Phase.YOU_DO,
+    )
+    # And the drawing is never also the listening beat: a microphone asking for
+    # the word with a finger already on the screen interrupts the writing.
+    assert Phase.SAY_IT not in teaching_sequence(
+        lesson_flow="sample", needs_answer=False, echo=True, draw=True
+    )
+
+
 # --------------------------------------------------------------------------
 # 3. The class, running
 # --------------------------------------------------------------------------
@@ -346,7 +402,11 @@ def test_the_lesson_walks_i_do_we_do_you_do_by_itself(client: TestClient):
     directive = client.post(f"/conductor/{child_id}/open").json()
 
     phases = [directive["phase"]]
-    for _ in range(8):
+    for _ in range(12):
+        if directive["phase"] == "say_it":
+            directive = say_it_back(client, directive)
+            phases.append(directive["phase"])
+            continue
         if directive["next_input"]["expects"] != "ready":
             break
         directive = send(client, directive["session_id"], kind="ready")
@@ -382,7 +442,9 @@ def test_a_wrong_answer_re_explains_and_a_right_one_moves_on(client: TestClient)
     assert wrong["scaffold"]["level"] >= directive["scaffold"]["level"]
     # The first wrong answer is encouragement by design - nothing new is taught,
     # so no strategy is spent on it.
-    assert wrong["teaching_strategy"] is None
+    # The first miss goes straight to the policy: something new is said on the
+    # very next turn, rather than "good try, go again".
+    assert wrong["teaching_strategy"]
 
     second_wrong = send(client, run_to_question(client, wrong)["session_id"], kind="tap", answer="blue", latency_ms=4000)
     # The second one teaches, and the policy names how.
@@ -394,20 +456,28 @@ def test_a_wrong_answer_re_explains_and_a_right_one_moves_on(client: TestClient)
     assert right["progress"]["filled"] == 1
 
 
-def test_four_wrong_answers_end_the_question_kindly(client: TestClient):
+def test_a_question_is_repaired_three_times_and_then_let_go_of(client: TestClient):
     """The worst thing the app can do is sit a child in front of a question they
-    cannot answer. Never told they failed, never asked again."""
+    cannot answer. Never told they failed, and never asked a fourth time."""
     child_id = make_child(client)
     directive = run_to_question(client, client.post(f"/conductor/{child_id}/open").json())
+    first_activity = directive["activity"]["activity_id"]
 
+    seen: list[str] = []
     for _ in range(6):
         directive = send(client, directive["session_id"], kind="tap", answer="blue", latency_ms=4000)
+        seen.append(directive["phase"])
         if directive.get("close"):
+            break
+        activity = (directive.get("activity") or {}).get("activity_id")
+        if activity and activity != first_activity:
             break
         directive = run_to_question(client, directive)
 
-    assert directive["close"]["reason"] == "end_kindly"
-    assert directive["close"]["revisit_skill_id"]
+    # Either the lesson had another thing to teach and moved to it, or that was
+    # the last question and the sitting closed. Never a fourth ask.
+    moved_on = (directive.get("activity") or {}).get("activity_id") != first_activity
+    assert moved_on or directive.get("close")
     assert "wrong" not in directive["speech"]["text"].lower()
     assert "fail" not in directive["speech"]["text"].lower()
 

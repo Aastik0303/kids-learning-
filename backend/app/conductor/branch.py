@@ -11,9 +11,13 @@ order rather than the conditions that carries the safety argument:
    good teaching later undoes that.
 2. `SWITCH_MODALITY` next, so a microphone that cannot hear a small voice is not
    mistaken for a child who cannot answer.
-3. `PREREQUISITE`, because re-explaining five to a child who does not have three
+3. `ADVANCE` with `attempts_exhausted`, once the three repairs are spent: the
+   question is let go of and the lesson carries on. Moving on is not the same
+   as getting it right and nothing here says it is - the attempt was already
+   recorded as wrong, no star is paid, and the skill is marked for revisiting.
+4. `PREREQUISITE`, because re-explaining five to a child who does not have three
    is re-explaining the wrong thing.
-4. `SIMPLIFY`, then `RE_EXPLAIN`, then `ADVANCE`.
+5. `SIMPLIFY`, then `RE_EXPLAIN`, then `ADVANCE`.
 
 No import in this module reaches `app.ai`, `app.services` or a model client, and
 `tests/test_conductor.py` asserts that on the import graph.
@@ -37,12 +41,18 @@ class Branch(str, Enum):
 # rather than moving on with a shaky grip on it.
 ADVANCE_MASTERY_FLOOR = 0.60
 
-# Four tries is the ceiling on one question. The fourth is not a fifth chance;
-# it is the turn the conductor stops asking.
-MAX_ATTEMPTS_ON_ONE_QUESTION = 4
+# Three goes at repairing one question, and then the class moves on.
+#
+# Each of the three is a different turn, and that is the point of having three
+# rather than one: the first re-explains with a strategy the learned policy
+# picks, the second re-explains with another one it has not spent yet, and the
+# third takes things away instead of adding them - fewer choices, more support.
+# A fourth would be the same question a fourth time, which is where a
+# four-year-old stops hearing teaching and starts hearing that they are wrong.
+MAX_ATTEMPTS_ON_ONE_QUESTION = 3
 
-# Where "re-explain" stops and "make it easier" starts.
-SIMPLIFY_AT_ATTEMPT = 3
+# Where "re-explain" stops and "make it easier" starts: the last of the three.
+SIMPLIFY_AT_ATTEMPT = 2
 
 FRUSTRATION_END_THRESHOLD = 0.75
 FRUSTRATION_SIMPLIFY_THRESHOLD = 0.50
@@ -100,9 +110,8 @@ class BranchOutcome:
 def decide(state: BranchInput) -> BranchOutcome:
     """Pick exactly one of the six. First rule that matches wins."""
 
-    # 1. Safety. A child is never left in front of a question they cannot do.
-    if state.attempts_on_current >= MAX_ATTEMPTS_ON_ONE_QUESTION and not state.is_correct:
-        return BranchOutcome(Branch.END_KINDLY, reason="attempts_exhausted")
+    # 1. Safety. A child is never left in front of a question they cannot do,
+    #    and an upset child is never taught through it.
     if state.frustration_score >= FRUSTRATION_END_THRESHOLD:
         return BranchOutcome(Branch.END_KINDLY, reason="frustration")
     if state.minutes_in_session > state.target_minutes * SESSION_OVERRUN_FACTOR:
@@ -114,10 +123,18 @@ def decide(state: BranchInput) -> BranchOutcome:
             Branch.SWITCH_MODALITY, reason="speech_unresolved", notes={"modality": "tap"}
         )
 
-    # 3. Do not teach a thing whose foundation is missing. Checked before the
+    # 3. Out of tries is not out of the lesson. The three repairs are spent, so
+    #    the question is let go of and the next thing is taught - `ADVANCE` here
+    #    means "move on", not "they got it", and the caller is told which by
+    #    `reason`. This used to end the whole sitting, which cost a child the
+    #    rest of the day's work over one question they could not do.
+    if state.attempts_on_current >= MAX_ATTEMPTS_ON_ONE_QUESTION and not state.is_correct:
+        return BranchOutcome(Branch.ADVANCE, reason="attempts_exhausted")
+
+    # 4. Do not teach a thing whose foundation is missing. Checked before the
     #    repair ladder, because otherwise the ladder re-explains the wrong skill
-    #    four times and then gives up on a child who was never taught the first
-    #    half of it.
+    #    three times and then moves on from a child who was never taught the
+    #    first half of it.
     if (
         not state.is_correct
         and state.prerequisite_mastery is not None
@@ -133,11 +150,11 @@ def decide(state: BranchInput) -> BranchOutcome:
         # same skill, with the support left where it is.
         return BranchOutcome(Branch.ADVANCE, reason="correct_after_help", notes={"reteach_soon": True})
 
-    # 4. Third try: stop adding words, start taking things away.
+    # 5. Last of the three: stop adding words, start taking things away.
     if state.attempts_on_current >= SIMPLIFY_AT_ATTEMPT or state.frustration_score >= FRUSTRATION_SIMPLIFY_THRESHOLD:
         return BranchOutcome(Branch.SIMPLIFY, reason="attempts_high", scaffold_delta=1)
 
-    # 5. Explain it again, differently. The rung and the strategy are chosen
+    # 6. Explain it again, differently. The rung and the strategy are chosen
     #    elsewhere; this only says that the question stays and the support goes up.
     return BranchOutcome(Branch.RE_EXPLAIN, reason="incorrect", scaffold_delta=1)
 

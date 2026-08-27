@@ -17,7 +17,7 @@ runs with no server at all. A bare `postgresql://` URL is normalised to psycopg
 3, which is the driver `requirements.txt` pins.
 
 Environment defaults are in `.env.example`. `LLM_PROVIDER=none` is the default and needs no API key.
-To use Groq for the single guide agent, create `backend/.env` with `LLM_PROVIDER=groq`, `GROQ_API_KEY`, and optionally `GROQ_MODEL`. The default Groq model is `llama-3.1-8b-instant`.
+To use Groq for the single guide agent, create `backend/.env` with `LLM_PROVIDER=groq`, `GROQ_API_KEY`, and optionally `GROQ_MODEL`. The default Groq model is `openai/gpt-oss-20b`.
 
 To use the configured ElevenLabs learning voice, add your API key. The voice ID is already set to `JBFqnCBsd6RMkjVDRZzb`; keep the key on the backend only.
 

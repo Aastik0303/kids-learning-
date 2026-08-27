@@ -1,4 +1,5 @@
 import { api } from "@/services/api";
+import { invalidate, shared } from "@/services/cache";
 import type { TodayPlan } from "@/types";
 
 /**
@@ -10,7 +11,15 @@ import type { TodayPlan } from "@/types";
  * what starts the day.
  */
 export function getTodayPlan(childId: string) {
-  return api<TodayPlan>(`/plans/${childId}/today`);
+  // The schedule strip, the auto-open gate and the home block all ask for this
+  // on the same render. They share one read; `forgetTodayPlan` is what makes a
+  // finished lesson show up rather than a timer.
+  return shared(`plans:today:${childId}`, () => api<TodayPlan>(`/plans/${childId}/today`));
+}
+
+/** Called when a lesson finishes: the day has moved, so re-read it. */
+export function forgetTodayPlan() {
+  invalidate("plans:");
 }
 
 /** The subject a plan item belongs to, read off the skill id it carries. */

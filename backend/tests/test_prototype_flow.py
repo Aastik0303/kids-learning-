@@ -12,6 +12,7 @@ from fastapi.testclient import TestClient
 import pytest
 
 from app.main import app
+from app.policy import actions as policy_actions
 from app.schemas.guide import GuideRequest
 from app.services import guide_agent_service
 from app.services.guide_agent_service import (
@@ -312,14 +313,22 @@ def test_a_wrong_answer_still_reaches_the_model(monkeypatch):
     assert seen == ["TOPIC_ANSWER_INCORRECT", "HINT_REQUESTED", "GUIDE_HELP_REQUESTED", "TOPIC_QUESTION_LOADED"]
 
 
-def test_asking_for_a_hint_skips_the_encouragement_rung():
-    """A child who asks for a hint has already said encouragement will not do,
-    so HINT_REQUESTED never lands on rung 1 - but it does not drag a parked
-    question back into being drilled either."""
+def test_every_miss_lands_on_a_rung_that_teaches():
+    """There is no encouragement-only rung any more.
+
+    Rung 1 used to be the clean second try - "good try, go again" - and nothing
+    was taught there and no strategy was spent. A question gets three repairs
+    now, and a turn that teaches nothing cannot be one of them, so the first
+    miss steps straight onto rung 2 where the policy chooses.
+    """
+    assert _ladder_attempt(_teaching_payload(1)) == 2
+    assert _ladder_attempt(_teaching_payload(2)) == 3
+
+    # A child who asks for a hint is still not dragged back down a rung, and
+    # asking on a parked question does not restart the drilling.
     assert _ladder_attempt(_teaching_payload(0, event="HINT_REQUESTED")) == 2
     assert _ladder_attempt(_teaching_payload(1, event="HINT_REQUESTED")) == 2
     assert _ladder_attempt(_teaching_payload(5, event="HINT_REQUESTED")) == 5
-    assert _ladder_attempt(_teaching_payload(1)) == 1
 
     instruction = _model_instruction(_teaching_payload(0, event="HINT_REQUESTED"))
     assert "S3_EXAMPLE or S5_CONTRAST" in instruction
@@ -330,7 +339,9 @@ def test_each_task_gets_only_its_own_instruction():
     """One instruction for every event alike read as a list of exceptions. Each
     task now carries its own job and nobody else's."""
     first = _model_instruction(_teaching_payload(0, event="TOPIC_QUESTION_LOADED"))
-    repair = _model_instruction(_teaching_payload(3))
+    # Attempt 2 is the last repair: rung 3, where the ladder changes how the
+    # idea is presented rather than adding words to the same explanation.
+    repair = _model_instruction(_teaching_payload(2))
     help_turn = _model_instruction(_teaching_payload(0, event="GUIDE_HELP_REQUESTED"))
 
     assert "there is nothing to repair yet" in first
@@ -453,8 +464,9 @@ def test_a_parked_turn_on_the_model_path_moves_the_child_on():
 
 def test_a_runaway_attempt_count_parks_rather_than_falling_off_the_ladder():
     """`attempt` is client UI state. Nothing scores off it, but every rung of
-    the ladder is chosen by it."""
-    assert _ladder_attempt(_teaching_payload(999)) == 6
+    the ladder is chosen by it, so it is clamped to the top of the ladder -
+    where the only thing left to do is park the question."""
+    assert _ladder_attempt(_teaching_payload(999)) == policy_actions.PARK_RUNG
     assert _fallback_guide(_teaching_payload(999)).message in HINT_RESPONSES_ATTEMPT_4_PLUS
 
 

@@ -7,5 +7,5 @@ router = APIRouter(prefix="/agent", tags=["guide-agent"])
 
 
 @router.post("/guide", response_model=GuideResponse)
-async def guide_agent(payload: GuideRequest) -> GuideResponse:
+def guide_agent(payload: GuideRequest) -> GuideResponse:
     return guide(payload)

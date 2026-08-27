@@ -1,4 +1,5 @@
 import logging
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -16,11 +17,13 @@ from app.api import (
     history,
     learning,
     plans,
+    playground,
     practice,
     progress,
     speech,
 )
 from app.config import get_settings
+from app.playground import rag
 from app.conductor.skill_graph import load_skill_graph
 from app.db.bootstrap import ensure_schema, schema_ready
 from app.services import planner_runner
@@ -50,6 +53,10 @@ async def lifespan(_: FastAPI):
     # child opens the app, not built by their first request. Off when
     # `PLANNER_AUTO_RUN=0`, which is what the test suite sets.
     planner_task = planner_runner.start()
+    # The AI Teacher's retrieval index, built off the request path. It is a
+    # playground, so a failure here is logged and forgotten - the tab still
+    # works, it just pays the build on its first turn.
+    threading.Thread(target=rag.warm, name="playground-rag-warm", daemon=True).start()
     try:
         yield
     finally:
@@ -100,4 +107,5 @@ app.include_router(progress.router)
 app.include_router(speech.router)
 app.include_router(guide.router)
 app.include_router(history.router)
+app.include_router(playground.router)
 app.include_router(dev.router)

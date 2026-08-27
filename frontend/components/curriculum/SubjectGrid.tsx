@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ChildProfile, SubjectProgress, ClassDetail, Subject, Topic } from "@/types";
+import type { ChildProfile, SubjectProgress, ClassDetail, Subject } from "@/types";
 import { learningTargetStyle } from "@/lib/experience";
 import { useTodayPlan } from "@/lib/useTodayPlan";
 
@@ -11,7 +11,13 @@ type Props = {
 };
 
 /**
- * The child's class, rendered as its subjects.
+ * The child's class, rendered as its subjects — a progress board, not a menu.
+ *
+ * Every card goes to that subject's level map and nothing here starts a lesson.
+ * The class is the AI Teacher and the frozen daily plan decides what it teaches,
+ * so a card that opened a level would be a second way in, able to reach a level
+ * the schedule had not got to yet. The "🗓️ Today" badge is how a child sees
+ * whose turn it is.
  *
  * Names are always shown. `text_density: "none"` means a pre-reader should not
  * be *asked to read* to answer a question — it does not mean stripping the
@@ -67,40 +73,18 @@ function paletteOf(subject: Subject) {
 }
 
 /**
- * The lesson a tap on this subject should open, or null when there is none.
+ * Whether this subject still has a level the child has not finished.
  *
- * Tapping a subject starts the lesson the child is actually on — a child does
- * not pick a level, they carry on from where they stopped. The list of levels
- * is what they meet *after* a lesson, not before it. `current_topic_id` is the
- * server's own bookmark and is kept moving as topics complete; the scan is the
- * fallback for a profile saved before that field existed, or one whose bookmark
- * points at a topic that is finished or no longer in the manifest.
- *
- * Null means there is nothing left to resume — every playable topic is done —
- * so the tap falls back to the levels, where the child can replay any of them.
+ * A subject card used to start a lesson: it worked out which level the child was
+ * on and dropped them into it. That is gone. The class is the AI Teacher and the
+ * frozen daily plan decides which levels are taught today, so a card that
+ * started a lesson would be a second way in — one that could open a level the
+ * schedule had not reached. Every card goes to the subject's own level map now,
+ * and this only decides what the card *says*.
  */
-function resumeTopic(
-  subject: Subject,
-  progress: SubjectProgress | undefined,
-  planned: Set<string>
-): Topic | null {
+function hasMoreToDo(subject: Subject, progress: SubjectProgress | undefined): boolean {
   const completed = new Set(progress?.completed_topics ?? []);
-  const unlocked = new Set(progress?.unlocked_topics ?? []);
-  const playable = subject.topics.filter(
-    (topic) => topic.available && unlocked.has(topic.topic_id) && !completed.has(topic.topic_id)
-  );
-
-  // Today's plan wins over the bookmark. The server refuses a topic the day
-  // does not hold, so sending a child straight into the next unlocked level
-  // would land them on "we saved that one for tomorrow" instead of a lesson.
-  // With nothing planned for this subject today the card opens the level map,
-  // where the sleeping levels explain themselves.
-  if (planned.size > 0) {
-    return playable.find((topic) => planned.has(topic.topic_id)) ?? null;
-  }
-
-  const bookmarked = playable.find((topic) => topic.topic_id === progress?.current_topic_id);
-  return bookmarked ?? playable[0] ?? null;
+  return subject.topics.some((topic) => topic.available && !completed.has(topic.topic_id));
 }
 
 export function SubjectGrid({ detail, child }: Props) {
@@ -140,13 +124,11 @@ export function SubjectGrid({ detail, child }: Props) {
             ? Math.round((done / subject.topic_count) * 100)
             : 0;
           const finished = done > 0 && done === subject.topic_count;
-          // Straight into the lesson; the levels are only where a finished
-          // subject can send them, since there is nothing left to carry on with.
-          const resume = resumeTopic(subject, progress, plannedTopicIds);
+          const more = hasMoreToDo(subject, progress);
           const isToday = subject.topics.some((topic) => plannedTopicIds.has(topic.topic_id));
-          const href = resume
-            ? (`/adventure/${subject.subject_id}/${resume.topic_id}` as const)
-            : (`/adventure/${subject.subject_id}` as const);
+          // One destination: this subject's levels. Nothing on this screen
+          // starts a lesson any more.
+          const href = `/adventure/${subject.subject_id}` as const;
 
           const body = (
             <div className="grid h-full content-between gap-4">
@@ -228,28 +210,12 @@ export function SubjectGrid({ detail, child }: Props) {
                       : "🌱 Coming soon"}
                   </span>
                   {subject.available ? (
-                    <div className="flex flex-wrap items-center gap-2">
-                      {/* The way to the map when the card itself no longer goes
-                          there. It sits above the card's own link — see the
-                          overlay below — so a tap here opens the levels rather
-                          than the lesson. A finished subject needs no button:
-                          the whole card already leads to its levels. */}
-                      {resume ? (
-                        <Link
-                          href={`/adventure/${subject.subject_id}`}
-                          data-testid="subject-levels"
-                          className="pressable relative z-10 rounded-2xl bg-white/90 px-4 py-2 font-black text-ink shadow-soft"
-                        >
-                          🗺️ Levels
-                        </Link>
-                      ) : null}
-                      <span
-                        style={accent.chipStyle}
-                        className={`pressable rounded-2xl px-4 py-2 font-black shadow-soft ${accent.chip}`}
-                      >
-                        {!resume ? "My levels →" : done ? "Keep going →" : "Start →"}
-                      </span>
-                    </div>
+                    <span
+                      style={accent.chipStyle}
+                      className={`pressable rounded-2xl px-4 py-2 font-black shadow-soft ${accent.chip}`}
+                    >
+                      {isToday ? "In class today →" : more ? "My levels →" : "All finished →"}
+                    </span>
                   ) : null}
                 </div>
               </div>
@@ -259,10 +225,7 @@ export function SubjectGrid({ detail, child }: Props) {
           const shared = `adventure-card bg-gradient-to-br ${accent.card} p-5`;
           const cardStyle = { ...learningTargetStyle(mode), ...accent.cardStyle };
 
-          // The card is a container, not a link: it holds two destinations now.
-          // Tapping anywhere still starts the lesson — that is the stretched
-          // link underneath — while the Levels button sits above it. Nesting one
-          // link inside another is not allowed, hence the overlay.
+          // One destination, so the whole card is one stretched link again.
           return subject.available ? (
             <div
               key={subject.subject_id}
@@ -276,10 +239,8 @@ export function SubjectGrid({ detail, child }: Props) {
               <Link
                 id="subject-card"
                 href={href}
-                data-testid="subject-start"
-                aria-label={`${subject.fun_name ?? subject.title}: ${
-                  resume ? "start learning" : "see my levels"
-                }`}
+                data-testid="subject-levels"
+                aria-label={`${subject.fun_name ?? subject.title}: see my levels`}
                 className="absolute inset-0 z-0 rounded-[2rem]"
               />
             </div>

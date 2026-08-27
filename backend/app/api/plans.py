@@ -21,7 +21,7 @@ router = APIRouter(prefix="/plans", tags=["plans"])
 
 
 @router.get("/{child_id}/today", response_model=TodayPlanResponse)
-async def today(child_id: str) -> TodayPlanResponse:
+def today(child_id: str) -> TodayPlanResponse:
     child = child_service.get_child(child_id)
     plan = plan_service.todays_plan(child)
     if plan is None:
@@ -47,7 +47,7 @@ async def today(child_id: str) -> TodayPlanResponse:
 
 
 @router.get("/{child_id}/history", response_model=PlanHistoryResponse)
-async def history(child_id: str, days: int = Query(default=30, ge=1, le=90)) -> PlanHistoryResponse:
+def history(child_id: str, days: int = Query(default=30, ge=1, le=90)) -> PlanHistoryResponse:
     child = child_service.get_child(child_id)
     try:
         child_uuid = UUID(child.child_id)

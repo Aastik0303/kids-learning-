@@ -22,7 +22,7 @@ from app.schemas.learning import Activity
 
 InputKind = Literal["tap", "voice", "trace", "idle", "doubt", "ready"]
 
-Phase = Literal["greet", "set", "i_do", "we_do", "you_do", "check", "branch", "close"]
+Phase = Literal["greet", "set", "i_do", "say_it", "we_do", "you_do", "check", "branch", "close"]
 
 
 class ConductorInput(BaseModel):
@@ -40,6 +40,22 @@ class ConductorInput(BaseModel):
     # recogniser's own floor the turn counts as unresolved - a microphone
     # problem - rather than as a wrong answer.
     confidence: float = Field(default=0.9, ge=0.0, le=1.0)
+    # The recogniser's other guesses at the same utterance, best first. A child
+    # saying "A" is very often the second alternative and the first is a word
+    # the recogniser preferred; handing them all over costs nothing and rescues
+    # answers that would otherwise be scored as a mishearing.
+    alternatives: list[str] = Field(default_factory=list, max_length=5)
+
+
+class ConductorOpenRequest(BaseModel):
+    """How the class is opened. Empty for the child's own class.
+
+    `topic_id` is only ever sent by the Adventure map, where a grown-up has
+    picked a level to sit through. It says *which* topic to conduct; it does not
+    bypass the day's plan, and it is not a child-facing choice.
+    """
+
+    topic_id: str | None = None
 
 
 class ScaffoldBlock(BaseModel):
@@ -75,6 +91,33 @@ class SpeechBlock(BaseModel):
     # "template" or "llm" - so a session can be read back and the model's
     # contribution separated from the app's own words.
     source: Literal["template", "llm"] = "template"
+
+
+class ListenBlock(BaseModel):
+    """Set whenever the microphone should be open for this turn.
+
+    The client opens the mic because this says to, closes it on `timeout_ms`
+    from `next_input`, and reports what it heard. It decides nothing else: not
+    whether the child was right, not whether to ask again, and not what silence
+    meant. `expect` is a hint for the recogniser and for the child's own screen
+    - never a thing to check the transcript against on the device.
+    """
+
+    active: bool = False
+    # The thing the child is being asked to say, as it should be shown: "A".
+    expect: str = ""
+    # Words to bias the recogniser towards. Never contains the answer to a
+    # question - the mic is only ever open on a teaching card or on an activity
+    # whose answer is spoken by design.
+    contextual_strings: list[str] = Field(default_factory=list)
+    language: str = "en"
+    # Which try this is, and how many there will be. The client shows neither;
+    # they are here so a session can be read back.
+    attempt: int = 0
+    max_attempts: int = 2
+    # A child who is not going to speak is never trapped: after this the client
+    # reports `idle` and the server decides what the silence meant.
+    hold_open_ms: int = 8000
 
 
 class NextInput(BaseModel):
@@ -122,6 +165,7 @@ class ConductorDirective(BaseModel):
     avatar: AvatarPayload
     visual_action: GuideVisualAction = Field(default_factory=GuideVisualAction)
     next_input: NextInput = Field(default_factory=NextInput)
+    listen: ListenBlock = Field(default_factory=ListenBlock)
     progress: ProgressBlock = Field(default_factory=ProgressBlock)
     # Set when the guide is talking and nothing is expected of the child, so the
     # class carries on by itself. This is what removes the "next" button.
@@ -130,3 +174,6 @@ class ConductorDirective(BaseModel):
     # Diagnostics for the parent surface and the tests. Never rendered to a child.
     branch: str | None = None
     teaching_strategy: str | None = None
+    # What the conductor made of an utterance that was not an answer -
+    # "dont_know", "chatter", "distress". Diagnostics, like `branch`.
+    heard_as: str | None = None

@@ -1,36 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRive, useStateMachineInput } from "@rive-app/react-canvas";
-import { AVATAR_CONFIG, AVATAR_EFFECT_INDEX, AVATAR_STATE_INDEX } from "./avatar.config";
+import dynamic from "next/dynamic";
+import { AVATAR_CONFIG } from "./avatar.config";
 import { AvatarFallback } from "./AvatarFallback";
 import type { AvatarEffect, AvatarState } from "./avatar.types";
 
-function RiveAvatar({ state, effect, isSpeaking }: { state: AvatarState; effect: AvatarEffect | null; isSpeaking: boolean }) {
-  const src = AVATAR_CONFIG.rive.src;
-  const { rive, RiveComponent } = useRive({
-    src,
-    stateMachines: AVATAR_CONFIG.rive.stateMachine,
-    autoplay: true
-  });
-  const stateInput = useStateMachineInput(rive, AVATAR_CONFIG.rive.stateMachine, AVATAR_CONFIG.rive.stateInput);
-  const speakingInput = useStateMachineInput(rive, AVATAR_CONFIG.rive.stateMachine, AVATAR_CONFIG.rive.speakingInput);
-  const effectInput = useStateMachineInput(rive, AVATAR_CONFIG.rive.stateMachine, AVATAR_CONFIG.rive.effectInput);
-
-  useEffect(() => {
-    if (stateInput) stateInput.value = AVATAR_STATE_INDEX[state];
-  }, [state, stateInput]);
-
-  useEffect(() => {
-    if (speakingInput) speakingInput.value = isSpeaking;
-  }, [isSpeaking, speakingInput]);
-
-  useEffect(() => {
-    if (effectInput) effectInput.value = AVATAR_EFFECT_INDEX[effect ?? "none"];
-  }, [effect, effectInput]);
-
-  return <RiveComponent className="h-full w-full" aria-label={`${AVATAR_CONFIG.name} learning avatar`} />;
-}
+/**
+ * Loaded only when there is artwork to animate. Without this the Rive renderer
+ * shipped in the first bundle of every page, including the ones a child waits
+ * on, to draw nothing at all.
+ */
+const RiveAvatar = dynamic(() => import("./RiveAvatar"), { ssr: false });
 
 export function AIAvatar({ state, effect, isSpeaking }: { state: AvatarState; effect: AvatarEffect | null; isSpeaking: boolean }) {
   const [canUseRive, setCanUseRive] = useState(false);

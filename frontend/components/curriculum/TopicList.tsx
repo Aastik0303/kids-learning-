@@ -27,9 +27,11 @@ type NodeState = "done" | "ready" | "tomorrow" | "locked" | "coming-soon";
 function chipFor(state: NodeState, isCurrent: boolean, score: number | undefined) {
   if (state === "coming-soon") return "🌱 Coming soon";
   if (state === "done") return `⭐ Done · ${score ?? 100}%`;
-  if (state === "tomorrow") return "🌙 Tomorrow";
+  if (state === "tomorrow") return "🌙 Waiting";
   if (state === "locked") return "🔒 Locked";
-  return isCurrent ? "🎈 Play now" : "🎈 Ready";
+  // Not "play now" any more: the map does not start anything. The class does,
+  // and it is already on this level today.
+  return isCurrent ? "🎈 In class today" : "🎈 Ready";
 }
 
 function symbolFor(state: NodeState, topic: Topic) {
@@ -40,7 +42,16 @@ function symbolFor(state: NodeState, topic: Topic) {
 }
 
 /**
- * A subject's topics as a floating trail of levels.
+ * A subject's topics as a floating trail of levels — a picture of the journey,
+ * and nothing to press.
+ *
+ * The map used to be the way into a lesson. It is not any more: the class is the
+ * AI Teacher, it runs one stage per item of today's frozen plan, and finishing a
+ * stage is the only thing that lights a level up here. So every node draws its
+ * state and none of them is a link — a level a child could tap into would be a
+ * second way to start a lesson, running beside the schedule and able to finish
+ * a level the day had not reached. Tapping a node opens the level's own page,
+ * which explains what it teaches and where it stands; it starts nothing either.
  *
  * This used to be a stack of rectangles, which reads as a settings list rather
  * than somewhere to play. A child recognises the shape of a game map long
@@ -100,7 +111,6 @@ export function TopicList({ subject, child, mode }: Props) {
         {subject.topics.map((topic, index) => {
           const state = stateOf(topic);
           const isCurrent = topic.topic_id === currentId;
-          const isOpen = state === "done" || state === "ready";
           const delivery = DELIVERY[topic.delivery];
           // A topic may author no icons, and an older server sends no field at all.
           const icons = topic.subtopic_icons ?? [];
@@ -149,8 +159,10 @@ export function TopicList({ subject, child, mode }: Props) {
               ) : null}
 
               <div className="topic-slot">
-                {isCurrent ? <span className="topic-tap-arrow" aria-hidden /> : null}
-                {isOpen ? (
+                {/* An authored level opens its own page — what it teaches and
+                    where it stands. A level with nothing behind it, or one still
+                    locked, has nothing to show and stays a picture. */}
+                {topic.available && state !== "locked" ? (
                   <Link
                     id={index === 0 ? "topic-card" : undefined}
                     href={`/adventure/${subject.subject_id}/${topic.topic_id}`}
@@ -168,6 +180,7 @@ export function TopicList({ subject, child, mode }: Props) {
                     data-testid="topic-card"
                     data-topic-id={topic.topic_id}
                     data-state={state}
+                    data-current={isCurrent ? "true" : undefined}
                     style={learningTargetStyle(mode)}
                     className={shared}
                   >
@@ -180,6 +193,9 @@ export function TopicList({ subject, child, mode }: Props) {
                 <div className="topic-now-bubble" data-testid="topic-now-bubble">
                   <p className="text-sm font-black uppercase tracking-wide text-leaf">
                     👉 You are here · Level {index + 1}
+                  </p>
+                  <p className="text-sm font-bold text-ink/50">
+                    Your class teaches this one — no need to press anything.
                   </p>
 
                   {/* What the level is, in the plainest words we have for it.

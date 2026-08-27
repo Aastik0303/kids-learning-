@@ -15,7 +15,26 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     groq_api_key: str = ""
-    groq_model: str = "llama-3.1-8b-instant"
+    # `llama-3.1-8b-instant` was decommissioned and every call came back 404,
+    # so the guide fell back to its deterministic words on every single turn -
+    # quietly, which is exactly how it is designed to fail.
+    groq_model: str = "openai/gpt-oss-20b"
+    # The AI Teacher playground's own model. Deliberately the biggest one the
+    # account has: it is a sandbox, nothing it says reaches a child's real
+    # progress, and a better explanation is worth the extra second there.
+    groq_teacher_model: str = "openai/gpt-oss-120b"
+    # Free HuggingFace sentence embeddings for the playground's retrieval. Small
+    # (~90MB), downloaded once and cached; the retriever falls back to keyword
+    # search if it cannot be loaded, so a machine with no network still works.
+    playground_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # The guide's voice. Microsoft Edge's neural voices are free and need no key,
+    # which is why they are the default: an install with nothing configured gets
+    # a real voice rather than the browser's robot. One voice reads both scripts,
+    # so an English sentence with Devanagari quoted inside it - which is how this
+    # app narrates Hindi - is spoken properly without being cut into runs.
+    edge_tts_voice: str = "hi-IN-SwaraNeural"
+    edge_tts_rate: str = "+0%"
+    edge_tts_pitch: str = "+0Hz"
     elevenlabs_api_key: str = ""
     elevenlabs_voice_id: str = "JBFqnCBsd6RMkjVDRZzb"
     elevenlabs_model: str = ""

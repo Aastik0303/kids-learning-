@@ -352,3 +352,101 @@ export type SpeechEvaluation = {
   heard: string;
   retry: boolean;
 };
+
+// ─── conductor.py ───────────────────────────────────────────────────────
+
+/**
+ * The conductor's one response shape.
+ *
+ * The class is run server-side and this is the whole of what the client is
+ * told about the current beat: what to show, what to say, what to wait for, and
+ * what to report when nothing comes. The app renders it and reports what the
+ * child did — it decides nothing, including what silence means.
+ */
+export type ConductorPhase =
+  | "greet"
+  | "set"
+  | "i_do"
+  | "say_it"
+  | "we_do"
+  | "you_do"
+  | "check"
+  | "branch"
+  | "close";
+
+export type ConductorInputKind = "tap" | "voice" | "trace" | "idle" | "doubt" | "ready";
+
+/** Set whenever the microphone should be open for this turn. */
+export type ConductorListen = {
+  active: boolean;
+  /** The thing the child is being asked to say, e.g. "A" or "अ". */
+  expect: string;
+  contextual_strings: string[];
+  language: string;
+  attempt: number;
+  max_attempts: number;
+  hold_open_ms: number;
+};
+
+export type ConductorDirective = {
+  session_id: string;
+  child_id: string;
+  topic_id: string;
+  phase: ConductorPhase;
+  /** Never carries an answer key: `correct_answer` is always null in a class. */
+  activity: Activity | null;
+  scaffold: {
+    level: number;
+    point_at: string[];
+    dim_others: boolean;
+    demo_tap: boolean;
+    /** Already trimmed server-side. The client may not widen this list. */
+    options_shown: string[];
+    co_narrate: string;
+  };
+  presentation: {
+    choices_shown: number;
+    touch_target_px: number;
+    text_density: string;
+    decoration: string;
+    motion: string;
+    narration_speed: number;
+  };
+  speech: {
+    text: string;
+    /** The language of the topic's *content*, not of the narration. */
+    language: string;
+    speak: boolean;
+    voice_speed: number;
+    source: "template" | "llm";
+  };
+  avatar: import("@/components/avatar/avatar.types").AvatarPayload;
+  visual_action: GuideResponse["visual_action"];
+  next_input: {
+    expects: ConductorInputKind;
+    timeout_ms: number;
+    on_timeout: ConductorInputKind;
+  };
+  listen: ConductorListen;
+  progress: { shape: string; filled: number; total: number };
+  /** Set when the guide is talking and nothing is expected of the child. */
+  auto_advance_in_ms: number | null;
+  close: {
+    reason: "completed" | "day_complete" | "end_kindly" | "paused" | "session_overrun";
+    stars_earned: number;
+    topic_completed: boolean;
+    revisit_skill_id: string | null;
+  } | null;
+  branch: string | null;
+  teaching_strategy: string | null;
+  /** What an utterance that was not an answer was taken to be. Diagnostics. */
+  heard_as: string | null;
+};
+
+export type ConductorInputPayload = {
+  kind: ConductorInputKind;
+  answer?: string;
+  latency_ms?: number;
+  confidence?: number;
+  alternatives?: string[];
+};

@@ -9,6 +9,7 @@ import {
   requestSttPermission,
   type SttOutcome,
 } from "@/services/audio/stt";
+import { languageTag, tagForContent } from "@/services/audio/language";
 import { tts } from "@/services/audio/tts";
 import { speechApi } from "@/services/api/speechApi";
 import { useAudioStore } from "@/store/audioStore";
@@ -33,12 +34,21 @@ import type { RenderableActivity } from "@/types/activity";
 
 const SETTLE_MS = 280;
 
-/** Below this, treat the transcript as a mishearing rather than an answer. */
+/**
+ * Below this, treat the transcript as a mishearing rather than an answer.
+ *
+ * Only ever applied to a confidence the recogniser actually computed. Android
+ * reports 0 for a perfectly clear answer on most devices, and `stt.ts` already
+ * turns that into a neutral value rather than passing the zero on — a child
+ * whose recogniser has no opinion is not a child who mumbled.
+ */
 const MIN_CONFIDENCE = 0.35;
 
 export type VoiceAnswer = {
   /** What the recogniser heard, verbatim. */
   transcript: string;
+  /** Its runners-up, best first. Sent on so the backend can rescue an answer. */
+  alternatives: string[];
   /** Resolved against the question's candidates by the backend. */
   resolvedAnswer: string;
   confidence: number;
@@ -135,9 +145,18 @@ export const voiceController = {
       ? [activity.correctAnswer, ...activity.acceptedAnswers, ...activity.options].filter(Boolean)
       : [];
 
+    // The recogniser listens for the language of the thing being *said*, not
+    // the language of the app. A Hindi level teaches अ to a child whose profile
+    // says English; listening for English at that moment hears nothing at all,
+    // and the child is left tapping a microphone that never answers.
+    const listenTag = tagForContent(
+      [activity?.glyph, activity?.concept, ...candidates].filter(Boolean).join(" "),
+      languageTag(language),
+    );
+
     const outcome = await listenOnce(
       {
-        language,
+        language: listenTag,
         contextualStrings: candidates,
         timeoutMs: 8000,
       },
@@ -161,6 +180,7 @@ export const voiceController = {
       track("voice_capture", { outcome: "too_quiet", confidence: outcome.confidence });
       return {
         transcript: outcome.transcript,
+        alternatives: outcome.alternatives,
         resolvedAnswer: "",
         confidence: outcome.confidence,
         isResolved: false,
@@ -178,6 +198,7 @@ export const voiceController = {
         correct_answer: activity?.correctAnswer ?? null,
         accepted_answers: activity?.acceptedAnswers ?? [],
         options: activity?.options ?? [],
+        alternatives: outcome.alternatives,
       });
 
       useAudioStore.getState().setOutcome("captured");
@@ -185,6 +206,7 @@ export const voiceController = {
 
       return {
         transcript: outcome.transcript,
+        alternatives: outcome.alternatives,
         resolvedAnswer: resolution.resolved_answer,
         confidence: resolution.resolution_confidence,
         isResolved: resolution.input_kind === "answer" && !resolution.ambiguous,
@@ -196,12 +218,85 @@ export const voiceController = {
       useAudioStore.getState().setOutcome("captured");
       return {
         transcript: outcome.transcript,
+        alternatives: outcome.alternatives,
         resolvedAnswer: outcome.transcript.trim(),
         confidence: outcome.confidence,
         isResolved: false,
         outcome: "ok",
       };
     }
+  },
+
+  /**
+   * Open the microphone for a conductor directive and hand back what was
+   * heard, raw.
+   *
+   * Deliberately does **not** call `/speech/normalize`. In a conductor class
+   * the server resolves the transcript itself, against state the device does
+   * not have — which attempt this is, what was just taught, whether the
+   * utterance was an answer at all. Resolving it here first would be the
+   * client deciding, and then telling the server about it.
+   */
+  async listenForDirective(options: {
+    contextualStrings?: string[];
+    /** BCP-47, or a bare subtag from the topic ("hi"). Both are handled. */
+    language?: string;
+    /** What the child is being asked to say, when there is such a thing. */
+    expect?: string;
+    timeoutMs?: number;
+  }): Promise<VoiceAnswer> {
+    const store = useAudioStore.getState();
+
+    const permitted = await voiceController.ensurePermission();
+    if (!permitted) {
+      const reason = store.micPermission === "unavailable" ? "unavailable" : "permission_denied";
+      store.setOutcome(reason);
+      return emptyAnswer(reason);
+    }
+    if (!store.canListen()) return emptyAnswer("aborted");
+
+    store.clearTranscript();
+    store.setListening(true);
+    useGuideStore.getState().setAvatarState("listening");
+    haptics.listenStart();
+
+    // The language of the thing being said, not of the app: a Hindi level asks
+    // for अ from a child whose profile says English.
+    const tag = tagForContent(
+      [options.expect, ...(options.contextualStrings ?? [])].filter(Boolean).join(" "),
+      languageTag(options.language),
+    );
+
+    const outcome = await listenOnce(
+      {
+        language: tag,
+        contextualStrings: options.contextualStrings,
+        timeoutMs: options.timeoutMs ?? 8000,
+      },
+      { onPartial: (text) => useAudioStore.getState().setPartial(text) },
+    );
+
+    useAudioStore.getState().setListening(false);
+
+    if (outcome.status !== "ok") {
+      useAudioStore.getState().setOutcome(outcome.status === "error" ? "error" : outcome.status);
+      track("voice_capture", { outcome: outcome.status, confidence: 0 });
+      return emptyAnswer(outcome.status);
+    }
+
+    useAudioStore.getState().setFinal(outcome.transcript, outcome.confidence);
+    useAudioStore.getState().setOutcome("captured");
+    track("voice_capture", { outcome: "captured", confidence: outcome.confidence });
+
+    return {
+      transcript: outcome.transcript,
+      alternatives: outcome.alternatives,
+      // Unresolved on purpose: the server does that.
+      resolvedAnswer: outcome.transcript.trim(),
+      confidence: outcome.confidence,
+      isResolved: false,
+      outcome: "ok",
+    };
   },
 
   /**
@@ -229,5 +324,12 @@ export const voiceController = {
 };
 
 function emptyAnswer(outcome: SttOutcome["status"]): VoiceAnswer {
-  return { transcript: "", resolvedAnswer: "", confidence: 0, isResolved: false, outcome };
+  return {
+    transcript: "",
+    alternatives: [],
+    resolvedAnswer: "",
+    confidence: 0,
+    isResolved: false,
+    outcome,
+  };
 }

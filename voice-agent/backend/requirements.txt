@@ -1,0 +1,20 @@
+# AI Voice Agent - install with:  pip install -r backend/requirements.txt
+
+fastapi>=0.110
+uvicorn[standard]>=0.27
+groq>=0.11
+edge-tts>=6.1.9
+python-dotenv>=1.0
+python-multipart>=0.0.9
+pydantic>=2.6
+
+# ---------------------------------------------------------------------------
+# Optional: local Whisper speech-to-text.
+#
+# Not needed for version one - the browser does the listening with the Web
+# Speech API. Uncomment this line, run pip install -r backend/requirements.txt
+# again, and set STT_ENGINE=whisper in backend/.env to transcribe on the server
+# instead. It is commented out because it pulls a few hundred megabytes of
+# PyTorch-free inference runtime, and most people do not need it on day one.
+# ---------------------------------------------------------------------------
+# faster-whisper>=1.0

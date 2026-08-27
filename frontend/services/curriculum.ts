@@ -1,45 +1,30 @@
 import { api } from "@/services/api";
-import type {
-  Activity,
-  ChildProfile,
-  ClassDetail,
-  ClassSummary,
-  CurriculumOverview,
-  ExperienceMode,
-  Subject,
-  Topic
-} from "@/types";
-
-export function getCurriculum() {
-  return api<CurriculumOverview>("/curriculum");
-}
+import { invalidate, shared, STATIC_MS } from "@/services/cache";
+import type { ChildProfile, ClassDetail, ClassSummary, ExperienceMode, Subject, Topic } from "@/types";
 
 export function listClasses() {
   return api<ClassSummary[]>("/curriculum/classes");
 }
 
-export function getClass(classId: string) {
-  return api<ClassDetail>(`/curriculum/classes/${classId}`);
-}
-
 export function getExperienceMode(classId: string) {
-  return api<ExperienceMode>(`/curriculum/classes/${classId}/experience`);
+  return shared(`curriculum:experience:${classId}`, () => api<ExperienceMode>(`/curriculum/classes/${classId}/experience`), STATIC_MS);
 }
 
 export function getSubject(subjectId: string) {
-  return api<Subject>(`/curriculum/subjects/${subjectId}`);
+  return shared(`curriculum:subject:${subjectId}`, () => api<Subject>(`/curriculum/subjects/${subjectId}`), STATIC_MS);
 }
 
 export function getTopic(topicId: string) {
-  return api<Topic>(`/curriculum/topics/${topicId}`);
-}
-
-export function getTopicActivities(topicId: string) {
-  return api<Activity[]>(`/curriculum/topics/${topicId}/activities`);
+  return shared(`curriculum:topic:${topicId}`, () => api<Topic>(`/curriculum/topics/${topicId}`), STATIC_MS);
 }
 
 export function getClassForChild(childId: string) {
-  return api<ClassDetail>(`/curriculum/children/${childId}/class`);
+  // Not `STATIC_MS`: a parent moving the child up a class changes this, and
+  // `setClassOverride` drops it. Sharing it briefly is only about the four
+  // components that ask for it on the same render.
+  return shared(`curriculum:child-class:${childId}`, () =>
+    api<ClassDetail>(`/curriculum/children/${childId}/class`)
+  );
 }
 
 /** Parent surface only. The child app never calls these two. */
@@ -51,5 +36,11 @@ export function setClassOverride(childId: string, session_token: string, class_i
   return api<ChildProfile>(`/curriculum/children/${childId}/class`, {
     method: "PUT",
     body: JSON.stringify({ session_token, class_id })
+  }).then((child) => {
+    // The child now has a different class, so everything read against the old
+    // one - the class detail, the subject map - is wrong.
+    invalidate("curriculum:");
+    invalidate("children");
+    return child;
   });
 }

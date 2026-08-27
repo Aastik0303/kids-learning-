@@ -52,6 +52,21 @@ class ChatRequest:
     temperature: float = 0.4
     max_tokens: int = 300
     json_object: bool = True
+    # A caller that needs a different model from the app's default one. The AI
+    # Teacher playground uses the big model on purpose - it is a sandbox where a
+    # slower, better answer is worth more than a fast one - while the class keeps
+    # the small fast model a waiting child needs.
+    model: str = ""
+    # Seconds to wait. The default is the class's: a child is watching a screen
+    # and the fallback is already good. A caller with nobody waiting - the
+    # playground - may ask for more.
+    timeout: float = 0.0
+    # How much of the budget a reasoning model may spend thinking before it
+    # answers. Empty leaves the provider's default. This matters more than it
+    # sounds: gpt-oss on Groq spent its whole 500-token budget reasoning and
+    # returned an empty body, which the provider then rejected as invalid JSON -
+    # so the teacher fell back to templates on every other turn.
+    reasoning_effort: str = ""
 
 
 @dataclass
@@ -108,7 +123,7 @@ def chat(request: ChatRequest) -> str:
         raise LLMUnavailable("provider circuit breaker is open")
 
     body: dict = {
-        "model": model_name(),
+        "model": request.model or model_name(),
         "messages": [
             *({"role": "system", "content": text} for text in request.system),
             *({"role": "user", "content": text} for text in request.user),
@@ -118,19 +133,31 @@ def chat(request: ChatRequest) -> str:
     }
     if request.json_object:
         body["response_format"] = {"type": "json_object"}
+    if request.reasoning_effort:
+        body["reasoning_effort"] = request.reasoning_effort
 
     try:
         response = httpx.post(
             PROVIDER_ENDPOINTS[provider_name()],
             headers={"Authorization": f"Bearer {api_key()}", "Content-Type": "application/json"},
             json=body,
-            timeout=REQUEST_TIMEOUT_SECONDS,
+            timeout=request.timeout or REQUEST_TIMEOUT_SECONDS,
         )
         response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
     except (httpx.HTTPError, KeyError, IndexError, TypeError, ValueError) as exc:
         _breaker.record_failure(time.monotonic())
-        logger.warning("Model call failed (%s); falling back to the deterministic path", type(exc).__name__)
+        # The status and the provider's own words, not just the exception class.
+        # "Model call failed (HTTPStatusError)" was true and told nobody whether
+        # the key was wrong, the model was gone or the account was rate limited.
+        detail = ""
+        if isinstance(exc, httpx.HTTPStatusError):
+            detail = f" {exc.response.status_code}: {exc.response.text[:200]}"
+        logger.warning(
+            "Model call failed (%s)%s; falling back to the deterministic path",
+            type(exc).__name__,
+            detail,
+        )
         raise LLMUnavailable(str(exc)) from exc
 
     _breaker.record_success()

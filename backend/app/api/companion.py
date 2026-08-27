@@ -22,7 +22,7 @@ def _child_or_guest(child_id: str | None, is_guest: bool):
 
 
 @router.post("/session/start", response_model=CompanionResponse)
-async def start_session(payload: CompanionStartRequest) -> CompanionResponse:
+def start_session(payload: CompanionStartRequest) -> CompanionResponse:
     child = _child_or_guest(payload.child_id, payload.is_guest)
     recommendation = choose_recommendation(child)
     deterministic_message = welcome_message(child, recommendation)
@@ -90,7 +90,7 @@ async def start_session(payload: CompanionStartRequest) -> CompanionResponse:
 
 
 @router.post("/session/event", response_model=CompanionResponse)
-async def session_event(payload: CompanionEventRequest) -> CompanionResponse:
+def session_event(payload: CompanionEventRequest) -> CompanionResponse:
     if payload.event_type not in {"route_changed", "button_clicked", "answer_submitted", "guide_step_confirmed"}:
         raise app_error("INVALID_EVENT", "Let us try that again.", 400)
     guidance = validate_guidance("wait_for_child_click")
@@ -108,5 +108,5 @@ async def session_event(payload: CompanionEventRequest) -> CompanionResponse:
 
 
 @router.post("/next-action", response_model=CompanionResponse)
-async def next_action(payload: CompanionStartRequest) -> CompanionResponse:
-    return await start_session(payload)
+def next_action(payload: CompanionStartRequest) -> CompanionResponse:
+    return start_session(payload)
