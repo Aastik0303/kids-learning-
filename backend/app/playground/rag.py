@@ -339,6 +339,7 @@ def search(
     query: str,
     *,
     top_k: int = DEFAULT_TOP_K,
+    class_id: str = "",
     topic_id: str = "",
     kinds: tuple[str, ...] = (),
 ) -> list[Hit]:
@@ -348,9 +349,18 @@ def search(
     embedding model - the first half-minute after a restart - this answers from
     keywords over the same notes rather than queueing behind it. Slightly worse
     passages beat a child watching a spinner for thirty seconds.
+
+    **The scope holds on that path too.** It used to be dropped there, so for as
+    long as the index was warming a Play Group turn could be answered out of the
+    UKG pages - worse passages is an acceptable trade for not waiting, the wrong
+    class is not.
     """
     if not _lock.acquire(blocking=False):
-        return _keyword_hits(query, _passages or _load_passages(), top_k)
+        warming = _passages or _load_passages()
+        keep = _scoped(warming, None, class_id=class_id, topic_id=topic_id, kinds=kinds)
+        if keep is not None:
+            warming = keep[0]
+        return _keyword_hits(query, warming, top_k)
     try:
         _build()
         passages = _passages or []
@@ -366,7 +376,7 @@ def search(
     # this topic's writing lines, not for the best passage in the whole syllabus.
     # Always widened back out if the filter leaves nothing, because a step with
     # no passage at all teaches nothing.
-    keep = _scoped(passages, vectors, topic_id=topic_id, kinds=kinds)
+    keep = _scoped(passages, vectors, class_id=class_id, topic_id=topic_id, kinds=kinds)
     if keep is not None:
         passages, vectors = keep
 
@@ -387,17 +397,44 @@ def search(
         return _keyword_hits(query, passages, top_k)
 
 
-def _scoped(passages, vectors, *, topic_id: str, kinds: tuple[str, ...]):
-    """The subset a step asked for, or None when it asked for everything."""
-    if not topic_id and not kinds:
+def _scoped(passages, vectors, *, class_id: str, topic_id: str, kinds: tuple[str, ...]):
+    """The subset a step asked for, or None when it asked for everything.
+
+    **The class is the outermost fence.** A Play Group child is two or three, and
+    the nearest passage to "letters" anywhere in the index is very often a UKG
+    one about reading whole words - which is how a two-year-old came to be taught
+    from a page written for a five-year-old. Scoping on `class_id` means the
+    syllabus the teacher reads from is the syllabus that child is enrolled in.
+
+    Widening back out when a filter leaves nothing is deliberate - a step with no
+    passage at all teaches nothing - but the class fence is applied first and on
+    its own, so falling back to "any topic, any kind" still falls back *inside*
+    the child's own class.
+    """
+    if not class_id and not topic_id and not kinds:
         return None
+
+    def in_class(passage) -> bool:
+        # The teaching notes belong to no class: they are how to teach a letter
+        # to a small child, not which letter this class teaches.
+        return not class_id or passage.class_id == class_id or passage.source == "notes"
+
+    within = [index for index, passage in enumerate(passages) if in_class(passage)]
+    if not within:
+        within = list(range(len(passages)))
 
     indexes = [
         index
-        for index, passage in enumerate(passages)
-        if (not topic_id or passage.topic_id == topic_id or passage.source == "notes")
-        and (not kinds or passage.kind in kinds or passage.source == "notes")
+        for index in within
+        if (
+            not topic_id
+            or passages[index].topic_id == topic_id
+            or passages[index].source == "notes"
+        )
+        and (not kinds or passages[index].kind in kinds or passages[index].source == "notes")
     ]
+    if not indexes:
+        indexes = within
     if not indexes:
         return None
 
@@ -407,9 +444,11 @@ def _scoped(passages, vectors, *, topic_id: str, kinds: tuple[str, ...]):
     return kept, vectors[indexes]
 
 
-def context_for(query: str, *, top_k: int = DEFAULT_TOP_K) -> str:
+def context_for(query: str, *, top_k: int = DEFAULT_TOP_K, class_id: str = "") -> str:
     """The retrieved passages as one block, ready to go into a prompt."""
-    return "\n\n".join(hit.passage.content for hit in search(query, top_k=top_k))
+    return "\n\n".join(
+        hit.passage.content for hit in search(query, top_k=top_k, class_id=class_id)
+    )
 
 
 def topic_kinds(topic_id: str) -> set[str]:

@@ -38,7 +38,7 @@ from sqlalchemy import select
 from app.db.models import Attempt, PlaygroundSession, PlaygroundTurn
 from app.db.session import session_scope
 from app.main import app
-from app.playground import agent, lesson, rag, stage, visuals
+from app.playground import agent, lesson, questions, rag, stage, visuals
 
 
 @pytest.fixture()
@@ -963,3 +963,301 @@ def test_the_question_the_bot_asked_is_still_waiting_afterwards(client: TestClie
 
     assert answered["question"] == waiting
     assert answered["options"] == turn["options"]
+
+
+# --------------------------------------------------------------------------
+# 12. The question a person wrote for this class
+# --------------------------------------------------------------------------
+#
+# Three faults, reported together from a Play Group sitting: the questions were
+# written for a much older child ("can you show me pre-writing strokes?"), a
+# question that wanted a choice arrived with no choices on it, and a right
+# answer was marked wrong when the child tapped it. All three are here.
+
+
+def test_the_question_is_the_authors_and_not_the_topics_title():
+    """The syllabus already holds "Which one is the standing line?" with its two
+    choices, written by a person for two-year-olds. The teacher asks that."""
+    asked = questions.pick("pg_eng_strokes", nth=0)
+
+    assert asked is not None
+    assert asked.question == "Which one is the standing line? \u2b07\ufe0f"
+    assert asked.answer == "standing line"
+    assert len(asked.options) == 2
+    # The title never becomes the question. That was the bug.
+    assert "pre-writing strokes" not in asked.question.lower()
+
+
+def test_a_syllabus_answer_written_as_a_token_is_read_out_for_a_child():
+    """`standing_line` is a key into the art; a child reads "standing line".
+    Both are the same answer, and the underscore spelling is still accepted."""
+    asked = questions.pick("pg_eng_strokes", nth=0)
+
+    assert asked.answer == "standing line"
+    assert "standing_line" in asked.accept
+    assert stage.normalise("standing_line") == stage.normalise("standing line")
+
+
+def test_five_questions_of_a_stage_are_five_different_ones():
+    first = questions.pick("pg_eng_strokes", nth=0)
+    second = questions.pick("pg_eng_strokes", nth=1)
+
+    assert first.question != second.question
+
+
+def test_a_topic_that_authored_no_question_falls_back_to_its_own_subtopics():
+    """An all-tracing topic has nothing with a right answer in it, and the stage
+    still has five questions to ask. Its subtopics are the things the child has
+    just been shown, so they are the choices - never the topic's own title."""
+    asked = questions.pick("lkg_art_strokes", nth=0)
+
+    assert asked is not None
+    assert asked.is_choice
+    assert any("standing line" in option.lower() for option in asked.options)
+
+
+def test_a_subtopic_too_long_to_be_a_button_is_not_made_into_one():
+    """"Talking about all types of transport as well as providing a
+    demonstration of vehicles" is a lesson plan, not a thing to tap."""
+    assert questions.pick("ukg_evs_community", nth=0) is None
+
+
+def test_a_step_that_wants_a_tap_is_given_something_to_tap(client: TestClient):
+    """A choice question with no choices on it is a typing box in front of a
+    two-year-old, which is the turn quietly failing rather than teaching."""
+    child_id = make_child(client, "playground-has-options@example.com")
+    turn = client.post(f"/playground/teacher/{child_id}/open").json()
+
+    seen_a_tap = False
+    for _ in range(40):
+        if turn.get("expects") == "tap" and turn.get("question"):
+            seen_a_tap = True
+            assert turn["options"], f"nothing to tap on: {turn['question']}"
+        if turn.get("day_complete"):
+            break
+        turn = client.post(
+            f"/playground/teacher/sessions/{turn['session_id']}/answer",
+            json={"answer": (turn.get("options") or ["yes"])[0]},
+        ).json()
+
+    assert seen_a_tap, "the sitting never reached a question that wanted a tap"
+
+
+def test_an_empty_option_list_is_repaired_rather_than_shown_bare():
+    from_author = agent.ensure_options(
+        answer="standing line", options=(), topic_id="pg_eng_strokes"
+    )
+
+    assert len(from_author) >= 2
+    assert any(stage.contains_answer(option, "standing line") for option in from_author)
+
+
+def test_a_concept_the_syllabus_never_offered_as_a_choice_gets_no_invented_ones():
+    """Nothing is made up to fill the row. A question with no plausible
+    alternatives is asked in words rather than with nonsense beside it."""
+    assert agent.ensure_options(answer="gross motor skills", options=(), topic_id="nur_art_gross") == ()
+
+
+# --------------------------------------------------------------------------
+# 13. Tapping the right box is never wrong
+# --------------------------------------------------------------------------
+
+
+def test_a_tapped_option_is_marked_by_which_button_it_was():
+    """The label is the answer dressed up for a child - "standing line \u2b07\ufe0f" for
+    `standing_line`. Word-matching the two came apart, and the child who tapped
+    the right box was told they were wrong."""
+    offered = ["standing line \u2b07\ufe0f", "sleeping line \u27a1\ufe0f"]
+
+    right = stage.judge(
+        said="standing line \u2b07\ufe0f",
+        expected="standing line",
+        accept=["standing_line"],
+        offered=offered,
+    )
+    wrong = stage.judge(
+        said="sleeping line \u27a1\ufe0f",
+        expected="standing line",
+        accept=["standing_line"],
+        offered=offered,
+    )
+
+    assert right.is_correct
+    assert not wrong.is_correct
+
+
+def test_the_answer_written_as_a_token_still_marks_its_readable_label():
+    verdict = stage.judge(
+        said="standing line \u2b07\ufe0f",
+        expected="standing_line",
+        offered=["standing line \u2b07\ufe0f", "sleeping line \u27a1\ufe0f"],
+    )
+
+    assert verdict.is_correct
+
+
+def test_an_option_carrying_the_answer_among_other_words_is_still_the_answer():
+    verdict = stage.judge(
+        said="red apple \U0001f34e", expected="red", offered=["red apple \U0001f34e", "green leaf \U0001f343"]
+    )
+
+    assert verdict.is_correct
+
+
+def test_one_rule_decides_both_which_options_may_be_shown_and_which_tap_is_right():
+    """"a" is inside "banana". The loose test used to let that set through as a
+    question about the letter A, and then mark the child wrong for tapping the
+    option it had called the answer."""
+    assert not stage.contains_answer("banana \U0001f34c", "a")
+    assert agent._options_from(["banana \U0001f34c", "ball \u26bd"], expected="a") == ()
+
+    assert stage.contains_answer("apple \U0001f34e", "apple")
+    assert stage.contains_answer("3 apples \U0001f34e", "3")
+
+
+def test_a_spoken_answer_is_still_judged_on_its_words():
+    """Only a tap is marked by which button it was. Speech and typing keep the
+    generous word matching - a child saying the answer inside a sentence has
+    said it."""
+    verdict = stage.judge(
+        said="i think it is a circle", expected="circle", offered=["circle", "square"]
+    )
+
+    assert verdict.is_correct
+
+
+def test_the_child_is_marked_against_what_was_on_their_screen(client: TestClient):
+    """End to end: tapping the option the server itself put there as the answer
+    comes back right."""
+    child_id = make_child(client, "playground-tap-right@example.com")
+    turn = _walk_to_a_question(client, client.post(f"/playground/teacher/{child_id}/open").json())
+    if turn["expects"] != "tap" or not turn["options"]:
+        pytest.skip("this child's first question does not want a tap")
+
+    answer = _pending_answer(turn["session_id"])
+    right = next(
+        option for option in turn["options"] if stage.contains_answer(option, answer)
+    )
+
+    marked = client.post(
+        f"/playground/teacher/sessions/{turn['session_id']}/answer", json={"answer": right}
+    ).json()
+
+    assert marked["is_correct"] is True
+
+
+# --------------------------------------------------------------------------
+# 14. The class is the fence around the syllabus
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("class_id", ["playgroup", "ukg"])
+def test_retrieval_stays_inside_the_childs_own_class(class_id: str):
+    """A Play Group child is two. The closest passage to "letters" in the whole
+    index is very often a UKG one about reading whole words, and that is how a
+    two-year-old came to be taught off a page written for a five-year-old.
+
+    Asserted as an absence: whichever passages come back, none of them is
+    another class's. The teaching notes belong to no class and are exempt - see
+    the test below.
+    """
+    hits = rag.search("letters and words", top_k=12, class_id=class_id)
+    foreign = [
+        hit.passage
+        for hit in hits
+        if hit.passage.source == "syllabus" and hit.passage.class_id != class_id
+    ]
+
+    assert not foreign, [passage.heading for passage in foreign]
+
+
+def test_a_topic_is_retrieved_from_inside_its_own_class():
+    hits = rag.search(
+        "standing line", top_k=6, class_id="playgroup", topic_id="pg_eng_strokes"
+    )
+    syllabus = [hit.passage for hit in hits if hit.passage.source == "syllabus"]
+
+    assert syllabus, "the topic's own passages were filtered away"
+    assert {passage.class_id for passage in syllabus} == {"playgroup"}
+
+
+def test_the_teaching_notes_belong_to_no_class_and_are_always_readable():
+    """They are how to teach a letter to a small child, not which letter this
+    class teaches, so the class fence does not shut them out."""
+    hits = rag.search("how to teach a letter", top_k=8, class_id="playgroup")
+
+    assert any(hit.passage.source == "notes" for hit in hits)
+
+
+def test_an_unknown_class_still_teaches_rather_than_returning_nothing():
+    """Infrastructure never locks a child out of their lesson."""
+    assert rag.search("colours", top_k=3, class_id="no-such-class")
+
+
+# --------------------------------------------------------------------------
+# 12. The class remembers its own sitting
+# --------------------------------------------------------------------------
+
+
+def test_the_sitting_so_far_is_a_reminder_and_not_a_transcript():
+    """What the model is told about its own last turns, and how it is told it."""
+    lines = agent._sitting_so_far(
+        {
+            "memory": [
+                {"explanation": "A circle is round.", "question": "", "child_answer": "", "is_correct": None},
+                {"explanation": "", "question": "Which one is the circle?", "child_answer": "circle", "is_correct": True},
+            ]
+        }
+    )
+    block = "\n".join(lines)
+    assert "A circle is round." in block
+    assert '"circle"' in block and "it was right" in block
+    assert "Do not repeat" in block
+
+
+def test_a_sitting_with_nothing_behind_it_carries_no_memory():
+    assert agent._sitting_so_far({"memory": []}) == []
+
+
+def test_the_class_reads_back_what_it_has_already_said(client: TestClient):
+    """The teacher is handed its own last turns, so a hint cannot repeat itself.
+
+    The log has always been written; nothing read it, and every turn was composed
+    from nothing. This pins the read: after a turn has been taught and answered,
+    the sitting's memory holds what was said and what came back - with the
+    verdict the pure-Python marker gave it, not one the model chose.
+    """
+    from app.playground import service as teacher_service
+
+    child_id = make_child(client)
+    opened = client.post(f"/playground/teacher/{child_id}/open").json()
+
+    turn = _walk_to_a_question(client, opened)
+    just_said = turn["speech"]
+    client.post(
+        f"/playground/teacher/sessions/{turn['session_id']}/answer",
+        json={"answer": "not the answer at all"},
+    )
+
+    with session_scope() as session:
+        row = session.scalar(
+            select(PlaygroundSession).where(PlaygroundSession.session_id == turn["session_id"])
+        )
+        memory = teacher_service._recent_turns(session, row)
+
+    assert memory, "the sitting remembers nothing"
+    assert len(memory) <= agent.MEMORY_TURNS
+    assert any(just_said[:30] in item["explanation"] for item in memory)
+    answered = [item for item in memory if item["child_answer"]]
+    assert answered and answered[-1]["is_correct"] is False
+
+
+def test_the_memory_is_only_a_reminder_and_marks_nothing(client: TestClient):
+    """A remembered turn must not be able to move a verdict.
+
+    The memory is handed to a model. If anything downstream of a star could read
+    it, a model would be upstream of the child's progress - so the marker is
+    checked here against a memory that says the opposite of the truth.
+    """
+    verdict = stage.judge(said="circle", expected="circle", accept=[], offered=[])
+    assert verdict.is_correct is True

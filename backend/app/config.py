@@ -8,7 +8,12 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=BACKEND_DIR / ".env", env_file_encoding="utf-8")
+    # `extra="ignore"` so a key left over in somebody's `.env` - an
+    # `ELEVENLABS_*` line from before there was one voice, say - is skipped
+    # rather than refusing to start the server.
+    model_config = SettingsConfigDict(
+        env_file=BACKEND_DIR / ".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
     env: str = "development"
     llm_provider: str = "none"
@@ -27,20 +32,14 @@ class Settings(BaseSettings):
     # (~90MB), downloaded once and cached; the retriever falls back to keyword
     # search if it cannot be loaded, so a machine with no network still works.
     playground_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
-    # The guide's voice. Microsoft Edge's neural voices are free and need no key,
-    # which is why they are the default: an install with nothing configured gets
-    # a real voice rather than the browser's robot. One voice reads both scripts,
+    # The guide's voice, and the only one. Microsoft Edge's neural voices are
+    # free and need no key, so every install sounds the same and none of them
+    # falls back to the browser's robot. One voice reads both scripts,
     # so an English sentence with Devanagari quoted inside it - which is how this
     # app narrates Hindi - is spoken properly without being cut into runs.
     edge_tts_voice: str = "hi-IN-SwaraNeural"
     edge_tts_rate: str = "+0%"
     edge_tts_pitch: str = "+0Hz"
-    elevenlabs_api_key: str = ""
-    elevenlabs_voice_id: str = "JBFqnCBsd6RMkjVDRZzb"
-    elevenlabs_model: str = ""
-    elevenlabs_model_id: str = "eleven_flash_v2_5"
-    elevenlabs_output_format: str = "mp3_22050_32"
-    elevenlabs_optimize_streaming_latency: str = "3"
     database_url: str = ""
     database_connect_timeout: int = 5
     # PBKDF2 rounds for a parent password. The OWASP floor for
@@ -56,10 +55,6 @@ class Settings(BaseSettings):
     planner_auto_run: bool = True
     planner_interval_seconds: int = 900
     cors_origins: str = "http://localhost:5000,http://127.0.0.1:5000"
-
-    @property
-    def elevenlabs_selected_model(self) -> str:
-        return self.elevenlabs_model or self.elevenlabs_model_id
 
     @property
     def cors_origin_list(self) -> list[str]:

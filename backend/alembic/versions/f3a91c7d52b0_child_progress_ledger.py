@@ -22,7 +22,7 @@ def upgrade() -> None:
         sa.Column('id', sa.Uuid(), nullable=False),
         sa.Column('child_id', sa.Uuid(), nullable=False),
         sa.Column('state', sa.JSON(), nullable=False),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ['child_id'], ['children.id'], name=op.f('fk_child_progress_child_id_children'), ondelete='CASCADE'
         ),

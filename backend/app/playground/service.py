@@ -53,7 +53,7 @@ from sqlalchemy import select
 from app.conductor import echo as echo_engine
 from app.db.models import PlaygroundSession, PlaygroundTurn
 from app.db.session import session_scope
-from app.playground import agent, lesson, rag, stage, visuals
+from app.playground import agent, lesson, questions, rag, stage, visuals
 from app.services import (
     child_service,
     child_store,
@@ -162,6 +162,36 @@ def _subject_of(topic_id: str) -> str:
         return ""
 
 
+def _class_of(topic_id: str) -> str:
+    """Which class this topic belongs to.
+
+    Retrieval is fenced on it, so a Play Group turn cannot be taught out of the
+    UKG pages however close the words are. That is what was making the questions
+    too old for the child in front of them.
+    """
+    if not topic_id:
+        return ""
+    try:
+        return curriculum_service.get_topic(topic_id).class_id
+    except Exception:  # pragma: no cover - a topic id the manifest no longer has
+        return ""
+
+
+def _age_band(class_id: str) -> str:
+    """"Play Group, where children are 2 to 3 years old" - said to the model.
+
+    A prompt that only knows "a child aged 2 to 6" writes for the top of that
+    range, and the top of that range is three years older than the child.
+    """
+    if not class_id:
+        return ""
+    try:
+        detail = curriculum_service.get_class(class_id)
+    except Exception:  # pragma: no cover - a class the manifest no longer has
+        return ""
+    return f"{detail.title}, where children are {detail.min_age} to {detail.max_age} years old"
+
+
 def _topic_title(topic_id: str) -> str:
     if not topic_id:
         return "today's lesson"
@@ -213,27 +243,83 @@ def _mode_for(step: lesson.Step) -> str:
     return agent.ASK
 
 
+def _recent_turns(session, row: PlaygroundSession) -> list[dict]:
+    """The sitting so far, oldest first: the class's memory of its own words.
+
+    Every turn used to be written from nothing. The log was already here -
+    `playground_turns` has held what was said, what was asked and what came back
+    since the loop was built - and nothing read it, so a hint could repeat its
+    own explanation word for word and the teacher could spend the same everyday
+    example twice in a row.
+
+    It is a **reminder handed to the model and nothing else**. The step, the
+    strategy and the authored question still decide what the turn is, and
+    `stage.judge` still marks in pure Python from the authored key. A memory that
+    could move a verdict would be a model upstream of a star.
+    """
+    try:
+        rows = list(
+            session.scalars(
+                select(PlaygroundTurn)
+                .where(PlaygroundTurn.session_id == row.session_id)
+                .order_by(PlaygroundTurn.created_at.desc())
+                .limit(agent.MEMORY_TURNS)
+            ).all()
+        )
+    except Exception:  # pragma: no cover - the log is not worth a failed turn
+        logger.exception("Could not read the sitting's own turns")
+        return []
+    return [
+        {
+            "explanation": turn.explanation,
+            "question": turn.question,
+            "child_answer": turn.child_answer,
+            "is_correct": turn.is_correct,
+        }
+        for turn in reversed(rows)
+    ]
+
+
 def _teach_step(
-    row: PlaygroundSession, *, feedback: str = "", verdict_bits: dict | None = None
+    row: PlaygroundSession,
+    session=None,
+    *,
+    feedback: str = "",
+    verdict_bits: dict | None = None,
 ) -> TeacherTurn:
-    """Run the agent for the step the sitting is on, and write it onto the row."""
+    """Run the agent for the step the sitting is on, and write it onto the row.
+
+    `session` is passed only so the turn can be given the sitting's own memory;
+    a caller without one simply teaches without it.
+    """
     steps = _steps_for(row.topic_id, row.subject_id)
     step = lesson.current(steps, row.step_index, row.step_tries)
     title = _topic_title(row.topic_id)
     mode = _mode_for(step)
+    class_id = _class_of(row.topic_id)
 
     taught = agent.teach(
         subject=row.subject_id,
         topic=title,
         topic_id=row.topic_id,
+        class_id=class_id,
+        age_band=_age_band(class_id),
         step=step.name,
         spent=list(row.strategies_spent or []),
         mode=mode,
+        # The syllabus's own question for this turn, when the step is one the
+        # author wrote questions for. Walked by how many of the stage's five
+        # have been settled, so five questions are five different ones rather
+        # than the same one five times.
+        asked=questions.pick(row.topic_id, nth=row.questions_asked),
         # A hint and a reveal are about the question already in front of the
         # child, so they are handed it rather than writing one.
         question=row.pending_question,
         answer=row.pending_answer,
         offered=list(row.pending_options or []),
+        # What this sitting has already said, so the class does not teach the
+        # same thing in the same words twice.
+        memory=_recent_turns(session, row) if session is not None else [],
     )
 
     # The same filter the guide's words go through. A playground is still a
@@ -556,7 +642,7 @@ def open_session(child_id: str) -> TeacherTurn:
         # to teach it; an unanswered question from an hour ago is owed nothing.
         row.strategies_spent = []
 
-        turn = _teach_step(row)
+        turn = _teach_step(row, session)
         if opening:
             turn.speech = f"{_class_intro(row, turn.topic_title)} {turn.speech}".strip()
         _log(row, turn, session)
@@ -626,12 +712,20 @@ def answer(session_id: str, said: str) -> TeacherTurn:
             row.step_index, row.step_tries = following.index, following.tries
             row.strategies_spent = []
             _clear_pending(row)
-            turn = _teach_step(row, feedback=_moving_on(step.name))
+            turn = _teach_step(row, session, feedback=_moving_on(step.name))
             _log(row, turn, session)
             return turn
 
         verdict = stage.judge(
-            said=said, expected=row.pending_answer, accept=list(row.pending_accept or [])
+            said=said,
+            expected=row.pending_answer,
+            accept=list(row.pending_accept or []),
+            # What was on the screen. A tap is marked by which button it was,
+            # not by word-matching its label against the answer - the label is
+            # the answer dressed up for a child ("standing line ⬇️" for
+            # `standing_line`), and matching the two as words is what marked a
+            # child wrong for tapping the right box.
+            offered=list(row.pending_options or []),
         )
 
         session.add(
@@ -661,6 +755,7 @@ def answer(session_id: str, said: str) -> TeacherTurn:
         row.step_index, row.step_tries = following.index, following.tries
         turn = _teach_step(
             row,
+            session,
             feedback=agent.reassure() if following.is_reveal else agent.encourage(),
             verdict_bits={"is_correct": False, "advanced": False},
         )
@@ -704,7 +799,7 @@ def _settle(
 
     if not progress.stage_complete:
         turn = _teach_step(
-            row, feedback=feedback, verdict_bits={"is_correct": mark, "advanced": False}
+            row, session, feedback=feedback, verdict_bits={"is_correct": mark, "advanced": False}
         )
         _log(row, turn, session)
         return turn
@@ -722,6 +817,7 @@ def _settle(
         return turn
     turn = _teach_step(
         row,
+        session,
         feedback=feedback,
         verdict_bits={"is_correct": mark, "advanced": True, **bits},
     )
@@ -775,7 +871,12 @@ def ask(session_id: str, question: str) -> TeacherTurn:
 
         title = _topic_title(row.topic_id)
         answer_text, source = agent.answer_question(
-            topic=title, topic_id=row.topic_id, question=question
+            topic=title,
+            topic_id=row.topic_id,
+            question=question,
+            # The child's question lands in the middle of a lesson, so the
+            # answer is given what the lesson has just been saying.
+            memory=_recent_turns(session, row),
         )
         answer_text = safe_text(answer_text) or answer_text
         row.updated_at = _now()

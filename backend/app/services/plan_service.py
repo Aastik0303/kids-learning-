@@ -39,10 +39,11 @@ logger = logging.getLogger(__name__)
 # that today's lesson unlocks: that is tomorrow's, which is the whole point of
 # freezing a day.
 #
-# This is the ceiling on the candidate list, not the length of a day: the
-# planner takes the first `app.ai.planner.graph.MAX_ITEMS` of it. Since
-# `_candidates` now returns exactly one level per subject, both numbers count
-# subjects - the day is three subjects, and the class is three stages.
+# This is a ceiling and not a length. `_candidates` returns exactly one level per
+# subject and every subject gets one, so the day is as long as the class is wide:
+# three stages for Play Group, six for Nursery and UKG. The number is here to
+# stop a manifest that grows a dozen subjects from turning an afternoon into a
+# syllabus, and it matches `app.ai.planner.graph.MAX_ITEMS`.
 PLAN_LENGTH = 8
 
 # What the child hears when they reach for something the day does not hold.
@@ -111,14 +112,19 @@ def _candidates(child: ChildProfile, today: date | None = None) -> list[PlannedI
     counts - a subject with three shaky levels still gets one turn today and the
     next one tomorrow.
 
-    The rotation matters as much as the selection. The planner keeps a day to
-    three lessons and a nursery child has six subjects; without rotation the
-    first three in manifest order would be the only three ever planned, and
-    Hindi, EVS and Art would wait until Maths ran out of topics. Rotating by the
-    day number gives every subject its turn, and does it deterministically - the
-    same child on the same date gets the same day, however many times the plan
-    is read. A Play Group child has exactly three subjects, so their day is all
-    three of them every day, in a rotating order.
+    **Every subject, every day.** There is no rotation and no sample: a Play
+    Group child's day is their three subjects, a Nursery or UKG child's is their
+    six. The rotation that used to be here existed to share out a three-item cap
+    (`graph.MAX_ITEMS`), and it meant a Nursery child met Hindi every other day
+    and EVS every third - a subject could go a week without being taught while
+    its levels sat unlocked on the Adventure map. The cap is gone, so the reason
+    for the rotation is too, and the day is the same shape every morning, which
+    is what a routine is.
+
+    A longer day is not a longer sitting. The plan is frozen in `daily_plans`
+    and the class always resumes at the plan cursor, so a child who does two
+    stages and stops picks the rest up later the same day rather than losing
+    them.
     """
     detail = curriculum_service.get_class(child.class_id)
     weak = set(child.weak_skills)
@@ -153,10 +159,6 @@ def _candidates(child: ChildProfile, today: date | None = None) -> list[PlannedI
         chosen = revisit or fresh
         if chosen is not None:
             per_subject.append(chosen)
-
-    if per_subject:
-        offset = (today or _today()).toordinal() % len(per_subject)
-        per_subject = per_subject[offset:] + per_subject[:offset]
 
     return per_subject[:PLAN_LENGTH]
 
@@ -220,6 +222,31 @@ def freeze_today(child: ChildProfile, *, today: date | None = None):
     )
 
 
+def mark_topic_done(child_id: str, topic_id: str, *, today: date | None = None) -> bool:
+    """Tick a finished level off today's plan, if today's plan holds it.
+
+    The cursor is the plan's own, not a re-reading of the child's lifetime
+    completions, because a `revisit` item is in that list before the day starts.
+    Quiet on failure: a plan that cannot be written to must never stop a lesson
+    from finishing, and the fallback in `plans.plan_cursor` still moves a fresh
+    item along.
+    """
+    child_uuid = _child_uuid(child_id)
+    if child_uuid is None:
+        return False
+    try:
+        with session_scope() as session:
+            return plans.mark_item_complete(
+                session,
+                child_id=child_uuid,
+                plan_date=today or _today(),
+                topic_id=topic_id,
+            )
+    except Exception:  # pragma: no cover - database unavailable
+        logger.exception("Could not tick %s off today's plan", topic_id)
+        return False
+
+
 def _completed_topics(child: ChildProfile) -> set[str]:
     return {
         topic_id
@@ -254,7 +281,7 @@ def todays_plan(child: ChildProfile, *, today: date | None = None) -> TodayPlan 
                     "skill_id": item.skill_id,
                     "reason": item.reason,
                     "title": topic_title(item.topic_id),
-                    "done": item.topic_id in done,
+                    "done": plans.item_is_done(item, done),
                     "current": cursor is not None and item.topic_id == cursor.topic_id,
                 }
                 for item in plan.items

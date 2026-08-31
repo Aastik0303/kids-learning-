@@ -1,4 +1,4 @@
-"""The Planner Agent, running itself.
+"""The planner, running itself.
 
 A plan that is only built when a child opens the app is not a schedule - it is a
 lazy computation with a nicer name, and it puts the agent's latency in front of a
@@ -10,9 +10,9 @@ Three properties it has to have, because it runs unattended:
 - **idempotent** - it asks the database which children are missing a plan, and
   the freeze itself is a unique constraint, so a second sweep (or a second
   worker) writes nothing;
-- **quiet on failure** - an unreachable database or a model that is down must
-  not take the API process with it. Every sweep is wrapped, and a failed child
-  does not stop the ones behind them;
+- **quiet on failure** - an unreachable database, or one child whose curriculum
+  is in a state this cannot plan, must not take the API process with it. Every
+  sweep is wrapped, and a failed child does not stop the ones behind them;
 - **off by default in tests**, which is what `PLANNER_AUTO_RUN=0` is for.
 """
 
@@ -68,12 +68,6 @@ def sweep(*, today: date | None = None) -> dict:
             summary["skipped"] += 1
             continue
         summary["planned"] += 1
-        if result.rejected:
-            logger.warning(
-                "Planner agent answer rejected for child %s (%s); deterministic order used",
-                child_id,
-                result.rejected,
-            )
 
     if summary["planned"] or summary["failed"]:
         logger.info("Planner sweep for %s: %s", plan_date, summary)

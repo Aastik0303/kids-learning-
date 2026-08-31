@@ -59,7 +59,7 @@ def upgrade() -> None:
         batch_op.add_column(sa.Column('resume_payload', sa.JSON(), nullable=True))
         batch_op.add_column(
             sa.Column(
-                'started_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.text('now()')
+                'started_at', sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
             )
         )
         batch_op.add_column(sa.Column('last_input_at', sa.DateTime(timezone=True), nullable=True))

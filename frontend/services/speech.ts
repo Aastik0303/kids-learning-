@@ -1,7 +1,7 @@
 "use client";
 
 import { API_BASE, api } from "@/services/api";
-import { primeMicrophone, watchVoiceActivity } from "@/services/micStream";
+import { primeMicrophone, startRecording, watchVoiceActivity } from "@/services/micStream";
 
 type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
@@ -47,6 +47,13 @@ type BrowserSpeechResult = {
    * answers.
    */
   alternatives: string[];
+  /**
+   * Whether our own level meter heard a voice, whatever the recogniser made of
+   * it. This is the difference between "they said nothing" and "they said
+   * something too quietly for Chrome", and only the second one is worth a
+   * second attempt on the server.
+   */
+  heardVoice?: boolean;
   error?: string;
 };
 
@@ -82,44 +89,42 @@ export type SpeechTranscription = {
 };
 
 /**
- * Who is actually speaking.
+ * Who is actually speaking, and why it is not a choice.
  *
- * - `edge` — Microsoft Edge's free neural voices, synthesised by our own server
- *   (`POST /speech/synthesize`). **The default.** No key, no cost, and one voice
- *   reads English and Devanagari in the same sentence — which is how this app
- *   narrates Hindi, so a line like "This is कमल" is spoken properly in one
- *   breath instead of being cut into runs and handed to two different voices.
- * - `elevenlabs` — better still, and paid. Used when the server has a key.
- * - `browser` — the machine's own `speechSynthesis`. Kept as the fallback for
- *   when the network or the server is down, never as the first choice: it is a
- *   different robot on every device and on Windows it reads Devanagari as
- *   silence.
+ * The guide's voice is Microsoft Edge's free neural voice, synthesised by our
+ * own server (`POST /speech/synthesize`). One voice reads English and
+ * Devanagari in the same sentence - which is how this app narrates Hindi, so a
+ * line like "This is कमल" is spoken properly in one breath instead of being cut
+ * into runs and handed to two different voices.
+ *
+ * The machine's own `speechSynthesis` is the **fallback and nothing else**: it
+ * is a different robot on every device and on Windows it reads Devanagari as
+ * silence. It used to be selectable, and that was the bug - one tap on a
+ * control meant for grown-ups stored `"browser"` in this browser forever, so
+ * the child got the robot on every visit from then on and the app looked
+ * broken. Nothing selects it now; it happens only when the server voice cannot
+ * be fetched, and it says so in the console.
  */
-export type VoiceProvider = "browser" | "edge" | "elevenlabs";
 
 const VOICE_PROVIDER_STORAGE_KEY = "child-ai-voice-provider";
 
-/** The stored choice, or the free neural voice. */
-export function getVoiceProvider(): VoiceProvider {
-  if (typeof window === "undefined") return DEFAULT_VOICE_PROVIDER;
-  const stored = window.localStorage.getItem(VOICE_PROVIDER_STORAGE_KEY);
-  if (stored === "elevenlabs" || stored === "edge" || stored === "browser") return stored;
-  return DEFAULT_VOICE_PROVIDER;
-}
-
 /**
- * The voice a child gets before anybody chooses one.
+ * Forget a stored voice choice from when there was one to make.
  *
- * It is the server's, not the browser's. A real voice with no key and no cost is
- * strictly better than the robot, and this is a nursery app — the guide's voice
- * is most of what a pre-reader actually receives from it.
+ * Runs once, on the first thing the guide says. Without it, a browser that was
+ * ever toggled onto the robot would keep it - the setting outlived the control
+ * that set it.
  */
-export const DEFAULT_VOICE_PROVIDER: VoiceProvider = "edge";
-
-export function setVoiceProvider(provider: VoiceProvider) {
-  if (typeof window === "undefined") return;
-  stopSpeech();
-  window.localStorage.setItem(VOICE_PROVIDER_STORAGE_KEY, provider);
+let legacyChoiceCleared = false;
+function forgetStoredVoiceChoice() {
+  if (legacyChoiceCleared || typeof window === "undefined") return;
+  legacyChoiceCleared = true;
+  try {
+    window.localStorage.removeItem(VOICE_PROVIDER_STORAGE_KEY);
+  } catch {
+    // A browser with site data blocked. Nothing was stored either, so nothing
+    // to forget.
+  }
 }
 
 const GUIDE_QUESTION_START = /^(what|why|how|where|when|who|help|explain|repeat|tell me|show me|can you|could you|please)\b/i;
@@ -241,17 +246,63 @@ export function listeningLanguage(...candidates: (string | null | undefined)[]):
   return candidates.some((value) => /[ऀ-ॿ]/.test(value ?? "")) ? "hi-IN" : "en-US";
 }
 
+/**
+ * The device's installed voices, once the browser has actually loaded them.
+ *
+ * `getVoices()` returns an empty array on the first call in Chrome - the list
+ * is populated asynchronously and announced with `voiceschanged`. The fallback
+ * asked for it synchronously, so the *first* line it ever had to rescue got no
+ * matching voice at all and was read by the default English one. That is the
+ * line a Devanagari lesson loses, and it is the line that matters most, because
+ * the fallback only runs when something has already gone wrong.
+ *
+ * An empty result is not cached, so a later line can still find the list once
+ * the browser has it.
+ */
+let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
+function loadVoices(): Promise<SpeechSynthesisVoice[]> {
+  if (voicesPromise) return voicesPromise;
+  const pending = new Promise<SpeechSynthesisVoice[]>((resolve) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      resolve([]);
+      return;
+    }
+    const ready = window.speechSynthesis.getVoices();
+    if (ready.length > 0) {
+      resolve(ready);
+      return;
+    }
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      window.speechSynthesis.removeEventListener?.("voiceschanged", finish);
+      resolve(window.speechSynthesis.getVoices());
+    };
+    window.speechSynthesis.addEventListener?.("voiceschanged", finish);
+    // A browser that never fires the event must not hold the guide silent.
+    window.setTimeout(finish, 1000);
+  }).then((voices) => {
+    if (voices.length === 0) voicesPromise = null;
+    return voices;
+  });
+  voicesPromise = pending;
+  return pending;
+}
+
 async function speakWithBrowser(text: string) {
   // One utterance per script run. A line with no Devanagari in it is a single
   // run, so nothing changes for the English-only lessons.
   const mine = ++speechGeneration;
+  const voices = await loadVoices();
+  if (mine !== speechGeneration) return;
   for (const segment of segmentByScript(text)) {
     if (mine !== speechGeneration) return;
-    await speakSegment(segment.text, segment.lang);
+    await speakSegment(segment.text, segment.lang, voices);
   }
 }
 
-function speakSegment(text: string, lang: string) {
+function speakSegment(text: string, lang: string, voices: SpeechSynthesisVoice[]) {
   return new Promise<void>((resolve) => {
     if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
       resolve();
@@ -261,9 +312,9 @@ function speakSegment(text: string, lang: string) {
     utterance.lang = lang;
     // A matching installed voice, when there is one. Without this some browsers
     // keep the default English voice even after `lang` is set.
-    const voice = window.speechSynthesis
-      .getVoices()
-      .find((candidate) => candidate.lang?.replace("_", "-").toLowerCase().startsWith(lang.slice(0, 2)));
+    const voice = voices.find((candidate) =>
+      candidate.lang?.replace("_", "-").toLowerCase().startsWith(lang.slice(0, 2))
+    );
     if (voice) utterance.voice = voice;
     utterance.rate = 0.9;
     utterance.pitch = 1.12;
@@ -274,29 +325,72 @@ function speakSegment(text: string, lang: string) {
   });
 }
 
+/**
+ * How many times to ask the server for a line before giving up on it.
+ *
+ * The guide's voice goes over the public internet to Microsoft and back, and
+ * that call fails now and then for a second - a refused websocket handshake, a
+ * reset connection - which arrives here as a 502. The server already asks again
+ * on its own; this is the same idea one layer out, and it covers the case where
+ * the backend itself was momentarily unreachable.
+ *
+ * Two attempts, a third of a second apart. The cost of the retry is a pause
+ * before the guide speaks; the cost of not retrying is the whole line read by
+ * the device's robot, which on Windows says the Devanagari part as nothing at
+ * all.
+ */
+const VOICE_FETCH_ATTEMPTS = 2;
+const VOICE_RETRY_DELAY_MS = 350;
+
+function wait(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+}
+
+/**
+ * The spoken line, from our own server.
+ *
+ * Retries a network failure or a 5xx; does not retry a refusal about the
+ * request itself (a line over the endpoint's length limit is 422 and will be
+ * 422 again), because that only delays the fallback.
+ */
+async function fetchVoiceClip(text: string, signal: AbortSignal): Promise<Blob> {
+  let lastError: unknown = new Error("The server voice is unavailable");
+  for (let attempt = 0; attempt < VOICE_FETCH_ATTEMPTS; attempt += 1) {
+    if (attempt > 0) {
+      await wait(VOICE_RETRY_DELAY_MS);
+      if (signal.aborted) throw new Error("Aborted");
+    }
+    let response: Response;
+    try {
+      response = await fetch(`${API_BASE}/speech/synthesize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+        signal
+      });
+    } catch (error) {
+      // An abort is the child moving on, not a broken voice.
+      if (signal.aborted) throw error;
+      lastError = error;
+      continue;
+    }
+    if (response.ok) return await response.blob();
+    if (response.status < 500) throw new Error(`The server voice refused the line (${response.status})`);
+    lastError = new Error(`The server voice is unavailable (${response.status})`);
+  }
+  throw lastError;
+}
+
 async function playSpeech(text: string) {
   stopSpeech();
-  const provider = getVoiceProvider();
-  if (provider === "browser") {
-    await speakWithBrowser(text);
-    return;
-  }
+  forgetStoredVoiceChoice();
   const controller = new AbortController();
   let audio: HTMLAudioElement | null = null;
   let audioUrl: string | null = null;
   let finishThisSpeech: (() => void) | null = null;
   activeRequest = controller;
   try {
-    const response = await fetch(`${API_BASE}/speech/synthesize`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      // The server picks when this is empty — the paid voice if it has a key,
-      // the free Edge one otherwise. Naming it here only pins the choice.
-      body: JSON.stringify({ text, provider }),
-      signal: controller.signal
-    });
-    if (!response.ok) throw new Error("The server voice is unavailable");
-    const blob = await response.blob();
+    const blob = await fetchVoiceClip(text, controller.signal);
     if (controller.signal.aborted) return;
     audioUrl = URL.createObjectURL(blob);
     activeAudioUrl = audioUrl;
@@ -314,7 +408,18 @@ async function playSpeech(text: string) {
     // The server voice failed — no network, server down, Edge unreachable. Fall
     // back to the machine's own robot rather than leaving the guide mute: a
     // worse voice is a much smaller problem than a silent lesson.
-    if (!controller.signal.aborted) await speakWithBrowser(text);
+    //
+    // Said out loud in the console, because the robot is exactly what this
+    // sounds like when the backend is not running, and a silent fallback sends
+    // people looking for the bug in the voice settings instead of at 8008.
+    if (!controller.signal.aborted) {
+      console.warn(
+        `The guide's voice could not be fetched from ${API_BASE}/speech/synthesize; ` +
+          "falling back to this device's own voice.",
+        error
+      );
+      await speakWithBrowser(text);
+    }
   } finally {
     if (activeRequest === controller) activeRequest = null;
     if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -401,9 +506,9 @@ const MAX_RESTARTS_WHEN_HEARD = 4;
  *   marking: the transcript still goes to the server, which is the only thing
  *   that decides what it was.
  */
-const SILENCE_AFTER_SPEECH_MS = 1100;
-const SILENCE_AFTER_WORD_MS = 600;
-const SILENCE_AFTER_EXPECTED_MS = 260;
+const SILENCE_AFTER_SPEECH_MS = 900;
+const SILENCE_AFTER_WORD_MS = 450;
+const SILENCE_AFTER_EXPECTED_MS = 200;
 
 /** Still talking. Never settle in the middle of a word, however long the pause. */
 const VOICE_HOLD_MS = 220;
@@ -454,8 +559,9 @@ function listenForTranscript(timeoutMs: number, language = "en-US", options: Lis
       if (settled) return;
       settled = true;
       window.clearTimeout(quiet);
+      const heardVoice = voice.heardVoice();
       voice.stop();
-      resolve(result);
+      resolve({ ...result, heardVoice });
     };
     const timer = window.setTimeout(() => {
       // The child's window is up. `onend` must not restart after this.
@@ -478,13 +584,19 @@ function listenForTranscript(timeoutMs: number, language = "en-US", options: Lis
       return transcript.trim().split(/\s+/).length <= 2 ? SILENCE_AFTER_WORD_MS : SILENCE_AFTER_SPEECH_MS;
     };
 
+    // How many times waiting has been extended because the child was still
+    // audibly talking. Bounded, so a noisy room cannot hold the turn open.
+    let held = 0;
+    const MAX_HOLDS = 4;
+
     const endAfterQuiet = () => {
       window.clearTimeout(quiet);
       quiet = window.setTimeout(() => {
         if (settled || !bufferedTranscript.trim()) return;
         // Our meter can still hear them. They are mid-sentence, or the
         // recogniser is simply behind - either way, do not answer over them.
-        if (voice.speaking() && Date.now() < deadline) {
+        if (voice.speaking() && held < MAX_HOLDS && Date.now() < deadline) {
+          held += 1;
           endAfterQuiet();
           return;
         }
@@ -588,6 +700,95 @@ function listenForTranscript(timeoutMs: number, language = "en-US", options: Lis
   });
 }
 
+/**
+ * Listen, and if the browser wasted a voice we heard, ask the server.
+ *
+ * The order matters: the browser's recogniser is instant and free, so it is
+ * always the first answer and almost always the only one. The clip is recorded
+ * beside it at no extra cost - the microphone is already open - and is sent on
+ * only in the one case Chrome is bad at: our meter heard a voice and Chrome
+ * reported silence, which is what a quiet three-year-old looks like to it.
+ *
+ * A child who genuinely said nothing costs nothing here: no voice on the meter
+ * means no upload. Nothing about this can fail loudly, either - a server with
+ * no transcriber answers 503 and the turn ends exactly as it does today.
+ */
+async function listenWithServerFallback(
+  timeoutMs: number,
+  language: string,
+  options: ListenOptions = {}
+): Promise<BrowserSpeechResult> {
+  await primeMicrophone();
+  const recording = startRecording();
+  const result = await listenForTranscript(timeoutMs, language, options);
+  const clip = await recording?.stop();
+
+  // A clip under this is a container header and nothing else - there is no
+  // point paying a round trip to be told it is empty.
+  const MIN_CLIP_BYTES = 1200;
+  if (!clip || !result.heardVoice || result.transcript.trim() || clip.size < MIN_CLIP_BYTES) {
+    return result;
+  }
+
+  const transcript = await transcribeOnServer(clip, language);
+  if (!transcript) return result;
+  return {
+    ...result,
+    transcript,
+    // Lower than a recogniser's own answer on purpose: this is the second
+    // attempt at something nobody heard clearly, so the server should resolve
+    // it gently rather than treat it as certain.
+    confidence: Math.max(result.confidence, 0.6),
+    error: undefined
+  };
+}
+
+/**
+ * Whether this server has a transcriber at all.
+ *
+ * A backend that has not been restarted since this endpoint was added answers
+ * 404, and one with no `GROQ_API_KEY` answers 503 - and both of those are true
+ * for the whole session, not for one clip. Asking again every single turn cost
+ * a round trip in front of a waiting child and filled the server log with the
+ * same refusal, so the first clear "no" is remembered and the fallback simply
+ * stops being part of the turn.
+ *
+ * Deliberately not remembered across reloads: restarting the backend is exactly
+ * how this gets fixed, and a reload should pick that up.
+ */
+let serverTranscriberMissing = false;
+
+/** Send the clip to `POST /speech/transcribe`. Silent on every failure. */
+async function transcribeOnServer(clip: Blob, language: string): Promise<string> {
+  if (serverTranscriberMissing) return "";
+  try {
+    const response = await fetch(
+      `${API_BASE}/speech/transcribe?language=${encodeURIComponent(language)}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": clip.type || "audio/webm" },
+        body: clip
+      }
+    );
+    if (response.status === 404 || response.status === 503) {
+      serverTranscriberMissing = true;
+      console.warn(
+        `No server transcriber at ${API_BASE}/speech/transcribe (${response.status}). ` +
+          "A quiet answer the browser cannot read will be missed until the backend is restarted " +
+          "with this endpoint (and a GROQ_API_KEY configured)."
+      );
+      return "";
+    }
+    if (!response.ok) return "";
+    const body = (await response.json()) as { transcript?: string };
+    return (body.transcript ?? "").trim();
+  } catch {
+    // No network, no server, no transcriber. The turn ends the way it would
+    // have without any of this.
+    return "";
+  }
+}
+
 export async function captureVoiceAnswer({
   sessionId,
   activityId,
@@ -612,13 +813,9 @@ export async function captureVoiceAnswer({
   // Left to the content when the caller does not insist. See `listeningLanguage`.
   const listenIn =
     language ?? listeningLanguage(correctAnswer, ...acceptedAnswers, ...options);
-  // Warm first, so the recogniser starts on an audio device that is already
-  // awake and so there is a level to read. Never blocks for long: a microphone
-  // that is already open answers immediately, and a refused one answers `null`.
-  await primeMicrophone();
   // Only what is on screen. The answer key is deliberately not an endpointing
   // hint - it would make the microphone behave differently for a right answer.
-  const browserResult = await listenForTranscript(timeoutMs, listenIn, {
+  const browserResult = await listenWithServerFallback(timeoutMs, listenIn, {
     expectedPhrases: options,
     onLevel
   });
@@ -674,8 +871,7 @@ export async function captureSpeechTranscript(
     throw new Error("Voice input is not supported in this browser. Type your question instead.");
   }
 
-  await primeMicrophone();
-  const result = await listenForTranscript(timeoutMs, language, { onLevel });
+  const result = await listenWithServerFallback(timeoutMs, language, { onLevel });
   if (result.error === "not-allowed" || result.error === "service-not-allowed") {
     throw new Error("Microphone permission is off. Allow microphone access or type your question.");
   }
@@ -722,14 +918,11 @@ export async function captureClassSpeech(options: {
   );
 
   // Wake the device before the recogniser asks for it - see `micStream`. It is
-  // a no-op once the class has primed it, which the class does on the way in.
-  await primeMicrophone();
-
   // The words already on screen are what a child is most likely to say, so
   // hearing one of them means they have finished. It settles the microphone;
   // it never settles the question - the transcript goes to the server exactly
   // as it would have, and the server is what resolves it.
-  const result = await listenForTranscript(options.timeoutMs ?? 8000, listenIn, {
+  const result = await listenWithServerFallback(options.timeoutMs ?? 8000, listenIn, {
     expectedPhrases: [options.expect ?? "", ...(options.contextualStrings ?? [])],
     onLevel: options.onLevel
   });

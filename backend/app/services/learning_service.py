@@ -437,6 +437,11 @@ def award_topic_completion(child: dict, topic: Topic, *, score: int) -> dict:
             title=topic.title,
             score=score,
         )
+        # Tick it off today's plan. The plan's cursor is its own: a `revisit`
+        # item is in the child's completed list from the moment it is frozen, so
+        # reading the cursor off that list ticked a day of revisits before it
+        # had begun.
+        plan_service.mark_topic_done(child["child_id"], topic.topic_id)
         _refresh_certificate(child)
         feedback = (
             "All correct! Every answer was right."

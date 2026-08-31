@@ -1,17 +1,24 @@
-"""The Planner Agent: a LangGraph graph that may order the day and nothing else.
+"""The planner: a LangGraph graph that orders the day, in pure Python.
 
-The tests that matter here are not the happy path. They are the envelope: what
-happens when the model answers with a topic this child cannot have, with a
-duplicate, with a list longer than the menu, or with nothing at all. In every one
-of those the deterministic order has to stand, and the row has to say so.
+There used to be a model in here, and most of this file used to be its envelope:
+what happens when it answers with a topic this child cannot have, with a
+duplicate, or with nothing at all. The model is gone, so those tests are gone
+with it, and what is pinned now is the part that decides a child's morning:
+
+* **no model is reachable from the planner at all** - not a fallback, not a
+  fenced one;
+* **every subject gets a level, every day** - no cap, no rotation, no sample;
+* **the order is a rule that can be read** - open on something the child will
+  get right, meet the shaky levels early, finish on a win - and it is the same
+  order every time the same candidates go in.
 """
 
 from datetime import date, timedelta
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 
-from app.ai.llm import LLMUnavailable
 from app.ai.planner import graph as planner_graph
 from app.db.models import DailyPlan
 from app.db.repositories.plans import PlannedItem
@@ -78,19 +85,16 @@ def planned(client: TestClient, monkeypatch):
     return child_id, items
 
 
-def model_answer(monkeypatch, payload: str | Exception):
-    """Point the graph's model call at a fixed answer, with no network."""
-    seen: list = []
-
-    def _chat(request):
-        seen.append(request)
-        if isinstance(payload, Exception):
-            raise payload
-        return payload
-
-    monkeypatch.setattr(planner_graph, "is_configured", lambda: True)
-    monkeypatch.setattr(planner_graph, "chat", _chat)
-    return seen
+def candidate(topic_id: str, *, reason: str = "new", mastery: float = 0.0) -> dict:
+    """One candidate as the ordering sees it: an id, why it is here, and mastery."""
+    return {
+        "topic_id": topic_id,
+        "skill_id": f"sub:{topic_id}",
+        "reason": reason,
+        "title": topic_id.replace("_", " ").title(),
+        "subject_title": topic_id.split("_")[0].title(),
+        "mastery": mastery,
+    }
 
 
 # --------------------------------------------------------------------------
@@ -99,11 +103,45 @@ def model_answer(monkeypatch, payload: str | Exception):
 
 
 def test_the_planner_is_actually_a_graph():
-    """Four nodes and the edges between them, not a function with a nice name."""
+    """Three nodes and the edges between them, not a function with a nice name."""
     compiled = planner_graph.build_graph()
     nodes = set(compiled.get_graph().nodes)
 
-    assert {"gather", "propose", "validate", "freeze"} <= nodes
+    assert {"gather", "order", "freeze"} <= nodes
+    # The two nodes that existed only to ask a model and check its answer.
+    assert "propose" not in nodes and "validate" not in nodes
+
+
+def test_no_model_is_reachable_from_the_planner():
+    """Not a fenced call, not a fallback: there is no call.
+
+    The module used to import `chat` and `is_configured` from `app.ai.llm` and
+    ask Groq for an ordering, validating the reply against the candidate list.
+    The fence held and the model still went, so this pins its absence rather
+    than its behaviour - a planner that quietly grew a model back would pass
+    every other test in this file.
+    """
+    source = Path(planner_graph.__file__).read_text(encoding="utf-8")
+
+    assert "app.ai.llm" not in source
+    for gone in ("chat(", "is_configured", "ChatRequest", "SYSTEM_PROMPT"):
+        assert gone not in source, gone
+    assert not hasattr(planner_graph, "chat")
+
+
+def test_a_planner_run_never_calls_out(planned, monkeypatch):
+    """The same thing again, from the other end: the provider is booby-trapped."""
+    from app.ai import llm
+
+    def _explode(*_args, **_kwargs):  # pragma: no cover - it must never run
+        raise AssertionError("the planner called a language model")
+
+    monkeypatch.setattr(llm, "chat", _explode)
+
+    result = plan_service.freeze_today(child_service.get_child(planned[0]))
+
+    assert result.frozen is True
+    assert result.source == "deterministic"
 
 
 def test_with_no_model_the_deterministic_order_is_frozen(planned):
@@ -121,98 +159,89 @@ def test_with_no_model_the_deterministic_order_is_frozen(planned):
         assert rows[0].source == "deterministic"
 
 
-def test_a_model_ordering_is_used_when_it_stays_on_the_menu(planned, monkeypatch):
-    child_id, items = planned
-    reversed_ids = [item.topic_id for item in reversed(items)]
-    seen = model_answer(monkeypatch, '{"order": %s, "why": "start with the easy one"}' % str(reversed_ids).replace("'", '"'))
-
-    result = plan_service.freeze_today(child_service.get_child(child_id))
-
-    assert seen, "the graph never called the model"
-    assert result.source == "planner_agent"
-    assert [item.topic_id for item in result.items] == reversed_ids
-    assert result.why == "start with the easy one"
+# --------------------------------------------------------------------------
+# The order itself
+# --------------------------------------------------------------------------
 
 
-def test_an_off_menu_topic_drops_the_whole_proposal(planned, monkeypatch):
-    """Not "drop the bad id and keep the rest".
+def test_a_day_of_new_levels_is_left_in_the_class_order():
+    """Nothing shaky, nothing to spread: the day is the subjects, in order.
 
-    A model that named a topic this child cannot have has told you its answer is
-    not trustworthy, and salvaging half of it hides that.
+    Shuffling levels that are all equally new would make today look different
+    from yesterday for no reason, and the routine is the thing a three-year-old
+    is building.
     """
-    child_id, items = planned
-    model_answer(monkeypatch, '{"order": ["%s", "some_locked_topic"]}' % items[1].topic_id)
+    day = [candidate("maths_one"), candidate("english_a"), candidate("ga_body")]
 
-    result = plan_service.freeze_today(child_service.get_child(child_id))
-
-    assert result.source == "deterministic"
-    assert result.rejected == "off_menu"
-    assert [item.topic_id for item in result.items] == [item.topic_id for item in items]
+    assert planner_graph._ordered(day) == day
 
 
-@pytest.mark.parametrize(
-    ("answer", "rejected"),
-    [
-        ('{"order": []}', "empty"),
-        ('{"order": ["<first>", "<first>"]}', "duplicate"),
-        ('{"order": ["<first>", "<second>", "<third>", "<first>"]}', "duplicate"),
-        ('{"nope": 1}', "no_order"),
-        ("not json at all", "unavailable"),
-    ],
-)
-def test_a_malformed_answer_keeps_the_deterministic_order(planned, monkeypatch, answer, rejected):
-    child_id, items = planned
-    third = items[2].topic_id if len(items) > 2 else items[0].topic_id
-    filled = (
-        answer.replace("<first>", items[0].topic_id)
-        .replace("<second>", items[1].topic_id)
-        .replace("<third>", third)
+def test_the_day_opens_on_a_win_and_meets_the_shaky_level_second():
+    """A day must not start with the thing the child could not do yesterday."""
+    day = [
+        candidate("maths_count", reason="revisit", mastery=0.2),
+        candidate("english_a", mastery=0.9),
+        candidate("ga_body", mastery=0.8),
+    ]
+
+    ordered = [item["topic_id"] for item in planner_graph._ordered(day)]
+
+    assert ordered[0] == "english_a", "the steadiest level opens the sitting"
+    assert ordered[1] == "maths_count", "the shaky one is met early, never first"
+    assert ordered[-1] == "ga_body", "and the sitting finishes on a win"
+
+
+def test_a_low_mastery_level_counts_as_shaky_even_when_it_is_new():
+    """`revisit` is not the only way to be struggling; mastery says so too."""
+    assert planner_graph._is_shaky(candidate("x", mastery=0.1)) is True
+    assert planner_graph._is_shaky(candidate("x", mastery=0.9)) is False
+    assert planner_graph._is_shaky(candidate("x", reason="revisit", mastery=1.0)) is True
+
+
+def test_the_same_candidates_always_make_the_same_day():
+    """A frozen plan and a re-read of it have to agree, so ties break the same way."""
+    day = [
+        candidate("maths_count", reason="revisit", mastery=0.5),
+        candidate("english_a", mastery=0.7),
+        candidate("ga_body", mastery=0.7),
+        candidate("evs_plants", reason="revisit", mastery=0.5),
+    ]
+
+    once = [item["topic_id"] for item in planner_graph._ordered(list(day))]
+    twice = [item["topic_id"] for item in planner_graph._ordered(list(day))]
+
+    assert once == twice
+
+
+def test_a_day_where_everything_is_shaky_is_still_the_whole_day():
+    """No steady level to open on is not a reason to drop anybody's subject."""
+    day = [
+        candidate("maths_count", reason="revisit"),
+        candidate("english_a", reason="revisit"),
+        candidate("ga_body", reason="revisit"),
+    ]
+
+    ordered = planner_graph._ordered(day)
+
+    assert [item["topic_id"] for item in ordered] == [item["topic_id"] for item in day]
+
+
+def test_the_order_never_loses_or_repeats_a_subject():
+    day = [
+        candidate("maths_count", reason="revisit", mastery=0.1),
+        candidate("english_a", mastery=0.9),
+        candidate("ga_body", mastery=0.6),
+        candidate("evs_plants", reason="revisit", mastery=0.3),
+        candidate("art_lines", mastery=0.55),
+        candidate("hindi_swar", reason="revisit", mastery=0.2),
+    ]
+
+    ordered = planner_graph._ordered(day)
+
+    assert sorted(item["topic_id"] for item in ordered) == sorted(
+        item["topic_id"] for item in day
     )
-    model_answer(monkeypatch, filled)
-
-    result = plan_service.freeze_today(child_service.get_child(child_id))
-
-    assert result.source == "deterministic"
-    assert result.rejected == rejected
-
-
-def test_a_model_that_is_down_costs_the_child_nothing(planned, monkeypatch):
-    child_id, items = planned
-    model_answer(monkeypatch, LLMUnavailable("provider down"))
-
-    result = plan_service.freeze_today(child_service.get_child(child_id))
-
-    assert result.frozen is True
-    assert result.source == "deterministic"
-    assert result.rejected == "unavailable"
-
-
-def test_a_short_answer_keeps_the_rest_of_the_day_behind_it(planned, monkeypatch):
-    """A planner may decide two topics is enough. A topic must not vanish."""
-    child_id, items = planned
-    model_answer(monkeypatch, '{"order": ["%s"]}' % items[2].topic_id)
-
-    result = plan_service.freeze_today(child_service.get_child(child_id))
-
-    assert result.source == "planner_agent"
-    assert [item.topic_id for item in result.items][0] == items[2].topic_id
-    assert len(result.items) == len(items)
-
-
-def test_the_planner_is_never_shown_an_answer_key(planned, monkeypatch):
-    """It is given titles, a reason and a mastery number. Nothing else.
-
-    An agent that could see the answer key could put it in the plan's reason
-    text, which the parent digest reads back out loud.
-    """
-    child_id, _ = planned
-    seen = model_answer(monkeypatch, '{"order": []}')
-
-    plan_service.freeze_today(child_service.get_child(child_id))
-
-    payload = " ".join(seen[0].user).lower()
-    for forbidden in ("correct_answer", "accepted_answers", "answer_key"):
-        assert forbidden not in payload
+    assert len(ordered) == len(day)
 
 
 def test_the_plan_is_frozen_once_however_many_times_it_runs(planned):

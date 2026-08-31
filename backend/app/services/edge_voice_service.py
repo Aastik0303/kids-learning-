@@ -40,16 +40,32 @@ class EdgeVoiceError(RuntimeError):
 
 
 # Edge is a network call. Without a ceiling a hung connection holds a child in
-# front of a still screen until the browser gives up.
+# front of a still screen until the browser gives up. This is per attempt, not
+# for the whole of `synthesize`.
 TIMEOUT_SECONDS = 15.0
+
+# Microsoft's endpoint is free and is occasionally rude about it: a websocket
+# handshake refused, a connection reset mid-stream, or a stream that closes
+# having sent no audio at all. None of those mean the voice is broken - asking
+# again a moment later works - but each one used to reach the child as the
+# device's own robot for the rest of that line, and on Windows that robot reads
+# Devanagari as silence. So a failure is retried here, where it costs a second,
+# rather than being handed straight to the fallback.
+#
+# Three attempts and short waits: the ceiling on a truly dead endpoint is about
+# a second and a half of waiting on top of the timeouts, which is less than the
+# child would spend listening to the wrong voice say the wrong thing.
+ATTEMPTS = 3
+RETRY_BACKOFF_SECONDS = (0.4, 1.0)
 
 
 async def synthesize(text: str, *, voice: str = "", rate: str = "", pitch: str = "") -> bytes:
     """Speak `text` and return MP3 bytes.
 
-    Raises `EdgeVoiceError`. The caller decides what a failure means - on the web
-    client it means falling back to the browser's own voice, so a broken network
-    makes the guide sound worse rather than making it mute.
+    Raises `EdgeVoiceError` only once every attempt has failed. The caller
+    decides what that means - on the web client it means falling back to the
+    browser's own voice, so a broken network makes the guide sound worse rather
+    than making it mute.
     """
     settings = get_settings()
     spoken = _prepare(text)
@@ -57,26 +73,44 @@ async def synthesize(text: str, *, voice: str = "", rate: str = "", pitch: str =
         raise EdgeVoiceError("There is nothing to say.")
 
     chosen = voice or settings.edge_tts_voice
+    chosen_rate = rate or settings.edge_tts_rate
+    chosen_pitch = pitch or settings.edge_tts_pitch
 
-    try:
-        audio = await asyncio.wait_for(
-            _stream(
-                spoken,
-                voice=chosen,
-                rate=rate or settings.edge_tts_rate,
-                pitch=pitch or settings.edge_tts_pitch,
-            ),
-            timeout=TIMEOUT_SECONDS,
-        )
-    except asyncio.TimeoutError as error:
-        raise EdgeVoiceError("The voice took too long to answer.") from error
-    except Exception as error:
-        logger.warning("Edge TTS failed: %s", error)
-        raise EdgeVoiceError(f"The voice service failed: {error}") from error
+    last_error = EdgeVoiceError("The voice service could not be reached.")
+    for attempt in range(ATTEMPTS):
+        if attempt:
+            await asyncio.sleep(RETRY_BACKOFF_SECONDS[min(attempt - 1, len(RETRY_BACKOFF_SECONDS) - 1)])
+        try:
+            audio = await asyncio.wait_for(
+                _stream(spoken, voice=chosen, rate=chosen_rate, pitch=chosen_pitch),
+                timeout=TIMEOUT_SECONDS,
+            )
+        except asyncio.TimeoutError as error:
+            last_error = EdgeVoiceError("The voice took too long to answer.")
+            last_error.__cause__ = error
+            logger.warning("Edge TTS timed out (attempt %d/%d)", attempt + 1, ATTEMPTS)
+            continue
+        except asyncio.CancelledError:
+            # The child moved on and the request was dropped. Not a voice
+            # failure, and retrying it would keep a dead request alive.
+            raise
+        except Exception as error:
+            last_error = EdgeVoiceError(f"The voice service failed: {error}")
+            last_error.__cause__ = error
+            logger.warning("Edge TTS failed (attempt %d/%d): %s", attempt + 1, ATTEMPTS, error)
+            continue
 
-    if not audio:
-        raise EdgeVoiceError(f"The voice service returned no audio for '{chosen}'.")
-    return audio
+        if audio:
+            if attempt:
+                logger.info("Edge TTS recovered on attempt %d/%d", attempt + 1, ATTEMPTS)
+            return audio
+
+        # A clean stream that carried nothing. This is what a refused handshake
+        # usually looks like from here, and it is worth asking again.
+        last_error = EdgeVoiceError(f"The voice service returned no audio for '{chosen}'.")
+        logger.warning("Edge TTS returned no audio (attempt %d/%d)", attempt + 1, ATTEMPTS)
+
+    raise last_error
 
 
 async def _stream(text: str, *, voice: str, rate: str, pitch: str) -> bytes:

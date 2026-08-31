@@ -9,6 +9,11 @@ class Activity(BaseModel):
     prompt: str
     visual_items: list[str] = []
     options: list[str] = []
+    # One emoji per option, in the same order, when the author wrote them. A
+    # two-year-old reads the picture on the button long before the word beside
+    # it, so these are content and not decoration; an empty list means the
+    # author wrote none, never a partial list.
+    option_emojis: list[str] = []
     # Null for watch/listen/trace activities, which have no right answer.
     correct_answer: str | None = None
     hint: str = ""

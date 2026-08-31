@@ -21,9 +21,9 @@ def upgrade() -> None:
         'auth_throttle',
         sa.Column('key', sa.String(length=200), nullable=False),
         sa.Column('failures', sa.Integer(), nullable=False),
-        sa.Column('window_started_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('window_started_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.Column('locked_until', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.PrimaryKeyConstraint('key', name=op.f('pk_auth_throttle')),
     )
     op.create_table(
@@ -33,7 +33,7 @@ def upgrade() -> None:
         sa.Column('token_hash', sa.String(length=64), nullable=False),
         sa.Column('expires_at', sa.DateTime(timezone=True), nullable=False),
         sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+        sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         sa.ForeignKeyConstraint(
             ['parent_id'], ['parents.id'], name=op.f('fk_password_resets_parent_id_parents'), ondelete='CASCADE'
         ),

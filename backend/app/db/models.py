@@ -332,8 +332,10 @@ class DailyPlan(Base):
     id: Mapped[UUID] = _pk()
     child_id: Mapped[UUID] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False)
     plan_date: Mapped[date] = mapped_column(Date, nullable=False)
-    # 'planner_agent' or 'deterministic' - so a week of plans can be read back
-    # and the agent's contribution separated from the fallback's.
+    # Always 'deterministic' now. The value stayed a column - and
+    # 'planner_agent' stayed in the constraint - because rows written while the
+    # planner still asked a model carry it, and a week of plans should read back
+    # as it was decided at the time rather than as it would be decided today.
     source: Mapped[str] = mapped_column(String(24), nullable=False, default="deterministic")
     frozen_at: Mapped[datetime] = _now_column()
 
@@ -358,6 +360,13 @@ class DailyPlanItem(Base):
     # Why this item is here - 'new', 'revisit', 'prerequisite'. Read back to a
     # parent in the daily digest, so it is stored rather than re-derived.
     reason: Mapped[str] = mapped_column(String(24), nullable=False, default="new")
+    # When this item was finished, for this plan. The cursor used to be derived
+    # from the child's lifetime `completed_topics`, which is wrong for the one
+    # kind of item that is *already* in that list the moment it is frozen: a
+    # 'revisit'. A day made of revisits was born finished - every item ticked,
+    # no current topic, `is_day_complete` true - and the class locked the child
+    # out of a plan that had taught nothing. The plan owns its own cursor now.
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime(), nullable=True)
 
     plan: Mapped[DailyPlan] = relationship(back_populates="items")
 

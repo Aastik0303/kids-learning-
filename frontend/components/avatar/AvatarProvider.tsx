@@ -3,15 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { AVATAR_CONFIG, tidyAvatarMessage } from "./avatar.config";
 import type { AvatarContextValue, AvatarEffect, AvatarPayload, AvatarState } from "./avatar.types";
-import {
-  DEFAULT_VOICE_PROVIDER,
-  getVoiceProvider,
-  setVoiceProvider as saveVoiceProvider,
-  speakText,
-  speakTextAsync,
-  stopSpeech,
-  type VoiceProvider
-} from "@/services/speech";
+import { speakText, speakTextAsync, stopSpeech } from "@/services/speech";
 
 const AvatarContext = createContext<AvatarContextValue | null>(null);
 
@@ -21,10 +13,6 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
   const [effect, setEffect] = useState<AvatarEffect | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [muted, setMuted] = useState(false);
-  // Starts on the server's free neural voice, not the machine's robot. Read
-  // from storage after mount, never during render: localStorage does not exist
-  // on the server, and disagreeing about it makes React throw the tree away.
-  const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>(DEFAULT_VOICE_PROVIDER);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const messageRef = useRef(message);
   const mutedRef = useRef(muted);
@@ -36,10 +24,6 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     mutedRef.current = muted;
   }, [muted]);
-
-  useEffect(() => {
-    setVoiceProvider(getVoiceProvider());
-  }, []);
 
   const clearResetTimer = useCallback(() => {
     if (resetTimer.current) {
@@ -113,30 +97,11 @@ export function AvatarProvider({ children }: { children: React.ReactNode }) {
     setIsSpeaking(false);
   }, []);
 
-  /**
-   * Cycle the voice: Edge (free, default) → ElevenLabs (paid) → the browser's
-   * own → back to Edge.
-   *
-   * ElevenLabs stays in the ring even though the client cannot tell whether a
-   * key is configured: the server answers that question by falling back to the
-   * Edge voice, so choosing it can never leave a child in silence.
-   */
-  const toggleVoiceProvider = useCallback(() => {
-    stopSpeech();
-    setIsSpeaking(false);
-    setVoiceProvider((current) => {
-      const order: VoiceProvider[] = ["edge", "elevenlabs", "browser"];
-      const next = order[(order.indexOf(current) + 1) % order.length];
-      saveVoiceProvider(next);
-      return next;
-    });
-  }, []);
-
   useEffect(() => () => clearResetTimer(), [clearResetTimer]);
 
   const value = useMemo(
-    () => ({ state, message, effect, isSpeaking, muted, voiceProvider, setAvatar, resetAvatar, speakMessage, speakMessageAsync, stopSpeaking, toggleMute, toggleVoiceProvider }),
-    [effect, isSpeaking, message, muted, resetAvatar, setAvatar, speakMessage, speakMessageAsync, state, stopSpeaking, toggleMute, toggleVoiceProvider, voiceProvider]
+    () => ({ state, message, effect, isSpeaking, muted, setAvatar, resetAvatar, speakMessage, speakMessageAsync, stopSpeaking, toggleMute }),
+    [effect, isSpeaking, message, muted, resetAvatar, setAvatar, speakMessage, speakMessageAsync, state, stopSpeaking, toggleMute]
   );
 
   return <AvatarContext.Provider value={value}>{children}</AvatarContext.Provider>;

@@ -49,7 +49,9 @@ from langgraph.graph import END, START, StateGraph
 from app.ai.llm import ChatRequest, LLMUnavailable, chat, is_configured
 from app.config import get_settings
 from app.playground import lesson as lesson_steps
+from app.playground import questions as authored_questions
 from app.playground import rag, visuals
+from app.playground.stage import contains_answer as stage_contains
 from app.playground.stage import normalise as stage_normalise
 from app.policy import actions as policy_actions
 
@@ -61,6 +63,14 @@ TEACHER_SYSTEM_PROMPT = """You are the Saksham IQ AI Teacher, teaching one child
 You are given passages from the teacher's own notes, and one teaching strategy to
 use. Teach only what the passages say. If they do not cover something, teach the
 nearest thing they do cover rather than inventing it.
+
+You are also told which class this child is in and how old that class is. That is
+the ceiling on every question you write: it must be answerable by the youngest
+child in that class, out loud, in one or two words, using only what the passages
+have just taught. Never ask a child to name the topic itself - "can you show me
+pre-writing strokes" is a syllabus heading, not a question a two-year-old can
+answer. Ask about the thing in front of them instead: the line, the letter, the
+colour, the number.
 
 How you speak:
 - English only, in short sentences a four-year-old can follow.
@@ -78,6 +88,14 @@ How you speak:
 - Only bring in a Hindi letter when the notes you were given are about Hindi.
   When you do, quote it in Devanagari inside your English sentence and never
   write it in Roman letters. An English or maths lesson stays English.
+
+You may also be given **what has already been said in this sitting** - your own
+last few turns and what the child answered. It is there so the class remembers
+itself: do not explain the same thing in the same words twice, do not reuse an
+everyday example you have already spent, and do not ask again something the
+child has already answered. Refer back to what they have just done when it
+helps - "you found the circle a moment ago" - and never read the memory out as a
+list.
 
 You are given the step of the lesson you are on, and it decides what you do:
 explain the thing, ask for it out loud, ask for it to be drawn, ask the child to
@@ -160,6 +178,16 @@ class _State(TypedDict, total=False):
     subject: str
     topic: str
     topic_id: str
+    # The child's class, and how old that class is. The first fences retrieval
+    # to the right syllabus; the second tells the model who it is talking to.
+    class_id: str
+    # The last few turns of this sitting: what was taught, what was asked and
+    # what came back. See `_sitting_so_far`.
+    memory: list[dict]
+    age_band: str
+    # The author's own question for this turn, when the syllabus has one. See
+    # `questions.py`: it is used verbatim and never shown to the model.
+    asked: object
     step: str
     spent: list[str]
     experience_mode: str
@@ -215,8 +243,20 @@ def _retrieve(state: _State) -> _State:
     lines while the child is drawing, the matching lines while they are choosing.
     """
     step = state.get("step") or lesson_steps.EXPLAIN
+    written = state.get("asked")
+    # The author's question, when there is one, is the best description of what
+    # this turn is about that exists - better than the topic's title, which is a
+    # heading over a dozen different things. Only its words: the answer it wants
+    # never enters a query, because a query becomes a prompt.
+    about = (
+        written.question
+        if isinstance(written, authored_questions.Authored) and state.get("mode") != REVEAL
+        else ""
+    )
     query = " ".join(
-        part for part in (state.get("topic") or "", state.get("subject") or "", step) if part
+        part
+        for part in (state.get("topic") or "", about, state.get("subject") or "", step)
+        if part
     ).strip()
     # A hint is the second telling, and it has to be a *deeper* one than the
     # first - so it reads wider than a plain turn does. Two more passages is the
@@ -225,6 +265,9 @@ def _retrieve(state: _State) -> _State:
     hits = rag.search(
         query or "how to teach one thing",
         top_k=top_k,
+        # The class first: a Play Group turn must not be taught out of the UKG
+        # pages, however close the words happen to be.
+        class_id=state.get("class_id") or "",
         topic_id=state.get("topic_id") or "",
         kinds=lesson_steps.RETRIEVAL_KINDS.get(step, ()),
     )
@@ -338,9 +381,7 @@ def _fallback_lesson(state: _State) -> Lesson:
         )
 
     if mode == HINT:
-        options = hint_options(
-            answer=answer, offered=list(state.get("offered") or []), visual=visual
-        )
+        options = _hint_choices(state, answer, visual)
         clue = _fallback_clue(visual, bool(options))
         return Lesson(
             explanation=" ".join(part for part in (explanation, clue) if part),
@@ -356,9 +397,40 @@ def _fallback_lesson(state: _State) -> Lesson:
             visual=visual,
         )
 
+    # The author's own question first. A person wrote it for children of this
+    # class, with its own choices and their emoji, which is a better question
+    # than anything that can be built out of a topic's title.
+    written = authored_for(state)
+    if written is not None:
+        return Lesson(
+            explanation=explanation,
+            question=written.question,
+            expected_answer=written.answer,
+            accept=written.accept,
+            strategy=state.get("strategy") or "S1_TELL",
+            source="syllabus",
+            passages=tuple(passages),
+            options=ensure_options(
+                answer=written.answer,
+                options=written.options,
+                topic_id=state.get("topic_id") or "",
+                visual=visual,
+            ),
+            visual=visual,
+        )
+
     # The topic's own title, never the passage heading: that ends in the
     # author's skill id, and "Can you draw letter_b_write?" is not a question.
-    question, expected = _fallback_question(step, topic)
+    question, expected = _fallback_question(step, topic, visual)
+    question = _drawing_question(state.get("topic_id") or "", step, question)
+    options: tuple[str, ...] = ()
+    if expected and lesson_steps.EXPECTS.get(step) == "tap":
+        options = ensure_options(
+            answer=expected,
+            options=(),
+            topic_id=state.get("topic_id") or "",
+            visual=visual,
+        )
     return Lesson(
         explanation=explanation,
         question=question,
@@ -367,6 +439,7 @@ def _fallback_lesson(state: _State) -> Lesson:
         strategy=state.get("strategy") or "S1_TELL",
         source="template",
         passages=tuple(passages),
+        options=options,
         visual=visual,
     )
 
@@ -462,7 +535,7 @@ def hint_options(
         return ()
 
     existing = [str(value).strip() for value in offered if str(value).strip()]
-    right = next((value for value in existing if wanted in stage_normalise(value)), "")
+    right = next((value for value in existing if stage_contains(value, answer)), "")
     if right:
         if len(existing) <= NARROWED_CHOICES:
             return tuple(existing)
@@ -510,6 +583,57 @@ def _family(answer: str, visual: visuals.Visual | None) -> tuple[str, ...]:
     if kind == "shape":
         return visuals.SHAPES
     return ()
+
+
+def authored_for(state: _State) -> authored_questions.Authored | None:
+    """The syllabus's own question for this turn, or None.
+
+    Only for the steps that ask the child to choose something. Saying a letter
+    out loud and drawing it are not questions the author wrote alternatives for,
+    and the reveal and the hint are about a question that already exists.
+    """
+    asked = state.get("asked")
+    if not isinstance(asked, authored_questions.Authored):
+        return None
+    if (state.get("mode") or ASK) != ASK:
+        return None
+    if (state.get("step") or lesson_steps.EXPLAIN) not in (lesson_steps.MATCH, lesson_steps.QUIZ):
+        return None
+    return asked
+
+
+def ensure_options(
+    *,
+    answer: str,
+    options: tuple[str, ...] | list[str],
+    topic_id: str = "",
+    visual: visuals.Visual | None = None,
+) -> tuple[str, ...]:
+    """Choices for a question that needs them, whatever it took to get some.
+
+    A tap question with no choices on it is a typing box in front of a
+    two-year-old, which is not a question at all - it is the turn quietly
+    failing. So an empty list is repaired rather than accepted, in the order that
+    keeps the most of the author in it:
+
+    1. what the caller already had, if it holds the answer;
+    2. the author's own choices for this answer, out of the class's syllabus;
+    3. the family the concept belongs to - other colours for a colour, other
+       letters of the same script for a letter - built by `hint_options`.
+
+    Still nothing means the concept has no family and the syllabus never offered
+    it as a choice; the caller shows the question without buttons rather than
+    inventing plausible-looking nonsense for a child to pick between.
+    """
+    existing = tuple(str(value).strip() for value in options if str(value).strip())
+    if len(existing) >= 2 and any(stage_contains(option, answer) for option in existing):
+        return existing
+
+    from_author = authored_questions.options_for(topic_id, answer)
+    if len(from_author) >= 2:
+        return from_author
+
+    return hint_options(answer=answer, visual=visual)
 
 
 def _shuffled(values: list[str], seed: str) -> list[str]:
@@ -692,16 +816,56 @@ def strip_emoji(text: str) -> str:
     return re.sub(r"\s+([?.!,])", r"\1", cleaned).strip()
 
 
-def _fallback_question(step: str, topic_title: str) -> tuple[str, str]:
-    """What the deterministic teacher asks on each step. No model, still a lesson."""
-    name = (topic_title or "this").strip().lower()
+def _fallback_question(
+    step: str, topic_title: str, visual: visuals.Visual | None = None
+) -> tuple[str, str]:
+    """What the deterministic teacher asks on each step. No model, still a lesson.
+
+    **It asks about the thing, not about the topic.** A level is called
+    "Pre-Writing Strokes" and "can you show me pre-writing strokes?" is that
+    heading with a question mark on it - a syllabus category, which a
+    two-year-old cannot show anybody. When the turn has a picture beside it the
+    question is about what is in the picture, which is the thing the child has
+    just been taught and the only thing on their screen. The title is the last
+    resort, for a concept with no picture at all.
+    """
+    named = _thing_named(topic_title, visual)
     if step == lesson_steps.EXPLAIN:
         return "", ""
     if step == lesson_steps.SAY_IT:
-        return f"Now your turn - can you say {name}?", name
+        return f"Now your turn - can you say {named}?", named
     if step == lesson_steps.DRAW:
-        return f"Can you draw {name} with your finger?", "done"
-    return f"Can you show me {name}?", name
+        return f"Can you draw {named} with your finger?", "done"
+    return f"Which one is {named}?", named
+
+
+def _drawing_question(topic_id: str, step: str, fallback: str) -> str:
+    """The author's words for the tracing card, when they wrote any.
+
+    "Scribble anywhere you like!" is what a person wrote on the same card the
+    canvas is about to draw; "can you draw pre-writing strokes with your finger?"
+    is what the topic's title becomes when nobody has.
+    """
+    if step != lesson_steps.DRAW:
+        return fallback
+    return authored_questions.drawing_prompt(topic_id) or fallback
+
+
+def _thing_named(topic_title: str, visual: visuals.Visual | None) -> str:
+    """What this turn is actually about, in the words a child would use."""
+    if visual is not None and visual.is_shown:
+        if visual.kind == "letter":
+            return visual.value
+        if visual.kind in {"number", "count"}:
+            return visual.value
+        if visual.kind == "colour":
+            return f"the colour {visual.value}"
+        if visual.kind == "shape":
+            return f"the {visual.value}"
+    # No picture. What comes after a colon in a level's title is the thing it
+    # teaches - "Colours: Pink, Black, White" - and the whole title otherwise.
+    named = topic_title.split(":", 1)[1] if ":" in topic_title else topic_title
+    return (named or "this").strip().lower()
 
 
 def _teach(state: _State) -> _State:
@@ -717,17 +881,28 @@ def _teach(state: _State) -> _State:
         user=[
             f"Notes:\n{state.get('context') or ''}",
             f"Today the child is learning: {state.get('topic') or 'numbers'}.",
+            _who_is_listening(state),
             f"Step of the lesson: {step} - {_brief_for(state)}",
             f"Teaching strategy to use: {strategy} - {STRATEGY_BRIEFS.get(strategy, '')}",
+            *_sitting_so_far(state),
+            *_leading_question(state),
             *_help_context(state),
         ],
         temperature=0.5,
-        # Room for the answer *after* the model has thought. At 500 the big
-        # model's reasoning ate the whole budget and Groq rejected the empty
-        # body; "low" effort keeps the turn under two seconds as well. The
-        # explaining turn is three or four sentences now, so the budget went up
-        # with it - a truncated body is a turn taught from the notes instead.
-        max_tokens=1200,
+        # Room for the answer *after* the model has thought, and no more than
+        # that, because the ceiling is not free: Groq reserves
+        # `max_completion_tokens` against the account's tokens-per-minute budget
+        # whether or not they are used. A measured teaching turn is a ~1000
+        # token prompt and **113** completion tokens (36 of them reasoning), so
+        # reserving 1200 charged ~2200 against an 8000/minute budget - under
+        # four turns a minute before every later one sat in a queue, which is
+        # what "the AI is slow" looked like from a child's chair. 500 is more
+        # than four times what a turn actually writes and halves the reservation.
+        #
+        # It is not 500 for its own sake: at 500 *without* `reasoning_effort`
+        # the big model's thinking ate the whole budget and Groq rejected the
+        # empty body. The two settings go together.
+        max_tokens=500,
         json_object=True,
         reasoning_effort="low",
         # The playground runs on the big model on purpose: nothing it says
@@ -763,9 +938,12 @@ def _teach(state: _State) -> _State:
 
     question = strip_emoji(str(decoded.get("question") or ""))
     expected = str(decoded.get("expected_answer") or "").strip()
-    # The explaining step is not a question, so the model is not held to one.
+    # The explaining step is not a question, and neither is a step whose question
+    # the author already wrote - on both the model was asked for words alone, so
+    # coming back without a question is the right answer rather than a broken one.
     teaching_only = step == lesson_steps.EXPLAIN
-    if not teaching_only and (not question or not expected):
+    written_ahead = authored_for(state) is not None
+    if not teaching_only and not written_ahead and (not question or not expected):
         return {"lesson": _fallback_lesson(state)}
     if teaching_only:
         question, expected = "", ""
@@ -774,6 +952,28 @@ def _teach(state: _State) -> _State:
     accept = tuple(str(value).strip() for value in raw_accept if str(value).strip())[:6]
     options = _options_from(decoded.get("options"), expected=expected)
 
+    # The author's question wins on a step where the child chooses. The model
+    # has just written the explanation around this concept, which is what it is
+    # for; the question itself was written by a person for children of this age,
+    # with its own choices, and that is the whole point of having a syllabus.
+    written = authored_for(state)
+    if written is not None:
+        question, expected, accept = written.question, written.answer, written.accept
+        options = written.options
+        source = "syllabus"
+    else:
+        source = "llm"
+
+    if expected and lesson_steps.EXPECTS.get(step) == "tap":
+        options = ensure_options(
+            answer=expected,
+            options=options,
+            topic_id=state.get("topic_id") or "",
+            visual=visual,
+        )
+
+    question = _drawing_question(state.get("topic_id") or "", step, question)
+
     return {
         "lesson": Lesson(
             explanation=explanation,
@@ -781,12 +981,28 @@ def _teach(state: _State) -> _State:
             expected_answer=expected,
             accept=accept,
             strategy=strategy,
-            source="llm",
+            source=source,
             passages=tuple(passages),
             options=options,
             visual=visual,
         )
     }
+
+
+def _who_is_listening(state: _State) -> str:
+    """One line telling the model whose class this is and how old they are.
+
+    Without it the prompt only knows "a child aged 2 to 6", and it wrote for the
+    top of that range - which is how a Play Group two-year-old ended up with a
+    UKG question.
+    """
+    band = (state.get("age_band") or "").strip()
+    if not band:
+        return "This child is in a nursery class. Keep every question tiny."
+    return (
+        f"This child is in {band}. Every question you write must be answerable by "
+        "the youngest child in that class."
+    )
 
 
 def _brief_for(state: _State) -> str:
@@ -797,6 +1013,80 @@ def _brief_for(state: _State) -> str:
     if mode == REVEAL:
         return lesson_steps.REVEAL_BRIEF
     return lesson_steps.BRIEFS.get(state.get("step") or lesson_steps.EXPLAIN, "")
+
+
+def _leading_question(state: _State) -> list[str]:
+    """The authored question, told to the model so its explanation leads into it.
+
+    Without this the model explains whatever the retrieved notes are strongest
+    on - a turn on pre-writing strokes explained the letter A - and the child
+    then gets a question about something else entirely. The *answer* is not sent
+    and never is: it is the author's, `stage.judge` marks against it, and a model
+    that knows the answer is a model that can hand it over while explaining.
+    """
+    written = authored_for(state)
+    if written is None:
+        return []
+    return [
+        f"After your explanation the child will be asked: {written.question}",
+        "Explain what they need to know in order to answer that, and nothing "
+        "else. Do not answer it for them, and do not write a question of your "
+        "own - leave \"question\" and \"expected_answer\" empty.",
+    ]
+
+
+# How many of the sitting's turns the teacher is reminded of. Four is roughly two
+# questions' worth - enough that a hint does not repeat the explanation it is
+# helping with, short enough that the memory cannot crowd out the notes the turn
+# is actually meant to teach from.
+MEMORY_TURNS = 4
+
+# One remembered line is a reminder, not a transcript.
+MEMORY_LINE_CHARS = 160
+
+
+def _trim(text: str, limit: int = MEMORY_LINE_CHARS) -> str:
+    words = " ".join(str(text or "").split())
+    return words if len(words) <= limit else words[: limit - 1].rstrip() + "…"
+
+
+def _sitting_so_far(state: _State, *, closing: str = "") -> list[str]:
+    """The last few turns of this sitting, in the order they happened.
+
+    Every turn used to be written from nothing: the model was handed the notes,
+    the step and the strategy, and no idea that it had already used the same
+    everyday example two turns ago or that the child had just got this very
+    thing right. That is what made a hint repeat the explanation word for word.
+
+    It is a **reminder, not an instruction**: nothing here decides anything. The
+    step, the strategy and the authored question are still what the turn is
+    made of, and `stage.judge` still marks in pure Python. The memory only stops
+    the class from saying the same thing twice.
+    """
+    remembered = list(state.get("memory") or ())[-MEMORY_TURNS:]
+    lines: list[str] = []
+    for turn in remembered:
+        said = _trim(turn.get("explanation", ""))
+        asked = _trim(turn.get("question", ""))
+        answered = _trim(turn.get("child_answer", ""), 60)
+        if said:
+            lines.append(f"- You said: {said}")
+        if asked and not answered:
+            lines.append(f"- You asked: {asked}")
+        if answered:
+            verdict = turn.get("is_correct")
+            how = "" if verdict is None else (" and it was right" if verdict else " and it did not land")
+            lines.append(f'- The child answered "{answered}"{how}.')
+    if not lines:
+        return []
+    return [
+        "What has already been said in this sitting, oldest first:\n" + "\n".join(lines),
+        closing
+        or (
+            "Do not repeat any of it. Teach the next thing in new words, with an "
+            "example you have not spent yet."
+        ),
+    ]
 
 
 def _help_context(state: _State) -> list[str]:
@@ -842,9 +1132,7 @@ def _help_lesson(
             visual=visual,
         )
 
-    options = hint_options(
-        answer=answer, offered=list(state.get("offered") or []), visual=visual
-    )
+    options = _hint_choices(state, answer, visual)
     return Lesson(
         explanation=explanation,
         question=(state.get("question") or "").strip(),
@@ -854,6 +1142,28 @@ def _help_lesson(
         source="llm",
         passages=tuple(passages),
         options=options,
+        visual=visual,
+    )
+
+
+def _hint_choices(state: _State, answer: str, visual: visuals.Visual) -> tuple[str, ...]:
+    """The choices a hint puts on the screen, and it must have some.
+
+    The hint's whole method is *fewer doors*: a child who missed the question is
+    shown the same one again with two things to choose between. A hint that
+    arrives with no buttons has given them nothing and left them with the typing
+    box they could not use the first time, so an empty narrowing falls through to
+    the author's own choices for this answer before it gives up.
+    """
+    narrowed = hint_options(
+        answer=answer, offered=list(state.get("offered") or []), visual=visual
+    )
+    if narrowed:
+        return narrowed
+    return ensure_options(
+        answer=answer,
+        options=(),
+        topic_id=state.get("topic_id") or "",
         visual=visual,
     )
 
@@ -880,8 +1190,13 @@ def _options_from(raw: object, *, expected: str) -> tuple[str, ...]:
     if len(seen) < 2:
         return ()
 
-    wanted = stage_normalise(expected)
-    if not any(wanted and wanted in stage_normalise(option) for option in seen):
+    # `contains_answer`, and not a plain substring, because "a" is inside
+    # "banana": the loose test used to let a set through whose "right" option was
+    # a word that merely happened to contain the answer's letters, and then
+    # `stage.judge` - which was never that generous - marked the child wrong for
+    # tapping it. One rule for putting an option on the screen and for marking
+    # it, or a child gets punished for the gap between two.
+    if not any(stage_contains(option, expected) for option in seen):
         return ()
     return tuple(seen[:4])
 
@@ -908,11 +1223,15 @@ def teach(
     spent: list[str],
     experience_mode: str = "standard",
     topic_id: str = "",
+    class_id: str = "",
+    age_band: str = "",
     step: str = lesson_steps.EXPLAIN,
     mode: str = ASK,
     question: str = "",
     answer: str = "",
     offered: list[str] | tuple[str, ...] = (),
+    asked: authored_questions.Authored | None = None,
+    memory: list[dict] | tuple[dict, ...] = (),
 ) -> Lesson:
     """Run one turn of the agent and get back what to say and what to ask.
 
@@ -920,6 +1239,11 @@ def teach(
     question. `HINT` and `REVEAL` are about the question already on the screen,
     so they are handed it - along with its answer and whatever the child was
     already being offered - and they never write a new one.
+
+    `memory` is the sitting so far, oldest first, so the class remembers what it
+    has already said. It changes nothing about what the turn *is*: it is a
+    reminder handed to the model, and no step, verdict or star is downstream of
+    it.
     """
     global _COMPILED
     if _COMPILED is None:
@@ -929,6 +1253,9 @@ def teach(
             "subject": subject,
             "topic": topic,
             "topic_id": topic_id,
+            "class_id": class_id,
+            "age_band": age_band,
+            "asked": asked,
             "step": step,
             "spent": list(spent),
             "experience_mode": experience_mode,
@@ -936,6 +1263,7 @@ def teach(
             "question": question,
             "answer": answer,
             "offered": list(offered),
+            "memory": [dict(turn) for turn in memory],
         }
     )
     lesson = result.get("lesson")
@@ -961,7 +1289,9 @@ thing you were teaching.
 Return exactly one JSON object and nothing else: {"answer": "..."}"""
 
 
-def answer_question(*, topic: str, topic_id: str, question: str) -> tuple[str, str]:
+def answer_question(
+    *, topic: str, topic_id: str, question: str, memory: list[dict] | tuple[dict, ...] = ()
+) -> tuple[str, str]:
     """What the child asked, answered from the notes. Returns (answer, source).
 
     This is not a turn of the lesson: nothing is marked, no strategy is spent and
@@ -989,10 +1319,21 @@ def answer_question(*, topic: str, topic_id: str, question: str) -> tuple[str, s
             user=[
                 "Notes:" + chr(10) + (chr(10) + chr(10)).join(passages),
                 f"The child is learning: {topic}.",
+                *_sitting_so_far(
+                    {"memory": list(memory)},
+                    closing=(
+                        "That is what the class has just been doing. Answer the "
+                        "child's question in a way that fits it, and do not "
+                        "repeat an explanation they have already heard."
+                    ),
+                ),
                 f"The child asked: {asked}",
             ],
             temperature=0.4,
-            max_tokens=700,
+            # An answer to a child's own question is a couple of sentences. See
+            # the note on the teaching turn: a ceiling is reserved against the
+            # per-minute budget even when it is not spent.
+            max_tokens=300,
             json_object=True,
             model=get_settings().groq_teacher_model,
             reasoning_effort="low",

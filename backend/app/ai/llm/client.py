@@ -38,6 +38,32 @@ BREAKER_COOLDOWN_SECONDS = 60.0
 
 PROVIDER_ENDPOINTS = {"groq": "https://api.groq.com/openai/v1/chat/completions"}
 
+# One connection, kept open, shared by every call.
+#
+# `httpx.post(...)` builds an SSL context, resolves, connects and shakes hands
+# on every single call, and on this machine that measured 1.5-2.3s per turn
+# against 0.5-0.9s through a pooled client - while Groq's own reported
+# processing time was a quarter of a second. That gap was most of what "the AI
+# is slow" meant: a child watching a blank screen for a second and a half of
+# handshake before the model had even been asked.
+#
+# Built lazily so importing this module never touches the network, and kept for
+# the life of the process. `httpx.Client` is thread-safe, which is what the
+# worker threads underneath the sync endpoints need.
+_client: httpx.Client | None = None
+
+
+def _http() -> httpx.Client:
+    global _client
+    if _client is None:
+        _client = httpx.Client(
+            # Per-request timeouts are passed at the call site; this is only the
+            # default for anything that does not name one.
+            timeout=REQUEST_TIMEOUT_SECONDS,
+            limits=httpx.Limits(max_keepalive_connections=4, keepalive_expiry=300.0),
+        )
+    return _client
+
 
 class LLMUnavailable(RuntimeError):
     """The model could not answer. Every caller has a fallback for this."""
@@ -137,7 +163,7 @@ def chat(request: ChatRequest) -> str:
         body["reasoning_effort"] = request.reasoning_effort
 
     try:
-        response = httpx.post(
+        response = _http().post(
             PROVIDER_ENDPOINTS[provider_name()],
             headers={"Authorization": f"Bearer {api_key()}", "Content-Type": "application/json"},
             json=body,

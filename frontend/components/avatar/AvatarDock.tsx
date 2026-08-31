@@ -20,7 +20,7 @@ type ConversationMessage = {
 
 export function AvatarDock() {
   const pathname = usePathname();
-  const { state, message, effect, isSpeaking, muted, voiceProvider, setAvatar, speakMessage, stopSpeaking, toggleMute, toggleVoiceProvider } = useAvatar();
+  const { state, message, effect, isSpeaking, muted, setAvatar, speakMessage, stopSpeaking, toggleMute } = useAvatar();
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [question, setQuestion] = useState("");
   const [conversation, setConversation] = useState<ConversationMessage[]>([]);
@@ -238,12 +238,10 @@ export function AvatarDock() {
         muted={muted}
         isSpeaking={isSpeaking}
         assistantOpen={assistantOpen}
-        voiceProvider={voiceProvider}
         onReplay={() => speakMessage()}
         onStop={stopSpeaking}
         onMute={toggleMute}
         onAsk={() => setAssistantOpen((current) => !current)}
-        onVoiceProviderChange={toggleVoiceProvider}
       />
       </aside>
     </>

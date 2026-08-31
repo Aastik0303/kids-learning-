@@ -25,7 +25,7 @@ from app.api import (
 from app.config import get_settings
 from app.playground import rag
 from app.conductor.skill_graph import load_skill_graph
-from app.db.bootstrap import ensure_schema, schema_ready
+from app.db.bootstrap import ensure_schema, pending_migrations, schema_ready
 from app.services import planner_runner
 from app.services.curriculum_service import load_curriculum
 from app.services.learning_memory_service import initialize_learning_memory_store
@@ -48,6 +48,22 @@ async def lifespan(_: FastAPI):
     ensure_schema()
     if not schema_ready():
         logger.warning("Database schema is missing. Run: cd backend && alembic upgrade head")
+    # A database that is merely *behind* is the worse failure, because nothing
+    # crashes: the tables all exist, so the check above is happy, and only the
+    # column the new code selects is missing. That is how the whole schedule
+    # disappeared once - every read of today's plan raised, `plan_service` caught
+    # it so that infrastructure could not lock a child out, and the schedule
+    # strip, the day's gate and the AI Teacher's stages all quietly degraded with
+    # no error anywhere. Say it at boot, loudly, with the fix in the line.
+    behind = pending_migrations()
+    if behind:
+        logger.error(
+            "Database is %d migration(s) behind (%s). Today's plan cannot be read, "
+            "so the schedule will not show and the class will not follow it. "
+            "Run: cd backend && alembic upgrade head",
+            len(behind),
+            ", ".join(behind),
+        )
     initialize_learning_memory_store()
     # The Planner Agent runs itself from here: today's plan is frozen before the
     # child opens the app, not built by their first request. Off when
@@ -92,7 +108,19 @@ async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONRespons
 
 @app.get("/health")
 async def health() -> dict:
-    return {"ok": True, "schema_ready": schema_ready()}
+    """Whether this process can actually serve a class.
+
+    `pending_migrations` is here and not only in the boot log because a server
+    that has been up for a week has scrolled its boot log away, and "the
+    scheduling is gone" is a question someone asks days later.
+    """
+    behind = pending_migrations()
+    return {
+        "ok": True,
+        "schema_ready": schema_ready(),
+        "pending_migrations": behind,
+        "schema_current": not behind,
+    }
 
 
 app.include_router(auth.router)

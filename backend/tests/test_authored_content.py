@@ -456,11 +456,17 @@ def test_three_option_counting_still_scores_exactly():
 # --------------------------------------------------------------------------
 
 
-def test_a_child_can_play_shapes_from_start_to_finish(client: TestClient):
+def test_a_child_can_play_shapes_from_start_to_finish(client: TestClient, next_day):
     _, child_id = make_nursery_child(client, "shapes@example.com")
+    # Shapes has to be today's work before it can be played. The day holds one
+    # level per subject and the subjects take turns, so "open Shapes" means
+    # "roll on to the day the plan comes round to Shapes" - the gate is the
+    # product working, not something for a test to reach past.
+    next_day.until_planned(client, child_id, "nur_maths_shapes")
     started = client.post(
         "/learning/start", json={"child_id": child_id, "topic_id": "nur_maths_shapes"}
     ).json()
+    assert "session_id" in started, started
     assert started["experience_mode"] == "early"
     # A lesson is a sample of the topic, so it is short enough to finish in one sitting.
     assert started["activity_total"] == LESSON_LENGTH
@@ -504,9 +510,11 @@ def test_the_next_topic_really_opens_after_completion(client: TestClient, next_d
     blocked = client.post("/learning/start", json={"child_id": child_id, "topic_id": "nur_maths_colours"})
     assert blocked.status_code == 403
 
+    next_day.until_planned(client, child_id, "nur_maths_shapes")
     started = client.post(
         "/learning/start", json={"child_id": child_id, "topic_id": "nur_maths_shapes"}
     ).json()
+    assert "session_id" in started, started
     activity = started["activity"]
     while activity is not None:
         answer = (

@@ -95,16 +95,21 @@
   "wrong". An utterance that does not resolve to an answer is never recorded as
   a failed attempt. Anything visible on screen is always an answer and is handed
   straight to the evaluator; the classifier never sees the answer key.
-- **A day is one level per subject, and that is what a stage counts.**
+- **A day is one level from every subject, and that is what a stage counts.**
   `plan_service._candidates` returns exactly one topic per subject - the first
   weak one if the subject has any, otherwise its first unfinished unlocked topic
-  - and never two from the same subject, however many of its levels are shaky. A
-  Play Group child has three subjects (English, Maths, General Awareness), so
-  their day is those three every day and the class is three stages. Classes with
-  more subjects than `app.ai.planner.graph.MAX_ITEMS` rotate by the day number so
-  none is starved. The AI Teacher's stage number is derived from the plan cursor
-  (`plan_index + 1`) and never read off a counter, so a sitting cannot go on
-  claiming a stage the day does not have.
+  - and never two from the same subject, however many of its levels are shaky.
+  **Every subject is in every day**: a Play Group child's three are three stages,
+  a Nursery or UKG child's six are six. There is no rotation and no sample. There
+  used to be both, to share out a three-item cap, and it meant a Nursery child
+  met Hindi every other day and EVS every third while their levels sat unlocked
+  on the Adventure map. `PLAN_LENGTH` and `graph.MAX_ITEMS` are now only a
+  ceiling against a manifest that grows. A longer day is not a longer sitting:
+  the plan is frozen and the class resumes at the plan cursor, so a child who
+  does two stages and stops picks the rest up later the same day. The AI
+  Teacher's stage number is derived from the plan cursor (`plan_index + 1`) and
+  never read off a counter, so a sitting cannot go on claiming a stage the day
+  does not have.
 - **The day's plan is the day's work.** `plan_service.may_open()` is the gate:
   a topic opens if today's frozen plan holds it, or if the child has already
   finished it. Anything else is tomorrow's, including the level the lesson just
@@ -114,10 +119,27 @@
   locking a child out over infrastructure. Both `/learning/start` and the
   conductor enforce it; refusals are `NOT_TODAYS_PLAN` and are worded for a
   child.
-- The Planner Agent is a LangGraph graph in `app/ai/planner/`, run on a timer by
-  `app/services/planner_runner.py` and frozen into `daily_plans`. It may only
-  reorder the candidates `plan_service` computed; an off-menu answer is dropped
-  whole and the day stays `deterministic`.
+- **The plan carries its own cursor.** `daily_plan_items.completed_at` is what
+  says an item is finished, written by `learning_service.award_topic_completion`
+  when the level passes. It is not read off the child's lifetime
+  `completed_topics`, because the one kind of item the planner freezes *because*
+  it is already in that list is a `revisit` - a level marked weak and played
+  again - and such a day arrived ticked: no current topic, `is_day_complete`
+  true before the class opened, and the AI Teacher writing `day_complete` over a
+  plan that had taught nothing. A `new` item still falls back to the old rule,
+  which is correct for every item that is not a revisit.
+- **The planner uses no model at all.** `app/ai/planner/` is a LangGraph graph -
+  gather, order, freeze - and every node is pure Python. It is run on a timer by
+  `app/services/planner_runner.py` and frozen into `daily_plans`, whose `source`
+  is always `deterministic`. There *was* a model here, asked for an ordering and
+  fenced by a validator that dropped any off-menu, duplicated or malformed
+  answer; the fence held and the model went anyway, because ordering a handful of
+  known topics is a small decision with a rule that can be read. Do not put one
+  back. The order is three rules: **open on something the child will get right**
+  (the steadiest level, by the evaluator's own mastery), **meet the shaky levels
+  early but never first** (a day must not start with yesterday's struggle), and
+  **finish on a win**. A day with nothing shaky in it is left in the class's own
+  order, because a routine is what the child is building.
 - The teaching policy is wired: `app/services/teaching_policy_service.py`
   chooses a strategy for every teaching turn (with no model configured too),
   `app/services/retention_service.py` schedules and settles the probes that pay
@@ -171,6 +193,38 @@
   so a hint can never arrive without the answer among its options. A question
   settles once however many turns it took, and five settled questions end the
   stage.
+- **The question a child is asked was written for their class.** On the steps
+  where the child chooses - `match` and `quiz` - the question, its answer and its
+  choices come from the authored syllabus for that child's own class
+  (`app/playground/questions.py`), and the model writes only the explanation that
+  leads into it. A topic's title is not a question: "can you show me pre-writing
+  strokes?" is a syllabus heading, and a two-year-old cannot show anybody one.
+  Retrieval is fenced on `class_id` for the same reason - the nearest passage to
+  "letters" in the whole index is often a UKG one - and that fence holds on the
+  keyword path while the embedding index is still warming. A topic that authored
+  no answerable question falls back to its own subtopics, and only then to the
+  title.
+- **A question that wants a tap always has something to tap.** `expects: "tap"`
+  with an empty `options` is a typing box in front of a child who cannot type,
+  which is the turn failing rather than teaching. `agent.ensure_options` repairs
+  it - what was already there, then the author's own choices for that answer,
+  then the concept's family - and invents nothing when none of those exist.
+- **One rule decides which options may be shown and which tap is right.**
+  `stage.contains_answer` puts an option on the screen, and `stage.judge` marks a
+  tap with the same function. When those two disagreed, a child could tap the
+  option the server had chosen as the answer and be told they were wrong; a
+  tapped answer is marked by *which button it was*, never by word-matching its
+  label. Speech and typing keep the generous word matching. Underscores are
+  spaces to `stage.normalise`, because the syllabus writes `standing_line` and a
+  child reads "standing line".
+- **The class remembers its own sitting.** `playground_turns` has always held
+  what was said, what was asked and what came back; nothing read it, so every
+  turn was written from nothing and a hint could repeat its own explanation word
+  for word. `service._recent_turns` hands the last few turns to the model
+  (`agent._sitting_so_far`), and the ask-me-anything answer gets them too. It is
+  a **reminder and nothing else**: the step, the strategy and the authored
+  question still decide what a turn is, and `stage.judge` still marks in pure
+  Python from the authored key. Nothing downstream of a star may read it.
 - **The class says hello before it teaches.** `service._class_intro` puts two or
   three lines in front of the first turn of a sitting: what today holds, what is
   starting, and that a tricky question will be helped and then answered. It is

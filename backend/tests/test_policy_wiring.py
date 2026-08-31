@@ -398,7 +398,15 @@ def test_the_breaker_stops_a_dead_provider_from_costing_every_turn(monkeypatch):
         calls.append(1)
         raise llm_client.httpx.ConnectError("down")
 
-    monkeypatch.setattr(llm_client.httpx, "post", _fail)
+    # Patched on the pooled client the module actually posts through, not on
+    # `httpx.post`. The client keeps one connection open between turns - the
+    # handshake cost more than the model's own thinking time - and patching the
+    # module-level function stopped intercepting anything when that landed,
+    # which let this test reach the real provider with a fake key.
+    class _DeadClient:
+        post = staticmethod(_fail)
+
+    monkeypatch.setattr(llm_client, "_http", lambda: _DeadClient())
 
     for _ in range(5):
         with pytest.raises(llm_client.LLMUnavailable):

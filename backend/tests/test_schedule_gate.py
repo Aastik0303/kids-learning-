@@ -195,18 +195,36 @@ def test_two_shaky_levels_in_one_subject_still_cost_the_day_one_slot(client: Tes
     assert subjects.count(subject_id) <= 1
 
 
-def test_the_subjects_take_turns_across_days(client: TestClient, next_day):
-    """A day is three lessons and a nursery child has six subjects. Without a
-    rotation the first three in manifest order would be the only three ever
-    planned, and Hindi, EVS and Art would wait until Maths ran out of topics."""
+def test_every_subject_is_in_every_day(client: TestClient):
+    """A day is one level from each of the child's subjects, and all of them.
+
+    It used to be three, with the subjects rotating by the day number so that
+    none was starved. That is what the rotation was *for*, and it meant a
+    Nursery child met Hindi every other day and EVS every third - a subject
+    could go most of a week without being taught while its levels sat unlocked
+    on the Adventure map. The cap is gone and so is the rotation.
+    """
+    child_id = make_child(client)
+    subjects = client.get(f"/curriculum/children/{child_id}/class").json()["subjects"]
+    teachable = {subject["subject_id"] for subject in subjects if subject.get("topics")}
+
+    planned = {
+        item["skill_id"].split(":")[0] for item in plan_of(client, child_id)["items"]
+    }
+
+    assert teachable, "the shipped class has no subjects"
+    assert planned == teachable, sorted(teachable - planned)
+
+
+def test_the_day_is_the_same_shape_tomorrow(client: TestClient, next_day):
+    """No rotation means no surprise: the subjects are the same every morning."""
     child_id = make_child(client)
 
-    seen: set[str] = set()
-    for _ in range(6):
-        seen.update(item["skill_id"].split(":")[0] for item in plan_of(client, child_id)["items"])
-        next_day()
+    today = {item["skill_id"].split(":")[0] for item in plan_of(client, child_id)["items"]}
+    next_day()
+    tomorrow = {item["skill_id"].split(":")[0] for item in plan_of(client, child_id)["items"]}
 
-    assert len(seen) > 3
+    assert today == tomorrow
 
 
 def test_a_child_with_nothing_planned_is_never_locked_out(client: TestClient, monkeypatch):
@@ -294,3 +312,59 @@ def test_a_finished_day_does_not_open_anything(client: TestClient):
 
     assert plan["complete"] is True
     assert plan["autopilot"] is False
+
+
+def test_a_day_of_revisits_is_not_born_finished(client: TestClient, next_day):
+    """A level the child has already passed, planned again because it went badly.
+
+    This is the case that locked children out. The plan's cursor used to be read
+    off the child's lifetime `completed_topics`, and a `revisit` item is in that
+    list from the moment it is frozen - that is what makes it a revisit. So the
+    whole day arrived ticked: no current topic, `is_day_complete` true, and the
+    AI Teacher wrote `day_complete` and refused to open a class that had taught
+    nothing. The plan carries its own cursor now.
+    """
+    child_id = make_child(client, "schedule-revisit@example.com")
+
+    plan = plan_of(client, child_id)
+    played = plan["items"][0]
+    play(client, child_id, played["topic_id"])
+
+    # It passed, so it is completed - and then it went shaky, so tomorrow plans
+    # it again as a revisit.
+    child = child_store.get(child_id)
+    child["weak_skills"].append(played["skill_id"])
+    child_store.save(child)
+
+    # The subjects take turns, so "tomorrow" is really "the day the rotation
+    # comes back round to this subject".
+    next_day()
+    tomorrow = next_day.until_planned(client, child_id, played["topic_id"])
+    revisits = [item for item in tomorrow["items"] if item["topic_id"] == played["topic_id"]]
+    assert revisits, tomorrow["items"]
+    assert revisits[0]["reason"] == "revisit"
+    assert revisits[0]["done"] is False
+    assert tomorrow["current_topic_id"] is not None
+
+    profile = child_service.get_child(child_id)
+    assert plan_service.is_day_complete(profile) is False
+
+
+def test_playing_a_revisit_ticks_it_off_the_day(client: TestClient, next_day):
+    """And it does finish, once the child has actually played it again."""
+    child_id = make_child(client, "schedule-revisit-done@example.com")
+
+    played = plan_of(client, child_id)["items"][0]
+    play(client, child_id, played["topic_id"])
+    child = child_store.get(child_id)
+    child["weak_skills"].append(played["skill_id"])
+    child_store.save(child)
+
+    next_day()
+    next_day.until_planned(client, child_id, played["topic_id"])
+    play(client, child_id, played["topic_id"])
+
+    after = plan_of(client, child_id)
+    done = [item for item in after["items"] if item["topic_id"] == played["topic_id"]]
+    assert done and done[0]["done"] is True
+    assert after["current_topic_id"] != played["topic_id"]

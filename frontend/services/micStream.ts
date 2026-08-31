@@ -35,8 +35,29 @@ type MicState = {
 let warm: MicState | null = null;
 let opening: Promise<MicState | null> | null = null;
 
-/** Below this the room is quiet; above it somebody is talking, however softly. */
-export const SPEECH_LEVEL = 0.045;
+/**
+ * Below this the room is quiet; above it somebody is talking, however softly.
+ *
+ * Deliberately far below what a speech recogniser calls speech. The whole
+ * reason this meter exists is to know that a child spoke when Chrome says
+ * nobody did, so it has to hear things Chrome does not. Two consecutive frames
+ * are required before it counts, which is what keeps a chair scrape or a door
+ * from registering as a voice.
+ */
+export const SPEECH_LEVEL = 0.02;
+
+/** Frames above `SPEECH_LEVEL` before it counts as a voice rather than a knock. */
+const VOICE_FRAMES = 2;
+
+/**
+ * "They are still talking", which is a louder question than "was anyone there".
+ *
+ * Two different bars on purpose. The sensitive one decides whether a quiet
+ * child spoke at all; this one decides whether to keep a child waiting. If
+ * holding the microphone open used the sensitive bar, a room with a fan in it
+ * would never settle and every answer would sit there until the window ran out.
+ */
+const STILL_TALKING_LEVEL = 0.05;
 
 type AudioContextConstructor = new () => AudioContext;
 
@@ -147,6 +168,7 @@ export function watchVoiceActivity(onLevel?: (level: number) => void): VoiceActi
   let level = 0;
   let lastVoiceAt = 0;
   let heard = false;
+  let loudFrames = 0;
 
   const timer = window.setInterval(() => {
     open.analyser.getByteTimeDomainData(open.buffer);
@@ -156,20 +178,82 @@ export function watchVoiceActivity(onLevel?: (level: number) => void): VoiceActi
     }
     level = peak;
     if (peak >= SPEECH_LEVEL) {
-      heard = true;
-      lastVoiceAt = Date.now();
+      loudFrames += 1;
+      if (loudFrames >= VOICE_FRAMES) {
+        heard = true;
+        lastVoiceAt = Date.now();
+      }
+    } else {
+      loudFrames = 0;
     }
     onLevel?.(peak);
-  }, 60);
+  }, 50);
 
   return {
     level: () => level,
     lastVoiceAt: () => lastVoiceAt,
     heardVoice: () => heard,
-    speaking: () => Date.now() - lastVoiceAt < 250,
+    speaking: () => level >= STILL_TALKING_LEVEL && Date.now() - lastVoiceAt < 250,
     stop: () => {
       window.clearInterval(timer);
       onLevel?.(0);
     }
+  };
+}
+
+
+/**
+ * Keep a copy of what the microphone hears, in case the recogniser wastes it.
+ *
+ * The browser's recogniser and this recorder run on the same warm stream at the
+ * same time, which costs nothing extra: the device is already open. Almost
+ * always the recogniser answers first and the clip is thrown away unheard. The
+ * clip only matters in the one case the recogniser is bad at - a child too
+ * quiet for it - where it is the difference between a second attempt on the
+ * server and telling a child who spoke that they said nothing.
+ */
+export type Recording = {
+  /** Stop, and hand back what was recorded. `null` if nothing usable was. */
+  stop: () => Promise<Blob | null>;
+};
+
+/** The container this browser will actually record in, or `""` for its default. */
+function recordingMimeType(): string {
+  const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+  return candidates.find((type) => MediaRecorder.isTypeSupported?.(type)) ?? "";
+}
+
+export function startRecording(): Recording | null {
+  if (!warm || typeof MediaRecorder === "undefined") return null;
+
+  let recorder: MediaRecorder;
+  try {
+    const mimeType = recordingMimeType();
+    recorder = new MediaRecorder(warm.stream, mimeType ? { mimeType } : undefined);
+    recorder.start();
+  } catch {
+    return null;
+  }
+
+  const chunks: Blob[] = [];
+  recorder.ondataavailable = (event) => {
+    if (event.data?.size) chunks.push(event.data);
+  };
+
+  return {
+    stop: () =>
+      new Promise<Blob | null>((resolve) => {
+        if (recorder.state === "inactive") {
+          resolve(chunks.length ? new Blob(chunks, { type: recorder.mimeType }) : null);
+          return;
+        }
+        recorder.onstop = () =>
+          resolve(chunks.length ? new Blob(chunks, { type: recorder.mimeType }) : null);
+        try {
+          recorder.stop();
+        } catch {
+          resolve(null);
+        }
+      })
   };
 }

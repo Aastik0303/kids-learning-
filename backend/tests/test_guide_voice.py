@@ -1,52 +1,38 @@
-"""The guide's voice: free by default, paid when it is paid for, never silent.
+"""The guide's voice: one voice, free, and never silent.
 
-`/speech/synthesize` used to answer 503 unless an ElevenLabs key was configured,
-and every install without one fell back to whatever robotic voice the browser
-happened to ship. It cannot any more: Microsoft Edge's neural voices are free and
-need no key, so a machine with nothing configured still gets a real voice.
+`/speech/synthesize` used to have two providers - Microsoft Edge's free neural
+voices and a paid ElevenLabs one that took over whenever a key happened to be
+present in `.env`. It has one now. A key left in somebody's environment was
+enough to change the voice of the whole site without anybody choosing it, so the
+guide sounded like a different person depending on whose machine was serving it,
+and a child heard a different teacher.
 
-Three things are pinned here, and all three are about a child not losing the
-lesson's voice over somebody's configuration:
+Four things are pinned here:
 
-1. **No key is not an error.** With no ElevenLabs key the endpoint speaks with
-   Edge and says so in `X-Voice-Provider`.
-2. **The paid voice failing falls through to the free one**, rather than 502-ing
-   a child into silence.
-3. **The two voices never serve each other's audio.** The cache is keyed by
-   provider as well as by the words.
+1. **Edge speaks, whatever is configured and whatever is asked for.** A request
+   naming the old paid provider still gets Edge, and says so in
+   `X-Voice-Provider`.
+2. **A failure is reported rather than hidden**, because the web client falls
+   back to the browser's own voice on it - an empty 200 would be silence.
+3. **The repeated lines are only synthesised once.**
+4. **A line with Devanagari quoted inside English goes out whole**, which is the
+   reason this voice was chosen.
 
-The network is never touched: `edge_voice_service.synthesize` is replaced, because
-what is being tested is the *routing*, not Microsoft's servers.
+The network is never touched: `edge_voice_service.synthesize` is replaced,
+because what is being tested is the *routing*, not Microsoft's servers.
 """
 
-import httpx
+import asyncio
+
 import pytest
 from fastapi.testclient import TestClient
 
 from app.api import speech as speech_api
-from app.config import get_settings
 from app.main import app
 from app.services import edge_voice_service
 
 
-# Two obviously different clips, so a test that gets the wrong one fails loudly
-# rather than passing on a coincidence.
 EDGE_AUDIO = b"\xff\xf3edge-audio" + b"\x00" * 64
-ELEVEN_AUDIO = b"\xff\xf3eleven-audio" + b"\x00" * 64
-
-
-async def _eleven_ok(self, url, **kwargs):
-    """A successful ElevenLabs reply.
-
-    The request has to be attached: `raise_for_status()` reads it back to build
-    its message and raises RuntimeError on a response that never had one.
-    """
-    return httpx.Response(
-        200,
-        content=ELEVEN_AUDIO,
-        headers={"content-type": "audio/mpeg"},
-        request=httpx.Request("POST", url),
-    )
 
 
 @pytest.fixture()
@@ -77,29 +63,12 @@ def fake_edge(monkeypatch):
     return said
 
 
-@pytest.fixture()
-def no_elevenlabs_key(monkeypatch):
-    settings = get_settings()
-    monkeypatch.setattr(settings, "elevenlabs_api_key", "", raising=False)
-    return settings
-
-
-@pytest.fixture()
-def with_elevenlabs_key(monkeypatch):
-    settings = get_settings()
-    monkeypatch.setattr(settings, "elevenlabs_api_key", "test-key", raising=False)
-    return settings
-
-
 # --------------------------------------------------------------------------
-# 1. A machine with no key still has a voice
+# 1. There is one voice
 # --------------------------------------------------------------------------
 
 
-def test_no_key_speaks_with_edge_instead_of_refusing(
-    client: TestClient, fake_edge, no_elevenlabs_key
-):
-    """This is the whole point of the change. It used to be a 503."""
+def test_the_free_neural_voice_speaks(client: TestClient, fake_edge):
     response = client.post("/speech/synthesize", json={"text": "Hello little one."})
 
     assert response.status_code == 200
@@ -109,17 +78,21 @@ def test_no_key_speaks_with_edge_instead_of_refusing(
     assert fake_edge == ["Hello little one."]
 
 
-def test_the_paid_voice_is_preferred_when_it_is_paid_for(
-    client: TestClient, fake_edge, with_elevenlabs_key, monkeypatch
-):
-    monkeypatch.setattr(httpx.AsyncClient, "post", _eleven_ok)
+@pytest.mark.parametrize("asked_for", ["edge", "elevenlabs", "browser", ""])
+def test_no_request_can_change_the_voice(client: TestClient, fake_edge, asked_for):
+    """`provider` is accepted and ignored.
 
-    response = client.post("/speech/synthesize", json={"text": "Good morning."})
+    Accepted rather than refused because older clients and the mobile app still
+    send it, and a 422 on the voice endpoint would leave a child in silence over
+    a field nobody reads. Ignored because there is only one voice to pick.
+    """
+    response = client.post(
+        "/speech/synthesize", json={"text": "Say it with me.", "provider": asked_for}
+    )
 
     assert response.status_code == 200
-    assert response.headers["x-voice-provider"] == "elevenlabs"
-    assert response.content == ELEVEN_AUDIO
-    assert fake_edge == [], "the free voice was not needed"
+    assert response.headers["x-voice-provider"] == "edge"
+    assert response.content == EDGE_AUDIO
 
 
 # --------------------------------------------------------------------------
@@ -127,40 +100,7 @@ def test_the_paid_voice_is_preferred_when_it_is_paid_for(
 # --------------------------------------------------------------------------
 
 
-def test_elevenlabs_failing_falls_through_to_the_free_voice(
-    client: TestClient, fake_edge, with_elevenlabs_key, monkeypatch
-):
-    """A billing problem, a rate limit, a dropped connection - none of them is a
-    reason for the guide to stop talking."""
-
-    async def _explode(self, url, **kwargs):
-        raise httpx.ConnectError("nope")
-
-    monkeypatch.setattr(httpx.AsyncClient, "post", _explode)
-
-    response = client.post("/speech/synthesize", json={"text": "Let us try this one."})
-
-    assert response.status_code == 200
-    assert response.headers["x-voice-provider"] == "edge"
-    assert response.content == EDGE_AUDIO
-
-
-def test_asking_for_the_paid_voice_without_a_key_gets_the_free_one(
-    client: TestClient, fake_edge, no_elevenlabs_key
-):
-    """The client cannot see whether a key is configured, so choosing the paid
-    voice must not be a way to break the app."""
-    response = client.post(
-        "/speech/synthesize", json={"text": "Say it with me.", "provider": "elevenlabs"}
-    )
-
-    assert response.status_code == 200
-    assert response.headers["x-voice-provider"] == "edge"
-
-
-def test_edge_failing_is_reported_rather_than_hidden(
-    client: TestClient, no_elevenlabs_key, monkeypatch
-):
+def test_edge_failing_is_reported_rather_than_hidden(client: TestClient, monkeypatch):
     """The web client falls back to the browser's own voice on this, so it has to
     be a failure it can see - not an empty 200."""
 
@@ -182,9 +122,7 @@ def test_edge_failing_is_reported_rather_than_hidden(
 # --------------------------------------------------------------------------
 
 
-def test_the_same_line_is_only_synthesised_once(
-    client: TestClient, fake_edge, no_elevenlabs_key
-):
+def test_the_same_line_is_only_synthesised_once(client: TestClient, fake_edge):
     """The guide says "Let us look at this one" all day. Saying it costs a round
     trip with a child watching a still screen."""
     for _ in range(3):
@@ -193,23 +131,8 @@ def test_the_same_line_is_only_synthesised_once(
     assert fake_edge == ["Let us look."], "the line was synthesised more than once"
 
 
-def test_the_two_voices_never_serve_each_others_audio(
-    client: TestClient, fake_edge, with_elevenlabs_key, monkeypatch
-):
-    """Same words, different provider, different clip. A cache keyed on the words
-    alone would hand the paid voice's audio back for a free-voice request."""
-
-    monkeypatch.setattr(httpx.AsyncClient, "post", _eleven_ok)
-
-    line = {"text": "The very same words."}
-    paid = client.post("/speech/synthesize", json={**line, "provider": "elevenlabs"})
-    free = client.post("/speech/synthesize", json={**line, "provider": "edge"})
-
-    assert paid.content == ELEVEN_AUDIO
-    assert free.content == EDGE_AUDIO
-
-
 def test_an_unknown_provider_is_refused(client: TestClient):
+    """Ignoring the field is not the same as accepting nonsense in it."""
     assert client.post("/speech/synthesize", json={"text": "hi", "provider": "hal9000"}).status_code == 422
 
 
@@ -223,7 +146,7 @@ def test_empty_text_is_refused(client: TestClient):
 
 
 def test_a_line_with_hindi_quoted_inside_english_goes_out_whole(
-    client: TestClient, fake_edge, no_elevenlabs_key
+    client: TestClient, fake_edge
 ):
     """This is why the Edge voice is worth having.
 
@@ -238,3 +161,85 @@ def test_a_line_with_hindi_quoted_inside_english_goes_out_whole(
 
     assert response.status_code == 200
     assert fake_edge == [line], "the sentence was split before it reached the voice"
+
+
+# --------------------------------------------------------------------------
+# 5. A stumble is not a failure
+# --------------------------------------------------------------------------
+#
+# Microsoft's free endpoint refuses a handshake or drops a connection now and
+# then. That reached a child as the device's own robot for the rest of the line
+# - and on Windows the robot reads Devanagari as nothing at all - so a transient
+# failure is asked again here rather than being handed to the fallback.
+
+
+@pytest.fixture(autouse=True)
+def no_backoff_waiting(monkeypatch):
+    """The retry waits are real seconds. Nothing here is testing the clock."""
+
+    async def _no_wait(_seconds):
+        return None
+
+    monkeypatch.setattr(edge_voice_service.asyncio, "sleep", _no_wait)
+
+
+def _stream_that(*outcomes):
+    """A fake `_stream` that produces one outcome per call.
+
+    An outcome is either bytes to return or an exception to raise.
+    """
+    calls = []
+
+    async def _stream(text, *, voice, rate, pitch):
+        outcome = outcomes[min(len(calls), len(outcomes) - 1)]
+        calls.append(text)
+        if isinstance(outcome, BaseException):
+            raise outcome
+        return outcome
+
+    return _stream, calls
+
+
+def test_a_dropped_connection_is_asked_again_rather_than_given_up_on(monkeypatch):
+    stream, calls = _stream_that(ConnectionResetError("reset"), EDGE_AUDIO)
+    monkeypatch.setattr(edge_voice_service, "_stream", stream)
+
+    audio = asyncio.run(edge_voice_service.synthesize("This is कमल."))
+
+    assert audio == EDGE_AUDIO
+    assert len(calls) == 2, "the failed attempt was not retried"
+
+
+def test_a_stream_that_carries_no_audio_is_asked_again(monkeypatch):
+    """What a refused handshake usually looks like from here: a clean stream
+    with nothing in it."""
+    stream, calls = _stream_that(b"", EDGE_AUDIO)
+    monkeypatch.setattr(edge_voice_service, "_stream", stream)
+
+    assert asyncio.run(edge_voice_service.synthesize("Hello.")) == EDGE_AUDIO
+    assert len(calls) == 2
+
+
+def test_a_voice_that_stays_down_still_fails_so_the_client_can_fall_back(monkeypatch):
+    """Retrying forever would be worse than the robot. After the last attempt
+    the caller is told, and the web client speaks with the device's own voice."""
+    stream, calls = _stream_that(ConnectionResetError("reset"))
+    monkeypatch.setattr(edge_voice_service, "_stream", stream)
+
+    with pytest.raises(edge_voice_service.EdgeVoiceError):
+        asyncio.run(edge_voice_service.synthesize("Hello."))
+
+    assert len(calls) == edge_voice_service.ATTEMPTS
+
+
+def test_the_endpoint_serves_a_recovered_clip_as_a_normal_answer(
+    client: TestClient, monkeypatch
+):
+    """The stumble never reaches the child: /speech/synthesize is a 200."""
+    stream, _ = _stream_that(ConnectionResetError("reset"), EDGE_AUDIO)
+    monkeypatch.setattr(edge_voice_service, "_stream", stream)
+
+    response = client.post("/speech/synthesize", json={"text": "Hello."})
+
+    assert response.status_code == 200
+    assert response.content == EDGE_AUDIO

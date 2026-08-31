@@ -75,11 +75,41 @@ def normalise(answer: str) -> str:
     Speech comes back as "the letter A", "it's three", "पहला अ" - the words
     around the answer are not the answer, and a child who says the right thing
     inside a sentence has said the right thing.
+
+    The underscore is treated as a space, because the syllabus writes its answers
+    as tokens - `standing_line`, `sleeping_line` - and what the child taps is the
+    same thing written for a person to read. "standing line" and "standing_line"
+    are one answer, and marking them as two was marking a right answer wrong.
     """
     text = (answer or "").strip().lower()
     text = re.sub(r"[^\w\sऀ-ॿ]", " ", text)
+    text = text.replace("_", " ")
     text = re.sub(r"\s+", " ", text).strip()
     return text
+
+
+def contains_answer(option: str, answer: str) -> bool:
+    """Whether this choice *is* the answer, written out for a child to read.
+
+    An option carries the answer plus decoration - "red apple 🍎" for "red",
+    "3 things 🍎🍎🍎" for "3" - so the test cannot be equality. It is whole-word
+    containment rather than plain substring, and the difference matters: "a" is a
+    substring of "banana", so the loose test would happily put "banana" on the
+    screen as the answer to a question about the letter A and then mark it wrong
+    when the child tapped it.
+
+    **This is the one rule.** The same function decides which options may be
+    shown and whether a tapped option was right, because when those two
+    disagree a child can tap the answer that was put in front of them and be
+    told they are wrong. That is what was happening.
+    """
+    wanted = normalise(answer)
+    text = normalise(option)
+    if not wanted or not text:
+        return False
+    if wanted == text:
+        return True
+    return f" {wanted} " in f" {text} "
 
 
 def _candidates(answer: str) -> set[str]:
@@ -95,13 +125,38 @@ def _candidates(answer: str) -> set[str]:
     return forms
 
 
-def judge(*, said: str, expected: str, accept: list[str] | None = None) -> Verdict:
+def judge(
+    *,
+    said: str,
+    expected: str,
+    accept: list[str] | None = None,
+    offered: list[str] | tuple[str, ...] | None = None,
+) -> Verdict:
     """Right or wrong, decided here and nowhere else.
 
     Generous about how it was said and strict about what was said: the accepted
     answers are the authored ones plus the number words a child uses for them,
     and nothing else counts.
+
+    `offered` is what was on the screen. When the child **tapped** one of those
+    choices, that tap is marked by asking whether the choice they touched is the
+    one the options were built around - `contains_answer`, the same question that
+    put it there. Word-matching a tapped label against the answer is the wrong
+    tool for it: the label is the answer dressed up for a child to read, and
+    "standing line ⬇️" against `standing_line`, or "3 apples 🍎" against `3`,
+    came apart often enough that a child tapping the right box was told they
+    were wrong. That was the bug, and it is why this branch exists.
+
+    Speech and typing fall through to the word matching below, where they belong.
     """
+    tapped = _tapped(said, offered)
+    if tapped is not None:
+        keys = [value for value in (expected, *(accept or [])) if value]
+        return Verdict(
+            is_correct=any(contains_answer(tapped, value) for value in keys),
+            normalised=normalise(said),
+        )
+
     spoken = _candidates(said)
     wanted: set[str] = set()
     for value in [expected, *(accept or [])]:
@@ -111,6 +166,22 @@ def judge(*, said: str, expected: str, accept: list[str] | None = None) -> Verdi
         return Verdict(is_correct=False, normalised=normalise(said))
 
     return Verdict(is_correct=bool(spoken & wanted), normalised=normalise(said))
+
+
+def _tapped(said: str, offered: list[str] | tuple[str, ...] | None) -> str | None:
+    """The choice the child touched, or None when this was not a tap.
+
+    Matched on the normalised label, so the emoji and the punctuation the option
+    is decorated with do not have to survive the round trip to the browser and
+    back.
+    """
+    spoken = normalise(said)
+    if not spoken or not offered:
+        return None
+    for option in offered:
+        if normalise(str(option)) == spoken:
+            return str(option)
+    return None
 
 
 def settle(*, stage: int, questions_asked: int) -> Progress:
@@ -135,6 +206,7 @@ __all__ = [
     "QUESTIONS_PER_STAGE",
     "Progress",
     "Verdict",
+    "contains_answer",
     "judge",
     "normalise",
     "settle",
