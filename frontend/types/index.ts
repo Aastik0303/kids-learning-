@@ -4,8 +4,20 @@ export type User = {
   email: string;
 };
 
+/**
+ * A signed-in parent, and the bearer token that says so.
+ *
+ * `session_token` and `access_token` are the same signed JWT. The first name is
+ * what every client already stores and sends back as `X-Demo-Session`; the
+ * second, with `token_type` and `expires_in`, is the ordinary bearer shape the
+ * API also accepts as `Authorization: Bearer <token>`.
+ */
 export type AuthResponse = {
   session_token: string;
+  access_token: string;
+  token_type: string;
+  /** Seconds, matching the server-side session the token names. */
+  expires_in: number;
   user: User;
 };
 
@@ -94,13 +106,6 @@ export type ClassDetail = ClassSummary & {
   subjects: Subject[];
 };
 
-export type CurriculumOverview = {
-  version: string;
-  source: string;
-  classes: ClassSummary[];
-  experience_modes: Record<string, ExperienceMode>;
-};
-
 export type SubjectProgress = {
   completed_topics: string[];
   unlocked_topics: string[];
@@ -146,6 +151,24 @@ export type PlanItem = {
  * Today's frozen plan. Written once per child per day, so a refresh, a
  * back-navigation and a second tab all show the same three things.
  */
+/**
+ * A retention check-in the schedule says is due: something taught two days ago,
+ * to be asked again with a different question before today's first stage.
+ *
+ * It is not a curriculum item and it is deliberately not shaped like one — no
+ * `reason`, no `done`, no `current`. Answering it unlocks nothing, pays no star
+ * and does not move the day. Adventure shows it so a grown-up can see what the
+ * class is about to check, and nothing about it is tappable.
+ */
+export type RetentionTestItem = {
+  test_id: string;
+  /** "<subject>:<topic>" — the concept being checked. */
+  concept_id: string;
+  topic_id: string;
+  title: string;
+  due_at: string;
+};
+
 export type TodayPlan = {
   child_id: string;
   plan_date: string;
@@ -159,6 +182,36 @@ export type TodayPlan = {
   complete: boolean;
   /** Play Group and Nursery: the app opens today's lesson itself. */
   autopilot: boolean;
+  /**
+   * The check-ins today's sitting opens with. Part of the schedule and not part
+   * of `items`: a check-in is not a level, so nothing that counts or walks the
+   * day's levels may pick these up by accident.
+   */
+  retention_tests?: RetentionTestItem[];
+};
+
+/**
+ * One level's revision notes: the author's own teaching lines, for going back
+ * over something already learned.
+ *
+ * Every line came out of the syllabus a person wrote — no model is upstream of
+ * any of it — so the same level reads the same on every afternoon. `lines` is
+ * both what is shown and what is read aloud; `speech` is those lines joined,
+ * ready for the narrator. Nothing about opening these marks, scores or unlocks
+ * anything, and none of it starts a lesson.
+ */
+export type TopicNotes = {
+  topic_id: string;
+  title: string;
+  lines: string[];
+  /** Asset tokens to draw — the everyday things the author named beside this level. */
+  example_items: string[];
+  /** The concept's own picture, named by the server; the client owns the SVG. */
+  visual_kind: string;
+  visual_value: string;
+  speech: string;
+  /** False when the author has not written anything to revise from yet. */
+  has_notes: boolean;
 };
 
 /** How an activity is answered. Decided by the server's evaluator registry. */
@@ -183,32 +236,6 @@ export type Activity = {
   min_accuracy?: number | null;
   /** Shown to the grown-up for a physical-world activity. */
   parent_note?: string | null;
-};
-
-export type LearningResponse = {
-  session_id: string;
-  child_id: string;
-  class_id: string;
-  subject_id: string;
-  topic_id: string;
-  topic_title: string;
-  experience_mode: string;
-  tutor_response: string;
-  activity: Activity | null;
-  activity_index: number;
-  activity_total: number;
-  is_correct: boolean | null;
-  attempt_number: number;
-  feedback: string;
-  stars_earned: number;
-  current_score: number;
-  topic_completed: boolean;
-  next_topic_id: string | null;
-  next_topic_unlocked: boolean;
-  recommended_practice: boolean;
-  question_changed: boolean;
-  complete: boolean;
-  avatar?: import("@/components/avatar/avatar.types").AvatarPayload | null;
 };
 
 export type GuidanceAction =
@@ -343,110 +370,4 @@ export type CompanionResponse = {
     route?: string;
     label?: string;
   };
-};
-
-export type SpeechEvaluation = {
-  result: "correct" | "close" | "retry" | "unclear";
-  confidence: number;
-  expected: string;
-  heard: string;
-  retry: boolean;
-};
-
-// ─── conductor.py ───────────────────────────────────────────────────────
-
-/**
- * The conductor's one response shape.
- *
- * The class is run server-side and this is the whole of what the client is
- * told about the current beat: what to show, what to say, what to wait for, and
- * what to report when nothing comes. The app renders it and reports what the
- * child did — it decides nothing, including what silence means.
- */
-export type ConductorPhase =
-  | "greet"
-  | "set"
-  | "i_do"
-  | "say_it"
-  | "we_do"
-  | "you_do"
-  | "check"
-  | "branch"
-  | "close";
-
-export type ConductorInputKind = "tap" | "voice" | "trace" | "idle" | "doubt" | "ready";
-
-/** Set whenever the microphone should be open for this turn. */
-export type ConductorListen = {
-  active: boolean;
-  /** The thing the child is being asked to say, e.g. "A" or "अ". */
-  expect: string;
-  contextual_strings: string[];
-  language: string;
-  attempt: number;
-  max_attempts: number;
-  hold_open_ms: number;
-};
-
-export type ConductorDirective = {
-  session_id: string;
-  child_id: string;
-  topic_id: string;
-  phase: ConductorPhase;
-  /** Never carries an answer key: `correct_answer` is always null in a class. */
-  activity: Activity | null;
-  scaffold: {
-    level: number;
-    point_at: string[];
-    dim_others: boolean;
-    demo_tap: boolean;
-    /** Already trimmed server-side. The client may not widen this list. */
-    options_shown: string[];
-    co_narrate: string;
-  };
-  presentation: {
-    choices_shown: number;
-    touch_target_px: number;
-    text_density: string;
-    decoration: string;
-    motion: string;
-    narration_speed: number;
-  };
-  speech: {
-    text: string;
-    /** The language of the topic's *content*, not of the narration. */
-    language: string;
-    speak: boolean;
-    voice_speed: number;
-    source: "template" | "llm";
-  };
-  avatar: import("@/components/avatar/avatar.types").AvatarPayload;
-  visual_action: GuideResponse["visual_action"];
-  next_input: {
-    expects: ConductorInputKind;
-    timeout_ms: number;
-    on_timeout: ConductorInputKind;
-  };
-  listen: ConductorListen;
-  progress: { shape: string; filled: number; total: number };
-  /** Set when the guide is talking and nothing is expected of the child. */
-  auto_advance_in_ms: number | null;
-  close: {
-    reason: "completed" | "day_complete" | "end_kindly" | "paused" | "session_overrun";
-    stars_earned: number;
-    topic_completed: boolean;
-    revisit_skill_id: string | null;
-  } | null;
-  branch: string | null;
-  teaching_strategy: string | null;
-  /** What an utterance that was not an answer was taken to be. Diagnostics. */
-  heard_as: string | null;
-};
-
-export type ConductorInputPayload = {
-  kind: ConductorInputKind;
-  answer?: string;
-  latency_ms?: number;
-  confidence?: number;
-  alternatives?: string[];
 };

@@ -140,6 +140,40 @@ class ClassResolution(BaseModel):
     default_class_id: str | None = None
 
 
+class TopicNotes(BaseModel):
+    """One level's revision notes, for the Adventure map to show and say.
+
+    Every line was typed by the person who wrote the syllabus - no model is
+    anywhere upstream of this - so the same level reads the same on every
+    afternoon, which is what a child going back over something actually needs.
+
+    `lines` is both what is shown and what is read aloud. There is deliberately
+    not a separate script: two versions of the same notes drift, and the one the
+    child hears would stop being the one on the screen. `speech` is those lines
+    joined, ready for the narrator.
+
+    Nothing here is a lesson. Reading it marks nothing, scores nothing, unlocks
+    nothing and does not move the day's plan.
+    """
+
+    topic_id: str
+    title: str
+    lines: list[str] = []
+    # Asset tokens the client draws - the everyday things the author named
+    # beside this level. Never a letter, number, shape or colour: those are the
+    # lesson's own furniture rather than an example of it.
+    example_items: list[str] = []
+    # The picture of the concept itself, named rather than drawn: the client
+    # owns the SVG. Empty when the app has no drawing for it.
+    visual_kind: str = ""
+    visual_value: str = ""
+    speech: str = ""
+    # False when the author has written nothing to revise from yet - a level
+    # that is all tracing, or one still being authored. The page says so kindly
+    # rather than inventing encouragement to fill the space.
+    has_notes: bool = False
+
+
 class ClassOverrideRequest(BaseModel):
     session_token: str
     class_id: str

@@ -194,6 +194,12 @@ class _State(TypedDict, total=False):
     context: str
     passages: list[str]
     strategy: str
+    # A strategy chosen upstream. The AI Teacher runs the learned policy - which
+    # filters the action set before it selects, and writes the episode
+    # afterwards - so when it hands one in, `_choose` spends it rather than
+    # re-deriving a different one from the ladder and leaving the episode
+    # describing a turn that never happened.
+    chosen: str
     lesson: Lesson
     # Set on a hint or a reveal: the question already on the screen, the answer
     # it wants, and whatever the child was already being offered to choose from.
@@ -271,11 +277,37 @@ def _retrieve(state: _State) -> _State:
         topic_id=state.get("topic_id") or "",
         kinds=lesson_steps.RETRIEVAL_KINDS.get(step, ()),
     )
+    # A level teaches several things, and the notes explain each of them in a
+    # passage of its own - one per skill id. The child is being asked about *one*
+    # of them, and the author's own skill id on the question says which. Without
+    # this the model was handed the monkey, the bear and the giraffe together and
+    # taught whichever it liked best: "This is a bear, it is big and furry",
+    # under a question that said "Tap the monkey!".
+    #
+    # It narrows and never empties: the level's overview carries no skill id and
+    # always stays, and a question whose skill has no passage of its own keeps
+    # the lot rather than teaching from nothing. No new word reaches the model -
+    # the passage kept is the one the author wrote for this very question.
+    hits = _about_this_card(hits, state.get("asked"))
+
     passages = [hit.passage.content for hit in hits]
     return {"context": chr(10).join(passages), "passages": passages}
 
 
+def _about_this_card(hits: list[rag.Hit], asked: object) -> list[rag.Hit]:
+    """The passages belonging to the question being asked, and the level's own."""
+    if not isinstance(asked, authored_questions.Authored):
+        return hits
+    skill = (asked.skill_id or "").strip()
+    if not skill or not any(hit.passage.skill_id == skill for hit in hits):
+        return hits
+    return [hit for hit in hits if hit.passage.skill_id in ("", skill)]
+
+
 def _choose(state: _State) -> _State:
+    handed_in = (state.get("chosen") or "").strip()
+    if handed_in:
+        return {"strategy": handed_in}
     return {
         "strategy": choose_strategy(
             spent=list(state.get("spent") or []),
@@ -357,12 +389,21 @@ def _fallback_lesson(state: _State) -> Lesson:
     if not visual.is_shown:
         visual = visuals.from_concept(topic or heading, explanation)
 
+    answer = (state.get("answer") or "").strip()
+
+    # A hint and a reveal are about a question that already has an answer, and
+    # that answer is what the card is about - on all three of a question's turns,
+    # not only on the asking. Without this the reveal said "here is the answer",
+    # drew whichever shape the notes led with, and put that shape's everyday
+    # example under it: a triangle on the board and a ball beneath it while the
+    # answer being given was the circle.
+    if mode in (HINT, REVEAL):
+        visual = visuals.for_card(answer, visual)
+
     if explaining or mode in (HINT, REVEAL):
         example = _everyday_example(visual)
         if example:
             explanation = f"{explanation} {example}"
-
-    answer = (state.get("answer") or "").strip()
 
     if mode == REVEAL:
         # The answer first, because it is the thing the child has been waiting
@@ -402,6 +443,9 @@ def _fallback_lesson(state: _State) -> Lesson:
     # than anything that can be built out of a topic's title.
     written = authored_for(state)
     if written is not None:
+        # The card is about what its question asks for, not about whichever
+        # concept the retrieved notes led with.
+        asking = visuals.for_card(written.answer, visual)
         return Lesson(
             explanation=explanation,
             question=written.question,
@@ -414,9 +458,9 @@ def _fallback_lesson(state: _State) -> Lesson:
                 answer=written.answer,
                 options=written.options,
                 topic_id=state.get("topic_id") or "",
-                visual=visual,
+                visual=asking,
             ),
-            visual=visual,
+            visual=asking,
         )
 
     # The topic's own title, never the passage heading: that ends in the
@@ -964,6 +1008,10 @@ def _teach(state: _State) -> _State:
     else:
         source = "llm"
 
+    # Same again: a turn that asks for something draws the thing it is asking
+    # about. On the explaining step there is no answer and the notes decide.
+    visual = visuals.for_card(expected, visual)
+
     if expected and lesson_steps.EXPECTS.get(step) == "tap":
         options = ensure_options(
             answer=expected,
@@ -1118,6 +1166,11 @@ def _help_lesson(
 ) -> Lesson:
     """A hint or a reveal, with only the words taken from the model."""
     answer = (state.get("answer") or "").strip()
+    # The picture on a helping turn is the picture of the question being helped
+    # with. The model chose one while writing the words, and on a level whose
+    # title names no concept that choice drifts to whatever it has just been
+    # explaining.
+    visual = visuals.for_card(answer, visual)
     if (state.get("mode") or ASK) == REVEAL:
         return Lesson(
             explanation=" ".join(
@@ -1232,6 +1285,7 @@ def teach(
     offered: list[str] | tuple[str, ...] = (),
     asked: authored_questions.Authored | None = None,
     memory: list[dict] | tuple[dict, ...] = (),
+    strategy: str = "",
 ) -> Lesson:
     """Run one turn of the agent and get back what to say and what to ask.
 
@@ -1264,6 +1318,7 @@ def teach(
             "answer": answer,
             "offered": list(offered),
             "memory": [dict(turn) for turn in memory],
+            "chosen": strategy,
         }
     )
     lesson = result.get("lesson")

@@ -31,7 +31,10 @@ export const AVATAR_STATE_INDEX: Record<AvatarState, number> = {
   encouraging: 7,
   storytelling: 8,
   sleeping: 9,
-  error_fallback: 10
+  error_fallback: 10,
+  proud: 11,
+  curious: 12,
+  sad: 13
 };
 
 export const AVATAR_EFFECT_INDEX: Record<AvatarEffect, number> = {
@@ -105,6 +108,63 @@ export function avatarForLearningResult(result: {
     animationEffect: "story_transition",
     speak: false
   };
+}
+
+/**
+ * What the panda's face is doing during a turn of the AI Teacher.
+ *
+ * The class is the one screen where a child cannot read anything, so the
+ * avatar's face is a channel of its own: it reacts *while the feedback is being
+ * said*, and settles into waiting once the talking stops. Splitting it that way
+ * matters - a panda that stayed delighted for the whole of the next question
+ * would be grinning at a child who is stuck on it.
+ *
+ * `speaking` is not a feeling and is not returned here. The mouth is driven
+ * separately by `isSpeaking`, so the panda can be pleased *and* talking, which
+ * is what it is doing most of the time.
+ *
+ * **A wrong answer never makes it sad.** It makes it kind: concerned eyebrows
+ * and a small steady smile. `sad` is reserved for the app's own failures - the
+ * microphone that heard nothing, the server that did not answer - because a
+ * child who learns that missing a letter upsets the panda learns to stop
+ * answering.
+ */
+export function avatarStateForTeacher(now: {
+  speaking: boolean;
+  listening: boolean;
+  waiting: boolean;
+  /** The app let the child down - not the other way round. */
+  sorry: boolean;
+  turn: {
+    is_correct?: boolean | null;
+    is_hint?: boolean;
+    is_reveal?: boolean;
+    is_retention_test?: boolean;
+    topic_completed?: boolean;
+    day_complete?: boolean;
+    expects?: string;
+  } | null;
+}): AvatarState {
+  if (now.sorry) return "sad";
+  if (now.listening) return "listening";
+  const turn = now.turn;
+  if (!turn) return now.waiting ? "thinking" : "idle";
+  if (turn.day_complete) return "proud";
+  if (now.waiting) return "thinking";
+
+  if (now.speaking) {
+    if (turn.topic_completed) return "celebrating";
+    if (turn.is_correct === true) return "happy";
+    if (turn.is_correct === false) return "encouraging";
+    if (turn.is_reveal) return "encouraging";
+    if (turn.is_hint) return "thinking";
+    if (turn.is_retention_test) return "curious";
+    return "storytelling";
+  }
+
+  // Finished talking. Now it is the child's turn, and the face says so.
+  if (turn.expects === "tap" || turn.expects === "voice") return "curious";
+  return "idle";
 }
 
 export function avatarForPracticeResult(result: { is_correct: boolean; feedback: string; hint: string | null }): AvatarPayload {

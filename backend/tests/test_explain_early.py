@@ -296,8 +296,13 @@ def test_the_conductor_teaches_before_the_first_question_and_not_after(client: T
     directive = client.post(f"/conductor/{child_id}/open").json()
     session_id = directive["session_id"]
 
+    # Long enough to reach the first question of whatever the day opens on. The
+    # planner puts one level from every subject into every day and orders them
+    # steadiest-first, so a Play Group child can open on pre-writing strokes -
+    # four tracing cards, each of which is an I DO and then a YOU DO - and the
+    # first question the child is *asked* is turn ten, not turn six.
     asked = None
-    for _ in range(8):
+    for _ in range(20):
         directive = client.post(
             f"/conductor/sessions/{session_id}/input", json={"kind": "ready"}
         ).json()

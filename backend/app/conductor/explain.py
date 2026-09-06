@@ -98,7 +98,19 @@ STOPWORDS = {"the", "a", "an", "it", "this", "that", "you", "me", "us", "one", "
 DEVANAGARI = re.compile(r"[ऀ-ॿ]")
 
 
+def _takes_no_article(thing: str) -> bool:
+    """Colours and uncountable things are named bare: "red", "clay".
+
+    `COLOUR_WORDS` and `MASS_NOUNS` are both defined further down, next to the
+    invitations that read from them.
+    """
+    word = thing.strip().lower()
+    return word in COLOUR_WORDS or word in MASS_NOUNS
+
+
 def _with_article(thing: str) -> str:
+    if _takes_no_article(thing):
+        return thing
     return f"{'an' if thing[:1].lower() in 'aeiou' else 'a'} {thing}"
 
 
@@ -106,7 +118,7 @@ def _name_it(thing: str) -> str:
     """"red" -> "This is red." / "square" -> "This is a square." """
     if not thing:
         return ""
-    if thing.lower() in COLOUR_WORDS or not thing.isascii():
+    if _takes_no_article(thing) or not thing.isascii():
         return f"This is {thing}."
     return f"This is {_with_article(thing)}."
 
@@ -468,6 +480,15 @@ COLOUR_WORDS = {
     "brown", "black", "white", "grey", "gray",
 }
 
+# ...and the things there is no "a" of. This is read aloud to a child, and
+# "Look around for a clay!" is what the blanket rule actually said on a Play
+# Group modelling level. Uncountable nouns are named bare, like the colours.
+MASS_NOUNS = {
+    "clay", "dough", "sand", "water", "paint", "paper", "chalk", "mud",
+    "rice", "flour", "milk", "glue", "wool", "string", "thread", "cotton",
+    "grass", "hair", "food", "music", "air",
+}
+
 
 def _invites(activity: Activity, topic: Topic) -> tuple[str, ...]:
     """A letter is said; a colour is found. Both are done with the body, and
@@ -537,11 +558,11 @@ def teaching_script(
         # rather than the apple.
         lines.append(f"{second} Both!" if len(second.split()) <= 5 else second)
 
-    invite = random.Random(activity.activity_id).choice(_invites(activity, topic))
     invites = _invites(activity, topic)
+    invite = random.Random(activity.activity_id).choice(invites)
     thing = symbol or "it"
     if symbol and invites is FIND_INVITES:
-        thing = symbol if symbol.lower() in COLOUR_WORDS or not symbol.isascii() else _with_article(symbol)
+        thing = symbol if not symbol.isascii() else _with_article(symbol)
     lines.append(invite.format(thing=thing))
 
     script = " ".join(line for line in lines if line)

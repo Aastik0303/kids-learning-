@@ -42,6 +42,18 @@ TEST_ENVIRONMENT = {
     # strategy would make every assertion about which strategy was chosen flaky.
     # `test_policy_wiring` turns it back on where that is the thing being tested.
     "POLICY_EXPLORE_RATE": "0",
+    # The learned policy teaches in the suite. Production defaults to shadow -
+    # the ladder teaches and the table only watches - which is the right posture
+    # for real children and the wrong one for a test that is asserting on what
+    # the table chose. `test_policy_production` sets it back to shadow where the
+    # shadow behaviour is the thing under test.
+    "POLICY_MODE": "on",
+    "POLICY_ROLLOUT_FRACTION": "1",
+    # A fixed signing key, so the suite does not depend on whether the
+    # developer's `backend/.env` has one. Without it `jwt_service` signs with a
+    # throwaway per-process key, which works but makes a token minted in one
+    # process meaningless in another.
+    "JWT_SECRET": "test-only-signing-key-not-for-any-real-environment",
     # The planner sweeps in the background of a running app. In the suite it is
     # off, so a test that asserts on today's plan is asserting on what its own
     # code did - `test_planner_agent` calls the sweep directly instead.

@@ -7,7 +7,6 @@ read to decide correctness, mastery or unlocking.
 """
 
 from datetime import datetime
-from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -47,23 +46,3 @@ def latest_for(session: Session, *, child_id: str) -> TopicMemory | None:
         .where(TopicMemory.child_id == child_id)
         .order_by(TopicMemory.completed_at.desc())
     )
-
-
-def memories_for(session: Session, *, child_id: str, limit: int = 20) -> list[TopicMemory]:
-    return list(
-        session.scalars(
-            select(TopicMemory)
-            .where(TopicMemory.child_id == child_id)
-            .order_by(TopicMemory.completed_at.desc())
-            .limit(limit)
-        ).all()
-    )
-
-
-def forget_child(session: Session, *, child_id: UUID | str) -> int:
-    """Erase one child's lesson memory. The parent-facing delete path uses this."""
-    rows = session.scalars(select(TopicMemory).where(TopicMemory.child_id == str(child_id))).all()
-    for row in rows:
-        session.delete(row)
-    session.flush()
-    return len(rows)

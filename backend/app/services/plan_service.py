@@ -15,6 +15,13 @@ This module owns the *candidates*: which topics are legal for this child today,
 which is a pure function of the manifest and the child's own board. The Planner
 Agent in `app/ai/planner/` owns the *order*, and can only order what is handed
 to it here. `daily_plans.source` records which of the two decided the day.
+
+A day also holds the **retention tests that have come due** - concepts taught two
+days ago and owed a check-in. They ride beside the plan rather than in it
+(`TodayPlan.retention_tests`, never `TodayPlan.items`), because a retention test
+is not a level: it teaches nothing, unlocks nothing, pays no star and does not
+move the cursor. The scheduler decides when one happens; see
+`app/services/retention_test_service.py`.
 """
 
 import logging
@@ -27,7 +34,7 @@ from app.db.repositories import plans, truth
 from app.db.repositories.plans import PlannedItem
 from app.db.session import session_scope
 from app.schemas.child import ChildProfile
-from app.services import curriculum_service
+from app.services import curriculum_service, retention_test_service
 
 
 logger = logging.getLogger(__name__)
@@ -70,6 +77,12 @@ class TodayPlan:
     items: tuple[dict, ...] = ()
     current_topic_id: str | None = None
     completed: int = 0
+    # The retention tests that have come due: concepts taught two days ago and
+    # owed a check-in. They are part of the day's schedule and they are **not**
+    # curriculum items - they are kept in their own tuple precisely so nothing
+    # that walks `items` (the cursor, the freeze, the stage the class teaches,
+    # the tick beside a level) can mistake one for a level to be taught.
+    retention_tests: tuple[dict, ...] = ()
 
 
 def _today() -> date:
@@ -292,10 +305,29 @@ def todays_plan(child: ChildProfile, *, today: date | None = None) -> TodayPlan 
                 items=items,
                 current_topic_id=cursor.topic_id if cursor else None,
                 completed=sum(1 for item in items if item["done"]),
+                # Read on the caller's own session: this is inside a
+                # `session_scope`, and opening a second one here would wait out
+                # SQLite's busy timeout on every read of the plan.
+                retention_tests=_due_tests_on(session, child),
             )
     except Exception:  # pragma: no cover - database unavailable
         logger.exception("Could not read today's plan")
         return None
+
+
+def _due_tests_on(session, child: ChildProfile) -> tuple[dict, ...]:
+    """The due tests, read on a session the caller already holds."""
+    tests = retention_test_service.due_for_child(child.child_id, session=session)
+    return tuple(
+        {
+            "test_id": test.test_id,
+            "concept_id": test.concept_id,
+            "topic_id": test.topic_id,
+            "title": topic_title(test.topic_id),
+            "due_at": test.due_at,
+        }
+        for test in tests
+    )
 
 
 def is_day_complete(child: ChildProfile, *, today: date | None = None) -> bool:
@@ -337,12 +369,6 @@ def may_open(child: ChildProfile, topic_id: str, *, today: date | None = None) -
         reason="tomorrow",
         message=DAY_DONE_MESSAGE if complete else TOMORROW_MESSAGE,
     )
-
-
-def planned_topic_ids(child: ChildProfile, *, today: date | None = None) -> set[str]:
-    """The topics today's plan holds, for a client that wants to grey out the rest."""
-    plan = todays_plan(child, today=today)
-    return {item["topic_id"] for item in plan.items} if plan else set()
 
 
 def topic_title(topic_id: str) -> str:

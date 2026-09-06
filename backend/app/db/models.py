@@ -463,8 +463,126 @@ class PolicyEpisode(Base):
     )
     taken_at: Mapped[datetime] = _now_column()
 
+    # ---- attribution -----------------------------------------------------
+    # The state key is a four-feature squeeze, which is what makes the table
+    # learnable and what makes an episode unreadable on its own six weeks later.
+    # These columns are the audit trail: they say which question was being
+    # taught, where the child stood before and after, which probe paid the
+    # episode and what the Q-value was on either side of the update. Without
+    # them, "why did the policy start preferring S4_STORY in std|m1|r2|n1" has
+    # no answer that does not involve replaying the logs.
+    #
+    # Nothing downstream of a mark, a star or an unlock reads any of them.
+    activity_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    rung: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    spent_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    mastery_before: Mapped[float | None] = mapped_column(Float)
+    mastery_after: Mapped[float | None] = mapped_column(Float)
+    # Which arm chose: 'rl' when the learned policy taught, 'shadow' when the
+    # ladder taught and this row is the recommendation nobody acted on.
+    arm: Mapped[str] = mapped_column(String(8), nullable=False, default="rl")
+    # What the *other* policy would have done, so the two can be compared
+    # without re-deriving one of them from a state key months later.
+    shadow_action: Mapped[str | None] = mapped_column(String(20))
+    explored: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    explore_rate: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+    # 'none' | 'scaffold' | 'partial' | 'leak' - `answer_leak_vetoed` is the
+    # boolean the reward reads, and this is the verdict it came from, so a
+    # penalty can be audited against the sentence that earned it.
+    leak_kind: Mapped[str] = mapped_column(String(16), nullable=False, default="none")
+    # The authored question this turn taught with - the activity id out of
+    # `app/playground/questions.py`, empty on a turn that had no question yet.
+    # The retention test scheduled off this episode reads it for one reason: to
+    # ask a *different* question about the same concept. Without it "do not
+    # simply repeat the exact same question" is a hope rather than a rule, and
+    # the transfer bonus cannot be told apart from recall.
+    question_ref: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    # ---- what the probe paid, denormalised onto the episode ---------------
+    probe_kind: Mapped[str | None] = mapped_column(String(8))
+    probe_passed: Mapped[bool | None] = mapped_column(Boolean)
+    q_before: Mapped[float | None] = mapped_column(Float)
+    q_after: Mapped[float | None] = mapped_column(Float)
+
     __table_args__ = (
         Index("ix_policy_episodes_pending", "skill_id", "reward_resolved_at"),
+        Index("ix_policy_episodes_probe", "retention_probe_id"),
+        Index("ix_policy_episodes_child_skill", "child_id", "skill_id", "taken_at"),
+    )
+
+
+class RetentionTest(Base):
+    """A scheduled re-ask of a concept, two days after it was taught.
+
+    This is the retention probe made **deterministic and part of the schedule**.
+    The probe in `RetentionProbe` waits for the child to bump into the skill
+    again and settles on whatever attempt happens to arrive; this row says the
+    thing outright - *this* concept, tested on *this* day, paying *that* teaching
+    episode - and the scheduler is what decides the day.
+
+    The chain the whole feature rests on is one row wide:
+
+        teaching episode -> concept -> retention test -> result -> reward
+        -> the episode's own (state, action) -> Q-value
+
+    Two properties are load-bearing:
+
+    * **one test per teaching episode.** `source_teaching_episode_id` is unique,
+      so a sweep that runs twice, two workers, or a retry all write one row. An
+      episode paid twice is not a rounding error - the update moves Q(s,a) by
+      `alpha * (target - Q)`, so counting one child's Tuesday twice is counting
+      two children.
+    * **the reward belongs to the teaching action, not to this one.** Nothing
+      about asking the test is an episode: no strategy is spent on it, no
+      `policy_episodes` row is written for it, and the Q-value it moves is the
+      one the *original* teaching turn chose.
+    """
+
+    __tablename__ = "retention_tests"
+
+    id: Mapped[UUID] = _pk()
+    child_id: Mapped[UUID] = mapped_column(ForeignKey("children.id", ondelete="CASCADE"), nullable=False)
+    # The concept, named the way everything else names it: "<subject>:<topic>".
+    # The same id the episode was written against and mastery rolls up on, so
+    # the test and the teaching it judges line up on one skill.
+    concept_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    # Where the question is authored. Derived from the concept and stored, so a
+    # test survives a concept id whose shape changes.
+    topic_id: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    source_teaching_episode_id: Mapped[UUID] = mapped_column(
+        ForeignKey("policy_episodes.id", ondelete="CASCADE"), nullable=False
+    )
+    scheduled_at: Mapped[datetime] = _now_column()
+    due_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    # 'pending' | 'settled' | 'void' - see `app/policy/retention.py`.
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="pending")
+    # The authored question this test asked, and the one the episode taught
+    # with. They must differ for the transfer bonus to be paid, which is what
+    # stops "did you remember this exact question" from being scored as
+    # retention.
+    question_ref: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    taught_question_ref: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    transfer: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    # 'pass' | 'fail', written by `stage.judge` through the retention service and
+    # by no model, ever.
+    result: Mapped[str | None] = mapped_column(String(8))
+    reward: Mapped[float | None] = mapped_column(Float)
+    settled_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    # How many episodes this settlement actually paid: 1 normally, 0 when the
+    # source episode had already been paid by the older opportunistic probe. It
+    # is the audit trail for the no-double-payment rule.
+    episodes_paid: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+    __table_args__ = (
+        # The idempotency of the whole scheduler, in one line.
+        UniqueConstraint(
+            "source_teaching_episode_id", name="uq_retention_tests_source_episode"
+        ),
+        CheckConstraint("status IN ('pending', 'settled', 'void')", name="retention_status_values"),
+        CheckConstraint("result IS NULL OR result IN ('pass', 'fail')", name="retention_result_values"),
+        # The scheduler's own query: this child's pending tests that have come due.
+        Index("ix_retention_tests_due", "child_id", "status", "due_at"),
+        Index("ix_retention_tests_concept", "child_id", "concept_id", "due_at"),
     )
 
 
@@ -488,7 +606,18 @@ class PolicyQValue(Base):
         UTCDateTime(), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    __table_args__ = (UniqueConstraint("state_key", "action", name="uq_policy_q_values_state_action"),)
+    __table_args__ = (
+        # The unique constraint is the thing that stops two workers creating two
+        # rows for one (state, action) and each learning half the evidence. It
+        # is also the conflict target the upsert in
+        # `repositories/policy.py` writes against.
+        UniqueConstraint("state_key", "action", name="uq_policy_q_values_state_action"),
+        # Reading a state means reading all nine of its actions, on every
+        # teaching turn. Its leading column is the unique index's too, so this
+        # is belt and braces on backends that will not use a unique index for a
+        # prefix scan.
+        Index("ix_policy_q_values_state", "state_key"),
+    )
 
 
 class TopicMemory(Base):
@@ -602,6 +731,12 @@ class PlaygroundSession(Base):
     # What the child may tap for the pending question. Held here so a reload
     # offers the same choices rather than a different set beside the same words.
     pending_options: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    # The due retention tests this sitting opened with, as row ids, and how far
+    # through them it has come. They are asked before the day's first stage and
+    # they are not part of it: nothing here moves `questions_asked`, the stage
+    # tally, the plan cursor or a star. An empty queue is the normal case.
+    retention_queue: Mapped[list] = mapped_column(JSON, nullable=False, default=list)
+    retention_index: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # "in_progress", or "day_complete" once every stage of today's plan is
     # through. A day_complete row is the lock: the class will not reopen until
     # tomorrow's plan exists.

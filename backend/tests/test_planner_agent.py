@@ -276,7 +276,15 @@ def test_the_sweep_plans_every_child_who_has_none(client: TestClient, monkeypatc
 
     # The second sweep finds nothing to do: that is what makes it safe to run on
     # a timer, and what stops two workers writing two plans.
-    assert planner_runner.sweep() == {"considered": 0, "planned": 0, "skipped": 0, "failed": 0}
+    # The sweep also schedules the retention tests that have come due; on a
+    # database whose teaching all happened today there are none.
+    assert planner_runner.sweep() == {
+        "considered": 0,
+        "planned": 0,
+        "skipped": 0,
+        "failed": 0,
+        "retention_tests": 0,
+    }
     assert second
 
 
@@ -286,7 +294,13 @@ def test_a_child_with_nothing_to_study_is_skipped_not_failed(client: TestClient,
 
     summary = planner_runner.sweep()
 
-    assert summary == {"considered": 1, "planned": 0, "skipped": 1, "failed": 0}
+    assert summary == {
+        "considered": 1,
+        "planned": 0,
+        "skipped": 1,
+        "failed": 0,
+        "retention_tests": 0,
+    }
 
 
 def test_the_sweep_does_not_stop_at_a_child_it_cannot_plan(client: TestClient, monkeypatch):

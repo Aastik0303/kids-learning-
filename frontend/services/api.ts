@@ -31,10 +31,12 @@ export class ApiRequestError extends Error {
 /**
  * Codes that mean "what this browser remembers no longer exists on the server".
  *
- * Auth and profiles are in memory in this prototype, so a server restart leaves
- * every tab holding a token and a child id that were never rebuilt. Without
- * this, each screen dead-ends on "We could not find that child profile" with no
- * way out but clearing storage by hand.
+ * The session outlives the tab now - it is kept in `localStorage` and the token
+ * is good for thirty days - so a browser can quite legitimately come back
+ * holding a token or a child id that the server has since dropped: a profile
+ * deleted, a database rebuilt, a session signed out from another device.
+ * Without this, each screen dead-ends on "We could not find that child profile"
+ * with no way out but clearing storage by hand.
  */
 const STALE_SESSION_CODES: Record<string, string> = {
   // The parent is still signed in; only the child is gone. `/child/select`

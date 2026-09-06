@@ -23,7 +23,7 @@ from datetime import date
 from app.config import get_settings
 from app.db.repositories import plans
 from app.db.session import session_scope
-from app.services import child_service, plan_service
+from app.services import child_service, plan_service, retention_test_service
 
 
 logger = logging.getLogger(__name__)
@@ -37,13 +37,28 @@ BATCH = 200
 def sweep(*, today: date | None = None) -> dict:
     """Freeze today's plan for every child who has not got one.
 
+    ...and schedule the retention tests that have come due, which are part of the
+    same schedule: `due_at = the teaching turn + 2 days`, one per teaching
+    episode, created by an anti-join so a repeated sweep writes nothing.
+
     Returns a small summary so the caller can log it and the tests can assert on
-    it: `{"considered": n, "planned": n, "skipped": n}`. "Skipped" is a child
-    with nothing legal to study today - every unlocked topic finished, or a
-    class with no authored content yet - which is a normal state, not an error.
+    it: `{"considered": n, "planned": n, "skipped": n, "retention_tests": n}`.
+    "Skipped" is a child with nothing legal to study today - every unlocked
+    topic finished, or a class with no authored content yet - which is a normal
+    state, not an error.
     """
     plan_date = today or date.today()
-    summary = {"considered": 0, "planned": 0, "skipped": 0, "failed": 0}
+    summary = {"considered": 0, "planned": 0, "skipped": 0, "failed": 0, "retention_tests": 0}
+
+    # Retention tests are part of the schedule, so they are created by the same
+    # sweep that freezes the day - not by a mechanism of their own running on
+    # its own timer. A concept taught two days ago becomes testable here, and
+    # the class asks it at the start of the next sitting.
+    #
+    # First, and outside the per-child loop, because it is one bounded anti-join
+    # over `policy_episodes` rather than a query per child, and because a
+    # curriculum that cannot be planned must not stop a test being scheduled.
+    summary["retention_tests"] = retention_test_service.schedule().get("created", 0)
 
     try:
         with session_scope() as session:
@@ -69,7 +84,7 @@ def sweep(*, today: date | None = None) -> dict:
             continue
         summary["planned"] += 1
 
-    if summary["planned"] or summary["failed"]:
+    if summary["planned"] or summary["failed"] or summary["retention_tests"]:
         logger.info("Planner sweep for %s: %s", plan_date, summary)
     return summary
 

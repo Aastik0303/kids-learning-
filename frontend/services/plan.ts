@@ -21,9 +21,3 @@ export function getTodayPlan(childId: string) {
 export function forgetTodayPlan() {
   invalidate("plans:");
 }
-
-/** The subject a plan item belongs to, read off the skill id it carries. */
-export function subjectOf(skillId: string): string | null {
-  const [subjectId] = skillId.split(":");
-  return subjectId && subjectId !== skillId ? subjectId : null;
-}

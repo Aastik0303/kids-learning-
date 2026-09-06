@@ -38,15 +38,6 @@ def database_url() -> str:
     return raw
 
 
-def libpq_url() -> str:
-    """The same URL as libpq wants it: no SQLAlchemy driver token.
-
-    `psycopg.connect()` rejects `postgresql+psycopg://`, so the one module that
-    speaks psycopg directly asks for this form.
-    """
-    return database_url().replace("postgresql+psycopg://", "postgresql://", 1)
-
-
 @lru_cache
 def get_engine() -> Engine:
     url = database_url()
@@ -97,6 +88,31 @@ def session_scope() -> Iterator[Session]:
         raise
     finally:
         session.close()
+
+
+@contextmanager
+def session_or(existing: Session | None) -> Iterator[Session]:
+    """Work on the caller's session when there is one, or open a unit of work.
+
+    Opening a second session inside a request that already holds one is not free
+    and on SQLite it is not even fast: the outer session's read transaction is
+    still open, so the inner one waits the driver's whole five-second busy
+    timeout for a write lock before it gets anywhere. That is five seconds per
+    teaching turn, on every turn, and it does not show up as an error - only as
+    a class that has become unusably slow.
+
+    So a caller that is already inside a `session_scope` passes its session in
+    and the work joins that transaction: one lock, one commit, and the episode
+    lands or rolls back with the turn that produced it. A caller with nothing
+    open - a background sweep, a test - passes `None` and gets the scope.
+    """
+    if existing is not None:
+        yield existing
+        # No commit here: the transaction belongs to whoever opened it, and
+        # committing it from underneath them would half-land their own work.
+        return
+    with session_scope() as session:
+        yield session
 
 
 def get_session() -> Iterator[Session]:

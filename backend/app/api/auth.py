@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Depends
 
 from app.schemas.auth import (
     AuthResponse,
@@ -10,6 +10,7 @@ from app.schemas.auth import (
     ResetPasswordRequest,
     SessionResponse,
 )
+from app.api.deps import optional_token
 from app.services import auth_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -32,8 +33,10 @@ def logout(payload: LogoutRequest) -> dict:
 
 
 @router.get("/session", response_model=SessionResponse)
-def session(x_demo_session: str | None = Header(default=None)) -> SessionResponse:
-    return auth_service.session(x_demo_session)
+def session(token: str | None = Depends(optional_token)) -> SessionResponse:
+    """Who is signed in, if anyone. Asked on every load, so an unknown or
+    expired token is an empty answer rather than an error."""
+    return auth_service.session(token)
 
 
 @router.post("/password/forgot", response_model=ForgotPasswordResponse)

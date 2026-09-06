@@ -89,7 +89,7 @@ function hasMoreToDo(subject: Subject, progress: SubjectProgress | undefined): b
 
 export function SubjectGrid({ detail, child }: Props) {
   const mode = detail.experience;
-  const { plannedTopicIds } = useTodayPlan(child);
+  const { plannedTopicIds, retentionTopicIds } = useTodayPlan(child);
   const totalDone = Object.values(child?.subject_progress ?? {}).reduce(
     (sum, progress) => sum + progress.completed_topics.length,
     0
@@ -126,6 +126,10 @@ export function SubjectGrid({ detail, child }: Props) {
           const finished = done > 0 && done === subject.topic_count;
           const more = hasMoreToDo(subject, progress);
           const isToday = subject.topics.some((topic) => plannedTopicIds.has(topic.topic_id));
+          // A level of this subject is owed a retention check-in: the class will
+          // ask about it again before it teaches anything today. Shown, never
+          // offered - this board still starts nothing.
+          const hasCheckIn = subject.topics.some((topic) => retentionTopicIds.has(topic.topic_id));
           // One destination: this subject's levels. Nothing on this screen
           // starts a lesson any more.
           const href = `/adventure/${subject.subject_id}` as const;
@@ -151,6 +155,17 @@ export function SubjectGrid({ detail, child }: Props) {
                       // turn it is.
                       <span className="rounded-full bg-leaf/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-leaf">
                         🗓️ Today
+                      </span>
+                    ) : null}
+                    {hasCheckIn ? (
+                      // Something in this subject was taught a couple of days
+                      // ago and the class is about to check it is still there.
+                      // It is not a lesson and it does not unlock anything.
+                      <span
+                        data-testid="subject-check-in"
+                        className="rounded-full bg-sky/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-sky"
+                      >
+                        🧩 Remember
                       </span>
                     ) : null}
                   </h2>

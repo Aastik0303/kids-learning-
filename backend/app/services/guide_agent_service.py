@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 import re
 from contextvars import ContextVar
@@ -19,11 +20,15 @@ from app.schemas.guide import (
     GuideVisualActionType,
     TeachingStrategy,
 )
+from app.policy import leak as policy_leak
 from app.services import curriculum_service, teaching_policy_service
 from app.services.answer_resolution_service import AnswerResolutionContext, resolve_answer
 from app.services.errors import app_error
 from app.services.safety_service import FALLBACK, safe_text
 from app.services.teaching_policy_service import TeachingDecision
+
+
+logger = logging.getLogger(__name__)
 
 
 CORE_SYSTEM_PROMPT = """You are the Saksham IQ Guide, a warm AI companion for children aged 3-6.
@@ -1097,6 +1102,33 @@ def _deterministic_teaching_strategy(payload: GuideRequest) -> TeachingStrategy 
     return strategy if strategy in _allowed_teaching_strategies(payload) else None  # type: ignore[return-value]
 
 
+def _leak_verdict(payload: GuideRequest, response: GuideResponse) -> "policy_leak.Verdict":
+    """What this turn did with the answer key it was never shown.
+
+    The model is handed the question with `correct_answer` stripped, which stops
+    it *reading* the answer out and does not stop it guessing one and telling the
+    child. The server still holds the key, so it can check the sentence it is
+    about to send - and it checks the deterministic wording too, because a
+    template that names the answer is the same leak with a different author.
+
+    A leak is not blocked here; blocking would leave the child with silence on
+    the turn they needed most. It is *recorded*, and the recording costs the
+    strategy 1.5 of reward - more than a passed probe pays - so a strategy that
+    leaks is unlearned rather than merely tutted at.
+    """
+    question = payload.question
+    spoken = " ".join(
+        part for part in (response.message, getattr(response.avatar, "message", None)) if part
+    )
+    return policy_leak.classify(
+        spoken,
+        correct_answer=question.correct_answer if question else None,
+        prompt=question.prompt if question else "",
+        options=tuple(question.options) if question else (),
+        accepted=tuple(question.accepted_answers) if question else (),
+    )
+
+
 def _spend_turn(payload: GuideRequest, response: GuideResponse) -> None:
     """Record what the child was actually taught, once per served turn."""
     author = _TURN_AUTHOR.get()
@@ -1107,6 +1139,15 @@ def _spend_turn(payload: GuideRequest, response: GuideResponse) -> None:
     decision = _TURN_DECISION.get()
     if decision is None:
         return
+    verdict = _leak_verdict(payload, response)
+    if verdict.is_leak:
+        logger.warning(
+            "Answer leak on %s by %s (%s): %s",
+            payload.question.activity_id if payload.question else "?",
+            strategy,
+            author,
+            verdict.evidence,
+        )
     teaching_policy_service.commit(
         child_id=payload.child_id,
         skill_id=_skill_id(payload),
@@ -1116,6 +1157,8 @@ def _spend_turn(payload: GuideRequest, response: GuideResponse) -> None:
         experience_mode=payload.experience_mode,
         rung=_ladder_attempt(payload),
         author=author,
+        answer_leak_vetoed=verdict.is_leak,
+        leak_kind=verdict.kind,
     )
 
 

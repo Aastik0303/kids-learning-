@@ -381,51 +381,169 @@ async function fetchVoiceClip(text: string, signal: AbortSignal): Promise<Blob> 
   throw lastError;
 }
 
+/**
+ * How much text to synthesise at a time.
+ *
+ * The whole line used to go to the server as one request, and nothing was heard
+ * until the last syllable of it had been generated and downloaded. On the short
+ * lines - a question, a bit of praise - that is imperceptible. On the explaining
+ * turn, which is a three or four sentence paragraph, it is the pause the class
+ * visibly hangs in before it says anything.
+ *
+ * So the line is spoken in sentence-sized pieces and the next piece is
+ * synthesised *while the current one plays*. The child hears the first sentence
+ * after one short sentence has been generated instead of after the paragraph
+ * has, and the rest arrives under cover of the audio already playing.
+ */
+const SPEECH_CHUNK_CHARS = 150;
+
+/**
+ * And a smaller target for the *first* piece.
+ *
+ * The only latency a child experiences is the wait before the guide starts
+ * talking; everything after that is covered by audio already playing. So the
+ * first request is deliberately the smallest useful one - a sentence or two -
+ * and the rest are grouped larger to keep the number of round trips down.
+ */
+const FIRST_CHUNK_CHARS = 70;
+
+/**
+ * Cut a line into pieces that can be spoken one after another.
+ *
+ * Sentence boundaries only - `.`, `!`, `?` and the Devanagari danda - because a
+ * cut in the middle of a sentence is audible: the voice drops as though the
+ * sentence had ended, and a four-year-old hears two broken thoughts instead of
+ * one. Short sentences are grouped up to the target so a line of five clauses
+ * does not become five requests.
+ */
+export function chunkForSpeech(text: string): string[] {
+  const clean = (text ?? "").trim();
+  if (!clean) return [];
+  const sentences = clean.match(/[^.!?।]+[.!?।]*\s*/g) ?? [clean];
+
+  const chunks: string[] = [];
+  let buffer = "";
+  for (const sentence of sentences) {
+    const piece = sentence.trim();
+    if (!piece) continue;
+    const target = chunks.length === 0 ? FIRST_CHUNK_CHARS : SPEECH_CHUNK_CHARS;
+    if (!buffer) {
+      buffer = piece;
+    } else if (`${buffer} ${piece}`.length <= target) {
+      buffer = `${buffer} ${piece}`;
+    } else {
+      chunks.push(buffer);
+      buffer = piece;
+    }
+  }
+  if (buffer) chunks.push(buffer);
+  return chunks;
+}
+
+/**
+ * Play one synthesised clip to the end.
+ *
+ * `finishActiveSpeech` is set to this clip's own resolve, so `stopSpeech()` -
+ * which is what a child tapping the microphone mid-sentence runs - ends the
+ * wait rather than leaving the caller awaiting audio that has been paused.
+ */
+function playClip(blob: Blob): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    activeAudioUrl = url;
+    activeAudio = audio;
+
+    const release = () => {
+      URL.revokeObjectURL(url);
+      if (activeAudioUrl === url) activeAudioUrl = null;
+      if (activeAudio === audio) activeAudio = null;
+      if (finishActiveSpeech === settle) finishActiveSpeech = null;
+    };
+    const settle = () => {
+      release();
+      resolve();
+    };
+
+    finishActiveSpeech = settle;
+    audio.onended = settle;
+    audio.onerror = () => {
+      release();
+      reject(new Error("Voice playback failed"));
+    };
+    audio.play().catch((error) => {
+      release();
+      reject(error);
+    });
+  });
+}
+
+/**
+ * Let a synthesis we are no longer going to play fail quietly.
+ *
+ * The next sentence is always already in flight, so every way out of the loop
+ * leaves one behind - and a child tapping the microphone mid-explanation aborts
+ * it. An aborted fetch nobody is awaiting is an unhandled rejection in the
+ * console, which is a red herring for whoever is looking for the real fault in
+ * the voice.
+ */
+function disown(pending: Promise<Blob> | null): void {
+  pending?.catch(() => undefined);
+}
+
 async function playSpeech(text: string) {
   stopSpeech();
   forgetStoredVoiceChoice();
   const controller = new AbortController();
-  let audio: HTMLAudioElement | null = null;
-  let audioUrl: string | null = null;
-  let finishThisSpeech: (() => void) | null = null;
   activeRequest = controller;
+  const chunks = chunkForSpeech(text);
+  let spoken = 0;
+  // The synthesis already in flight for the *next* chunk. Held here so it can
+  // be disowned if this one fails - an unawaited rejected promise is an
+  // unhandled rejection in the console, which is a red herring for whoever is
+  // debugging the voice.
+  let ahead: Promise<Blob> | null = null;
+
   try {
-    const blob = await fetchVoiceClip(text, controller.signal);
-    if (controller.signal.aborted) return;
-    audioUrl = URL.createObjectURL(blob);
-    activeAudioUrl = audioUrl;
-    const playbackAudio = new Audio(audioUrl);
-    audio = playbackAudio;
-    activeAudio = playbackAudio;
-    await new Promise<void>((resolve, reject) => {
-      finishThisSpeech = resolve;
-      finishActiveSpeech = resolve;
-      playbackAudio.onended = () => resolve();
-      playbackAudio.onerror = () => reject(new Error("Voice playback failed"));
-      playbackAudio.play().catch(reject);
-    });
+    if (chunks.length === 0) return;
+    let pending: Promise<Blob> | null = fetchVoiceClip(chunks[0], controller.signal);
+    for (let index = 0; index < chunks.length; index += 1) {
+      const current = pending as Promise<Blob>;
+      // Start the next sentence's synthesis before waiting on this one, so the
+      // server is working on it while the child is listening to this.
+      ahead =
+        index + 1 < chunks.length ? fetchVoiceClip(chunks[index + 1], controller.signal) : null;
+      pending = ahead;
+
+      const blob = await current;
+      if (controller.signal.aborted) return disown(ahead);
+      await playClip(blob);
+      spoken = index + 1;
+      if (controller.signal.aborted) return disown(ahead);
+    }
   } catch (error) {
+    disown(ahead);
     // The server voice failed — no network, server down, Edge unreachable. Fall
     // back to the machine's own robot rather than leaving the guide mute: a
     // worse voice is a much smaller problem than a silent lesson.
+    //
+    // Only what has not been said yet: the pieces already played must not be
+    // read out a second time by a different voice.
     //
     // Said out loud in the console, because the robot is exactly what this
     // sounds like when the backend is not running, and a silent fallback sends
     // people looking for the bug in the voice settings instead of at 8008.
     if (!controller.signal.aborted) {
+      const remaining = chunks.slice(spoken).join(" ");
       console.warn(
         `The guide's voice could not be fetched from ${API_BASE}/speech/synthesize; ` +
           "falling back to this device's own voice.",
         error
       );
-      await speakWithBrowser(text);
+      if (remaining) await speakWithBrowser(remaining);
     }
   } finally {
     if (activeRequest === controller) activeRequest = null;
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    if (activeAudioUrl === audioUrl) activeAudioUrl = null;
-    if (activeAudio === audio) activeAudio = null;
-    if (finishActiveSpeech === finishThisSpeech) finishActiveSpeech = null;
   }
 }
 

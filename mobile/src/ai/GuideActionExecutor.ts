@@ -1,5 +1,3 @@
-import type { View } from "react-native";
-
 import { track } from "@/services/analytics/analytics";
 import { navigationRef } from "@/navigation/navigationRef";
 import { SAFE_ROUTES, isSafeRoute } from "@/navigation/routes";
@@ -151,27 +149,4 @@ export function executeVisualAction(
   guide.setHighlights(mounted);
   track("guide_action_executed", { action: action.type, target: mounted.join(",") });
   return { executed: true };
-}
-
-/**
- * Measure a target on screen. Used by the highlight overlay so a pointer
- * can be drawn at the right place without the target itself knowing.
- */
-export function measureTarget(
-  target: RegisteredTarget,
-): Promise<{ x: number; y: number; width: number; height: number } | null> {
-  return new Promise((resolve) => {
-    const node: View | null = target.ref.current;
-    if (!node) {
-      resolve(null);
-      return;
-    }
-    node.measureInWindow((x, y, width, height) => {
-      if ([x, y, width, height].some((value) => !Number.isFinite(value))) {
-        resolve(null);
-        return;
-      }
-      resolve({ x, y, width, height });
-    });
-  });
 }

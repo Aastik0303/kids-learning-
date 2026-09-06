@@ -58,6 +58,17 @@ HINT_AT_TRY = 1
 # The steps that ask for something and can therefore be got wrong.
 SCORED_STEPS = (SAY_IT, MATCH, QUIZ)
 
+# ...and, of those, the ones whose answer may never move the level's score.
+#
+# The echo is taught, repaired and revealed like any other step - a child who
+# cannot say "A" is shown it again - but nothing about it is written to the
+# attempt log and nothing about it reaches a star. Speech-to-text on a
+# three-year-old mishears constantly, and a level that failed because a
+# microphone did not catch a small voice is the app marking its own hardware.
+# `app/conductor/echo.py` has always kept this rule; this is the same rule in
+# the AI Teacher, which is the class that actually pays stars.
+UNMARKED_STEPS = (SAY_IT,)
+
 # What the client is asked to collect for each step.
 EXPECTS = {
     EXPLAIN: "ready",
@@ -157,6 +168,18 @@ class Step:
         return self.asks_a_question and not self.is_reveal
 
     @property
+    def is_marked(self) -> bool:
+        """Whether what happens on this step may move the level's score.
+
+        Not the same question as `is_scored`. A reveal is not scored - there is
+        nothing to mark on a turn that hands the answer over - and it still
+        counts against the level, because a question the teacher had to answer
+        is a question that did not land. An echo is the other way round: it is
+        asked and it is repaired, and none of it is ever counted.
+        """
+        return self.asks_a_question and self.name not in UNMARKED_STEPS
+
+    @property
     def retrieval_kinds(self) -> tuple[str, ...]:
         return RETRIEVAL_KINDS.get(self.name, ())
 
@@ -227,6 +250,7 @@ __all__ = [
     "SCORED_STEPS",
     "SEQUENCE",
     "TRIES_PER_QUESTION",
+    "UNMARKED_STEPS",
     "Step",
     "advance",
     "after_answer",

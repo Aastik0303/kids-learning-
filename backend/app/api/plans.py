@@ -13,7 +13,13 @@ from fastapi import APIRouter, Query
 
 from app.db.repositories import plans as plans_repo
 from app.db.session import session_scope
-from app.schemas.plan import PlanHistoryEntry, PlanHistoryResponse, PlanItem, TodayPlanResponse
+from app.schemas.plan import (
+    PlanHistoryEntry,
+    PlanHistoryResponse,
+    PlanItem,
+    RetentionTestItem,
+    TodayPlanResponse,
+)
 from app.services import child_service, plan_service
 from app.services.errors import app_error
 
@@ -43,6 +49,9 @@ def today(child_id: str) -> TodayPlanResponse:
         # early; from LKG the child chooses, and taking that away would be worse
         # than the taps.
         autopilot=child.experience_mode == "early" and plan.current_topic_id is not None,
+        # Read off the same frozen plan, so the schedule the client draws is the
+        # one the class will actually run: the check-ins first, then the levels.
+        retention_tests=[RetentionTestItem(**test) for test in plan.retention_tests],
     )
 
 

@@ -30,20 +30,7 @@ export function learningTargetStyle(mode: ExperienceMode) {
   } as const;
 }
 
-/**
- * Trim a set of choices to what this mode allows on one screen. `early` shows
- * two; `standard` shows four. Enforced here as well as on the server so a
- * mis-authored activity cannot put six choices in front of a two-year-old.
- */
-export function limitChoices<T>(choices: T[], mode: ExperienceMode): T[] {
-  return choices.slice(0, mode.max_choices_per_screen);
-}
-
 /** `early` mode is icon and voice only: no written words for a pre-reader. */
 export function showsText(mode: ExperienceMode): boolean {
   return mode.text_density !== "none";
-}
-
-export function isEarly(mode: ExperienceMode): boolean {
-  return mode.mode_id === "early";
 }

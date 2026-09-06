@@ -20,8 +20,6 @@ export const space = {
   24: 96,
 } as const;
 
-export type SpaceKey = keyof typeof space;
-
 /**
  * Minimum tap target. Children this young are imprecise — the spec calls
  * for large touch targets, so we sit well above the 44pt platform floor.

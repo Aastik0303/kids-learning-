@@ -1,15 +1,17 @@
 "use client";
 
-import { use, useEffect, useMemo, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { ComingSoon } from "@/components/curriculum/ComingSoon";
+import { ExampleStrip } from "@/components/curriculum/ExampleStrip";
 import { AppShell } from "@/components/shared/AppShell";
 import { FALLBACK_MODE, showsText } from "@/lib/experience";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { useTodayPlan } from "@/lib/useTodayPlan";
-import { getExperienceMode, getTopic } from "@/services/curriculum";
-import type { ExperienceMode, Topic } from "@/types";
+import { getExperienceMode, getTopic, getTopicNotes } from "@/services/curriculum";
+import { canSpeak, speakText, stopSpeech } from "@/services/speech";
+import type { ExperienceMode, Topic, TopicNotes } from "@/types";
 
 /**
  * A level on the Adventure map, and what it is.
@@ -26,6 +28,19 @@ import type { ExperienceMode, Topic } from "@/types";
  * until its turn, or still locked — and offers no way to start it, because
  * starting a level was never this page's decision to make. The way in is the
  * class, and the schedule decides when.
+ *
+ * It does one more thing, and it is the reason a child would come here at all:
+ * it gives back **the notes for this level** — what it teaches, in the words
+ * the syllabus author wrote, with the everyday pictures beside them — and reads
+ * them out loud, because a three-year-old cannot read a line of it. Going back
+ * over something is how it stops fading, and there was nowhere in the app to do
+ * that.
+ *
+ * The notes are deterministic all the way down (`app/playground/notes.py`): no
+ * model writes them, so the same level says the same thing on every afternoon.
+ * Opening them marks nothing, scores nothing, unlocks nothing and does not move
+ * the day's plan — which is what keeps this a progress board rather than a
+ * second classroom.
  */
 export default function TopicLevelPage({
   params
@@ -37,12 +52,41 @@ export default function TopicLevelPage({
   const { plannedTopicIds, loaded } = useTodayPlan(child);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [mode, setMode] = useState<ExperienceMode>(FALLBACK_MODE);
+  const [notes, setNotes] = useState<TopicNotes | null>(null);
+  const [reading, setReading] = useState(false);
 
   useEffect(() => {
     getTopic(topicId)
       .then(setTopic)
       .catch(() => setTopic(null));
   }, [topicId]);
+
+  useEffect(() => {
+    getTopicNotes(topicId)
+      // Notes are the nice-to-have on this page: a level whose notes cannot be
+      // fetched still shows what it is and where it stands.
+      .then(setNotes)
+      .catch(() => setNotes(null));
+  }, [topicId]);
+
+  // Leaving the page mid-sentence must not leave the voice talking over the
+  // next screen — the class narrates too, and two of them at once is chaos.
+  useEffect(() => () => stopSpeech(), []);
+
+  const readAloud = useCallback(() => {
+    if (!notes?.speech) return;
+    if (reading) {
+      stopSpeech();
+      setReading(false);
+      return;
+    }
+    setReading(true);
+    // The same voice the class uses: Edge through this app's own backend, with
+    // the device's own voice only as a fallback. `speakText` owns that choice;
+    // nothing here picks a voice or a language.
+    const started = speakText(notes.speech, () => setReading(false));
+    if (!started) setReading(false);
+  }, [notes, reading]);
 
   useEffect(() => {
     if (!child) return;
@@ -150,6 +194,67 @@ export default function TopicLevelPage({
             🧑‍🏫 Go to my class
           </Link>
         </section>
+
+        {/*
+          The notes: what this level teaches, in the author's own words, said
+          out loud.
+
+          Shown for every level except a locked one. A locked level is one the
+          child has not been given yet, and handing over its notes would be
+          teaching it early through the back door — the same reason the map does
+          not link to it.
+
+          The 🔊 button is the point of the page for a pre-reader: the lines are
+          printed for the grown-up sitting alongside and *spoken* for the child,
+          which is the same split the class makes. It is a button and not an
+          autoplay, because a page a child navigated to should not start talking
+          at them.
+        */}
+        {standing.label !== "Locked" && notes ? (
+          <section
+            data-testid="topic-notes"
+            className="surface-panel grid gap-4 rounded-[2rem] p-5"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h2 className="text-lg font-black text-ink">📖 Let us remember this one</h2>
+              {notes.has_notes && canSpeak() ? (
+                <button
+                  type="button"
+                  onClick={readAloud}
+                  data-testid="read-notes"
+                  aria-label={reading ? "Stop reading" : "Read these notes to me"}
+                  className="pressable rounded-3xl bg-sky px-6 py-4 text-lg font-black text-white shadow-soft"
+                >
+                  {reading ? "⏹️ Stop" : "🔊 Read it to me"}
+                </button>
+              ) : null}
+            </div>
+
+            {notes.has_notes ? (
+              <>
+                {/* The pictures first: they are what a child who cannot read
+                    actually takes in, and the words below are for the ear and
+                    for the grown-up. */}
+                <ExampleStrip items={notes.example_items} />
+                <ul className="grid gap-2">
+                  {notes.lines.map((line) => (
+                    <li key={line} className="flex items-start gap-2 text-lg font-bold text-ink/75">
+                      <span aria-hidden>•</span>
+                      <span>{line}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              // An honest empty state. A level whose author has not written the
+              // teaching lines yet has nothing to revise from, and inventing
+              // some would be the one thing this page must never do.
+              <p className="font-bold text-ink/60">
+                Your class will teach this one out loud. There is nothing written down for it yet.
+              </p>
+            )}
+          </section>
+        ) : null}
 
         {/* What this level covers, each point in its own words. */}
         {withText && topic?.subtopics.length ? (

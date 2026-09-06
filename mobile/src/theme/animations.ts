@@ -33,12 +33,3 @@ export const loops = {
   celebrate: { scale: 1.035, distance: 7, duration: duration.celebrate },
   sparkle: { duration: 1500 },
 } as const;
-
-/**
- * Every animated surface must consult this. `prefers-reduced-motion` was
- * honoured in the web CSS and the RN build has to match — vestibular
- * safety is not optional, and some children are motion sensitive.
- */
-export function motionDuration(base: number, reduceMotion: boolean): number {
-  return reduceMotion ? 0 : base;
-}

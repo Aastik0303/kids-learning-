@@ -45,9 +45,3 @@ def issue(session: Session, *, child_id: UUID, subject_id: str, title: str) -> C
     return certificate
 
 
-def certificates_for(session: Session, *, child_id: UUID) -> list[Certificate]:
-    return list(
-        session.scalars(
-            select(Certificate).where(Certificate.child_id == child_id).order_by(Certificate.issued_at)
-        ).all()
-    )

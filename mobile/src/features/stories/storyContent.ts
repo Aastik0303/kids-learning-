@@ -114,8 +114,3 @@ export const STORIES: Story[] = [
 export function storyById(id: string): Story | undefined {
   return STORIES.find((story) => story.id === id);
 }
-
-export function storiesForAge(age: number | null | undefined): Story[] {
-  if (age === null || age === undefined) return STORIES;
-  return STORIES.filter((story) => story.minAge <= age);
-}

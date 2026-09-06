@@ -189,13 +189,6 @@ export function toddlerToRenderableActivity(activity: ToddlerActivity): Renderab
   };
 }
 
-/** True when the child's answer for this kind is checked on the device. */
-export function isLocallyEvaluated(kind: ActivityKind): boolean {
-  // Tracing and drawing accuracy is measured from stroke geometry on the
-  // device. Spec section 14: the AI encourages, it does not grade the path.
-  return kind === "letter_trace" || kind === "shape_trace" || kind === "free_draw";
-}
-
 /**
  * A conductor directive's activity, ready to render.
  *

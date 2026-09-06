@@ -220,11 +220,6 @@ def _forget_departed_topics(progress: dict, subject) -> None:
         progress["current_topic_id"] = candidates[0] if candidates else None
 
 
-def is_topic_unlocked(child: dict, topic_id: str) -> bool:
-    topic = curriculum_service.get_topic(topic_id)
-    return topic_id in subject_progress(child, topic.subject_id)["unlocked_topics"]
-
-
 def refresh_certificate_eligibility(child: dict) -> bool:
     """A certificate needs every playable topic in the class finished.
 

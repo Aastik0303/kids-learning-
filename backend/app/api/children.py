@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Depends
 
 from app.schemas.child import ChildCreateRequest, ChildProfile, ChildUpdateRequest
+from app.api.deps import required_token
 from app.services import child_service
 
 router = APIRouter(prefix="/children", tags=["children"])
@@ -12,8 +13,8 @@ def create_child(payload: ChildCreateRequest) -> ChildProfile:
 
 
 @router.get("", response_model=list[ChildProfile])
-def list_children(x_demo_session: str = Header()) -> list[ChildProfile]:
-    return child_service.list_children(x_demo_session)
+def list_children(token: str = Depends(required_token)) -> list[ChildProfile]:
+    return child_service.list_children(token)
 
 
 @router.get("/{child_id}", response_model=ChildProfile)

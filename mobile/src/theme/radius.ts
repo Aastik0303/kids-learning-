@@ -16,5 +16,3 @@ export const radius = {
   /** Fully rounded pill / circle */
   pill: 999,
 } as const;
-
-export type RadiusKey = keyof typeof radius;

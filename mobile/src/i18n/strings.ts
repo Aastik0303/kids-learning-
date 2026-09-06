@@ -89,23 +89,7 @@ function deviceLanguage(): string {
 
 let activeLanguage = deviceLanguage();
 
-/** Map a child's stored language name onto a language code. */
-export function setLanguageFromName(name: string | undefined): void {
-  if (!name) return;
-  const map: Record<string, string> = {
-    english: "en",
-    hindi: "hi",
-    spanish: "es",
-    french: "fr",
-  };
-  activeLanguage = map[name.toLowerCase()] ?? "en";
-}
-
 /** Look up a string, falling back to English then to the key itself. */
 export function t(key: StringKey): string {
   return translations[activeLanguage]?.[key] ?? en[key] ?? key;
-}
-
-export function currentLanguage(): string {
-  return activeLanguage;
 }

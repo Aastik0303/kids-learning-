@@ -121,12 +121,3 @@ def get_latest_learning_memory(child_id: str) -> LearningMemory | None:
     return _session_fallback.get(child_id)
 
 
-def recent_learning_memories(child_id: str, limit: int = 5) -> list[LearningMemory]:
-    """The last few finished topics, newest first. Read by the parent digest."""
-    try:
-        with session_scope() as session:
-            return [_as_memory(row) for row in memories.memories_for(session, child_id=child_id, limit=limit)]
-    except Exception:
-        logger.exception("Could not read learning memories")
-        remembered = _session_fallback.get(child_id)
-        return [remembered] if remembered else []

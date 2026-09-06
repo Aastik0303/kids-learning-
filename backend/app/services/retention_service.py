@@ -23,8 +23,10 @@ scores badly: it produces a correct attempt today and a failed probe on Tuesday.
 from datetime import datetime, timezone
 from uuid import UUID
 
+from sqlalchemy.orm import Session
+
 from app.db.repositories import policy
-from app.db.session import session_scope
+from app.db.session import session_or
 
 
 def _now() -> datetime:
@@ -45,6 +47,7 @@ def on_attempt(
     form_signature: str,
     is_correct: bool,
     now: datetime | None = None,
+    session: Session | None = None,
 ) -> dict:
     """Settle whatever this attempt answers, then schedule what it earns.
 
@@ -60,7 +63,10 @@ def on_attempt(
     settled: list[str] = []
     scheduled: str | None = None
 
-    with session_scope() as session:
+    # The caller's session when it has one - see `session_or`. A second session
+    # opened inside a request that already holds one waits out the driver's busy
+    # timeout on SQLite before it can write.
+    with session_or(session) as session:
         probe = policy.open_probe(session, child_id=child_uuid, skill_id=skill_id)
 
         if probe is not None and probe.due_at <= moment:

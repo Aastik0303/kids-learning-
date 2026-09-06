@@ -5,7 +5,6 @@ import { conductorApi } from "@/services/api/conductorApi";
 import { track } from "@/services/analytics/analytics";
 import { haptics } from "@/services/audio/haptics";
 import { voiceController } from "@/features/voice/VoiceController";
-import { useAudioStore } from "@/store/audioStore";
 import { useChildStore } from "@/store/childStore";
 import { useGuideStore } from "@/store/guideStore";
 import { conductorToRenderableActivity, type RenderableActivity } from "@/types/activity";
@@ -322,9 +321,4 @@ export function useConductorClass({ onComplete }: UseConductorClassInput) {
     raiseHand,
     clearError: () => setError(null),
   };
-}
-
-/** Kept for the audio store's mic affordance; see `MicButton`. */
-export function useIsMicOpen(): boolean {
-  return useAudioStore((state) => state.isListening);
 }

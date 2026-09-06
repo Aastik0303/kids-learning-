@@ -38,7 +38,7 @@ from sqlalchemy import select
 from app.db.models import Attempt, PlaygroundSession, PlaygroundTurn
 from app.db.session import session_scope
 from app.main import app
-from app.playground import agent, lesson, questions, rag, stage, visuals
+from app.playground import agent, examples, lesson, questions, rag, stage, visuals
 
 
 @pytest.fixture()
@@ -404,6 +404,239 @@ def test_a_level_is_about_what_comes_after_its_colon():
     """"स्वर: अ, आ" teaches अ. The word before the colon is the kind of thing."""
     assert visuals.from_concept("स्वर: अ, आ").as_token() == "letter:अ"
     assert visuals.from_concept("Letters: A, B, C").as_token() == "letter:A"
+
+
+def test_a_devanagari_level_is_about_the_letter_standing_on_its_own():
+    """"स्वर अ आ" teaches अ, not the स of the word "स्वर".
+
+    Half the Hindi levels in the syllabus are named without a colon, and the
+    first Devanagari character in those titles belongs to the word for the
+    *kind* of letter - स्वर, व्यंजन. Reading character by character drew that
+    letter on the board, and then filtered the notes and picked the example for
+    it, so a level on अ taught स. What is being taught is written as a letter by
+    itself; the kind of thing it is never is.
+    """
+    assert visuals.from_concept("स्वर अ आ").as_token() == "letter:अ"
+    assert visuals.from_concept("स्वर (अ - अः)").as_token() == "letter:अ"
+    assert visuals.from_concept("व्यंजन क ख").as_token() == "letter:क"
+
+
+def test_the_explanation_is_spoken_and_the_example_is_what_is_shown(client: TestClient):
+    """Every teaching turn still writes its explanation, and the screen shows
+    pictures instead.
+
+    The words are the lesson and they are still there - the guide says them out
+    loud, and `speech` carries them exactly as before. What a two-year-old gets
+    to *look* at is `example_items`: the everyday things the author named beside
+    this level, which the client draws.
+    """
+    child_id = make_child(client, "playground-example@example.com")
+    turn = client.post(f"/playground/teacher/{child_id}/open").json()
+
+    assert turn["speech"].strip(), "the explanation is still written and still said"
+    assert isinstance(turn["example_items"], list)
+    assert len(turn["example_items"]) <= examples.MAX_ITEMS
+    # Nothing here is a word to read: they are asset tokens the client draws.
+    assert all(isinstance(item, str) and item.strip() for item in turn["example_items"])
+
+
+def test_an_example_is_never_the_answer_to_the_question_beside_it():
+    """A picture next to a question may not be the thing being asked for.
+
+    The examples sit where the explanation used to be, which is directly above
+    the question - so an apple shown beside "tap the red one" would be the
+    answer handed over in pictures, by the one part of the turn no model wrote.
+    """
+    concept = visuals.from_concept("Letters Aa Bb")
+    with_answer = examples.for_turn("nur_eng_letters_ab", visual=concept, answer="apple")
+    assert "apple" not in with_answer
+
+    offered = examples.for_turn(
+        "nur_eng_letters_ab", visual=concept, options=["apple 🍎", "ball ⚽"]
+    )
+    assert "apple" not in offered and "ball" not in offered
+
+
+def test_an_example_is_an_everyday_thing_and_never_another_card_of_the_lesson():
+    """A is for apple, not for B.
+
+    Letters, numbers, shapes and colours are the lesson's own furniture: a child
+    has not "seen a letter B for themselves" the way they have seen a ball. A
+    pre-writing level, whose every picture is a stroke, therefore shows no
+    example rather than a picture of a sleeping line.
+    """
+    letters = examples.for_turn("nur_eng_letters_ab", visual=visuals.from_concept("Letters Aa Bb"))
+    assert "apple" in letters
+    assert not [item for item in letters if item.lower().startswith("letter")]
+
+    assert examples.for_turn("nur_eng_strokes", visual=visuals.Visual()) == []
+
+
+def test_an_example_belongs_to_the_card_and_not_to_the_rest_of_the_level():
+    """A ball is a picture of a circle, so it goes on the circle's card.
+
+    The shapes level names a ball beside its circle and nothing at all beside
+    its square. Reading the rest of the level for the square drew that ball -
+    beside the question "tap the square!", whose other choice was the circle. It
+    was an example of the wrong concept *and* a picture of the wrong answer, on
+    the one part of the screen a child who cannot read is using.
+
+    What the square gets instead is the everyday example the teacher is already
+    saying out loud, drawn.
+    """
+    square = examples.for_turn(
+        "pg_maths_shapes",
+        visual=visuals.Visual(kind="shape", value="square"),
+        answer="square",
+        options=["square", "circle"],
+    )
+    assert "ball" not in square
+    assert square, "the square still shows what the spoken example names"
+
+    circle = examples.for_turn(
+        "pg_maths_shapes",
+        visual=visuals.Visual(kind="shape", value="circle"),
+        answer="circle",
+        options=["circle", "triangle"],
+    )
+    assert "ball" in circle, "the author put the ball beside the circle themselves"
+
+
+def test_a_turn_is_taught_from_the_notes_for_the_question_it_is_asking():
+    """The card that asks about the monkey is not taught the bear.
+
+    A level teaches several things and the notes explain each in a passage of
+    its own, one per skill id. All of them came back from retrieval together, so
+    the model was handed the monkey, the bear and the giraffe and taught
+    whichever it liked - "This is a bear, it is big and furry" - under a question
+    that said "Tap the monkey!". The author's skill id on the question says which
+    passage belongs to this card.
+    """
+    for written in questions.for_topic("pg_ga_animals_4"):
+        state = {
+            "subject": "General Awareness",
+            "topic": "Wild Animals: Monkey, Bear, Giraffe",
+            "topic_id": "pg_ga_animals_4",
+            "class_id": "playgroup",
+            "step": lesson.MATCH,
+            "spent": [],
+            "asked": written,
+        }
+        state.update(agent._retrieve(state))
+        # The body of each passage, without its heading - the heading is the
+        # level's name and quite properly says "Monkey, Bear, Giraffe".
+        taught = " ".join(" ".join(one.splitlines()[1:]) for one in state["passages"]).lower()
+        assert written.answer.lower() in taught, written.question
+        for other in questions.for_topic("pg_ga_animals_4"):
+            if other.skill_id == written.skill_id:
+                continue
+            assert other.answer.lower() not in taught, f"{written.question} taught {other.answer}"
+
+
+def test_narrowing_the_notes_to_one_card_never_leaves_none():
+    """A question whose skill has no passage of its own keeps the whole level.
+
+    Teaching from nothing is worse than teaching from a neighbour, so the filter
+    only ever narrows when it has something to narrow to.
+    """
+    hits = rag.search(
+        "Wild Animals: Monkey, Bear, Giraffe",
+        top_k=4,
+        class_id="playgroup",
+        topic_id="pg_ga_animals_4",
+    )
+    assert hits
+    stranger = questions.Authored(
+        activity_id="none", skill_id="no_such_skill", question="?", answer="?"
+    )
+    assert agent._about_this_card(list(hits), stranger) == list(hits)
+    assert agent._about_this_card(list(hits), None) == list(hits)
+
+
+def test_the_answer_has_the_last_word_on_what_the_board_draws():
+    """"Tap the circle!" draws a circle, whoever thought otherwise.
+
+    The picture can come from the level's title, from the notes that were
+    retrieved, or from a token the model chose while writing the words - and on
+    a level called "Shapes" the title says nothing, so any of the other two
+    could put a square on the board under a question about the circle. The
+    answer is the one part of a card a person wrote on purpose, so it wins; the
+    rest only decides when the answer names nothing the app can draw.
+    """
+    square = visuals.Visual(kind="shape", value="square")
+    assert visuals.for_card("circle", square).as_token() == "shape:circle"
+    assert visuals.for_card("the triangle 🔺", square).as_token() == "shape:triangle"
+    assert visuals.for_card("red", square).as_token() == "colour:red"
+    assert visuals.for_card("A", square).as_token() == "letter:A"
+    # And it stands back when the answer is a thing rather than a concept, or
+    # when there is no question at all - the explaining step has none.
+    assert visuals.for_card("apple", square) == square
+    assert visuals.for_card("", square) == square
+
+
+def test_every_shape_gets_its_own_example_and_the_card_follows_its_question():
+    """"Tap the triangle!" is a triangle card, whatever the notes drew.
+
+    The picture is worked out from the level's title and then from the notes
+    that were retrieved. A level called "Shapes" says nothing in its title, so
+    every card of it took whichever shape the notes led with - the circle - and
+    the ball the author had put beside the circle followed it onto the square
+    card and the triangle card both. A question that has an answer has already
+    said what its card is about, and a person wrote that answer.
+    """
+    for written in questions.for_topic("pg_maths_shapes"):
+        # All three turns of the question, because the reveal drifted too: it
+        # said "here is the answer", drew the shape the notes led with, and put
+        # that shape's example under it.
+        for mode in (agent.ASK, agent.HINT, agent.REVEAL):
+            state = {
+                "subject": "",
+                "topic": "Shapes",
+                "topic_id": "pg_maths_shapes",
+                "step": lesson.MATCH,
+                "spent": [],
+                "asked": written,
+                "mode": mode,
+                "answer": written.answer,
+                "question": written.question,
+                "offered": list(written.options),
+            }
+            state.update(agent._retrieve(state))
+            taught = agent._fallback_lesson(state)
+            assert taught.visual.as_token() == f"shape:{written.answer}", (
+                f"{mode}: {written.question}"
+            )
+
+            shown = examples.for_turn(
+                "pg_maths_shapes",
+                visual=taught.visual,
+                answer=written.answer,
+                options=list(taught.options or written.options),
+            )
+            assert shown, f"{written.answer} needs an example of its own"
+            if written.answer != "circle":
+                assert "ball" not in shown, f"a ball is a circle, not a {written.answer}"
+
+
+def test_a_letters_level_still_shows_the_pictures_its_author_grouped_apart():
+    """The concept and its pictures are usually in two different activities.
+
+    A letters level names the letters in one activity and the apple and the ball
+    in the next, and a counting level names four balls in an activity that never
+    says "4". Neither of those is another card of the lesson, so both are still
+    read: an activity that names no concept of its own belongs to the level.
+    """
+    assert "apple" in examples.for_turn("nur_eng_letters_ab", visual=visuals.Visual())
+    assert examples.for_turn(
+        "pg_maths_number_4", visual=visuals.Visual(kind="number", value="4")
+    ), "the four balls are the number 4's own counters"
+
+
+def test_a_level_whose_author_named_no_picture_shows_no_example():
+    """An invented example is worse than none - the same rule the spoken
+    everyday example keeps."""
+    assert examples.for_turn("", visual=visuals.Visual()) == []
+    assert examples.for_turn("no_such_topic", visual=visuals.Visual()) == []
 
 
 def test_the_retrieval_marker_never_reaches_the_child():

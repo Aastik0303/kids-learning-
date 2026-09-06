@@ -10,7 +10,7 @@ That is the rule these tests pin, from both ends: what the schedule opens, and
 what it holds back until tomorrow.
 """
 
-from datetime import date, timedelta
+from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient

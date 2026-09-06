@@ -23,3 +23,8 @@ sentence-transformers>=3.0,<6
 # one voice reads English and Devanagari in the same sentence - which is how this
 # app narrates Hindi, so it replaces the browser's own robotic speechSynthesis.
 edge-tts>=6.1.9
+
+# Signed session tokens. `app/services/jwt_service.py` mints one at sign-in and
+# verifies it on every request; the `auth_sessions` row it names is still what
+# makes a sign-out actually sign somebody out.
+PyJWT>=2.8,<3

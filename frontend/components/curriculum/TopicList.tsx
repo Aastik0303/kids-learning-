@@ -65,6 +65,13 @@ function symbolFor(state: NodeState, topic: Topic) {
  * centre no matter how tall that row grew. That is what lets the open level
  * carry an extra bubble of detail without every rope below it going crooked.
  *
+ * A level can also carry a **🧩 Remember** badge: the scheduler says a check-in
+ * on it is due, so the class will ask about it again today with a different
+ * question. It is a badge and not a state, because it says nothing about
+ * whether the level may be taught - a finished level still reads as finished on
+ * the morning its check-in falls due, and answering the check-in pays no star
+ * and unlocks nothing.
+ *
  * Only the level a child is actually on explains itself. Repeating the
  * objective, the delivery and the subtopics on all eight levels is what made
  * the old list a wall of grey text — here that detail rides on the one node the
@@ -79,7 +86,7 @@ export function TopicList({ subject, child, mode }: Props) {
   // Finishing a level unlocks the next one; the next one is tomorrow's, and the
   // server refuses it today - so the map has to say so rather than let a child
   // tap into a refusal.
-  const { plannedTopicIds, loaded } = useTodayPlan(child);
+  const { plannedTopicIds, retentionTopicIds, loaded } = useTodayPlan(child);
 
   const stateOf = (topic: Topic): NodeState => {
     if (!topic.available) return "coming-soon";
@@ -122,6 +129,18 @@ export function TopicList({ subject, child, mode }: Props) {
           const ropeTone = state === "done" ? "topic-rope-open" : "topic-rope-dim";
           const ropeLive = next && next.topic_id === currentId ? "topic-rope-live" : "";
 
+          // This level is owed a retention check-in: it was taught a couple of
+          // days ago and the class will ask about it again - a different
+          // question about the same thing - before it teaches anything today.
+          //
+          // Drawn as a badge *beside* the state rather than as a state of its
+          // own, because it is not one. A level being checked is still done, or
+          // still waiting, or still today's; the check-in says nothing about
+          // whether it may be taught, pays no star and unlocks nothing. Merging
+          // it into `NodeState` would have made a finished level stop looking
+          // finished on the morning its check-in came due.
+          const checkIn = retentionTopicIds.has(topic.topic_id);
+
           const node = (
             <>
               <span className={`topic-node-symbol topic-symbol-${state}`} aria-hidden>
@@ -132,6 +151,15 @@ export function TopicList({ subject, child, mode }: Props) {
               <span className={`topic-node-chip topic-chip-${state}`}>
                 {chipFor(state, isCurrent, scores[topic.topic_id])}
               </span>
+              {checkIn ? (
+                <span
+                  data-testid="topic-check-in"
+                  title="We will remember this one in class today"
+                  className="rounded-full bg-sky/15 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-sky"
+                >
+                  🧩 Remember
+                </span>
+              ) : null}
             </>
           );
 
@@ -169,6 +197,7 @@ export function TopicList({ subject, child, mode }: Props) {
                     data-testid="topic-card"
                     data-topic-id={topic.topic_id}
                     data-state={state}
+                    data-check-in={checkIn ? "true" : undefined}
                     data-current={isCurrent ? "true" : undefined}
                     style={learningTargetStyle(mode)}
                     className={shared}

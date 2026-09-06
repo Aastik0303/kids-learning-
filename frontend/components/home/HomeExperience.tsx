@@ -10,7 +10,7 @@ import { isSafeGuideTarget, startCompanionSession } from "@/services/companion";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { isGuestSession } from "@/services/session";
 import { getClassForChild } from "@/services/curriculum";
-import type { ChildProfile, ClassDetail } from "@/types";
+import type { ClassDetail } from "@/types";
 
 export function HomeExperience() {
   const { child } = useActiveChild();
@@ -72,21 +72,28 @@ export function HomeExperience() {
         </div>
 
         <div className="relative z-10 grid gap-4 lg:grid-cols-2">
+          {/* This screen is the guest hub - a signed-in child is sent to their
+              class by `FrontDoor` and never sees it. So the card here is the
+              sign-up, not a lesson: there is one way into a lesson and it is
+              the AI Teacher, which needs a child and a frozen plan before it can
+              teach anything. This card used to send guests to `/practice`, a
+              second teaching loop that opened levels the day's schedule had not
+              reached. */}
           <Link
-            href="/practice"
+            href="/signup"
             data-guide-id="start-practice"
             className={`adventure-card bg-gradient-to-br from-sky/20 via-white to-sunshine/30 p-6 ${highlightId === "start-practice" ? "guide-glow" : ""}`}
           >
             <div className="grid h-full content-between gap-5">
               <div>
-                <span className="reward-token">🎨</span>
-                <p className="mt-5 text-sm font-black uppercase text-sky">Practice</p>
-                <h2 className="mt-2 text-4xl font-black text-ink sm:text-5xl">Let&apos;s Play & Practice!</h2>
-                <p className="mt-3 max-w-md text-lg font-bold text-ink/70">Free play activities drawn from the topics you have already met.</p>
+                <span className="reward-token">🎒</span>
+                <p className="mt-5 text-sm font-black uppercase text-sky">Get Started</p>
+                <h2 className="mt-2 text-4xl font-black text-ink sm:text-5xl">Make Your Own Class!</h2>
+                <p className="mt-3 max-w-md text-lg font-bold text-ink/70">Tell us your name and your class, and your teacher will be waiting for you.</p>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="rounded-full bg-white/80 px-4 py-3 font-black text-ink shadow-soft">🧩 No pressure here</span>
-                <span className="pressable rounded-3xl bg-sky px-6 py-4 text-xl font-black text-white shadow-soft">▶️ Start Playing</span>
+                <span className="rounded-full bg-white/80 px-4 py-3 font-black text-ink shadow-soft">🧩 Takes a minute</span>
+                <span className="pressable rounded-3xl bg-sky px-6 py-4 text-xl font-black text-white shadow-soft">▶️ Start Here</span>
               </div>
             </div>
           </Link>

@@ -1,0 +1,570 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1960" height="3459" viewBox="0 0 1960 3459" font-family="Segoe UI, Inter, Helvetica Neue, Arial, sans-serif">
+<defs>
+  <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#475569"/></marker>
+  <marker id="arwr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker>
+  <marker id="arwg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/></marker>
+  <style>
+    .bg    { fill:#f8fafc; }
+    .h1    { font-size:34px; font-weight:700; fill:#0f172a; }
+    .h2    { font-size:14.5px; fill:#475569; }
+    .band  { font-size:14px; font-weight:700; fill:#0f172a; letter-spacing:1.3px; }
+    .bandsub { font-size:12.5px; fill:#64748b; font-style:italic; }
+    .t     { font-size:13px; font-weight:700; }
+    .tag   { font-size:10px; font-weight:700; opacity:.72; letter-spacing:.6px; }
+    .b     { font-size:11px; fill:#334155; }
+    .cap   { font-size:11px; fill:#64748b; font-style:italic; }
+    .capr  { font-size:11.5px; fill:#b45309; font-style:italic; font-weight:600; }
+    .capg  { font-size:11.5px; fill:#b91c1c; font-style:italic; font-weight:600; }
+    .lg    { font-size:12px; fill:#334155; }
+    .det   { fill:#ecfdf5; stroke:#059669; stroke-width:1.6; }
+    .dett  { fill:#065f46; }
+    .llm   { fill:#fffbeb; stroke:#d97706; stroke-width:2; }
+    .llmt  { fill:#92400e; }
+    .db    { fill:#eff6ff; stroke:#2563eb; stroke-width:1.6; }
+    .dbt   { fill:#1e3a8a; }
+    .cli   { fill:#f5f3ff; stroke:#7c3aed; stroke-width:1.6; }
+    .clit  { fill:#5b21b6; }
+    .grd   { fill:#fef2f2; stroke:#dc2626; stroke-width:2; }
+    .grdt  { fill:#991b1b; }
+    .ext   { fill:#f0fdfa; stroke:#0d9488; stroke-width:1.6; stroke-dasharray:5 4; }
+    .extt  { fill:#115e59; }
+    .box   { rx:10; }
+    .cont  { fill:#ffffff; stroke:#cbd5e1; stroke-width:1.6; stroke-dasharray:7 6; rx:14; }
+    .ln    { stroke:#475569; stroke-width:1.9; fill:none; marker-end:url(#arw); }
+    .lnp   { stroke:#475569; stroke-width:1.9; fill:none; }
+    .lnd   { stroke:#b45309; stroke-width:1.9; fill:none; stroke-dasharray:7 6; marker-end:url(#arwr); }
+    .lng   { stroke:#dc2626; stroke-width:1.9; fill:none; stroke-dasharray:4 4; marker-end:url(#arwg); }
+    .rule  { fill:#0f172a; rx:14; }
+    .ruleh { font-size:15px; font-weight:700; fill:#f8fafc; letter-spacing:1.2px; }
+    .rulet { font-size:12.5px; fill:#e2e8f0; }
+    .ruleb { font-size:12.5px; font-weight:700; fill:#fbbf24; }
+  </style>
+</defs>
+<rect class="bg" x="0" y="0" width="1960" height="3459"/>
+<text class="h1" x="44" y="62">Saksham IQ &#8212; the whole system, end to end</text>
+<text class="h2" x="44" y="92">A child opens the site and is taught. This is every hop between those two facts: which box is a language model, which is pure Python, where the</text>
+<text class="h2" x="44" y="112">fence between them runs, and which single path is allowed to move a star. Every box named here is a real module in this repository.</text>
+<rect class="det box" x="44" y="138" width="20" height="20"/>
+<text class="lg" x="72" y="153">pure Python &#8212; deterministic</text>
+<rect class="llm box" x="254" y="138" width="20" height="20"/>
+<text class="lg" x="282" y="153">reaches a language model</text>
+<rect class="grd box" x="445" y="138" width="20" height="20"/>
+<text class="lg" x="473" y="153">gate, guardrail or kill switch</text>
+<rect class="db box" x="674" y="138" width="20" height="20"/>
+<text class="lg" x="702" y="153">PostgreSQL &#8212; the durable truth</text>
+<rect class="cli box" x="903" y="138" width="20" height="20"/>
+<text class="lg" x="931" y="153">the client (decides nothing)</text>
+<rect class="ext box" x="1119" y="138" width="20" height="20"/>
+<text class="lg" x="1147" y="153">an outside service</text>
+<rect class="cont" x="28" y="194" width="1904" height="251"/>
+<text class="band" x="44" y="222">1 · THE CLIENTS</text><text class="bandsub" x="202" y="222">they render a turn and report what the child did; they decide nothing</text>
+<rect class="cli box" x="44" y="240" width="486" height="100"/>
+<text class="t clit" x="57" y="264" style="font-size:13.00px">Web · Next.js (frontend/)</text>
+<text class="tag clit" x="517" y="264" text-anchor="end" style="font-size:10.00px">THE SURFACE THE TEAM RUNS</text>
+<text class="b" x="57" y="281">/ and /home send a signed-in child straight to /ai-teacher, and /class redirects</text>
+<text class="b" x="57" y="295">there too - a child is never asked to pick a level. A guest gets the sign-up hub</text>
+<text class="b" x="57" y="309">instead. AppShell wraps every screen and ScheduleStrip rides above all of them,</text>
+<text class="b" x="57" y="324">so the day's plan is visible wherever the child is.</text>
+<rect class="cli box" x="548" y="240" width="486" height="100"/>
+<text class="t clit" x="561" y="264" style="font-size:13.00px">/ai-teacher — the class itself</text>
+<text class="tag clit" x="1021" y="264" text-anchor="end" style="font-size:10.00px">ONE TEACHING LOOP</text>
+<text class="b" x="561" y="281">page.tsx runs one loop and knows no pedagogy: narrate `speech`, draw the question</text>
+<text class="b" x="561" y="295">large, render options / trace pad / microphone from `expects`, then auto-advance</text>
+<text class="b" x="561" y="309">once the narration has actually been heard. ExampleStrip.tsx draws the author's</text>
+<text class="b" x="561" y="324">own picture tokens under it.</text>
+<rect class="cli box" x="1052" y="240" width="423" height="100"/>
+<text class="t clit" x="1065" y="264" style="font-size:13.00px">/adventure · /rewards · /parent</text>
+<text class="b" x="1065" y="281">Adventure is a progress board: finished, today's, sleeping until its</text>
+<text class="b" x="1065" y="295">turn, still locked. Nothing on it starts a lesson - a second entrance</text>
+<text class="b" x="1065" y="309">could open a level the plan has not reached. Rewards, the certificate</text>
+<text class="b" x="1065" y="324">and the parent's progress view are read-only.</text>
+<rect class="cli box" x="1493" y="240" width="423" height="100"/>
+<text class="t clit" x="1506" y="264" style="font-size:13.00px">Mobile · Expo (mobile/)</text>
+<text class="b" x="1506" y="281">useConductorClass + ClassScreen read five fields - speech,</text>
+<text class="b" x="1506" y="295">next_input.expects, listen, auto_advance_in_ms, close - and nothing</text>
+<text class="b" x="1506" y="309">else, which is what stops a second copy of the teaching loop growing</text>
+<text class="b" x="1506" y="324">here. It drives the conductor, not the AI Teacher.</text>
+<rect class="cli box" x="44" y="356" width="1872" height="71"/>
+<text class="t clit" x="57" y="380" style="font-size:13.00px">frontend/services/*.ts — the only place the web app talks to a server</text>
+<text class="b" x="57" y="397">api.ts attaches the bearer to every call · aiTeacher.ts opens the sitting and posts answers · speech.ts narrates and listens · plan.ts reads today · session.ts / auth.ts hold the parent · micStream.ts is the level meter that hears a quiet child. lib/visualIcon.ts turns an asset token into a picture, and a Hindi picture word</text>
+<text class="b" x="57" y="411">into the Devanagari word rather than a near-miss emoji.</text>
+<rect class="cont" x="28" y="479" width="1904" height="192"/>
+<text class="band" x="44" y="507">2 · THE EDGE</text><text class="bandsub" x="175" y="507">FastAPI · backend/app/main.py</text>
+<rect class="det box" x="44" y="525" width="460" height="128"/>
+<text class="t dett" x="57" y="549" style="font-size:13.00px">lifespan — fail loudly at boot, not in front of a child</text>
+<text class="b" x="57" y="566">load_curriculum() and load_skill_graph() refuse to start on malformed</text>
+<text class="b" x="57" y="580">authored content, naming the file. ensure_schema() creates SQLite locally;</text>
+<text class="b" x="57" y="595">PostgreSQL is Alembic's alone. pending_migrations() is logged and served on</text>
+<text class="b" x="57" y="609">/health, because a database that is merely behind breaks the schedule</text>
+<text class="b" x="57" y="623">silently.</text>
+<rect class="grd box" x="522" y="525" width="418" height="128"/>
+<text class="t grdt" x="535" y="549" style="font-size:13.00px">app/api/deps.py — who is asking</text>
+<text class="tag grdt" x="927" y="549" text-anchor="end" style="font-size:10.00px">AUTH</text>
+<text class="b" x="535" y="566">Authorization: Bearer, or X-Demo-Session - the same string, the</text>
+<text class="b" x="535" y="580">second kept so shipped clients are not signed out by a rename.</text>
+<text class="b" x="535" y="595">jwt_service verifies HS256 with a pinned algorithm, issuer, audience</text>
+<text class="b" x="535" y="609">and expiry, so a forged or expired token is refused before any query</text>
+<text class="b" x="535" y="623">is made.</text>
+<rect class="grd box" x="958" y="525" width="418" height="128"/>
+<text class="t grdt" x="971" y="549" style="font-size:13.00px">… and the row behind it still rules</text>
+<text class="b" x="971" y="566">The jti claim names an auth_sessions row and that row is checked on</text>
+<text class="b" x="971" y="580">every request: a stateless token cannot be signed out, and sign-out</text>
+<text class="b" x="971" y="595">and password reset both have to actually end the session. JWT_SECRET</text>
+<text class="b" x="971" y="609">has no default - outside development an unset key closes sign-in</text>
+<text class="b" x="971" y="623">rather than signing with something guessable.</text>
+<rect class="det box" x="1394" y="525" width="522" height="128"/>
+<text class="t dett" x="1407" y="549" style="font-size:13.00px">the routers — app/api/</text>
+<text class="b" x="1407" y="566">auth · children · curriculum · plans · progress · history · speech · guide · companion ·</text>
+<text class="b" x="1407" y="580">dev, plus the three that teach: playground (the AI Teacher: /{child_id}/open,</text>
+<text class="b" x="1407" y="595">/sessions/{id}/answer, /ask), conductor (the mobile class), and learning / practice,</text>
+<text class="b" x="1407" y="609">kept for older clients and marked deprecated. policy carries the kill switch: POST</text>
+<text class="b" x="1407" y="623">/policy/disable wants POLICY_ADMIN_TOKEN in an X-Policy-Token header outside</text>
+<text class="b" x="1407" y="637">development, because a switch that needs no deploy is also a switch anybody can reach.</text>
+<rect class="cont" x="28" y="705" width="1904" height="192"/>
+<text class="band" x="44" y="733">3 · LOOP A — THE DAY IS PLANNED</text><text class="bandsub" x="344" y="733">overnight, on a timer, and no model touches any part of it</text>
+<rect class="det box" x="44" y="751" width="356" height="128"/>
+<text class="t dett" x="57" y="775" style="font-size:13.00px">planner_runner.sweep()</text>
+<text class="tag dett" x="387" y="775" text-anchor="end" style="font-size:10.00px">BACKGROUND</text>
+<text class="b" x="57" y="792">Runs itself every PLANNER_INTERVAL_SECONDS (900) and</text>
+<text class="b" x="57" y="807">freezes a plan for every child who has none for today, so</text>
+<text class="b" x="57" y="821">the agent's latency is never in front of a waiting</text>
+<text class="b" x="57" y="835">three-year-old. Idempotent: the freeze is a unique</text>
+<text class="b" x="57" y="849">constraint, not this code.</text>
+<rect class="det box" x="418" y="751" width="356" height="128"/>
+<text class="t dett" x="431" y="775" style="font-size:13.00px">plan_service._candidates()</text>
+<text class="b" x="431" y="792">Exactly one level per subject - the first weak one, else</text>
+<text class="b" x="431" y="807">the first unfinished unlocked one - and never two from the</text>
+<text class="b" x="431" y="821">same subject. Every subject is in every day: three stages</text>
+<text class="b" x="431" y="835">for Play Group, six for Nursery and UKG. No rotation, no</text>
+<text class="b" x="431" y="849">sample.</text>
+<rect class="det box" x="793" y="751" width="410" height="128"/>
+<text class="t dett" x="806" y="775" style="font-size:11.00px">app/ai/planner/graph.py — LangGraph, all pure Python</text>
+<text class="tag dett" x="1190" y="775" text-anchor="end" style="font-size:10.00px">NO MODEL</text>
+<text class="b" x="806" y="792">gather → order → freeze. There was a model here once, asked for an</text>
+<text class="b" x="806" y="807">ordering and fenced by a validator that dropped anything off-menu;</text>
+<text class="b" x="806" y="821">the fence held and the model went anyway, because ordering a handful</text>
+<text class="b" x="806" y="835">of known topics is a small decision with a rule that can be read.</text>
+<text class="b" x="806" y="849">The order is three rules: open on a level the child will get right,</text>
+<text class="b" x="806" y="863">meet the shaky ones early but never first, finish on a win.</text>
+<rect class="db box" x="1221" y="751" width="339" height="128"/>
+<text class="t dbt" x="1234" y="775" style="font-size:13.00px">daily_plans + daily_plan_items</text>
+<text class="b" x="1234" y="792">One frozen plan per child per day, and `source` is</text>
+<text class="b" x="1234" y="807">always 'deterministic'. The cursor is</text>
+<text class="b" x="1234" y="821">daily_plan_items.completed_at, written by the award -</text>
+<text class="b" x="1234" y="835">never inferred from the child's lifetime list, because</text>
+<text class="b" x="1234" y="849">a revisit item is already in that list and such a day</text>
+<text class="b" x="1234" y="863">arrived ticked.</text>
+<rect class="grd box" x="1577" y="751" width="339" height="128"/>
+<text class="t grdt" x="1590" y="775" style="font-size:13.00px">plan_service.may_open()</text>
+<text class="tag grdt" x="1903" y="775" text-anchor="end" style="font-size:10.00px">THE GATE</text>
+<text class="b" x="1590" y="792">A topic opens if today's frozen plan holds it, or the</text>
+<text class="b" x="1590" y="807">child has already finished it. Everything else is</text>
+<text class="b" x="1590" y="821">tomorrow's - including the level this very lesson has</text>
+<text class="b" x="1590" y="835">just unlocked. With no plan at all the gate opens, so</text>
+<text class="b" x="1590" y="849">infrastructure can never lock a child out. Refusals</text>
+<text class="b" x="1590" y="863">read NOT_TODAYS_PLAN, worded for a child.</text>
+<path class="ln" d="M 402 816 L 414 816"/>
+<path class="ln" d="M 777 816 L 789 816"/>
+<path class="ln" d="M 1205 816 L 1217 816"/>
+<path class="ln" d="M 1561 816 L 1573 816"/>
+<rect class="cont" x="28" y="932" width="1904" height="797"/>
+<text class="band" x="44" y="960">4 · LOOP B — THE CLASS, AND ONE TEACHING TURN</text><text class="bandsub" x="468" y="960">app/playground/ — the web app's teaching loop, and the only place in the product a language model runs</text>
+<rect class="det box" x="44" y="978" width="454" height="128"/>
+<text class="t dett" x="57" y="1002" style="font-size:13.00px">service.open_session()</text>
+<text class="b" x="57" y="1019">Snapshots today's plan into playground_sessions.plan_topics and teaches them</text>
+<text class="b" x="57" y="1033">in order, resuming at the plan cursor so a child who did two stages and</text>
+<text class="b" x="57" y="1047">stopped picks the rest up later the same day. _class_intro says hello once a</text>
+<text class="b" x="57" y="1061">sitting - a reload teaches the step again without re-introducing the class.</text>
+<text class="b" x="57" y="1075">A sitting whose plan_date is not today is yesterday's and is closed, not</text>
+<text class="b" x="57" y="1090">resumed.</text>
+<rect class="det box" x="516" y="978" width="454" height="128"/>
+<text class="t dett" x="530" y="1002" style="font-size:13.00px">lesson.py — the shape of a stage</text>
+<text class="tag dett" x="958" y="1002" text-anchor="end" style="font-size:10.00px">5 QUESTIONS · NO SCORE</text>
+<text class="b" x="530" y="1019">explain → say_it → draw → match → quiz. A stage is one item of today's plan</text>
+<text class="b" x="530" y="1033">- one subject - and five settled questions. Every question gets three turns:</text>
+<text class="b" x="530" y="1047">it is asked; a wrong answer brings the hint, the thing explained more deeply</text>
+<text class="b" x="530" y="1061">ending in a clue and two or three choices; a second wrong answer brings the</text>
+<text class="b" x="530" y="1075">answer, told and explained. That third turn expects “ready”, is never</text>
+<text class="b" x="530" y="1090">marked, and writes no attempt.</text>
+<rect class="det box" x="989" y="978" width="454" height="128"/>
+<text class="t dett" x="1002" y="1002" style="font-size:13.00px">service._recent_turns()</text>
+<text class="b" x="1002" y="1019">playground_turns is read back into the model's context, so a hint cannot</text>
+<text class="b" x="1002" y="1033">repeat its own explanation word for word. It is a reminder and nothing else:</text>
+<text class="b" x="1002" y="1047">the step, the strategy and the authored question still decide what a turn</text>
+<text class="b" x="1002" y="1061">is, and nothing downstream of a star may read it.</text>
+<rect class="grd box" x="1462" y="978" width="454" height="128"/>
+<text class="t grdt" x="1474" y="1002" style="font-size:13.00px">status = “day_complete”</text>
+<text class="tag grdt" x="1903" y="1002" text-anchor="end" style="font-size:10.00px">THE LOCK</text>
+<text class="b" x="1474" y="1019">The last stage through ends the day. That row plus</text>
+<text class="b" x="1474" y="1033">plan_service.is_day_complete is the lock: the class will not reopen until</text>
+<text class="b" x="1474" y="1047">tomorrow's plan exists, and a reload cannot get past it because the refusal</text>
+<text class="b" x="1474" y="1061">is the server's. There is no score anywhere on the child's screen - five</text>
+<text class="b" x="1474" y="1075">dots for five questions, and which level of the day.</text>
+<text class="band" x="48" y="1136" style="font-size:12.5px;letter-spacing:1px;fill:#334155">A · WHICH WAY TO TEACH IT — teaching_policy_service.decide()</text>
+<text class="bandsub" x="548" y="1136">candidates → eligibility filter → epsilon-greedy → strategy, and that order is the fence</text>
+<rect class="det box" x="44" y="1150" width="423" height="128"/>
+<text class="t dett" x="57" y="1174" style="font-size:13.00px">candidates — app/policy/actions.py</text>
+<text class="b" x="57" y="1191">The nine strategies: TELL · SHOW · EXAMPLE · STORY · CONTRAST ·</text>
+<text class="b" x="57" y="1205">DO_TOGETHER · SENSE_SWITCH · PREREQUISITE · PARK. Early mode keeps the</text>
+<text class="b" x="57" y="1219">five that assume no verbal reasoning.</text>
+<rect class="grd box" x="485" y="1150" width="486" height="128"/>
+<text class="t grdt" x="498" y="1174" style="font-size:12.00px">eligibility.decide() — a separate step, before exploration</text>
+<text class="tag grdt" x="958" y="1174" text-anchor="end" style="font-size:10.00px">THE FENCE</text>
+<text class="b" x="498" y="1191">Removes what the app's own rules forbid: parking a child early, an explanation</text>
+<text class="b" x="498" y="1205">already spent on this question, a strategy the age band excludes, a prerequisite</text>
+<text class="b" x="498" y="1219">that does not exist, a story for a child near tears. The selector only ever sees</text>
+<text class="b" x="498" y="1233">the survivors, so exploration cannot reach a filtered action. It never returns</text>
+<text class="b" x="498" y="1248">nothing - a repeat beats a blank turn.</text>
+<rect class="det box" x="989" y="1150" width="486" height="128"/>
+<text class="t dett" x="1002" y="1174" style="font-size:12.75px">selector.choose() — epsilon-greedy, 0.08, over the survivors only</text>
+<text class="b" x="1002" y="1191">A Q-table keyed on mode|mastery|rung|spent - the child's identity is deliberately</text>
+<text class="b" x="1002" y="1205">not in it. The hand-written ladder is the prior and decays as visits arrive, so</text>
+<text class="b" x="1002" y="1219">day one reproduces today's behaviour exactly. A question gets three repairs and</text>
+<text class="b" x="1002" y="1233">each is a different turn; the last one simplifies instead of re-explaining.</text>
+<rect class="grd box" x="1493" y="1150" width="423" height="128"/>
+<text class="t grdt" x="1506" y="1174" style="font-size:13.00px">rollout.arm_for() + health.breaker</text>
+<text class="tag grdt" x="1903" y="1174" text-anchor="end" style="font-size:10.00px">KILL SWITCH</text>
+<text class="b" x="1506" y="1191">POLICY_MODE is shadow in production: the ladder teaches, the table's</text>
+<text class="b" x="1506" y="1205">pick is written beside it, and nothing a child hears changes. `on`</text>
+<text class="b" x="1506" y="1219">plus POLICY_ROLLOUT_FRACTION walks 0.05 → 1.0 by a stable hash of the</text>
+<text class="b" x="1506" y="1233">child id, so nobody swaps arms mid-sitting. `off`, POST</text>
+<text class="b" x="1506" y="1248">/policy/disable, and five consecutive failures each send every child</text>
+<text class="b" x="1506" y="1262">back to the ladder without a deploy.</text>
+<path class="ln" d="M 469 1214 L 481 1214"/>
+<path class="ln" d="M 973 1214 L 985 1214"/>
+<path class="ln" d="M 1477 1214 L 1489 1214"/>
+<text class="band" x="48" y="1308" style="font-size:12.5px;letter-spacing:1px;fill:#334155">B · WHAT TO SAY — retrieval, the authored syllabus, and the agent</text>
+<text class="bandsub" x="588" y="1308">the only outbound model call in the product — and every caller already holds an answer without it</text>
+<rect class="det box" x="44" y="1322" width="374" height="157"/>
+<text class="t dett" x="57" y="1346" style="font-size:13.00px">rag.search() — teacher_notes.md + the syllabus</text>
+<text class="b" x="57" y="1363">Free HuggingFace MiniLM embeddings and cosine similarity,</text>
+<text class="b" x="57" y="1377">with a keyword fallback that is not an afterthought. Fenced</text>
+<text class="b" x="57" y="1391">on class_id, or the nearest passage to “letters” in the whole</text>
+<text class="b" x="57" y="1406">index is a UKG one - and that fence holds on the keyword path</text>
+<text class="b" x="57" y="1420">too. The answer keys - correct_answer, accept, options - are</text>
+<text class="b" x="57" y="1434">never indexed: a model holding the key is one that can give</text>
+<text class="b" x="57" y="1448">it away.</text>
+<rect class="det box" x="436" y="1322" width="374" height="157"/>
+<text class="t dett" x="449" y="1346" style="font-size:12.75px">questions.pick() — written for this child's class</text>
+<text class="b" x="449" y="1363">On the steps where the child chooses (match, quiz) the</text>
+<text class="b" x="449" y="1377">question, its answer and its choices come from the authored</text>
+<text class="b" x="449" y="1391">syllabus for the child's own class, and the model writes only</text>
+<text class="b" x="449" y="1406">the explanation that leads into it. A topic's title is not a</text>
+<text class="b" x="449" y="1420">question: “can you show me pre-writing strokes?” is a</text>
+<text class="b" x="449" y="1434">heading, and a two-year-old cannot show anybody one.</text>
+<rect class="llm box" x="829" y="1322" width="374" height="157"/>
+<text class="t llmt" x="842" y="1346" style="font-size:12.50px">app/playground/agent.py — a LangGraph graph</text>
+<text class="tag llmt" x="1190" y="1346" text-anchor="end" style="font-size:10.00px">MODEL</text>
+<text class="b" x="842" y="1363">START → retrieve → choose → teach → END. Only `teach` calls</text>
+<text class="b" x="842" y="1377">out, and it asks for two things at once: the explanation in</text>
+<text class="b" x="842" y="1391">the chosen strategy, and one question on it. The explaining</text>
+<text class="b" x="842" y="1406">turn is three or four sentences with an everyday example in</text>
+<text class="b" x="842" y="1420">it - what the thing is, said again in other words, something</text>
+<text class="b" x="842" y="1434">the child has seen for themselves - because a label is not a</text>
+<text class="b" x="842" y="1448">lesson. The same nodes run the hint and the reveal, and</text>
+<text class="b" x="842" y="1462">neither invents a question.</text>
+<rect class="llm box" x="1221" y="1322" width="339" height="157"/>
+<text class="t llmt" x="1234" y="1346" style="font-size:13.00px">app/ai/llm/client.py</text>
+<text class="tag llmt" x="1546" y="1346" text-anchor="end" style="font-size:10.00px">BREAKER</text>
+<text class="b" x="1234" y="1363">One provider-agnostic call with a circuit breaker in</text>
+<text class="b" x="1234" y="1377">front of it. Groq · openai/gpt-oss-120b, a 6s timeout,</text>
+<text class="b" x="1234" y="1391">no retries, over one pooled connection - the TLS</text>
+<text class="b" x="1234" y="1406">handshake per call was most of what “the AI is slow”</text>
+<text class="b" x="1234" y="1420">meant. Three failures in a row and it fails fast for a</text>
+<text class="b" x="1234" y="1434">minute.</text>
+<rect class="det box" x="1577" y="1322" width="339" height="157"/>
+<text class="t dett" x="1590" y="1346" style="font-size:13.00px">… or the deterministic teacher</text>
+<text class="tag dett" x="1903" y="1346" text-anchor="end" style="font-size:10.00px">ALWAYS READY</text>
+<text class="b" x="1590" y="1363">No key, a timeout, an HTTP error or a malformed body</text>
+<text class="b" x="1590" y="1377">raises LLMUnavailable, and the child still gets several</text>
+<text class="b" x="1590" y="1391">sentences out of the author's own passages, one</text>
+<text class="b" x="1590" y="1406">hand-written everyday example, a question and its</text>
+<text class="b" x="1590" y="1420">options. Failure here is normal and quiet.</text>
+<path class="ln" d="M 420 1400 L 432 1400"/>
+<path class="ln" d="M 813 1400 L 825 1400"/>
+<path class="ln" d="M 1205 1400 L 1217 1400"/>
+<path class="lng" d="M 1561 1400 L 1573 1400"/>
+<text class="capg" x="1572" y="1394" text-anchor="middle" transform="rotate(-90 1572 1394)">on failure</text>
+<rect class="ext box" x="126" y="1493" width="210" height="32"/>
+<text class="t extt" x="231" y="1514" text-anchor="middle">HuggingFace · all-MiniLM-L6-v2</text>
+<path class="ln" d="M 231 1481 L 231 1491"/>
+<rect class="ext box" x="1285" y="1493" width="210" height="32"/>
+<text class="t extt" x="1390" y="1514" text-anchor="middle">Groq · openai/gpt-oss-120b</text>
+<path class="ln" d="M 1390 1481 L 1390 1491"/>
+<text class="band" x="48" y="1555" style="font-size:12.5px;letter-spacing:1px;fill:#334155">C · COMPOSE THE DIRECTIVE — everything below this line is pure Python again</text>
+<rect class="grd box" x="44" y="1569" width="494" height="142"/>
+<text class="t grdt" x="57" y="1593" style="font-size:13.00px">safety_service.safe_text() · leak.classify()</text>
+<text class="tag grdt" x="525" y="1593" text-anchor="end" style="font-size:10.00px">VETO</text>
+<text class="b" x="57" y="1610">safe_text filters the words, so an off-topic “ask me anything” comes back as a kind</text>
+<text class="b" x="57" y="1624">redirection. leak.classify tells scaffolding and a partial clue apart from handing</text>
+<text class="b" x="57" y="1638">the answer over, and only an outright leak sets answer_leak_vetoed, which costs</text>
+<text class="b" x="57" y="1652">more reward than a passed probe pays. A teaching turn is judged on its directive</text>
+<text class="b" x="57" y="1666">frames alone (“the answer is X”, “tap X”), because naming the thing you are</text>
+<text class="b" x="57" y="1681">teaching is the lesson - without that distinction one turn in eight was vetoed for</text>
+<text class="b" x="57" y="1695">saying “This is a square”, and the table would have learned to stop explaining.</text>
+<rect class="det box" x="556" y="1569" width="449" height="142"/>
+<text class="t dett" x="569" y="1593" style="font-size:13.00px">ensure_options() · hint_options()</text>
+<text class="b" x="569" y="1610">A question that wants a tap always has something to tap: `expects: “tap”`</text>
+<text class="b" x="569" y="1624">with an empty options list is a typing box in front of a child who cannot</text>
+<text class="b" x="569" y="1638">type. ensure_options repairs it from what was already there, then the</text>
+<text class="b" x="569" y="1652">author's own choices, then the concept's family, and invents nothing when</text>
+<text class="b" x="569" y="1666">none of those exist. hint_options is built here in plain Python rather than</text>
+<text class="b" x="569" y="1681">asked for, so a hint can never arrive without the answer among its choices.</text>
+<rect class="det box" x="1023" y="1569" width="449" height="142"/>
+<text class="t dett" x="1036" y="1593" style="font-size:13.00px">examples.for_turn() · visuals.from_concept()</text>
+<text class="b" x="1036" y="1610">The example strip is two or three of the author's own visual_items for that</text>
+<text class="b" x="1036" y="1624">very level. Three rules hold it: an example is never a letter, number,</text>
+<text class="b" x="1036" y="1638">shape, colour or writing stroke - those are the lesson's own furniture, not</text>
+<text class="b" x="1036" y="1652">something a child has seen for themselves; it is never the answer to the</text>
+<text class="b" x="1036" y="1666">question beside it, checked with the same contains_answer the marker uses;</text>
+<text class="b" x="1036" y="1681">and a level whose author named nothing shows nothing rather than an</text>
+<text class="b" x="1036" y="1695">invented example.</text>
+<rect class="db box" x="1490" y="1569" width="426" height="142"/>
+<text class="t dbt" x="1503" y="1593" style="font-size:13.00px">commit() → policy_episodes</text>
+<text class="tag dbt" x="1903" y="1593" text-anchor="end" style="font-size:10.00px">NO REWARD YET</text>
+<text class="b" x="1503" y="1610">One row per teaching turn, and no reward in it. The question, the rung,</text>
+<text class="b" x="1503" y="1624">how many strategies were spent, mastery either side, which arm chose</text>
+<text class="b" x="1503" y="1638">and what the other arm would have chosen, the eligible set, and the</text>
+<text class="b" x="1503" y="1652">leak verdict - that is what makes a moved table explicable afterwards.</text>
+<text class="b" x="1503" y="1666">It runs on the turn's own session (db.session.session_or): a second</text>
+<text class="b" x="1503" y="1681">session opened inside a request that already holds one waits out</text>
+<text class="b" x="1503" y="1695">SQLite's whole five-second busy timeout, on every turn.</text>
+<rect class="cont" x="28" y="1763" width="1904" height="281"/>
+<text class="band" x="44" y="1791">5 · THE CHILD'S SURFACE</text><text class="bandsub" x="273" y="1791">spoken out, tapped, traced and said back — and the class listens twice, because a recogniser gives up on a quiet child</text>
+<rect class="det box" x="44" y="1809" width="388" height="171"/>
+<text class="t dett" x="57" y="1833" style="font-size:13.00px">the explanation is said, not printed</text>
+<text class="b" x="57" y="1850">Three or four sentences for the ear, kept on screen only as</text>
+<text class="b" x="57" y="1864">sr-only text for a reader. What the child looks at is the</text>
+<text class="b" x="57" y="1878">picture, the question drawn large - the only words on the card -</text>
+<text class="b" x="57" y="1893">and the example strip under it. A paragraph of English above a</text>
+<text class="b" x="57" y="1907">two-year-old's question is not something they can read, and it</text>
+<text class="b" x="57" y="1921">was sitting in the one piece of screen they could have used.</text>
+<rect class="det box" x="450" y="1809" width="353" height="171"/>
+<text class="t dett" x="463" y="1833" style="font-size:13.00px">POST /speech/synthesize</text>
+<text class="tag dett" x="790" y="1833" text-anchor="end" style="font-size:10.00px">NO MODEL</text>
+<text class="b" x="463" y="1850">Microsoft Edge's free hi-IN-SwaraNeural, through the app's</text>
+<text class="b" x="463" y="1864">own backend, so every install sounds the same and none</text>
+<text class="b" x="463" y="1878">falls back to the browser's robot. One voice reads both</text>
+<text class="b" x="463" y="1893">scripts, which is what this narration needs: English with</text>
+<text class="b" x="463" y="1907">Devanagari quoted inside it. Text in, audio out - what is</text>
+<text class="b" x="463" y="1921">said was decided upstream.</text>
+<rect class="cli box" x="821" y="1809" width="353" height="171"/>
+<text class="t clit" x="834" y="1833" style="font-size:13.00px">the child answers</text>
+<text class="b" x="834" y="1850">tap · trace · voice, whichever the step's `expects` asked</text>
+<text class="b" x="834" y="1864">for. There is exactly one microphone on the screen. The</text>
+<text class="b" x="834" y="1878">auto-advance timer stays - the child is too small to press</text>
+<text class="b" x="834" y="1893">a button - but it may only start once the narration has</text>
+<text class="b" x="834" y="1907">actually been heard. Language tags are BCP-47 or nothing,</text>
+<text class="b" x="834" y="1921">and the tag follows the content, not the profile.</text>
+<rect class="det box" x="1192" y="1809" width="353" height="171"/>
+<text class="t dett" x="1205" y="1833" style="font-size:13.00px">listening twice — micStream + /transcribe</text>
+<text class="b" x="1205" y="1850">The browser's Web Speech API listens first: instant, free,</text>
+<text class="b" x="1205" y="1864">already on the machine. Its one bad failure is the one</text>
+<text class="b" x="1205" y="1878">that matters - it decides for itself when speech has</text>
+<text class="b" x="1205" y="1893">started, and a three-year-old saying “अ” under their</text>
+<text class="b" x="1205" y="1907">breath never clears that bar, so what comes back is</text>
+<text class="b" x="1205" y="1921">`no-speech` rather than “I heard something I could not</text>
+<text class="b" x="1205" y="1935">read”. Our own level meter is far more sensitive; when it</text>
+<text class="b" x="1205" y="1949">heard a voice and the browser did not, the clip is posted</text>
+<text class="b" x="1205" y="1964">to Groq's whisper-large-v3-turbo.</text>
+<rect class="det box" x="1563" y="1809" width="353" height="171"/>
+<text class="t dett" x="1576" y="1833" style="font-size:13.00px">child_speech_service — stage one</text>
+<text class="b" x="1576" y="1850">“tree” for three, “wed” for red, “do nahi teen” - cleaned</text>
+<text class="b" x="1576" y="1864">by lookup in data/speech/kid_phonetics.json, which is why</text>
+<text class="b" x="1576" y="1878">it costs nothing and gives the same answer twice. It is</text>
+<text class="b" x="1576" y="1893">handed the options visible on screen and never the correct</text>
+<text class="b" x="1576" y="1907">answer, so a poor transcript can never be nudged towards</text>
+<text class="b" x="1576" y="1921">being right. It reports what was said; whether that is</text>
+<text class="b" x="1576" y="1935">right stays with the evaluator.</text>
+<rect class="ext box" x="527" y="1994" width="200" height="32"/>
+<text class="t extt" x="627" y="2015" text-anchor="middle">Microsoft edge-tts</text>
+<path class="ln" d="M 627 1982 L 627 1992"/>
+<rect class="ext box" x="1254" y="1994" width="230" height="32"/>
+<text class="t extt" x="1369" y="2015" text-anchor="middle">Groq · whisper-large-v3-turbo</text>
+<path class="ln" d="M 1369 1982 L 1369 1992"/>
+<rect class="cont" x="28" y="2078" width="1904" height="221"/>
+<text class="band" x="44" y="2106">6 · MARKING AND PROGRESS</text><text class="bandsub" x="282" y="2106">pure Python from the authored key, and the only path in the system that pays a star</text>
+<rect class="grd box" x="44" y="2124" width="498" height="157"/>
+<text class="t grdt" x="57" y="2148" style="font-size:13.00px">stage.judge() — the answer-key boundary</text>
+<text class="tag grdt" x="529" y="2148" text-anchor="end" style="font-size:10.00px">NO MODEL, EVER</text>
+<text class="b" x="57" y="2165">Marks in plain Python from the authored key and from nothing else. One rule decides</text>
+<text class="b" x="57" y="2179">which options may be shown and which tap is right: stage.contains_answer both puts</text>
+<text class="b" x="57" y="2193">an option on the screen and marks it, so the two cannot disagree and a child cannot</text>
+<text class="b" x="57" y="2207">tap the server's own answer and be told they were wrong. Speech and typing keep the</text>
+<text class="b" x="57" y="2222">generous word matching; normalise reads `standing_line` as “standing line”, because</text>
+<text class="b" x="57" y="2236">that is what a child says. This rule matters more here than it ever did in a</text>
+<text class="b" x="57" y="2250">sandbox, because the verdict now pays stars: a model that both sets and marks</text>
+<text class="b" x="57" y="2264">learns to give the answer away.</text>
+<rect class="det box" x="560" y="2124" width="433" height="157"/>
+<text class="t dett" x="573" y="2148" style="font-size:13.00px">history_service.record_attempt() → attempts</text>
+<text class="b" x="573" y="2165">The one log everything downstream reads: mastery, the weak-skill list</text>
+<text class="b" x="573" y="2179">the planner reorders on, and the conductor's own view of the child. A</text>
+<text class="b" x="573" y="2193">teaching loop that graded an answer and kept the verdict to itself would</text>
+<text class="b" x="573" y="2207">leave both reading a partial history. is_scored and is_marked are</text>
+<text class="b" x="573" y="2222">different questions: a reveal is not scored and still counts against the</text>
+<text class="b" x="573" y="2236">level; the echo is scored and never counts - speech-to-text mishears a</text>
+<text class="b" x="573" y="2250">three-year-old constantly, and a level that failed because a microphone</text>
+<text class="b" x="573" y="2264">did not catch a small voice is the app marking its own hardware.</text>
+<rect class="det box" x="1011" y="2124" width="498" height="157"/>
+<text class="t dett" x="1024" y="2148" style="font-size:12.00px">award_topic_completion() — the end of a stage</text>
+<text class="tag dett" x="1495" y="2148" text-anchor="end" style="font-size:10.00px">THE ONLY WAY A STAR MOVES</text>
+<text class="b" x="1024" y="2165">The same deterministic scorer the conductor ends a lesson with, run on a score</text>
+<text class="b" x="1024" y="2179">computed out of that stage's own topic_correct / topic_answered, where a question</text>
+<text class="b" x="1024" y="2193">the teacher had to answer for the child counts as one that did not land. It marks</text>
+<text class="b" x="1024" y="2207">the level done, pays the manifest's stars, unlocks the next level, re-checks the</text>
+<text class="b" x="1024" y="2222">certificate and moves the plan cursor by writing daily_plan_items.completed_at.</text>
+<rect class="cli box" x="1526" y="2124" width="390" height="157"/>
+<text class="t clit" x="1539" y="2148" style="font-size:13.00px">…and Adventure catches up</text>
+<text class="b" x="1539" y="2165">Finishing a stage is the only thing that moves the Adventure</text>
+<text class="b" x="1539" y="2179">map. The newly unlocked level is not playable today: unlocking</text>
+<text class="b" x="1539" y="2193">is what a lesson earns, and when it is played is the plan's to</text>
+<text class="b" x="1539" y="2207">decide. Adventure redraws, the schedule strip redraws, and</text>
+<text class="b" x="1539" y="2222">neither of them can start anything.</text>
+<path class="ln" d="M 544 2202 L 556 2202"/>
+<path class="ln" d="M 995 2202 L 1007 2202"/>
+<path class="ln" d="M 1510 2202 L 1522 2202"/>
+<rect class="cont" x="28" y="2332" width="1904" height="242"/>
+<text class="band" x="44" y="2360">7 · THE REWARD, PAID DAYS LATER</text><text class="bandsub" x="344" y="2360">the reason this is not RLHF — nothing here can be earned inside the turn that spent the strategy</text>
+<rect class="det box" x="44" y="2378" width="336" height="128"/>
+<text class="t dett" x="57" y="2402" style="font-size:13.00px">retention_service.on_attempt()</text>
+<text class="b" x="57" y="2419">Every marked answer passes through here. It settles</text>
+<text class="b" x="57" y="2434">whatever probe this attempt answers and schedules what</text>
+<text class="b" x="57" y="2448">the answer earns. It runs on its own session,</text>
+<text class="b" x="57" y="2462">deliberately: settling the fifth question of a stage</text>
+<text class="b" x="57" y="2476">calls the award, which needs the write lock the probe</text>
+<text class="b" x="57" y="2490">would otherwise be holding.</text>
+<rect class="det box" x="398" y="2378" width="336" height="128"/>
+<text class="t dett" x="411" y="2402" style="font-size:13.00px">schedule the day-2 and day-7 probes</text>
+<text class="b" x="411" y="2419">A correct answer schedules a probe two days out and</text>
+<text class="b" x="411" y="2434">another at seven, and attaches every unpaid episode</text>
+<text class="b" x="411" y="2448">that taught this skill. Nothing is paid now. The whole</text>
+<text class="b" x="411" y="2462">point of the delay is that a child who was handed the</text>
+<text class="b" x="411" y="2476">answer passes the turn and fails the probe.</text>
+<rect class="grd box" x="753" y="2378" width="370" height="128"/>
+<text class="t grdt" x="766" y="2402" style="font-size:10.50px">settle_probe() — once, and inside the window</text>
+<text class="tag grdt" x="1110" y="2402" text-anchor="end" style="font-size:10.00px">ATTRIBUTION</text>
+<text class="b" x="766" y="2419">Refuses a probe that already has a resolved_at, so a reward</text>
+<text class="b" x="766" y="2434">is the probe's and nobody else's and is paid exactly once. It</text>
+<text class="b" x="766" y="2448">reaches back only ATTRIBUTION_WINDOW (7 days) for the</text>
+<text class="b" x="766" y="2462">episodes it pays, so June's retention result cannot be</text>
+<text class="b" x="766" y="2476">credited to April's teaching.</text>
+<rect class="det box" x="1141" y="2378" width="387" height="128"/>
+<text class="t dett" x="1154" y="2402" style="font-size:13.00px">the reward, and the Q update → policy_q_values</text>
+<text class="b" x="1154" y="2419">+1.0 for a passed retention probe, +0.35 for transfer, −0.5 for</text>
+<text class="b" x="1154" y="2434">a failed one, and −1.5 for an answer leak - which is why a</text>
+<text class="b" x="1154" y="2448">vetoed turn costs more than a passed probe pays. Q ← Q + 0.15 ·</text>
+<text class="b" x="1154" y="2462">(r + 0.85 · maxQ′ − Q). Deliberately conservative: this policy</text>
+<text class="b" x="1154" y="2476">teaches real children while it learns, so it moves slowly and</text>
+<text class="b" x="1154" y="2490">explores rarely.</text>
+<rect class="det box" x="1546" y="2378" width="370" height="128"/>
+<text class="t dett" x="1559" y="2402" style="font-size:10.00px">policy/evaluate.py — the claim nobody makes yet</text>
+<text class="tag dett" x="1903" y="2402" text-anchor="end" style="font-size:10.00px">OFF-POLICY</text>
+<text class="b" x="1559" y="2419">Replays the recorded episodes to compare the hand-written</text>
+<text class="b" x="1559" y="2434">ladder, random, and Q-learning, and reports “no difference</text>
+<text class="b" x="1559" y="2448">demonstrated” until the evidence clears two standard errors.</text>
+<text class="b" x="1559" y="2462">Do not claim the learned policy is better until it does.</text>
+<text class="b" x="1559" y="2476">/policy/metrics and /policy/health serve the same numbers</text>
+<text class="b" x="1559" y="2490">live.</text>
+<path class="ln" d="M 382 2442 L 394 2442"/>
+<path class="ln" d="M 737 2442 L 749 2442"/>
+<path class="ln" d="M 1125 2442 L 1137 2442"/>
+<path class="ln" d="M 1530 2442 L 1542 2442"/>
+<path class="lnd" d="M 1334 2511 L 1334 2535 L 40 2535 L 40 2515"/>
+<text class="capr" x="980" y="2551" text-anchor="middle">the moved table is read by selector.choose() on the next teaching turn — this is the only feedback edge in the whole system</text>
+<rect class="cont" x="28" y="2609" width="1904" height="221"/>
+<text class="band" x="44" y="2637">8 · LOOP C — THE CONDUCTOR</text><text class="bandsub" x="299" y="2637">app/conductor/ — the mobile app's class. Same rules, different client; nothing in frontend/ mounts it any more</text>
+<rect class="det box" x="44" y="2655" width="360" height="157"/>
+<text class="t dett" x="57" y="2679" style="font-size:13.00px">POST /conductor/{child_id}/open · …/input</text>
+<text class="b" x="57" y="2696">One row in lesson_states is the live lesson, and those two</text>
+<text class="b" x="57" y="2710">endpoints drive the whole sitting. conductor_service holds</text>
+<text class="b" x="57" y="2724">the state, writes the truth and asks the guide for the</text>
+<text class="b" x="57" y="2738">words. The client renders a ConductorDirective and reports</text>
+<text class="b" x="57" y="2752">what the child did - it decides nothing, including what</text>
+<text class="b" x="57" y="2767">silence means.</text>
+<rect class="grd box" x="422" y="2655" width="360" height="157"/>
+<text class="t grdt" x="435" y="2679" style="font-size:13.00px">branch.py — a pure function</text>
+<text class="tag grdt" x="769" y="2679" text-anchor="end" style="font-size:10.00px">IMPORT-FENCED</text>
+<text class="b" x="435" y="2696">Advance, re-explain, simplify, drop to a prerequisite,</text>
+<text class="b" x="435" y="2710">switch modality, stop kindly. MAX_ATTEMPTS_ON_ONE_QUESTION</text>
+<text class="b" x="435" y="2724">is 3 and each is a different turn, the last simplifying</text>
+<text class="b" x="435" y="2738">rather than re-explaining. Running out is ADVANCE with</text>
+<text class="b" x="435" y="2752">reason attempts_exhausted: nothing is celebrated, the skill</text>
+<text class="b" x="435" y="2767">is marked weak, and the lesson carries on. Only a</text>
+<text class="b" x="435" y="2781">frustrated child or an overrunning sitting ends it.</text>
+<rect class="det box" x="800" y="2655" width="360" height="157"/>
+<text class="t dett" x="813" y="2679" style="font-size:13.00px">echo.py — the class stops and listens</text>
+<text class="b" x="813" y="2696">After a thing is explained the child says it back. Three</text>
+<text class="b" x="813" y="2710">boundaries hold it: only in subjects that teach an alphabet</text>
+<text class="b" x="813" y="2724">or numbers, and only for a letter or a number in either</text>
+<text class="b" x="813" y="2738">script - never a colour, a shape or a whole word; teaching</text>
+<text class="b" x="813" y="2752">cards only, so a microphone is never open beside an answer</text>
+<text class="b" x="813" y="2767">key; and an echo is never scored - no attempt, no star.</text>
+<text class="b" x="813" y="2781">Asked once a sitting. Judged by string work over a cleaned</text>
+<text class="b" x="813" y="2795">transcript, never a model.</text>
+<rect class="det box" x="1178" y="2655" width="360" height="157"/>
+<text class="t dett" x="1191" y="2679" style="font-size:12.50px">unexpected.py — not every utterance is an answer</text>
+<text class="b" x="1191" y="2696">“Pata nahi”, the question read back, a story about a dog,</text>
+<text class="b" x="1191" y="2710">“I want mumma” - each is named and each says what the class</text>
+<text class="b" x="1191" y="2724">should do, and none of the answers is “wrong”. An utterance</text>
+<text class="b" x="1191" y="2738">that does not resolve to an answer is never recorded as a</text>
+<text class="b" x="1191" y="2752">failed attempt. Anything visible on screen is always an</text>
+<text class="b" x="1191" y="2767">answer and goes straight to the evaluator; the classifier</text>
+<text class="b" x="1191" y="2781">never sees the answer key.</text>
+<rect class="det box" x="1556" y="2655" width="360" height="157"/>
+<text class="t dett" x="1569" y="2679" style="font-size:13.00px">signals · scaffold · skill_graph · explain</text>
+<text class="b" x="1569" y="2696">Frustration and idle watchers, the scaffolding ladder, the</text>
+<text class="b" x="1569" y="2710">authored prerequisite graph loaded at boot, and</text>
+<text class="b" x="1569" y="2724">explain.spoken_form(), which reads the Devanagari back out</text>
+<text class="b" x="1569" y="2738">of the author's prompt so the guide says “अनार” and never</text>
+<text class="b" x="1569" y="2752">the asset token “anar”.</text>
+<rect class="cont" x="28" y="2863" width="1904" height="220"/>
+<text class="band" x="44" y="2891">9 · THE DURABLE TRUTH</text><text class="bandsub" x="255" y="2891">PostgreSQL · schema in app/db/models.py, access in app/db/repositories/, migrations in backend/alembic — `alembic upgrade head`</text>
+<rect class="db box" x="44" y="2909" width="360" height="128"/>
+<text class="t dbt" x="57" y="2933" style="font-size:13.00px">who is here</text>
+<text class="b" x="57" y="2950">parents · auth_sessions · auth_throttle · password_resets ·</text>
+<text class="b" x="57" y="2964">children · child_progress. A parent's email and a child's</text>
+<text class="b" x="57" y="2979">first name and birth month is the whole of the personal</text>
+<text class="b" x="57" y="2993">data; consent_granted_at is written by the parent surface</text>
+<text class="b" x="57" y="3007">only, because DPDP and COPPA both require an explicit act</text>
+<text class="b" x="57" y="3021">by a person.</text>
+<rect class="db box" x="422" y="2909" width="360" height="128"/>
+<text class="t dbt" x="435" y="2933" style="font-size:13.00px">what happened</text>
+<text class="b" x="435" y="2950">attempts · skill_mastery · topic_memories · certificates.</text>
+<text class="b" x="435" y="2964">attempts is the single log: mastery is computed from it,</text>
+<text class="b" x="435" y="2979">the weak-skill list the planner reorders on is read off it,</text>
+<text class="b" x="435" y="2993">and both teaching loops write to it through</text>
+<text class="b" x="435" y="3007">history_service.</text>
+<rect class="db box" x="800" y="2909" width="360" height="128"/>
+<text class="t dbt" x="813" y="2933" style="font-size:13.00px">what today is</text>
+<text class="b" x="813" y="2950">daily_plans · daily_plan_items. One frozen plan per child</text>
+<text class="b" x="813" y="2964">per day, source always 'deterministic'. A change to how the</text>
+<text class="b" x="813" y="2979">day is built is invisible until tomorrow unless today's</text>
+<text class="b" x="813" y="2993">rows are deleted and allowed to re-freeze.</text>
+<rect class="db box" x="1178" y="2909" width="360" height="128"/>
+<text class="t dbt" x="1191" y="2933" style="font-size:13.00px">what was taught</text>
+<text class="b" x="1191" y="2950">lesson_states (the conductor's live lesson) ·</text>
+<text class="b" x="1191" y="2964">playground_sessions · playground_turns (the AI Teacher's</text>
+<text class="b" x="1191" y="2979">sitting, and the only memory a turn has of the one before</text>
+<text class="b" x="1191" y="2993">it) · teaching_events, which is what was spent so it is not</text>
+<text class="b" x="1191" y="3007">spent twice.</text>
+<rect class="db box" x="1556" y="2909" width="360" height="128"/>
+<text class="t dbt" x="1569" y="2933" style="font-size:13.00px">what was learned</text>
+<text class="b" x="1569" y="2950">policy_episodes · retention_probes · policy_q_values. The</text>
+<text class="b" x="1569" y="2964">episode is written at the turn with no reward in it, the</text>
+<text class="b" x="1569" y="2979">probe is settled days later, and the Q-value is the only</text>
+<text class="b" x="1569" y="2993">row of the three that a future turn reads back.</text>
+<text class="cap" x="48" y="3059">Tests run on in-memory SQLite; the models use portable SQLAlchemy types, so one migration describes both backends. The only module-level dicts left anywhere are the in-flight lesson and practice cursors, which are rebuilt by starting again.</text>
+<rect class="rule" x="28" y="3117" width="1904" height="272"/>
+<text class="ruleh" x="52" y="3151">THE ONE RULE THAT NEVER MOVES — and the four consequences that fall out of it</text>
+<text class="ruleb" x="52" y="3179">▸ No language model decides correctness, scoring, stars, unlocking or certificate eligibility.</text>
+<text class="rulet" x="68" y="3195">Not the branch decision either: app/conductor/branch.py is a pure function and may not import app.ai or app.services. “100% AI” means zero manual decisions on the child's surface — no navigation, no menus, no “next” button — not that a model grades anything.</text>
+<text class="ruleb" x="52" y="3219">▸ A reward is paid by retention days later, and by nothing else.</text>
+<text class="rulet" x="68" y="3235">A reward defined on “the child answered correctly” trains a teacher that hands over the answer. That is why RLHF was rejected here, and a Q-learning reward built the same way fails identically. The probe is the only thing that pays.</text>
+<text class="ruleb" x="52" y="3259">▸ The fence is the order of the flow, not a check at the end.</text>
+<text class="rulet" x="68" y="3275">candidates → eligibility filter → epsilon-greedy → strategy. Because the filter runs first, exploration cannot reach a strategy the app's own rules forbid — there is no path by which an illegal action is chosen and then caught.</text>
+<text class="ruleb" x="52" y="3299">▸ Every model call already has its answer ready without the model.</text>
+<text class="rulet" x="68" y="3315">No key, a timeout, an HTTP error or a malformed body is a normal, quiet outcome: the deterministic teacher explains from the author's own passages, and a database that will not answer falls back to the hand-written ladder rather than erroring onto a child's screen.</text>
+<text class="ruleb" x="52" y="3339">▸ There is one way into a lesson, and the day's plan is the gate.</text>
+<text class="rulet" x="68" y="3355">Not from a subject card, not from a level node, not from the schedule strip. A second entrance can open a level the plan has not reached, which is the one thing the gate exists to prevent. The level a lesson unlocks is played tomorrow.</text>
+<text class="cap" x="44" y="3429">Saksham IQ · system design · generated from the modules named above · every arrow is a call in this repository, and the six colours are the only thing that had to be added.</text>
+</svg>

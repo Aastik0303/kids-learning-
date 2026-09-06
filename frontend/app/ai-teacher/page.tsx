@@ -4,8 +4,10 @@ import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { AIAvatar } from "@/components/avatar/AIAvatar";
+import { avatarStateForTeacher } from "@/components/avatar/avatar.config";
+import { AnswerChoice } from "@/components/curriculum/AnswerChoice";
 import { AppShell } from "@/components/shared/AppShell";
-import { TeachingVisual } from "@/components/curriculum/TeachingVisual";
+import { Blackboard } from "@/components/blackboard/Blackboard";
 import { TraceCanvas } from "@/components/learning/TraceCanvas";
 import { NoChildNotice } from "@/components/shared/NoChildNotice";
 import { announcePlanChanged } from "@/lib/useTodayPlan";
@@ -75,12 +77,41 @@ const AUTO_NEXT_MS = 10_000;
 /** Said after the question, so the child knows the microphone is theirs now. */
 const SPEAK_NOW = "Say it out loud!";
 
+/**
+ * How long the line just shown *should* have taken to say.
+ *
+ * The countdown to the next step may only begin once the child has actually
+ * heard the explanation. Normally that is known exactly - the narration promise
+ * resolves when the audio ends - but there are several ordinary ways for the
+ * voice not to play at all: autoplay refused until the page is tapped, the
+ * backend not running, a device with no speech at all. In every one of those
+ * the promise resolves in a few milliseconds, and before this the ten-second
+ * clock started immediately and moved the class on from an explanation nobody
+ * had heard *or* had time to read.
+ *
+ * So when the voice comes back suspiciously fast, the clock still waits out a
+ * floor derived from the length of the line. Roughly two words a second, which
+ * is a slow, four-year-old-facing pace, plus a moment to look at the picture.
+ */
+function readingMs(line: string): number {
+  const words = line.trim().split(/\s+/).filter(Boolean).length;
+  if (!words) return 0;
+  return Math.min(30_000, 800 + Math.round((words / 2) * 1000));
+}
+
 const STEP_LABELS: Record<string, string> = {
   explain: "👂 Listen",
   say_it: "🗣️ Say it",
   draw: "✏️ Draw it",
   match: "👀 Find it",
-  quiz: "🧠 One more"
+  quiz: "🧠 One more",
+  /**
+   * The check-in the schedule opens the class with: something taught two days
+   * ago, asked again with a different question. It is not part of the lesson —
+   * nothing about answering it is marked, counted or allowed near a star — so
+   * it is named for what it is rather than as a step of the level.
+   */
+  retention: "🧩 Remember"
 };
 
 /**
@@ -127,6 +158,10 @@ export default function AiTeacherPage() {
   const [micLevel, setMicLevel] = useState(0);
   const micBucket = useRef(-1);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  // The moment this turn's narration finished, or - when the voice never
+  // played - the moment it would have. Null while it is still being said, which
+  // is what keeps the auto-advance clock from starting during the explanation.
+  const [narrationEndsAt, setNarrationEndsAt] = useState<number | null>(null);
   const mounted = useRef(true);
   // Whether a recogniser is open right now, tracked in a ref rather than in
   // `listening` state.
@@ -207,12 +242,25 @@ export default function AiTeacherPage() {
         next.expects !== "ready" &&
         next.expects !== "trace" &&
         next.expects !== "done";
-      await say(
-        [next.feedback, next.speech, next.question, wantsVoice ? SPEAK_NOW : ""]
-          .filter(Boolean)
-          .join(" ")
-      );
+      const line = [next.feedback, next.speech, next.question, wantsVoice ? SPEAK_NOW : ""]
+        .filter(Boolean)
+        .join(" ");
+      // A new turn is never immediately skippable: the clock is cleared here and
+      // only set again once the line has been said.
+      setNarrationEndsAt(null);
+      const startedAt = Date.now();
+      await say(line);
       if (!mounted.current || mine !== beat.current) return;
+      // When the voice really played, that is the end of the narration and the
+      // clock starts now. When it came back far too fast to have said anything -
+      // autoplay refused, no backend, a device with no speech - the floor is
+      // used instead, so the explanation still gets time on the screen. Trusting
+      // the audio when it did play matters: the floor is a slow estimate, and
+      // adding it on top of a narration that already finished would leave a
+      // child sitting in front of a finished sentence for several seconds.
+      const elapsed = Date.now() - startedAt;
+      const floor = readingMs(line);
+      setNarrationEndsAt(elapsed >= floor / 2 ? Date.now() : startedAt + floor);
       if (wantsVoice) await listenRef.current?.();
     },
     [say]
@@ -372,28 +420,54 @@ export default function AiTeacherPage() {
     }
   }
 
+  /**
+   * Carrying on by itself, once the explanation has actually been heard.
+   *
+   * The button exists, but a two- or three-year-old cannot be relied on to
+   * press it, so the class has to move on on its own. What it must not do is
+   * move on *over* the explanation, which is what happened whenever the voice
+   * did not play: the clock started the instant the turn arrived.
+   *
+   * It now starts from `narrationEndsAt` - the end of the audio, or the reading
+   * floor when there was no audio - and the deadline is computed from the wall
+   * clock rather than counted down in ticks, so a tab that was backgrounded
+   * (where browsers throttle timers to once a minute) does not come back with
+   * eight seconds still on a clock that should have finished long ago.
+   */
   useEffect(() => {
-    if (!turn || turn.expects !== "ready" || turn.day_complete || busy || speaking || listening) {
+    if (
+      !turn ||
+      turn.expects !== "ready" ||
+      turn.day_complete ||
+      busy ||
+      speaking ||
+      listening ||
+      narrationEndsAt === null
+    ) {
       setSecondsLeft(null);
       return;
     }
     const mine = beat.current;
-    let left = Math.round(AUTO_NEXT_MS / 1000);
-    setSecondsLeft(left);
-    const tick = window.setInterval(() => {
-      left -= 1;
+    const deadline = Math.max(narrationEndsAt, Date.now()) + AUTO_NEXT_MS;
+    // Declared before `render` reads it: the first call happens synchronously,
+    // below, and a `const` here would be in its temporal dead zone.
+    let tick = 0;
+    const render = () => {
       if (!mounted.current || mine !== beat.current) return;
-      setSecondsLeft(left > 0 ? left : 0);
-      if (left <= 0) {
+      const remaining = deadline - Date.now();
+      setSecondsLeft(Math.max(0, Math.ceil(remaining / 1000)));
+      if (remaining <= 0) {
         window.clearInterval(tick);
         void send("ready");
       }
-    }, 1000);
+    };
+    render();
+    tick = window.setInterval(render, 250);
     return () => window.clearInterval(tick);
     // `send` is stable enough that including it would restart the clock on
     // every render, which is the one thing this must not do.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turn, busy, speaking, listening]);
+  }, [turn, busy, speaking, listening, narrationEndsAt]);
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -418,6 +492,42 @@ export default function AiTeacherPage() {
   const dayDone = Boolean(turn?.day_complete);
   // The turn that gives the answer away. Nothing here is being tested.
   const revealing = Boolean(turn?.is_reveal);
+  /**
+   * What tells the blackboard that this is a new turn and it should be wiped.
+   *
+   * Every part of a turn that changes what is drawn is in it, the attempt
+   * included: a question asked again with a hint draws its picture again rather
+   * than leaving the finished one from the first ask sitting there. Two turns
+   * that really do draw the same thing keep the same key and the board is left
+   * alone, which is what stops a re-render from restarting the chalk.
+   */
+  /**
+   * What the panda's face is doing.
+   *
+   * It reacts while the feedback is being said and settles into waiting once
+   * the talking stops - a face that stayed delighted through the next question
+   * would be grinning at a child who is stuck on it. A wrong answer makes it
+   * *kind*, never sad; sad is only for the app's own failures, which here means
+   * the microphone that heard nothing and the server that did not answer.
+   */
+  const mood = avatarStateForTeacher({
+    speaking,
+    listening,
+    waiting: busy,
+    sorry: Boolean(error) || micNote === MIC_TROUBLE.silence,
+    turn
+  });
+
+  const boardKey = [
+    turn?.session_id ?? "none",
+    turn?.topic_id ?? "",
+    turn?.step ?? "",
+    turn?.step_index ?? 0,
+    turn?.questions_asked ?? 0,
+    turn?.attempt ?? 1,
+    turn?.visual_kind ?? "",
+    turn?.visual_value ?? ""
+  ].join("|");
 
   return (
     <AppShell>
@@ -472,10 +582,16 @@ export default function AiTeacherPage() {
         {/* The teacher, centre stage. */}
         <div className="surface-panel grid justify-items-center gap-5 rounded-[2rem] p-6 text-center">
           <div
-            className={`h-56 w-56 transition-transform ${speaking ? "scale-105" : "scale-100"}`}
+            className={`h-56 w-56 transition-transform ${
+              mood === "celebrating" || mood === "proud"
+                ? "scale-110"
+                : speaking
+                  ? "scale-105"
+                  : "scale-100"
+            }`}
             aria-hidden
           >
-            <AIAvatar state={speaking ? "speaking" : listening ? "listening" : "idle"} effect={null} isSpeaking={speaking} />
+            <AIAvatar state={mood} effect={null} isSpeaking={speaking} />
           </div>
 
           {/* A level finished. This is the only place the Adventure map ever
@@ -517,18 +633,36 @@ export default function AiTeacherPage() {
             </p>
           ) : null}
 
-          {/* The thing being taught, drawn. A pre-reader looks at this and
-              listens to the rest. */}
-          {turn?.visual_kind ? (
-            <TeachingVisual kind={turn.visual_kind} value={turn.visual_value ?? ""} />
+          {/* The board, and the whole reason the child looks up.
+
+              On it is the one thing this card is teaching, drawn rather than
+              delivered: the letter is written while it is being said. The
+              explanation is still not printed here — a paragraph of English on
+              a blackboard is no more readable to a two-year-old than one
+              anywhere else — and the everyday examples that used to be drawn
+              under it are gone at the user's request, after a ball kept turning
+              up beside a square and then beside a triangle. */}
+          {!dayDone ? (
+            <Blackboard
+              title={turn?.topic_title}
+              visualKind={turn?.visual_kind}
+              visualValue={turn?.visual_value}
+              playKey={boardKey}
+            />
           ) : null}
 
           <div aria-live="polite" className="grid gap-3">
-            <p className="max-w-2xl text-xl font-bold leading-snug text-ink/80 sm:text-2xl">
-              {busy && !turn ? "Waking the teacher up…" : turn?.speech}
-            </p>
+            {/* Said, not shown. A screen reader still gets the whole
+                explanation; a child gets the picture above and the question
+                below, which is all they can use. */}
+            <p className="sr-only">{turn?.speech}</p>
+            {busy && !turn ? (
+              <p className="max-w-2xl text-xl font-bold leading-snug text-ink/80 sm:text-2xl">
+                Waking the teacher up…
+              </p>
+            ) : null}
             {turn?.question ? (
-              <p className="max-w-2xl text-2xl font-black leading-snug text-ink sm:text-3xl">
+              <p className="max-w-2xl text-3xl font-black leading-snug text-ink sm:text-4xl">
                 {turn.question}
               </p>
             ) : null}
@@ -586,7 +720,12 @@ export default function AiTeacherPage() {
           ) : null}
 
           {/* What to tap. The server says what was offered; it never says which
-              one is right, so nothing here can give the answer away. */}
+              one is right, so nothing here can give the answer away.
+
+              Each one is drawn as a picture with its word underneath, because
+              two words a child cannot read are the same button twice. The
+              string sent back is the option exactly as it arrived - only how it
+              is drawn changes here. */}
           {turn?.options?.length ? (
             <div className="flex flex-wrap items-center justify-center gap-3">
               {turn.options.map((option) => (
@@ -595,9 +734,9 @@ export default function AiTeacherPage() {
                   type="button"
                   disabled={busy || speaking}
                   onClick={() => void send(option)}
-                  className="pressable min-h-16 rounded-3xl bg-white px-6 py-4 text-xl font-black text-ink shadow-soft disabled:opacity-50"
+                  className="pressable min-h-16 rounded-3xl bg-white px-6 py-4 shadow-soft disabled:opacity-50"
                 >
-                  {option}
+                  <AnswerChoice option={option} offered={turn.options} />
                 </button>
               ))}
             </div>

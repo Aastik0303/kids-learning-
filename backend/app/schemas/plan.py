@@ -1,6 +1,6 @@
 """The daily plan, as the client reads it."""
 
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -15,6 +15,21 @@ class PlanItem(BaseModel):
     reason: str = "new"
     done: bool = False
     current: bool = False
+
+
+class RetentionTestItem(BaseModel):
+    """A due retention test, as the schedule shows it.
+
+    Not a curriculum item and deliberately not shaped like one: no `reason`, no
+    `done`, no `current`. It is a check-in on something taught two days ago, and
+    nothing about answering it unlocks a level, pays a star or moves the plan.
+    """
+
+    test_id: str
+    concept_id: str
+    topic_id: str
+    title: str
+    due_at: datetime
 
 
 class TodayPlanResponse(BaseModel):
@@ -36,6 +51,10 @@ class TodayPlanResponse(BaseModel):
     # still has work in it. The client never decides this: a two-year-old cannot
     # navigate, but a five-year-old can and should.
     autopilot: bool = False
+    # The retention tests today's sitting will open with: concepts taught two
+    # days ago, due for a check-in. The scheduler decides when they happen -
+    # never the learned policy, which is the thing they pay.
+    retention_tests: list[RetentionTestItem] = []
 
 
 class PlanHistoryEntry(BaseModel):

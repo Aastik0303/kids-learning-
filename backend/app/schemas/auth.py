@@ -24,7 +24,20 @@ class LoginRequest(BaseModel):
 
 
 class AuthResponse(BaseModel):
+    """What a successful sign-in or registration hands back.
+
+    `session_token` and `access_token` hold the same signed JWT. The first is
+    the name every client already sends back as `X-Demo-Session`, and renaming
+    it would sign all of them out at once; the second, with `token_type` and
+    `expires_in`, is the ordinary bearer-token shape, so a client can send
+    `Authorization: Bearer <token>` and know when to sign in again.
+    """
+
     session_token: str
+    access_token: str
+    token_type: str = "Bearer"
+    # Seconds, matching the `auth_sessions` row the token names.
+    expires_in: int
     user: UserPublic
 
 

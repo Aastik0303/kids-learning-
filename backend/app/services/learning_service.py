@@ -437,11 +437,6 @@ def award_topic_completion(child: dict, topic: Topic, *, score: int) -> dict:
             title=topic.title,
             score=score,
         )
-        # Tick it off today's plan. The plan's cursor is its own: a `revisit`
-        # item is in the child's completed list from the moment it is frozen, so
-        # reading the cursor off that list ticked a day of revisits before it
-        # had begun.
-        plan_service.mark_topic_done(child["child_id"], topic.topic_id)
         _refresh_certificate(child)
         feedback = (
             "All correct! Every answer was right."
@@ -453,6 +448,25 @@ def award_topic_completion(child: dict, topic: Topic, *, score: int) -> dict:
         mark_weak(child, topic)
         feedback = random.choice(TOPIC_COMPLETE_NEEDS_PRACTICE)
         recommended_practice = True
+
+    # Tick it off today's plan - **whether or not it passed**. Passing is what
+    # earns the star and unlocks the next level; being taught through is what
+    # finishes an item of today's work, and the two are different questions.
+    #
+    # This used to sit inside the `if passed:` branch, and that was the bug that
+    # stopped the schedule dead. A child who scored under the topic's
+    # `passing_score` left `daily_plan_items.completed_at` NULL, so the plan
+    # cursor never moved off item one: `is_day_complete` stayed false, the class
+    # reopened on the same level - the same day and every day after - and no
+    # level was ever unlocked, so the subjects behind it were never scheduled.
+    # The child had done the whole sitting and the day did not know it.
+    #
+    # The level that did not pass is not lost: `mark_weak` above puts it on the
+    # weak list, and `plan_service._candidates` brings it back tomorrow as a
+    # `revisit`. That is the intended way round - the day moves on, the level
+    # comes back - and it is what the cursor's own docstring in
+    # `DailyPlanItem.completed_at` has always said it was for.
+    plan_service.mark_topic_done(child["child_id"], topic.topic_id)
 
     return {
         "passed": passed,

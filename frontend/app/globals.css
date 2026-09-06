@@ -2324,8 +2324,125 @@ select:focus-visible {
   animation: panda-talk 0.42s ease-in-out infinite;
 }
 
-.avatar-speaking .panda-mouth-closed,
-.avatar-is-speaking .panda-mouth-closed {
+/* Talking hides every resting mouth at once, so adding a new feeling can never
+ * leave two mouths on the face. */
+.avatar-speaking .panda-mouth-rest,
+.avatar-is-speaking .panda-mouth-rest {
+  opacity: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * The face.
+ *
+ * Every feeling is three things - the eyes, the eyebrows and the mouth - and
+ * each is drawn once in the SVG and shown by the state class the page puts on
+ * the wrapper. Opacity rather than display, because a hidden `display:none`
+ * SVG group cannot be transitioned and the swap between two feelings should
+ * not be a jump cut.
+ *
+ * `sad` is here and is deliberately never used for a wrong answer: it is for
+ * when the *app* has failed the child - nothing heard, nothing returned.
+ * ------------------------------------------------------------------------ */
+.panda-brow-set path {
+  stroke: #241d19;
+  stroke-width: 5;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.panda-brow-set,
+.panda-eyes-joy,
+.panda-mouth {
+  opacity: 0;
+  transition: opacity 220ms ease-out;
+}
+
+.panda-eyes-joy path {
+  stroke: #fffdfb;
+  stroke-width: 5.4;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* The resting face: round eyes and a small smile. */
+.panda-mouth-closed {
+  opacity: 1;
+}
+
+/* Pleased - a level finished, an answer that landed. */
+.avatar-happy .panda-eyes-joy,
+.avatar-celebrating .panda-eyes-joy,
+.avatar-proud .panda-eyes-joy,
+.avatar-waving .panda-eyes-joy {
+  opacity: 1;
+}
+
+.avatar-happy .panda-eyes,
+.avatar-celebrating .panda-eyes,
+.avatar-proud .panda-eyes,
+.avatar-waving .panda-eyes {
+  opacity: 0;
+}
+
+.avatar-happy .panda-mouth-grin,
+.avatar-celebrating .panda-mouth-grin,
+.avatar-proud .panda-mouth-grin,
+.avatar-waving .panda-mouth-grin {
+  opacity: 1;
+}
+
+.avatar-celebrating .panda-brows-up {
+  opacity: 1;
+}
+
+/* Kind. The face for a child who has just missed something: no frown, no
+ * disappointment - concerned eyebrows and a small steady smile. */
+.avatar-encouraging .panda-brows-soft,
+.avatar-encouraging .panda-mouth-soft,
+.avatar-sad .panda-brows-soft,
+.avatar-error_fallback .panda-brows-soft,
+.avatar-sleeping .panda-mouth-soft {
+  opacity: 1;
+}
+
+.avatar-encouraging .panda-cheek {
+  opacity: 0.55;
+}
+
+/* Sorry - the microphone heard nothing, the class could not answer. */
+.avatar-sad .panda-mouth-frown,
+.avatar-error_fallback .panda-mouth-frown {
+  opacity: 1;
+}
+
+/* Working something out. */
+.avatar-thinking .panda-brows-one,
+.avatar-thinking .panda-mouth-soft {
+  opacity: 1;
+}
+
+/* Wondering, and waiting for an answer. */
+.avatar-curious .panda-brows-up,
+.avatar-curious .panda-mouth-oh,
+.avatar-listening .panda-brows-up,
+.avatar-listening .panda-mouth-soft {
+  opacity: 1;
+}
+
+/* Only one resting mouth may be lit, and the ones a feeling did not ask for
+ * are put out by the rule above; the smile is the one that has to be told,
+ * because it is on by default. */
+.avatar-happy .panda-mouth-closed,
+.avatar-celebrating .panda-mouth-closed,
+.avatar-proud .panda-mouth-closed,
+.avatar-waving .panda-mouth-closed,
+.avatar-encouraging .panda-mouth-closed,
+.avatar-sad .panda-mouth-closed,
+.avatar-error_fallback .panda-mouth-closed,
+.avatar-thinking .panda-mouth-closed,
+.avatar-curious .panda-mouth-closed,
+.avatar-listening .panda-mouth-closed,
+.avatar-sleeping .panda-mouth-closed {
   opacity: 0;
 }
 
@@ -2345,6 +2462,7 @@ select:focus-visible {
 }
 
 .avatar-celebrating .panda-cheek,
+.avatar-proud .panda-cheek,
 .avatar-happy .panda-cheek {
   opacity: 0.72;
 }
@@ -2426,6 +2544,7 @@ select:focus-visible {
 }
 
 .avatar-celebrating,
+.avatar-proud,
 .avatar-happy {
   animation: avatar-celebrate 0.9s ease-in-out infinite;
 }
@@ -2435,8 +2554,16 @@ select:focus-visible {
 }
 
 .avatar-celebrating .avatar-sparkle,
+.avatar-proud .avatar-sparkle,
 .avatar-happy .avatar-sparkle {
   opacity: 1;
+}
+
+/* A sorry panda sinks a little rather than bobbing along as though nothing
+ * happened. */
+.avatar-sad {
+  animation: none;
+  transform: translateY(0.15rem);
 }
 
 .avatar-error_fallback {

@@ -37,62 +37,6 @@ COMPLETE_MESSAGES = [
 ]
 
 
-def page_avatar(page: str) -> AvatarPayload:
-    messages = {
-        "learning_start": AvatarPayload(
-            state="storytelling",
-            message="Let us start this little learning story together.",
-            animationEffect="story_transition",
-        ),
-        "correct": AvatarPayload(
-            state="celebrating",
-            message=random.choice(CORRECT_MESSAGES),
-            animationEffect="star_burst",
-        ),
-        "hint": AvatarPayload(
-            state="encouraging",
-            message=random.choice(HINT_MESSAGES),
-            animationEffect="gentle_hint",
-        ),
-        "complete": AvatarPayload(
-            state="celebrating",
-            message=random.choice(COMPLETE_MESSAGES),
-            animationEffect="confetti",
-        ),
-        "error": AvatarPayload(
-            state="error_fallback",
-            message="Let us pause and try again together.",
-            animationEffect="none",
-        ),
-        "practice_start": AvatarPayload(
-            state="storytelling",
-            message="Practice time! Let us see what you remember.",
-            animationEffect="bounce",
-        ),
-        "world_unlock": AvatarPayload(
-            state="celebrating",
-            message="A new world is ready for you to explore!",
-            animationEffect="rainbow",
-        ),
-        "certificate": AvatarPayload(
-            state="celebrating",
-            message="Your certificate is ready! You are a Saksham IQ Explorer.",
-            animationEffect="confetti",
-        ),
-        "idle": AvatarPayload(
-            state="idle",
-            message="I am here whenever you are ready.",
-            animationEffect="none",
-        ),
-        "waving": AvatarPayload(
-            state="waving",
-            message="Hello! I am Pip, your learning friend.",
-            animationEffect="sparkle",
-        ),
-    }
-    return messages.get(page, messages["learning_start"])
-
-
 def learning_avatar(
     *,
     is_correct: bool | None,

@@ -2,21 +2,6 @@ import { api } from "@/services/api";
 import { getChild } from "@/services/session";
 import type { Activity, ChildProfile, GuideQuestionContext, GuideRequest, GuideResponse } from "@/types";
 
-type ActiveGuideContext = {
-  route: string;
-  sessionId?: string;
-  screen?: string;
-  topic?: string;
-  experienceMode?: string;
-  question?: GuideQuestionContext | null;
-};
-
-let activeGuideContext: ActiveGuideContext | null = null;
-
-export function setActiveGuideContext(context: ActiveGuideContext | null) {
-  activeGuideContext = context;
-}
-
 export const GUIDE_TARGETS = {
   HOME_PRACTICE: "home-practice",
   START_PRACTICE: "start-practice",
@@ -130,7 +115,6 @@ export function askGuideQuestion({
   attempt?: number;
 }) {
   const child = getChild();
-  const activeContext = activeGuideContext?.route === route ? activeGuideContext : null;
   const contextualQuestion = activity
     ? activityQuestion(activity, {
         topic: topic ?? activity.type,
@@ -139,18 +123,18 @@ export function askGuideQuestion({
         recent_answers: [question.trim()],
         attempt
       })
-    : questionContext ?? activeContext?.question ?? undefined;
-  const earlyMode = (experienceMode ?? activeContext?.experienceMode ?? child?.experience_mode ?? "standard") === "early";
+    : questionContext;
+  const earlyMode = (experienceMode ?? child?.experience_mode ?? "standard") === "early";
   const contextualTargets = earlyMode
     ? [GUIDE_TARGETS.ACTIVITY_AREA, GUIDE_TARGETS.ANSWER_OPTIONS, GUIDE_TARGETS.MICROPHONE_BUTTON]
     : [GUIDE_TARGETS.COUNTING_OBJECTS, GUIDE_TARGETS.QUESTION_AREA, GUIDE_TARGETS.VOICE_ANSWER_AREA, GUIDE_TARGETS.MICROPHONE_BUTTON];
   return guideAgent({
-    session_id: sessionId ?? activeContext?.sessionId ?? `guide_${Date.now()}`,
+    session_id: sessionId ?? `guide_${Date.now()}`,
     child_id: child?.child_id ?? null,
     mode: "help",
     event: "GUIDE_HELP_REQUESTED",
     route,
-    screen: screen ?? activeContext?.screen ?? (route === "/guide" ? "guide_help" : "learning_app"),
+    screen: screen ?? (route === "/guide" ? "guide_help" : "learning_app"),
     feature: question.trim(),
     class_id: child?.class_id ?? null,
     experience_mode: earlyMode ? "early" : "standard",
@@ -159,7 +143,7 @@ export function askGuideQuestion({
     question: contextualQuestion
       ? { ...contextualQuestion, child_answer: question.trim(), recent_answers: [question.trim()], attempt }
       : undefined,
-    progress: progressContext(child, topic ?? activeContext?.topic),
+    progress: progressContext(child, topic),
     allowed_visual_targets: contextualQuestion?.visual_items?.map((_, index) => `visual-item-${index}`) ?? [],
     available_actions: contextualQuestion ? ["highlight", "show_hint", "repeat_instruction"] : ["none"],
     available_targets: contextualQuestion ? contextualTargets : []

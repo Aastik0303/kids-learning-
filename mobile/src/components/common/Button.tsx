@@ -165,30 +165,3 @@ function tonePalette(tone: ButtonTone, theme: ReturnType<typeof useTheme>) {
       };
   }
 }
-
-/** Bare pressable row used inside cards, without the pill chrome. */
-export function PressableRow({
-  children,
-  onPress,
-  style,
-  accessibilityLabel,
-}: {
-  children: React.ReactNode;
-  onPress?: () => void;
-  style?: ViewStyle;
-  accessibilityLabel?: string;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={() => {
-        haptics.tap();
-        onPress?.();
-      }}
-      style={({ pressed }) => [{ opacity: pressed ? 0.85 : 1 }, style]}
-    >
-      <View>{children}</View>
-    </Pressable>
-  );
-}

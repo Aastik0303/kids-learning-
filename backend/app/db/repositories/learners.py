@@ -91,10 +91,6 @@ def create_child(
     return child
 
 
-def children_of(session: Session, parent: Parent) -> list[Child]:
-    return list(session.scalars(select(Child).where(Child.parent_id == parent.id).order_by(Child.created_at)).all())
-
-
 def owned_child(session: Session, *, parent: Parent, child_id: UUID) -> Child | None:
     """The authorisation check every child-scoped endpoint needs.
 

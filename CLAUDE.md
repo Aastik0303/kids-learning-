@@ -5,8 +5,10 @@
 - Follow `README.md` and, for the AI classroom, the `docs/` family:
   `AI-100-PERCENT-AUTOMATION.md` (what "100% automation" means and its phase
   plan), `AGENT-FLOW.md` (build order and the LangGraph verdict),
-  `AI-ARCHITECTURE-DECISIONS.md` (why RLHF was rejected), and
-  `TEACHING-GRAPH-SPEC.md` (nodes, edges, contract tests).
+  `AI-ARCHITECTURE-DECISIONS.md` (why RLHF was rejected),
+  `TEACHING-GRAPH-SPEC.md` (nodes, edges, contract tests), and
+  `RETENTION-TESTS.md` (how a taught concept is tested two days later and what
+  that pays).
 
 ## The one rule that never moves
 
@@ -32,7 +34,21 @@
 - `app/services/mock_storage.py` and `mock_auth.py` are gone. Auth is
   `app/services/auth_service.py` (PBKDF2, `parents` / `auth_sessions`), the
   child's progress ledger is `app/services/child_store.py`, and the attempt log
-  is `app/services/history_service.py` writing `attempts`. Do not reintroduce a
+  is `app/services/history_service.py` writing `attempts`.
+- **A parent's bearer is a signed token, and the row behind it still rules.**
+  `app/services/jwt_service.py` mints an HS256 JWT at sign-in, signed with
+  `JWT_SECRET` from the environment and pinned to one algorithm, so a forged or
+  expired token is refused before a query is made. Its `jti` claim is the
+  `auth_sessions` row, and that row is still checked on every request - a
+  stateless token cannot be signed out, and sign-out and password reset both
+  have to actually end the session here. `JWT_SECRET` has no default: outside
+  development an unset key closes sign-in rather than signing with something
+  guessable. `AuthResponse` carries the same string as `session_token` (what
+  every client already sends back as `X-Demo-Session`) and as
+  `access_token` / `token_type` / `expires_in`, and `app/api/deps.py` accepts
+  either that header or `Authorization: Bearer`. An opaque token issued before
+  this - a bare `auth_sessions` key - is still looked up as one until it
+  expires, so nothing already signed in was signed out by the change. Do not reintroduce a
   module-level dict as storage; the only ones left are the in-flight lesson and
   practice cursors, which are rebuilt by starting again.
 - **A question gets three repairs, and then the class moves on.**
@@ -63,9 +79,12 @@
   deprecated.
 - **The web app does not use the conductor any more.** Its class is the AI
   Teacher (see below): `/` opens it, `/class` redirects to it, and Adventure
-  teaches nothing. `frontend/components/curriculum/ConductedClass.tsx` and
-  `frontend/lib/useConductorClass.ts` are still in the tree but nothing mounts
-  them.
+  teaches nothing. The web's conductor client has been deleted with the rest of
+  the dead code - `ConductedClass.tsx`, `lib/useConductorClass.ts`,
+  `services/conductor.ts` and the `Conductor*` types - along with everything
+  only it reached (`ActivityView.tsx`, `GuideCoach.tsx`). `/conductor` itself is
+  untouched: it is the mobile app's class, and `mobile/` keeps its own client.
+  Do not re-add a web conductor client; the AI Teacher is the web's one loop.
 - **Language tags are BCP-47 or nothing.** `services/audio/language.ts` is the
   only place that decides one. A recogniser handed a profile display name
   ("English") refuses to start, silently, and the microphone simply never
@@ -119,15 +138,25 @@
   locking a child out over infrastructure. Both `/learning/start` and the
   conductor enforce it; refusals are `NOT_TODAYS_PLAN` and are worded for a
   child.
-- **The plan carries its own cursor.** `daily_plan_items.completed_at` is what
-  says an item is finished, written by `learning_service.award_topic_completion`
-  when the level passes. It is not read off the child's lifetime
+- **The plan carries its own cursor, and a level that was *taught* moves it -
+  passing is a different question.** `daily_plan_items.completed_at` says an
+  item of today's work is finished, and `learning_service.award_topic_completion`
+  writes it **whatever the level scored**, with `playground/service._finish_stage`
+  covering the stages that never reach it at all (nothing marked, a topic the
+  manifest lost, a level turned unavailable). Passing is what pays the star and
+  unlocks the next level; being taught through is what finishes an item of the
+  day. Writing the cursor only on a pass is what stopped the whole schedule: the
+  levels shipped want 80%, so a small child's ordinary morning left every item
+  NULL - `is_day_complete` never became true, `open_session` discarded the
+  `day_complete` row and started a clean sitting **on the same level the same
+  afternoon**, nothing was ever added to `completed_topics`, and so nothing was
+  ever unlocked or scheduled behind it. A level that did not pass is not lost:
+  `mark_weak` puts it on the weak list and `_candidates` brings it back tomorrow
+  as a `revisit`. The cursor is also not read off the child's lifetime
   `completed_topics`, because the one kind of item the planner freezes *because*
-  it is already in that list is a `revisit` - a level marked weak and played
-  again - and such a day arrived ticked: no current topic, `is_day_complete`
-  true before the class opened, and the AI Teacher writing `day_complete` over a
-  plan that had taught nothing. A `new` item still falls back to the old rule,
-  which is correct for every item that is not a revisit.
+  it is already in that list is a `revisit`, and such a day arrived ticked. A
+  `new` item still falls back to the old rule, which is correct for every item
+  that is not a revisit.
 - **The planner uses no model at all.** `app/ai/planner/` is a LangGraph graph -
   gather, order, freeze - and every node is pure Python. It is run on a timer by
   `app/services/planner_runner.py` and frozen into `daily_plans`, whose `source`
@@ -145,6 +174,67 @@
   `app/services/retention_service.py` schedules and settles the probes that pay
   its reward, and `app/services/plan_service.py` freezes one plan per child per
   day. Anything reaching a language model goes through `app/ai/llm/`.
+- **The learned policy is fenced, and the fence is the order of the flow:**
+  `candidates -> eligibility filter -> epsilon-greedy -> strategy`.
+  `app/policy/eligibility.py` removes what the app's own rules forbid - parking
+  early, a spent explanation, a strategy the age band excludes, a prerequisite
+  that does not exist, a story for a child who is already close to tears - and
+  the selector only ever sees the survivors, so exploration cannot reach a
+  strategy the filter removed. The filter never returns nothing: a repeat beats
+  a blank turn. `app/policy/leak.py` tells scaffolding and partial clues apart
+  from handing the answer over, and only an outright leak sets
+  `answer_leak_vetoed`, which costs more reward than a passed probe pays. A
+  **teaching** turn - one that explains a thing and then asks about it, which is
+  every AI Teacher `match` and `quiz` turn - is judged on the directive frames
+  alone ("the answer is X", "tap X"), because naming the thing you are teaching
+  is the lesson. Without that distinction one turn in eight was vetoed for
+  saying "This is a square", and the table would have learned to stop
+  explaining.
+- **The hand-written ladder is permanent, and it is the default.**
+  `POLICY_MODE` is `shadow` in production: the ladder teaches, the learned
+  policy's choice is written beside it, and nothing a child hears changes.
+  `on` plus `POLICY_ROLLOUT_FRACTION` walks `0.05 -> 0.10 -> 0.25 -> 0.50 -> 1.0`
+  by a stable hash of the child id, so a child does not swap arms mid-sitting.
+  `off`, `POST /policy/disable`, and the failure breaker in `app/policy/health.py`
+  each send every child back to the ladder without a deploy. A database that
+  will not answer is a fallback, never an error on a child's screen. The switch
+  is an endpoint so it needs no deploy, which also made it reachable by anybody:
+  outside development it wants `POLICY_ADMIN_TOKEN` in an `X-Policy-Token`
+  header, and an unset token closes it rather than opening it.
+- **A taught concept is tested two days later, and the scheduler decides when.**
+  `retention_tests` is the deterministic half of the reward loop:
+  one row per teaching episode (`source_teaching_episode_id` is unique - that
+  constraint is the whole idempotency of the feature), `due_at =
+  episode.taken_at + RETENTION_TEST_DELAY_DAYS`, created by
+  `planner_runner.sweep` beside the daily plan because a retention test **is**
+  part of the schedule and not a background mechanism of its own. The class
+  opens with the due ones (`app/playground/service.py`, the check-in section)
+  before today's first stage; the question is a **different** authored question
+  about the same concept, picked deterministically out of the syllabus by
+  `app/playground/retention.py`, which is what separates transfer from having
+  memorised one sentence. `stage.judge` marks it, `app/policy/reward.py` prices
+  it from four configurable weights, and
+  `db/repositories/retention_tests.settle` pays **the original teaching
+  episode's** (state, action) - never the asking of the test, which chooses
+  nothing and is nobody's action. Q-learning has no say in when a test happens
+  or in what order due tests run; that ordering is a total order over columns
+  (`policy.retention.order_key`). A check-in is not a lesson: no strategy is
+  spent, no episode is written, nothing reaches `attempts`, the stage tally, the
+  plan cursor, a star or an unlock. See `docs/RETENTION-TESTS.md`.
+- **A reward is still the probe's and nobody else's, and it is paid once.**
+  `policy.pay_episode` is the only function that writes `PolicyEpisode.reward`,
+  and both payers go through it - the opportunistic probe and the scheduled
+  retention test - so "has this episode already been paid?" is asked in one
+  place. An episode with a `reward_resolved_at` is never paid again, whichever
+  arrives second. `settle_probe` refuses a probe that already has a `resolved_at`, and reaches
+  back only `ATTRIBUTION_WINDOW` days for the episodes it pays, so June's
+  retention result cannot be credited to April's teaching. Each episode records
+  the question, the rung, the spent count, mastery either side, which arm chose,
+  what the other arm would have chosen, the probe's verdict and the Q-value
+  before and after - that is what makes a moved table explicable.
+  `app/policy/evaluate.py` compares ladder, random and Q-learning by replay over
+  those episodes and says "no difference demonstrated" until the evidence clears
+  two standard errors. Do not claim the learned policy is better until it does.
 - Tests run on in-memory SQLite; the models use portable SQLAlchemy types so one
   migration describes both backends.
 
@@ -156,12 +246,13 @@
   apple emoji, so a level teaching अ से अनार showed a child सेब. Those live in
   `frontend/lib/visualIcon.ts`'s `HINDI_PICTURE_WORDS` and render as the word
   until there is real artwork.
-- **The child asks; the app does not offer a fixed question.** The lesson's
-  guide panel has "Ask me anything" (a microphone) where it used to have "Give
-  me a hint". A hint is now one of the things a child can ask for out loud
-  rather than the only thing they were allowed to want. Answers are filtered by
-  `safety_service.safe_text` server-side, so an off-topic question comes back as
-  a kind redirection.
+- **The child asks; the app does not offer a fixed question.** "Ask me
+  anything" (a microphone) replaced "Give me a hint": a hint is one of the
+  things a child can ask for out loud rather than the only thing they were
+  allowed to want. On the web this now lives in `AvatarDock` alone -
+  `GuideCoach.tsx` was the lesson panel's copy and went with `ConductedClass`.
+  Answers are filtered by `safety_service.safe_text` server-side, so an
+  off-topic question comes back as a kind redirection.
 
 ## The AI Teacher is the class
 
@@ -201,7 +292,14 @@
   strokes?" is a syllabus heading, and a two-year-old cannot show anybody one.
   Retrieval is fenced on `class_id` for the same reason - the nearest passage to
   "letters" in the whole index is often a UKG one - and that fence holds on the
-  keyword path while the embedding index is still warming. A topic that authored
+  keyword path while the embedding index is still warming. It is fenced a second
+  time on **the question's own skill id** (`agent._about_this_card`): a level
+  teaches several things and the notes explain each in a passage of its own, so
+  handing the model all of them let it teach whichever it liked - "This is a
+  bear, it is big and furry" - under a question that said "Tap the monkey!". The
+  level's overview carries no skill id and always stays, and a question whose
+  skill has no passage keeps the lot, because teaching from nothing is worse
+  than teaching from a neighbour. A topic that authored
   no answerable question falls back to its own subtopics, and only then to the
   title.
 - **A question that wants a tap always has something to tap.** `expects: "tap"`
@@ -245,7 +343,73 @@
   concept with no authored example gets none rather than an invented one. The
   picture beside the words is read from the level's **title** first
   (`visuals.from_concept`), and from what comes after its colon, or a level on
-  pink draws a red circle as soon as its notes mention red.
+  pink draws a red circle as soon as its notes mention red. In Devanagari it is
+  the letter **standing on its own** - "स्वर अ आ" teaches अ, and the first
+  character of that title is the स of the word for "vowel", which is what the
+  board drew on every Hindi level whose author left the colon out.
+  **On a card that asks something, the answer decides the concept**
+  (`visuals.for_card`), on **all three turns of that question** - the asking,
+  the hint and the reveal - and it is applied again in `service._teacher_turn`,
+  where the turn leaves the server, so no path through the teacher can put a
+  picture on the board that disagrees with the question beside it. A model that
+  picks its own visual token is one of those paths: it chose `shape:square`
+  while the authored question asked for the circle. A level called "Shapes" has nothing in its title, so
+  every one of its cards took whichever shape the notes led with - the circle -
+  and "Tap the triangle!" was explained, drawn and illustrated as a circle;
+  fixing only the asking left the reveal saying "here is the answer" beside a
+  triangle with a ball under it while the answer was the circle. A person wrote
+  that answer; the retrieval order is an accident. The notes decide only on the
+  explaining step, which has no answer, and when the answer names nothing the
+  app can draw.
+- **The explanation is said, not printed.** Those three or four sentences are
+  for the ear. The web class does not put them on the screen: `speech` is
+  narrated and kept only as `sr-only` text for a reader, and what a child looks
+  at is the **blackboard** - the one thing this card is teaching, drawn - and
+  the **question**, drawn large and the only words on the card. A paragraph of English above a
+  two-year-old's question is not something they can read, and it was sitting in
+  the one piece of screen they could have used. **The class board does not show
+  the everyday examples any more.** It drew two or three of them under the
+  concept, and the user asked for them off after they kept arriving beside the
+  wrong one - a ball under a square, then under a triangle. What is left on the
+  board is the thing being taught and nothing else. The rules below still govern
+  `example_items`, which the server still computes and which Adventure's level
+  notes still draw, where a child is revising rather than being asked something;
+  do not put the strip back on the class board without being asked to.
+  `app/playground/examples.py` names that strip: two or three asset tokens out of the `visual_items` the
+  author wrote for that very level (`apple` beside Aa, `ball` beside a circle).
+  Four rules hold it: an example is never a letter, number, shape, colour or
+  writing stroke (those are the lesson's own furniture, not something a child
+  has seen for themselves); it is never the answer to the question beside it,
+  which is `stage.contains_answer` again, against the key the server is holding
+  and the choices already on screen; it **belongs to the concept on the card
+  rather than to the level**, because an author who put `circle` and `ball` in
+  one activity has said the ball is a picture of the circle, and reading the
+  rest of the level for the square card drew that ball beside "tap the square!"
+  while the circle was the other choice - an activity that names a concept of
+  its own is only read on that concept's card, and one that names none (the four
+  balls of a counting level, the apple and ball of a letters level) is the
+  level's own picture box; and a concept the author grouped nothing with falls
+  back to `examples._CONCEPT_PICTURES`, which is the very everyday example
+  `agent.EVERYDAY_EXAMPLES` is already *saying* out loud, as tokens - hand-
+  written, closed, only the things the app can draw, and a concept missing from
+  it shows nothing rather than an invented example. A Hindi picture word is
+  drawn as the Devanagari word with no Roman caption under it.
+- **The class teaches at a blackboard, and the board draws itself.**
+  `frontend/components/blackboard/` is what the child looks at:
+  `chalkArt.ts` holds hand-written stroke coordinates for the tokens the
+  syllabus names, `ChalkDrawing.tsx` walks each path along its own length with a
+  chalk tip riding the moving end, `ChalkGlyph.tsx` writes a letter or a
+  Devanagari word as a wipe (a glyph has no path to walk, and guessing at stroke
+  order would teach the wrong one), and `Blackboard.tsx` draws the concept while
+  it is being said and each example after it. The point is timing: a finished
+  picture that appears the instant the narration starts has been looked at and
+  left before the words reach it. The board **adds no content of its own** - it
+  draws the `visual_kind` / `visual_value` and `example_items` the server chose
+  and filtered - and it never prints the explanation. A token with no
+  coordinates keeps its emoji rather than being drawn as a near-miss, which is
+  the rule `visualIcon` keeps for अनार.
+  `frontend/components/curriculum/ExampleStrip.tsx` still draws the strip on
+  Adventure's level pages, and exports the caption both surfaces write.
 - **A stage is one item of today's frozen plan - one subject - and the day is
   all of them.** The schedule is not something the teacher consults - it *is* the
   shape of the sitting. `service.open_session` snapshots `plan_service.todays_plan` into
@@ -262,13 +426,56 @@
   teacher had to answer for the child counts as one that did not land. That marks the level
   done, pays the manifest's stars, unlocks the next level and re-checks the
   certificate. Every answered question is written to `attempts` through
-  `history_service`, so mastery, the weak-skill list and the policy reward all
-  see the same history.
-- **Adventure is a progress board.** `/adventure` and its subject and level pages
-  show what is finished, what today's plan holds, what is sleeping until its turn
-  and what is still locked. Nothing on it starts a lesson - no `ConductedClass`,
-  no `/learning` - because a second way in could open a level the schedule had
-  not reached.
+  `history_service`, so mastery and the weak-skill list see the same history.
+- **The class is what feeds the learned policy.** Every teaching turn asks
+  `teaching_policy_service.decide` for its strategy and writes the episode with
+  `commit`, and every marked answer goes through `retention_service.on_attempt`,
+  which settles the probe that came due and schedules the next one. Without
+  those two calls the whole of `app/policy/` - the rollout, the breaker, the
+  leak veto, the offline evaluation - was hanging off `/agent/guide`, which the
+  web app no longer reaches: a sitting wrote no episode and no probe, so the
+  reward was never paid and the table never moved.
+  Two shapes of that wiring are load-bearing. `commit` runs on **the turn's own
+  session** (`db.session.session_or`) - a second session opened inside a request
+  that already holds one waits out SQLite's whole five-second busy timeout, on
+  every turn - while `on_attempt` runs on **its own**, because settling the
+  fifth question of a stage calls `award_topic_completion`, which needs the
+  write lock the probe would otherwise be holding.
+- **The echo is taught and never marked.** `say_it` is asked, hinted and
+  revealed like any other step, and `lesson.UNMARKED_STEPS` keeps it out of the
+  attempt log and out of the stage's tally. Speech-to-text mishears a
+  three-year-old constantly, and a level that failed because a microphone did
+  not catch a small voice is the app marking its own hardware. This is the same
+  rule `app/conductor/echo.py` has always kept, in the class that pays stars.
+  `is_scored` and `is_marked` are different questions: a reveal is not scored
+  and still counts against the level, an echo is scored and never counts.
+- **Adventure is a progress board, and it shows the whole schedule.**
+  `/adventure` and its subject and level pages show what is finished, what
+  today's plan holds, what is sleeping until its turn and what is still locked -
+  **and the retention check-ins the scheduler says are due**, as a `🧩 Remember`
+  badge on the subject card and on the level node, plus a chip in
+  `ScheduleStrip`. Whatever the scheduler decides is visible here: a schedule
+  the child's grown-up cannot see is one nobody can tell is working. It stays
+  status and never a door - nothing on this board starts a lesson or a check-in,
+  and no `/learning` - because a second way in could open a level the schedule
+  had not reached.
+- **A level's page hands its notes back, and says them out loud.**
+  `GET /curriculum/topics/{id}/notes` is `app/playground/notes.py`: the level's
+  objective and the author's own teaching lines, the everyday pictures beside
+  them, and one `speech` string for Edge TTS. It is how a child goes back over
+  something so it does not fade, and it is the only thing besides a status the
+  map may hand them. Four rules keep it from being a second classroom. **No
+  model** - every line was typed by the syllabus author, nothing is retrieved by
+  similarity, and the same level reads the same on every afternoon, which is
+  what revising needs. **No asking** - the prompt of a card that has an answer
+  is the question and is dropped; only its hint survives, and a hint that does
+  not name its own subject is given it ("Round, with no corners." ->
+  "Circle: round, with no corners.") by `stage.contains_answer`, the same test
+  that decides which options may be shown. **Nothing is marked** - no attempt,
+  no probe, no episode, no star, no plan movement. **Not for a locked level** -
+  a level the child has not been given yet keeps its notes, the same reason the
+  map does not link to it. A level whose author wrote nothing says so rather
+  than inventing something to fill the space.
 - **The site opens on the class.** `/` and `/home` send a signed-in child
   straight to `/ai-teacher`; a guest still gets the sign-up hub. The day's plan
   rides above every screen as `components/shared/ScheduleStrip.tsx`.

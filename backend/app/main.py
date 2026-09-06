@@ -18,6 +18,7 @@ from app.api import (
     learning,
     plans,
     playground,
+    policy,
     practice,
     progress,
     speech,
@@ -136,4 +137,5 @@ app.include_router(speech.router)
 app.include_router(guide.router)
 app.include_router(history.router)
 app.include_router(playground.router)
+app.include_router(policy.router)
 app.include_router(dev.router)

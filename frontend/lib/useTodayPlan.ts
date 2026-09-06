@@ -63,12 +63,29 @@ export function useTodayPlan(child: ChildProfile | null) {
     [plan]
   );
 
+  /**
+   * The check-ins the schedule owes today, and the topics they are about.
+   *
+   * Kept apart from `plannedTopicIds` on purpose. That set is what decides
+   * whether a level may be *taught* today, and a due check-in is not permission
+   * to teach anything - it is a question about something already learned. Were
+   * the two merged, a level whose check-in came due would stop being greyed out
+   * on the map and start looking like today's lesson.
+   */
+  const retentionTests = useMemo(() => plan?.retention_tests ?? [], [plan]);
+  const retentionTopicIds = useMemo(
+    () => new Set(retentionTests.map((test) => test.topic_id)),
+    [retentionTests]
+  );
+
   /** The item the day is pointing at, or null when the day is done. */
   const current = useMemo(() => (plan?.items ?? []).find((item) => item.current) ?? null, [plan]);
 
   return {
     plan,
     plannedTopicIds,
+    retentionTests,
+    retentionTopicIds,
     current,
     /** True only once the answer is known, so nothing is greyed out on a guess. */
     loaded,

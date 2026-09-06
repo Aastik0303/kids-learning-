@@ -48,6 +48,18 @@ export type TeacherTurn = {
   attempts_allowed?: number;
   is_hint?: boolean;
   is_reveal?: boolean;
+  /**
+   * True when this turn is a retention check-in rather than a lesson: a concept
+   * taught two days ago, asked about with a *different* question. `step` is
+   * "retention" and the client renders it like any other question — options are
+   * tapped, speech is narrated. Nothing about answering it is marked into the
+   * stage, written to the child's history, or allowed near a star; what it
+   * moves is the Q-value of the teaching turn that earned it.
+   */
+  is_retention_test?: boolean;
+  retention_test_id?: string;
+  /** How many more check-ins the sitting opened with, after this one. */
+  retention_remaining?: number;
   /** What to trace, on the drawing step. */
   trace_target?: string;
   /**
@@ -62,6 +74,13 @@ export type TeacherTurn = {
    */
   visual_kind?: string;
   visual_value?: string;
+  /**
+   * The everyday things this level's author named — `apple`, `ball` — as asset
+   * tokens the client draws. The explanation itself is spoken and never
+   * printed, so this is what the child actually looks at beside the question.
+   * Never the answer to what is being asked: the server drops those.
+   */
+  example_items?: string[];
   feedback?: string;
   /** Null when the turn was not an answer — the reveal included. */
   is_correct?: boolean | null;

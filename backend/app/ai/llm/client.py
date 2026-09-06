@@ -18,7 +18,6 @@ immediately, so an outage degrades the class to the deterministic guide instead
 of stalling it. One success closes it again.
 """
 
-import json
 import logging
 import time
 from dataclasses import dataclass, field
@@ -186,15 +185,17 @@ def chat(request: ChatRequest) -> str:
         )
         raise LLMUnavailable(str(exc)) from exc
 
-    _breaker.record_success()
+    # An empty body is a failure, and it has to be counted as one *before* the
+    # breaker is told anything. Recording the success first meant the one
+    # failure mode this breaker was written for - a reasoning model that spends
+    # its whole budget thinking and returns nothing, which the provider then
+    # rejects - reset the counter on every call, so the breaker never opened and
+    # every turn went on paying a full round trip to a provider that could not
+    # answer.
     if not isinstance(content, str) or not content.strip():
+        _breaker.record_failure(time.monotonic())
+        logger.warning("The model returned an empty message; falling back to the deterministic path")
         raise LLMUnavailable("the provider returned an empty message")
+
+    _breaker.record_success()
     return content
-
-
-def chat_json(request: ChatRequest) -> dict:
-    """`chat()` for callers that want the decoded object rather than the text."""
-    decoded = json.loads(chat(request))
-    if not isinstance(decoded, dict):
-        raise LLMUnavailable("the provider returned JSON that was not an object")
-    return decoded

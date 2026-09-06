@@ -34,6 +34,16 @@ Three shapes are worth saying plainly:
   stars and unlocks the next level. Adventure shows that; it no longer teaches
   anything of its own.
 
+* **The class opens with the check-ins the schedule says are due.** A concept
+  taught two days ago is asked about again - a *different* question about the
+  same thing - before today's first stage. It is a retention test, not a lesson:
+  no strategy is spent, no episode is written, nothing is added to the attempt
+  log, no star moves and the day's plan does not advance. What it does move is
+  the Q-value of the teaching turn that taught the concept two days ago, which
+  is the only way this policy is ever paid. See `app/policy/retention.py` for
+  when, `app/services/retention_test_service.py` for the wiring, and
+  `app/policy/reward.py` for what it pays.
+
 The one rule still holds, and holds harder now that this writes a child's
 progress: **no model decides correctness, stars or unlocking.** `stage.judge`
 marks the answer in plain Python from the authored key, and
@@ -53,13 +63,17 @@ from sqlalchemy import select
 from app.conductor import echo as echo_engine
 from app.db.models import PlaygroundSession, PlaygroundTurn
 from app.db.session import session_scope
-from app.playground import agent, lesson, questions, rag, stage, visuals
+from app.playground import agent, examples, lesson, questions, rag, retention, stage, visuals
+from app.policy import leak as policy_leak
 from app.services import (
     child_service,
     child_store,
     curriculum_service,
     learning_service,
     plan_service,
+    retention_service,
+    retention_test_service,
+    teaching_policy_service,
 )
 from app.services.errors import app_error
 from app.services.history_service import record_attempt
@@ -110,10 +124,23 @@ class TeacherTurn:
     options: list[str] = field(default_factory=list)
     visual_kind: str = ""
     visual_value: str = ""
+    # The two or three everyday things the author named beside this level, as
+    # asset tokens the client draws. This is what the child *reads* instead of
+    # the explanation: the words are spoken, the example is looked at. Never the
+    # answer to the question on the screen - `examples.for_turn` drops those.
+    example_items: list[str] = field(default_factory=list)
     # --- the answer just given, when there was one -------------------------
     feedback: str = ""
     is_correct: bool | None = None
     advanced: bool = False
+    # --- the check-in on something taught two days ago ---------------------
+    # A retention test, not a lesson: nothing about answering it is marked into
+    # the stage, written to the attempt log, or allowed near a star. It is asked
+    # before the day's first stage, the schedule decided when, and what it pays
+    # goes to the teaching turn that earned it two days ago.
+    is_retention_test: bool = False
+    retention_test_id: str = ""
+    retention_remaining: int = 0
     # --- the day, and what finishing a stage did to the map ----------------
     stages_total: int = 0
     # Every stage of today's plan is through. The class is shut until tomorrow;
@@ -175,6 +202,48 @@ def _class_of(topic_id: str) -> str:
         return curriculum_service.get_topic(topic_id).class_id
     except Exception:  # pragma: no cover - a topic id the manifest no longer has
         return ""
+
+
+def _skill_id(row: PlaygroundSession) -> str:
+    """The concept this stage teaches, named the way everything else names it.
+
+    "<subject>:<topic>" is the id `history_service` writes, the mastery roll-up
+    groups on, and the retention probe is scheduled against - so a strategy
+    spent here and the probe that eventually pays for it line up on one skill.
+    One function rather than the same f-string in three places, because when
+    those three drifted the policy learned from a join that meant nothing.
+    """
+    if not row.topic_id:
+        return ""
+    return f"{row.subject_id}:{row.topic_id}" if row.subject_id else row.topic_id
+
+
+def _experience_mode(class_id: str) -> str:
+    """`early` for Play Group and Nursery, `standard` for the rest.
+
+    Read from the manifest, never from an age test here - the action space the
+    policy may choose from depends on it, and two answers to "is this child
+    early?" is how a two-year-old gets offered a story to reason about.
+    """
+    if not class_id:
+        return "standard"
+    try:
+        return curriculum_service.experience_mode_for_class(class_id).mode_id
+    except Exception:  # pragma: no cover - a class the manifest no longer has
+        return "standard"
+
+
+def _policy_rung(step: lesson.Step) -> int:
+    """The repair rung this turn stands on, in the ladder's own numbering.
+
+    The two do not count the same way and cannot be used interchangeably. The
+    ladder's rung 1 is a clean second try that teaches nothing and spends no
+    strategy; the AI Teacher has no such turn - its second turn is the hint,
+    which is a deeper telling and very much spends one. So try 0 is rung 0 and
+    try 1 is rung 2, which are the two rungs `actions.LADDER_PRIOR` actually
+    describes.
+    """
+    return 0 if step.tries <= 0 else 2
 
 
 def _age_band(class_id: str) -> str:
@@ -297,6 +366,34 @@ def _teach_step(
     title = _topic_title(row.topic_id)
     mode = _mode_for(step)
     class_id = _class_of(row.topic_id)
+    experience = _experience_mode(class_id)
+    skill_id = _skill_id(row)
+    activity_id = f"teacher_{step.name}"
+
+    # Which of the nine ways to teach it, decided by the learned policy rather
+    # than by the ladder alone. The flow is the one `app/policy/` documents -
+    # candidates, then the eligibility filter, then epsilon-greedy - and it
+    # degrades to the ladder on its own when the database cannot answer, so a
+    # child never waits on this. Two of the filter's flags are settled here and
+    # not guessed: this class cannot drop to a prerequisite mid-stage, because a
+    # stage *is* one item of the day's plan, and whether there is anything to
+    # look at is whatever `visuals` can draw for the concept.
+    decision = teaching_policy_service.decide(
+        child_id=str(row.child_id),
+        skill_id=skill_id,
+        activity_id=activity_id,
+        experience_mode=experience,
+        rung=_policy_rung(step),
+        spent=list(row.strategies_spent or []),
+        has_prerequisite=False,
+        has_visual=visuals.from_concept(title).is_shown,
+    )
+
+    # The syllabus's own question for this rotation. Held in a name rather than
+    # passed inline because the episode records which authored question the turn
+    # taught around: the retention test scheduled off it two days from now reads
+    # that to ask a *different* one about the same concept.
+    asked = questions.pick(row.topic_id, nth=row.questions_asked)
 
     taught = agent.teach(
         subject=row.subject_id,
@@ -306,12 +403,14 @@ def _teach_step(
         age_band=_age_band(class_id),
         step=step.name,
         spent=list(row.strategies_spent or []),
+        experience_mode=experience,
+        strategy=decision.strategy,
         mode=mode,
         # The syllabus's own question for this turn, when the step is one the
         # author wrote questions for. Walked by how many of the stage's five
         # have been settled, so five questions are five different ones rather
         # than the same one five times.
-        asked=questions.pick(row.topic_id, nth=row.questions_asked),
+        asked=asked,
         # A hint and a reveal are about the question already in front of the
         # child, so they are handed it rather than writing one.
         question=row.pending_question,
@@ -326,6 +425,31 @@ def _teach_step(
     # child's screen.
     explanation = safe_text(taught.explanation) or taught.explanation
     question = (safe_text(taught.question) or taught.question) if taught.question else ""
+
+    # What this turn did with the answer key it was never shown. A reveal is
+    # exempt: saying the answer is the whole job of that turn, and marking it as
+    # a leak would teach the table to avoid the one turn that exists so nobody
+    # is left stuck. Nothing is blocked here - the verdict is recorded, and an
+    # outright leak costs the strategy more reward than a passed probe pays.
+    verdict = (
+        policy_leak.Verdict(policy_leak.NONE)
+        if mode == agent.REVEAL
+        else policy_leak.classify(
+            f"{explanation} {question}".strip(),
+            correct_answer=taught.expected_answer if mode == agent.ASK else row.pending_answer,
+            prompt=question if mode == agent.ASK else (row.pending_question or ""),
+            options=tuple(taught.options or ()),
+            accepted=tuple(taught.accept or ()) if mode == agent.ASK else tuple(row.pending_accept or ()),
+            # An ASK turn explains the thing and then asks about it, so naming
+            # it is the lesson. A hint is help with a question already on the
+            # screen, and naming the answer there is handing it over.
+            teaching=mode == agent.ASK,
+        )
+    )
+    if verdict.is_leak:
+        logger.warning(
+            "Answer leak on %s by %s: %s", activity_id, taught.strategy, verdict.evidence
+        )
 
     if mode == agent.ASK:
         row.pending_question = question
@@ -351,6 +475,43 @@ def _teach_step(
         spent.append(taught.strategy)
     row.strategies_spent = spent
     row.updated_at = _now()
+
+    # The episode, with no reward on it. What pays it is a retention probe days
+    # from now and nothing else - `_record_attempt` schedules and settles those.
+    teaching_policy_service.commit(
+        child_id=str(row.child_id),
+        skill_id=skill_id,
+        activity_id=activity_id,
+        decision=decision,
+        strategy=taught.strategy,
+        experience_mode=experience,
+        rung=_policy_rung(step),
+        author=taught.source,
+        answer_leak_vetoed=verdict.is_leak,
+        leak_kind=verdict.kind,
+        # Which authored question this turn taught around. The retention test
+        # scheduled off this episode asks a different one about the same
+        # concept, and tells transfer from recall by comparing the two.
+        question_ref=asked.activity_id if asked is not None else "",
+        # This turn's own unit of work. Opening a second one here costs a full
+        # SQLite busy timeout per turn against the transaction we are inside.
+        session=session,
+    )
+
+    # What is drawn on the board. The answer the server is holding decides it -
+    # the level's title, the retrieved notes and the model's own token all only
+    # get a say when the answer names nothing the app can draw.
+    shown = visuals.for_card(row.pending_answer or taught.expected_answer, taught.visual)
+
+    # What the child looks at in place of the explanation they cannot read. The
+    # answer the server is now holding is passed in so an example can never be
+    # the thing about to be asked for.
+    example_items = examples.for_turn(
+        row.topic_id,
+        visual=taught.visual,
+        answer=row.pending_answer or taught.expected_answer,
+        options=list(row.pending_options or taught.options or []),
+    )
 
     bits = verdict_bits or {}
     return TeacherTurn(
@@ -379,8 +540,13 @@ def _teach_step(
         is_reveal=step.is_reveal,
         trace_target=_trace_target(row.topic_id) if step.name == lesson.DRAW else "",
         options=list(taught.options),
-        visual_kind=taught.visual.kind,
-        visual_value=taught.visual.value,
+        # The picture is the concept the question asks about, decided here and
+        # not only inside the teacher: this is the one place every turn passes
+        # through, so a card cannot leave the server drawing a square under
+        # "Tap the circle!" however it was built.
+        visual_kind=shown.kind,
+        visual_value=shown.value,
+        example_items=example_items,
         feedback=feedback,
         is_correct=bits.get("is_correct"),
         advanced=bool(bits.get("advanced")),
@@ -388,6 +554,173 @@ def _teach_step(
         next_topic_unlocked=bool(bits.get("next_topic_unlocked")),
         stars_earned=int(bits.get("stars_earned") or 0),
     )
+
+
+# --------------------------------------------------------------------------
+# The check-in: a concept taught two days ago, asked before today's first stage
+# --------------------------------------------------------------------------
+#
+# A retention test is part of the schedule and it is not part of the lesson.
+# Everything about the boundary is enforced in this section:
+#
+# * **the scheduler decides when.** The queue is whatever
+#   `retention_test_service.due_for_child` returns - `due_at <= now`, oldest
+#   first - and nothing here reads a Q-value to pick or order one.
+# * **it is never a teaching turn.** No strategy is chosen, no episode is
+#   written, `strategies_spent` is untouched and `teaching_policy_service` is
+#   not called. The reward this test pays belongs to the teaching turn from two
+#   days ago; crediting it to the asking would be crediting the exam.
+# * **it cannot touch the curriculum.** No `attempts` row, no stage tally, no
+#   `questions_asked`, no plan cursor, no `award_topic_completion`. A child who
+#   gets a check-in wrong has lost nothing at all, and one who gets it right has
+#   won nothing but the class's warmth.
+# * **it is judged by `stage.judge`**, in pure Python, against the authored key
+#   the syllabus already holds - the same function that marks every other
+#   answer.
+
+# What is said back, and neither of them is a mark. A check-in the child does
+# not remember is answered warmly and let go of: it has told the policy what it
+# needed to know, and telling a four-year-old off for forgetting a letter from
+# Monday would be teaching them to dread Wednesday.
+RETENTION_PASS_FEEDBACK = "You remembered! That is wonderful."
+
+
+def _retention_miss_feedback(answer: str) -> str:
+    text = (answer or "").strip()
+    return f"That one was {text}. It is coming back to us!" if text else "That one was tricky - well tried!"
+
+
+def _load_retention_queue(row: PlaygroundSession, session) -> None:
+    """Fill this sitting's check-in queue, once, as the class opens.
+
+    Only on the call that starts the sitting. A reload must not fetch a new
+    queue - a child who looks away and back has to find the same check-in in
+    front of them, and re-reading would also re-ask one they had just answered
+    if it settled between the two calls.
+    """
+    due = retention_test_service.due_for_child(str(row.child_id), session=session)
+    row.retention_queue = [test.test_id for test in due]
+    row.retention_index = 0
+
+
+def _current_retention(row: PlaygroundSession, session):
+    """The check-in this sitting is on, or None when the round is through.
+
+    Steps over anything that can no longer be asked - settled from another
+    device, or a concept whose authored questions have gone - rather than
+    stalling the sitting on it.
+    """
+    queue = list(row.retention_queue or [])
+    while row.retention_index < len(queue):
+        test = retention_test_service.load(queue[row.retention_index], session=session)
+        if test is not None:
+            return test
+        row.retention_index += 1
+    return None
+
+
+def _retention_remaining(row: PlaygroundSession) -> int:
+    return max(0, len(list(row.retention_queue or [])) - row.retention_index - 1)
+
+
+def _retention_turn(
+    row: PlaygroundSession, test, *, feedback: str = "", is_correct: bool | None = None
+) -> TeacherTurn:
+    """The check-in as the client renders it.
+
+    The topic shown is the *tested* concept, not the one today's plan is on, and
+    it is taken from the test rather than written onto the row - a check-in must
+    not move the sitting's own cursor by so much as a title.
+    """
+    title = _topic_title(test.topic_id)
+    concept = visuals.from_concept(title)
+    return TeacherTurn(
+        session_id=row.session_id,
+        child_id=str(row.child_id),
+        # Where the day is, unchanged. A check-in is not a stage and does not
+        # consume one of the stage's five questions.
+        stage=row.plan_index + 1,
+        stages_total=len(row.plan_topics or []) or 1,
+        questions_asked=row.questions_asked,
+        questions_per_stage=stage.QUESTIONS_PER_STAGE,
+        topic_id=test.topic_id,
+        topic_title=title,
+        speech=retention.speech(test.question),
+        question=test.question,
+        # No strategy was spent on this turn, so there is none to name. The
+        # empty string is the honest answer and it is what stops a check-in
+        # being counted as a teaching episode by anything reading the log.
+        strategy="",
+        source="deterministic",
+        retrieval=rag.backend(),
+        step="retention",
+        expects=test.expects,
+        step_index=0,
+        steps_total=1,
+        attempt=1,
+        options=list(test.options),
+        visual_kind=concept.kind if concept.is_shown else "",
+        visual_value=concept.value if concept.is_shown else "",
+        example_items=examples.for_turn(
+            test.topic_id, visual=concept, answer=test.answer, options=list(test.options)
+        ),
+        feedback=feedback,
+        is_correct=is_correct,
+        is_retention_test=True,
+        retention_test_id=test.test_id,
+        retention_remaining=_retention_remaining(row),
+    )
+
+
+def _answer_retention(row: PlaygroundSession, session, test, said: str) -> TeacherTurn:
+    """Mark the check-in, pay the teaching turn that earned it, and move on.
+
+    The order is the architecture, and each step belongs to somebody else:
+    `stage.judge` decides right or wrong, `retention_test_service.settle` prices
+    it through `app/policy/reward.py` and pays the **original teaching
+    episode's** (state, action) through `policy.pay_episode`, and only then does
+    the class carry on. Nothing in this function may reach a level, a star or
+    the plan.
+    """
+    verdict = stage.judge(
+        said=said, expected=test.answer, accept=list(test.accept), offered=list(test.options)
+    )
+
+    # On its own session, deliberately: settling writes `policy_episodes` and
+    # `policy_q_values`, which have nothing to do with this sitting's row, and on
+    # SQLite a second writer inside the turn's open transaction waits out the
+    # whole busy timeout.
+    outcome = retention_test_service.settle(
+        test.test_id, passed=verdict.is_correct, asked_question_ref=test.question_ref
+    )
+    logger.info(
+        "Retention test %s for %s: %s (reward %s to episode %s)",
+        test.test_id,
+        test.concept_id,
+        outcome.get("result"),
+        outcome.get("reward"),
+        outcome.get("episode_id"),
+    )
+
+    row.retention_index += 1
+    row.updated_at = _now()
+    feedback = (
+        RETENTION_PASS_FEEDBACK
+        if verdict.is_correct
+        else _retention_miss_feedback(test.answer)
+    )
+
+    following = _current_retention(row, session)
+    if following is not None:
+        return _retention_turn(row, following, feedback=feedback, is_correct=verdict.is_correct)
+
+    # The round is through: today's class starts. The check-in's own verdict
+    # rides along on the first teaching turn so the child hears it.
+    turn = _teach_step(
+        row, session, feedback=feedback, verdict_bits={"is_correct": verdict.is_correct}
+    )
+    _log(row, turn, session)
+    return turn
 
 
 def _log(row: PlaygroundSession, turn: TeacherTurn, session) -> None:
@@ -530,6 +863,21 @@ def _finish_stage(row: PlaygroundSession) -> tuple[dict, bool]:
     next `open_session` reads it and refuses to teach again until tomorrow.
     """
     award = _award_level(row)
+
+    # The stage has been taught through, so this item of today's plan is
+    # finished with - whatever the level scored, and even when there was nothing
+    # to score. `award_topic_completion` ticks the item for every stage that
+    # reaches it, pass or fail; this covers the stages that do not reach it at
+    # all - a stage whose questions were all unmarked echoes, a topic the
+    # manifest no longer has, a level marked unavailable. Without it those
+    # stages leave the cursor where it was, `is_day_complete` never becomes
+    # true, and the class reopens on the same level for ever.
+    #
+    # `mark_topic_done` is idempotent - it only writes an item whose
+    # `completed_at` is still NULL - so calling it here as well costs nothing.
+    if row.topic_id:
+        plan_service.mark_topic_done(str(row.child_id), row.topic_id)
+
     topics = list(row.plan_topics or [])
 
     if not topics or row.plan_index + 1 >= len(topics):
@@ -642,6 +990,18 @@ def open_session(child_id: str) -> TeacherTurn:
         # to teach it; an unanswered question from an hour ago is owed nothing.
         row.strategies_spent = []
 
+        # The check-ins the schedule says are due, taken once as the sitting
+        # starts. They are asked before today's first stage and they are not
+        # part of it: no strategy, no episode, no attempt, no star.
+        if opening:
+            _load_retention_queue(row, session)
+        check_in = _current_retention(row, session)
+        if check_in is not None:
+            turn = _retention_turn(row, check_in)
+            if opening:
+                turn.speech = f"{_class_intro(row, _topic_title(row.topic_id))} {turn.speech}".strip()
+            return turn
+
         turn = _teach_step(row, session)
         if opening:
             turn.speech = f"{_class_intro(row, turn.topic_title)} {turn.speech}".strip()
@@ -694,6 +1054,12 @@ def answer(session_id: str, said: str) -> TeacherTurn:
         if row.status == "day_complete":
             return _day_done_turn(row)
 
+        # A check-in is still in front of the child: this answer is that, and
+        # nothing about it belongs to the lesson.
+        check_in = _current_retention(row, session)
+        if check_in is not None:
+            return _answer_retention(row, session, check_in, said)
+
         steps = _steps_for(row.topic_id, row.subject_id)
         step = lesson.current(steps, row.step_index, row.step_tries)
 
@@ -703,7 +1069,9 @@ def answer(session_id: str, said: str) -> TeacherTurn:
         # the level's own score tells the truth about how the stage went.
         if step.is_reveal:
             _leave_question(row, steps, step)
-            return _settle(row, session, correct=False, mark=None, feedback="")
+            return _settle(
+                row, session, correct=False, mark=None, feedback="", counts=step.is_marked
+            )
 
         # Explaining and drawing are not questions. The child has watched, or
         # has drawn; the lesson moves on and nothing is marked.
@@ -741,12 +1109,22 @@ def answer(session_id: str, said: str) -> TeacherTurn:
         )
         # Every try is written to the attempt log, both of them: mastery and the
         # weak-skill list are about what the child could do, and a question that
-        # took two goes is not the same history as one that took one.
-        _record_attempt(row, step, said=said, is_correct=verdict.is_correct)
+        # took two goes is not the same history as one that took one. The echo
+        # is the exception and `is_marked` is where that is decided - it is
+        # taught and repaired, and it is never written down.
+        if step.is_marked:
+            _record_attempt(row, step, said=said, is_correct=verdict.is_correct)
 
         if verdict.is_correct:
             _leave_question(row, steps, step)
-            return _settle(row, session, correct=True, mark=True, feedback=agent.praise())
+            return _settle(
+                row,
+                session,
+                correct=True,
+                mark=True,
+                feedback=agent.praise(),
+                counts=step.is_marked,
+            )
 
         # Not right, and not finished either. The same question stays in front of
         # the child - `pending_answer` and `pending_accept` are deliberately left
@@ -780,6 +1158,7 @@ def _settle(
     correct: bool,
     mark: bool | None,
     feedback: str,
+    counts: bool = True,
 ) -> TeacherTurn:
     """One of the stage's five questions is finished with, and the lesson moves on.
 
@@ -791,11 +1170,16 @@ def _settle(
     the level passed. `mark` is what the child is shown - `None` for the question
     that ended in being told the answer, because there is no tick or cross to put
     on a turn that was teaching rather than testing.
+
+    `counts` is whether it goes into that tally at all. An echo is one of the
+    stage's five things and none of the level's score: it still moves the lesson
+    on, and a microphone that did not catch a small voice never costs a star.
     """
     progress = stage.settle(stage=row.plan_index + 1, questions_asked=row.questions_asked)
     row.questions_asked = progress.questions_asked
-    row.topic_answered += 1
-    row.topic_correct += 1 if correct else 0
+    if counts:
+        row.topic_answered += 1
+        row.topic_correct += 1 if correct else 0
 
     if not progress.stage_complete:
         turn = _teach_step(
@@ -828,27 +1212,57 @@ def _settle(
 def _record_attempt(
     row: PlaygroundSession, step: lesson.Step, *, said: str, is_correct: bool
 ) -> None:
-    """Put the answer in the one attempt log everything downstream reads.
+    """Put the answer in the one attempt log everything downstream reads, and
+    move the retention probe that pays the learned policy.
 
-    Mastery, the weak-skill list the planner reorders on, and the learned
-    policy's reward all read `attempts`. A teaching loop that graded an answer
-    and kept the verdict to itself would leave every one of them reading a
-    partial history and never say so. `is_correct` arrives here from
-    `stage.judge` - plain Python over the authored key - and from nothing else.
+    Two things happen here and they are different things. `record_attempt` is
+    the history: mastery and the weak-skill list the planner reorders on both
+    read `attempts`, so a teaching loop that graded an answer and kept the
+    verdict to itself would leave both reading a partial history and never say
+    so. `is_correct` arrives from `stage.judge` - plain Python over the authored
+    key - and from nothing else.
+
+    `retention_service.on_attempt` is the reward, and it is emphatically *not*
+    read off this attempt. It settles a probe that came due - the child meeting
+    this skill again days after it was taught - and schedules the next one. The
+    strategies that taught it are paid by that probe and by nothing that happens
+    inside today's turn, which is the whole reason RLHF was rejected here: a
+    reward defined on "the child answered correctly" trains a teacher that hands
+    the answer over.
+
+    Without this call the AI Teacher wrote episodes that no probe ever paid, so
+    the table never moved and `pending_episodes` grew for ever.
     """
     if not row.topic_id:
         return
+    skill_id = _skill_id(row)
     record_attempt(
         child_id=str(row.child_id),
         session_id=row.session_id,
         activity_id=f"teacher_{step.name}",
         topic=row.topic_id,
-        skill=f"{row.subject_id}:{row.topic_id}" if row.subject_id else row.topic_id,
+        skill=skill_id,
         child_answer=said,
         is_correct=is_correct,
         # Which of this question's two tries it was, not how far into the stage
         # the child is: an attempt number is about one question.
         attempt_number=step.tries + 1,
+    )
+    # The step is the form the skill was asked in, so a probe posed on a
+    # different step is evidence of transfer rather than of recall.
+    #
+    # On its own session, deliberately. A correct answer here can be the fifth
+    # of the stage, and settling the stage calls `award_topic_completion`, which
+    # opens a session of its own to write the plan cursor and the unlock. If the
+    # probe were written into the turn's session first, that session would be
+    # holding the write lock by the time the award tried for it, and on SQLite
+    # the award simply fails. One writer at a time: the probe commits and lets
+    # go, and the award has the lock when it needs it.
+    retention_service.on_attempt(
+        child_id=str(row.child_id),
+        skill_id=skill_id,
+        form_signature=step.name,
+        is_correct=is_correct,
     )
 
 
@@ -880,6 +1294,26 @@ def ask(session_id: str, question: str) -> TeacherTurn:
         )
         answer_text = safe_text(answer_text) or answer_text
         row.updated_at = _now()
+
+        # Asked in the middle of a check-in: answer it, and put the check-in
+        # back exactly as it was. The round does not move because the child was
+        # curious.
+        check_in = _current_retention(row, session)
+        if check_in is not None:
+            session.add(
+                PlaygroundTurn(
+                    session_id=row.session_id,
+                    stage=row.plan_index + 1,
+                    strategy="ASKED",
+                    source=source,
+                    explanation=answer_text,
+                    question=question,
+                )
+            )
+            turn = _retention_turn(row, check_in)
+            turn.speech = answer_text
+            turn.source = source
+            return turn
 
         steps = _steps_for(row.topic_id, row.subject_id)
         step = lesson.current(steps, row.step_index, row.step_tries)
@@ -947,6 +1381,13 @@ def read_session(session_id: str) -> TeacherTurn:
             raise app_error("PLAYGROUND_SESSION_GONE", "Let us start that again.", 404)
         if row.status == "day_complete":
             return _day_done_turn(row)
+
+        # A reload during the check-in round finds the same check-in, because
+        # the queue is stored on the sitting and the question the test asks is
+        # chosen deterministically out of the syllabus.
+        check_in = _current_retention(row, session)
+        if check_in is not None:
+            return _retention_turn(row, check_in)
 
         steps = _steps_for(row.topic_id, row.subject_id)
         step = lesson.current(steps, row.step_index, row.step_tries)

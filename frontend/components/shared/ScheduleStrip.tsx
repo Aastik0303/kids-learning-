@@ -17,14 +17,23 @@ import { useTodayPlan } from "@/lib/useTodayPlan";
  * next stage by itself and Adventure teaches nothing any more, so a link would
  * only offer a child a door that does not exist. This says where the day is,
  * and that is all it says.
+ *
+ * A day has two halves and this shows both. The 🧩 chips are the **retention
+ * check-ins** the scheduler says are due — something taught two days ago, asked
+ * again before today's first stage. They come first because that is the order
+ * the class asks them in, and they are not counted in the "3/5" on the right:
+ * a check-in is not one of the day's levels, it teaches nothing, and answering
+ * it moves neither the count nor a star.
  */
 export function ScheduleStrip() {
   const { child } = useActiveChild();
-  const { plan, complete } = useTodayPlan(child);
+  const { plan, complete, retentionTests } = useTodayPlan(child);
 
   // Nothing planned is a real answer — a class whose content is still being
   // authored, or a child not signed in yet. An empty strip would only puzzle.
-  if (!child || !plan || plan.total === 0) return null;
+  // A day with no levels left can still owe a check-in, so both halves of the
+  // schedule are asked before the strip gives up on drawing anything.
+  if (!child || !plan || (plan.total === 0 && retentionTests.length === 0)) return null;
 
   return (
     <section
@@ -37,6 +46,27 @@ export function ScheduleStrip() {
       </span>
 
       <ol className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+        {/*
+          The check-ins first, because that is the order the class asks them in:
+          something taught two days ago is remembered before today's new thing
+          is taught. They are a different shape from a level chip on purpose —
+          no number, no tick — because they are not one of the day's stages and
+          nothing about answering one moves the count on the right.
+        */}
+        {retentionTests.map((test) => (
+          <li
+            key={test.test_id}
+            data-testid="schedule-retention"
+            data-topic-id={test.topic_id}
+            data-state="check-in"
+            title={`We will remember ${test.title} before today's lessons`}
+            className="flex items-center gap-1.5 rounded-full bg-sky/15 px-3 py-1.5 text-sm font-bold text-sky"
+          >
+            <span aria-hidden>🧩</span>
+            <span className="max-w-[10rem] truncate">{test.title}</span>
+          </li>
+        ))}
+
         {plan.items.map((item, index) => (
           <li
             key={item.topic_id}

@@ -3,7 +3,7 @@ import { create } from "zustand";
 import { childApi } from "@/services/api/childApi";
 import { kv, storageKeys } from "@/services/storage/kv";
 import { track } from "@/services/analytics/analytics";
-import type { ChildProfile, LearningMode } from "@/types/domain";
+import type { ChildProfile } from "@/types/domain";
 
 /**
  * Which adaptive UI mode the child experience runs in (spec section 4).

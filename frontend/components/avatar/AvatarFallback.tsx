@@ -85,6 +85,26 @@ export function AvatarFallback({ state, isSpeaking }: { state: AvatarState; isSp
           <ellipse className="panda-cheek" cx="54" cy="118" rx="13" ry="8" fill="#e87891" opacity="0.42" filter={`url(#${blush})`} />
           <ellipse className="panda-cheek" cx="146" cy="118" rx="13" ry="8" fill="#e87891" opacity="0.42" filter={`url(#${blush})`} />
 
+          {/* Eyebrows. They sit on the white fur above the patches, because a
+              dark brow drawn on a black eye patch is invisible - and they do
+              most of the emotional work: the difference between "I am
+              listening" and "oh dear" is two short strokes. All hidden until a
+              feeling asks for one. */}
+          <g className="panda-brows">
+            <g className="panda-brow-set panda-brows-soft">
+              <path d="M58 65 Q72 56 87 58" />
+              <path d="M142 65 Q128 56 113 58" />
+            </g>
+            <g className="panda-brow-set panda-brows-up">
+              <path d="M58 58 Q72 49 87 55" />
+              <path d="M142 58 Q128 49 113 55" />
+            </g>
+            <g className="panda-brow-set panda-brows-one">
+              <path d="M58 63 Q72 60 87 63" />
+              <path d="M142 55 Q128 47 113 53" />
+            </g>
+          </g>
+
           <g className="panda-eyes">
             <g>
               <circle cx="76" cy="91" r="9.6" fill="#fffdfb" />
@@ -100,6 +120,13 @@ export function AvatarFallback({ state, isSpeaking }: { state: AvatarState; isSp
             </g>
           </g>
 
+          {/* Eyes shut in a smile. White, for the same reason the brows are
+              dark: this arc is drawn *on* the black patch. */}
+          <g className="panda-eyes-joy">
+            <path d="M64 95 Q76 82 88 95" />
+            <path d="M112 95 Q124 82 136 95" />
+          </g>
+
           {/* Muzzle, so the nose sits on something instead of floating. */}
           <ellipse cx="100" cy="122" rx="27" ry="19" fill="#fffdfa" opacity="0.95" />
 
@@ -110,14 +137,41 @@ export function AvatarFallback({ state, isSpeaking }: { state: AvatarState; isSp
           <ellipse cx="95.4" cy="112.4" rx="3" ry="1.9" fill="#ffffff" opacity="0.42" transform="rotate(-18 95.4 112.4)" />
 
           <path className="panda-lip" d="M100 123v6" stroke="#241d19" strokeWidth="3" strokeLinecap="round" fill="none" />
-          <path
-            className="panda-mouth-closed"
-            d="M100 129c-3.4 6.6-11.6 6.2-14.4 1.2M100 129c3.4 6.6 11.6 6.2 14.4 1.2"
-            stroke="#241d19"
-            strokeWidth="3.2"
-            strokeLinecap="round"
-            fill="none"
-          />
+
+          {/* The mouth it is wearing while it is not talking. One of these is
+              showing at a time; `panda-mouth-rest` is what the talking mouth
+              hides, so a new feeling can never leave two mouths on the face. */}
+          <g className="panda-mouth-rest">
+            <path
+              className="panda-mouth panda-mouth-closed"
+              d="M100 129c-3.4 6.6-11.6 6.2-14.4 1.2M100 129c3.4 6.6 11.6 6.2 14.4 1.2"
+              stroke="#241d19"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <path
+              className="panda-mouth panda-mouth-soft"
+              d="M92 130q8 5 16 0"
+              stroke="#241d19"
+              strokeWidth="3"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <path
+              className="panda-mouth panda-mouth-frown"
+              d="M89 134q11 -8 22 0"
+              stroke="#241d19"
+              strokeWidth="3.2"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <g className="panda-mouth panda-mouth-grin">
+              <path d="M81 127q19 22 38 0z" fill="#3a2723" />
+              <ellipse cx="100" cy="139" rx="7.4" ry="4.6" fill="#e07f92" />
+            </g>
+            <ellipse className="panda-mouth panda-mouth-oh" cx="100" cy="133" rx="6.8" ry="8.4" fill="#3a2723" />
+          </g>
           <g className="panda-mouth-open">
             <ellipse cx="100" cy="136" rx="11" ry="9.5" fill="#3a2723" />
             <ellipse cx="100" cy="140.5" rx="6.6" ry="4.6" fill="#e07f92" />

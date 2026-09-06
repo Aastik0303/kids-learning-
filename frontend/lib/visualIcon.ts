@@ -122,7 +122,15 @@ const MODIFIERS = new Set([
 
 const DIGITS = ["0️⃣", "1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣"];
 
-const FALLBACK = "🔹";
+/**
+ * What `visualIcon` gives back for a token it has no picture for. Exported so a
+ * caller that would rather show *nothing* than a neutral mark can tell the two
+ * apart - the AI Teacher's example strip does exactly that, because three blue
+ * diamonds beside a question are not an example of anything.
+ */
+export const VISUAL_FALLBACK = "🔹";
+
+const FALLBACK = VISUAL_FALLBACK;
 
 function clean(token: string): string {
   return token.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");

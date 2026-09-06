@@ -10,6 +10,13 @@ the email addresses of parents of small children.
 Only a parent ever authenticates. A child has no account, no password and no
 token of their own - the child surface is reached through the parent's session,
 which is why nothing here takes a child id.
+
+The bearer a client carries is a JWT (`jwt_service`), signed with `JWT_SECRET`
+and naming its `auth_sessions` row in the `jti` claim. The row is still what
+decides whether the session is open, so signing out and resetting a password
+both still end it; the signature is what makes a forged or expired token cheap
+to refuse before any query is made. A token issued before this change is an
+opaque row key and is still accepted until it expires on its own.
 """
 
 import hashlib
@@ -19,10 +26,9 @@ import re
 import secrets
 from datetime import datetime, timezone
 from os import urandom
-from uuid import UUID
 
 from app.config import get_settings
-from app.db.repositories import learners, profiles, security
+from app.db.repositories import learners, security
 from app.db.session import session_scope
 from app.schemas.auth import (
     AuthResponse,
@@ -34,6 +40,7 @@ from app.schemas.auth import (
     SessionResponse,
     UserPublic,
 )
+from app.services import jwt_service
 from app.services.errors import app_error
 
 
@@ -48,10 +55,6 @@ def _throttle_key(scope: str, email: str) -> str:
     return f"{scope}:{email.strip().lower()}"[:200]
 
 
-# 600k rounds is the OWASP floor for PBKDF2-HMAC-SHA256 at the time of writing.
-# It costs a few hundred milliseconds on login, once, and nothing on any other
-# request - sessions are looked up by token, not by re-checking the password.
-PBKDF2_ROUNDS = 600_000
 PBKDF2_ALGORITHM = "pbkdf2_sha256"
 
 
@@ -91,6 +94,27 @@ def _public(parent) -> UserPublic:
     return UserPublic(id=str(parent.id), name=parent.name, email=parent.email)
 
 
+def _authorised(parent, auth) -> AuthResponse:
+    """The answer to a successful sign-in or registration.
+
+    `session_token` and `access_token` are the same signed string. The older
+    field keeps its name because the web and mobile clients both send it back
+    as `X-Demo-Session` and a rename would sign every one of them out; the new
+    pair says what it actually is, so a client can send `Authorization: Bearer`
+    instead.
+    """
+    token = jwt_service.issue(
+        session_token=auth.token, parent_id=str(parent.id), email=parent.email
+    )
+    return AuthResponse(
+        session_token=token,
+        access_token=token,
+        token_type=jwt_service.TOKEN_TYPE,
+        expires_in=int(jwt_service.ttl().total_seconds()),
+        user=_public(parent),
+    )
+
+
 def register(payload: RegisterRequest) -> AuthResponse:
     _validate_email(payload.email)
     with session_scope() as session:
@@ -103,7 +127,7 @@ def register(payload: RegisterRequest) -> AuthResponse:
             password_hash=hash_password(payload.password),
         )
         auth = learners.open_session(session, parent)
-        return AuthResponse(session_token=auth.token, user=_public(parent))
+        return _authorised(parent, auth)
 
 
 def login(payload: LoginRequest) -> AuthResponse:
@@ -131,7 +155,7 @@ def login(payload: LoginRequest) -> AuthResponse:
         if parent is not None and verify_password(payload.password, parent.password_hash):
             security.clear(session, key=key)
             auth = learners.open_session(session, parent)
-            return AuthResponse(session_token=auth.token, user=_public(parent))
+            return _authorised(parent, auth)
 
     # The failure is written in a transaction of its own, and only then is the
     # refusal raised. Counting it inside the transaction above would have been
@@ -201,27 +225,24 @@ def reset_password(payload: ResetPasswordRequest) -> dict:
 
 def logout(session_token: str) -> None:
     with session_scope() as session:
-        learners.close_session(session, session_token)
+        learners.close_session(session, jwt_service.session_token_of(session_token))
 
 
 def get_user_for_token(session_token: str) -> dict:
     """The parent behind a session token, as the plain dict the services use."""
     with session_scope() as session:
-        parent = learners.parent_for_token(session, session_token) if session_token else None
+        row_token = jwt_service.session_token_of(session_token) if session_token else ""
+        parent = learners.parent_for_token(session, row_token) if row_token else None
         if parent is None:
             raise app_error("MISSING_SESSION", "Please log in again.", 401)
         return {"id": str(parent.id), "name": parent.name, "email": parent.email}
-
-
-def parent_id_for_token(session_token: str) -> UUID:
-    return UUID(get_user_for_token(session_token)["id"])
 
 
 def session(session_token: str | None) -> SessionResponse:
     if not session_token:
         return SessionResponse()
     with session_scope() as db:
-        parent = learners.parent_for_token(db, session_token)
+        parent = learners.parent_for_token(db, jwt_service.session_token_of(session_token))
         # An expired or unknown token is not an error here: the client asks this
         # on every load to find out whether it is signed in.
         return SessionResponse(user=_public(parent)) if parent else SessionResponse()
@@ -234,16 +255,9 @@ def grant_consent(session_token: str) -> None:
     path may call this - not the planner, not the conductor, not a migration.
     """
     with session_scope() as db:
-        parent = learners.parent_for_token(db, session_token)
+        parent = learners.parent_for_token(db, jwt_service.session_token_of(session_token))
         if parent is None:
             raise app_error("MISSING_SESSION", "Please log in again.", 401)
         learners.grant_consent(db, parent)
 
 
-def children_records(session_token: str) -> list[dict]:
-    """Every child of the signed-in parent, as progress records."""
-    with session_scope() as db:
-        parent = learners.parent_for_token(db, session_token)
-        if parent is None:
-            raise app_error("MISSING_SESSION", "Please log in again.", 401)
-        return profiles.records_for_parent(db, parent.id)

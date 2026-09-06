@@ -104,6 +104,18 @@ def _read(haystack: str, *, letters_from: str = "") -> Visual:
     if letter:
         return Visual(kind="letter", value=letter.group(1).upper())
 
+    # A letter standing on its own, first. "स्वर अ आ" is a level about अ, and
+    # the first Devanagari character in that title is the स of the word for
+    # "vowel" - so reading character by character drew स on every swar level
+    # the author wrote without a colon in its name. What is being taught is
+    # written as a letter by itself; the kind of thing it is never is.
+    for word in re.split(r"[\s,;।·/|-]+", letters_from):
+        candidate = word.strip("()[]{}<>\"'`.,:;!?-")
+        if not candidate or not any("ऀ" <= char <= "ॿ" for char in candidate):
+            continue
+        if _is_single_letter(candidate):
+            return Visual(kind="letter", value=candidate)
+
     devanagari = re.search(r"([ऀ-ॿ])", letters_from)
     if devanagari:
         return Visual(kind="letter", value=devanagari.group(1))
@@ -136,4 +148,37 @@ def from_concept(topic_title: str, explanation: str = "") -> Visual:
     return _read(f"{topic_title} {explanation}", letters_from=topic_title)
 
 
-__all__ = ["COLOURS", "MAX_COUNT", "SHAPES", "Visual", "from_concept", "parse"]
+def for_card(answer: str, drawn: Visual | None = None) -> Visual:
+    """The concept a card is really about: the answer to the question on it.
+
+    The picture is worked out from the level's title and, failing that, from the
+    notes that were retrieved or from a token the model chose - and on a level
+    called "Shapes" the title says nothing, so a card could take whichever shape
+    the notes led with, or whichever one the model had in mind while it wrote
+    the words. That is how "Tap the circle!" came to be asked under a drawing of
+    a square.
+
+    A question that has an answer has already said what its card is about, and a
+    person wrote that answer. So when the answer names one of the things the app
+    draws - a shape, a colour, a letter, a number - that is the concept, and
+    everything else only decides when the answer names none of them.
+
+    This is deliberately the *last* word rather than the first: it is applied
+    again where the turn leaves the server, so no path through the teacher can
+    put a picture on the board that disagrees with the question beside it.
+    """
+    named = from_concept(answer or "")
+    if named.is_shown:
+        return named
+    return drawn or Visual()
+
+
+__all__ = [
+    "COLOURS",
+    "MAX_COUNT",
+    "SHAPES",
+    "Visual",
+    "for_card",
+    "from_concept",
+    "parse",
+]

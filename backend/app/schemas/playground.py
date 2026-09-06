@@ -66,12 +66,27 @@ class TeacherTurnResponse(BaseModel):
     # this turn has no picture. The client owns the SVG; nothing here is markup.
     visual_kind: str = ""
     visual_value: str = ""
+    # The everyday things the author named beside this level, as asset tokens
+    # the client draws - `apple` beside the letter A. The explanation itself is
+    # spoken and not shown, so this is what the child actually looks at, and it
+    # is never the answer to the question on the screen.
+    example_items: list[str] = []
     # --- the answer just given, when there was one -----------------------
     feedback: str = ""
     # Whether the answer just given was right. `None` on a turn that was not an
     # answer at all - including the one that settled a question by explaining it.
     is_correct: bool | None = None
     advanced: bool = False
+    # --- the check-in on something taught two days ago --------------------
+    # True when this turn is a retention test rather than a lesson: a concept
+    # taught two days ago, asked about with a *different* question. `step` is
+    # "retention" and the client renders it like any other question. Nothing
+    # about answering it is marked into the stage or reaches a star; what it
+    # moves is the Q-value of the teaching turn that earned it.
+    is_retention_test: bool = False
+    retention_test_id: str = ""
+    # How many more check-ins the sitting opened with, after this one.
+    retention_remaining: int = 0
     # --- the day, and what the last stage did to the Adventure map --------
     # Every stage of today's plan is through. There is nothing to answer and
     # nothing to open; the next lesson is tomorrow's.
