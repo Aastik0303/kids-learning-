@@ -7,11 +7,16 @@
  * pre-reader's screen that can react to what just happened, so what it does
  * with its eyebrows carries more of the lesson than any sentence does.
  *
- * One of them is deliberately never shown for a wrong answer. `sad` is for when
- * **the app** has let the child down - the microphone heard nothing, the server
- * did not answer - never as a verdict on a child who has just tried something
- * and missed. A four-year-old who makes the panda sad by getting a letter wrong
- * learns to stop answering.
+ * Two of them are deliberately never shown for a wrong answer. `sad` and
+ * `crying` are for when **the app** has let the child down - the microphone
+ * heard nothing, the server did not answer - never as a verdict on a child who
+ * has just tried something and missed. A four-year-old who makes the panda cry
+ * by getting a letter wrong learns to stop answering.
+ *
+ * They are two strengths of the same feeling, not synonyms: `sad` is the eyes
+ * gone soft and a small frown, worn when something did not work and can be
+ * tried again; `crying` is real tears, eyes squeezed shut and a shaking sob,
+ * worn when the class itself could not carry on.
  */
 export type AvatarState =
   | "idle"
@@ -25,6 +30,7 @@ export type AvatarState =
   | "curious"
   | "encouraging"
   | "sad"
+  | "crying"
   | "storytelling"
   | "sleeping"
   | "error_fallback";

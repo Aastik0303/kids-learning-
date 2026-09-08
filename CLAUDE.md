@@ -299,7 +299,14 @@
   bear, it is big and furry" - under a question that said "Tap the monkey!". The
   level's overview carries no skill id and always stays, and a question whose
   skill has no passage keeps the lot, because teaching from nothing is worse
-  than teaching from a neighbour. A topic that authored
+  than teaching from a neighbour. **The author's question is in the query on
+  every turn, the reveal included.** It used to be dropped there, so a reveal's
+  query was the level's title alone: "Tap the brown one" was revealed out of the
+  passages on the three primary colours and on sorting, with not one word about
+  brown in front of the model, and it filled the gap by talking about a bear
+  beside a patch of brown. Two reveals in five were reading somebody else's
+  notes. Nothing was being protected by hiding it - a reveal is told the answer
+  outright, because it has to say it. A topic that authored
   no answerable question falls back to its own subtopics, and only then to the
   title.
 - **A question that wants a tap always has something to tap.** `expects: "tap"`
@@ -394,22 +401,74 @@
   written, closed, only the things the app can draw, and a concept missing from
   it shows nothing rather than an invented example. A Hindi picture word is
   drawn as the Devanagari word with no Roman caption under it.
-- **The class teaches at a blackboard, and the board draws itself.**
-  `frontend/components/blackboard/` is what the child looks at:
-  `chalkArt.ts` holds hand-written stroke coordinates for the tokens the
-  syllabus names, `ChalkDrawing.tsx` walks each path along its own length with a
-  chalk tip riding the moving end, `ChalkGlyph.tsx` writes a letter or a
-  Devanagari word as a wipe (a glyph has no path to walk, and guessing at stroke
-  order would teach the wrong one), and `Blackboard.tsx` draws the concept while
-  it is being said and each example after it. The point is timing: a finished
-  picture that appears the instant the narration starts has been looked at and
-  left before the words reach it. The board **adds no content of its own** - it
-  draws the `visual_kind` / `visual_value` and `example_items` the server chose
-  and filtered - and it never prints the explanation. A token with no
-  coordinates keeps its emoji rather than being drawn as a near-miss, which is
-  the rule `visualIcon` keeps for अनार.
+- **The examples the teacher *says* are shown while it says them.** An
+  explaining turn always reaches for something the child has seen - "A is for
+  apple", "round like a ball" - and a child who cannot read hears that word with
+  nothing to look at, because the screen is holding the letter. So the letter
+  steps aside for three seconds while the example is on the screen, and then
+  comes back. `frontend/lib/spokenExamples.ts` finds them, and **no model is
+  involved**: the explanation is split into words, each is stripped of
+  punctuation and reduced to its singular, and what survives is looked up in
+  `visualIcon`'s own closed picture table - a word that table has no picture for
+  is not an example, and that is the whole test. Three rules bound it. It reads
+  **only the explanation**, never the feedback before it or the question after
+  it, because the question is the moment the concept itself has to be on screen.
+  It **never illustrates an option**: on a match or a quiz the teacher says the
+  answer's name on the way into the question, and a picture of it is the answer
+  given away. And two examples may not fall inside one three-second hold, so
+  they cannot fight over the screen. Timing is an estimate - Edge TTS returns a
+  clip with no word boundaries, so a cue is placed by where its word falls at
+  that voice's real rate (`MS_PER_WORD`, about 155 wpm, deliberately faster than
+  `readingMs`'s deliberately-slow floor); the three-second hold absorbs the
+  drift. The concept underneath is **hidden, not unmounted**, or the chalk would
+  redraw itself from nothing every time an example came and went.
+- **The teacher holds the picture up.** In the class the panda and the drawing
+  are **one** picture: `components/avatar/TeacherStage.tsx` stands the panda in
+  its `holding` pose behind a board and lays the lesson's drawing on the board's
+  face, with `PandaPaws` painted over the top so the paws close over both. Two
+  pictures stacked - a panda, and separately a diagram under it - is one too
+  many for a three-year-old, who looks at whichever moved last; held up, the
+  face doing the reacting is directly above the thing it is reacting to. It is
+  three layers over one square: two SVGs sharing a `viewBox` with the drawing
+  placed between them by percentages taken from the same coordinates, so the
+  board rect in `AvatarFallback` and `.teacher-display` in `globals.css` are one
+  number and move together. The `holding` pose is a single transform on
+  `panda-upper`, which is why all fourteen feelings still work inside it
+  untouched. **This does not put the old blackboard back**: the frame the user
+  had removed was a slate around the whole card, and what came back is a board
+  the *teacher* is holding. Do not re-add a frame around the card itself.
+- **The picture draws itself, and there is no board around it.**
+  `frontend/components/blackboard/` is what the child looks at: `chalkArt.ts`
+  holds hand-written stroke coordinates, `ChalkDrawing.tsx` walks each path
+  along its own length with the drawing tip riding the moving end,
+  `ChalkGlyph.tsx` writes a letter or a Devanagari word as a wipe (a glyph has
+  no path to walk, and guessing at stroke order would teach the wrong one), and
+  `TeachingDrawing.tsx` draws the one thing the card is about while it is being
+  said. The point is timing: a finished picture that appears the instant the
+  narration starts has been looked at and left before the words reach it. It
+  began as a blackboard - a frame, a slate, white chalk - and the user asked for
+  the frame off; the lines are ink now, which is what `ChalkDrawing`'s `tone` is
+  for, and they are drawn on the board the teacher holds (above). It **adds no content of its own** - it draws
+  the `visual_kind` / `visual_value` the server chose - it never prints the
+  explanation, and it shows no everyday examples. A token with no coordinates
+  draws nothing rather than a near-miss, the rule `visualIcon` keeps for अनार.
   `frontend/components/curriculum/ExampleStrip.tsx` still draws the strip on
   Adventure's level pages, and exports the caption both surfaces write.
+- **A cow is a picture the app may name, and only a person may name it.**
+  `visuals.THINGS` is the closed list of everyday tokens `chalkArt.ts` has real
+  strokes for, and `thing:cow` is a fifth kind beside letter, number, count,
+  shape and colour. It exists because a shapes-and-letters vocabulary left
+  forty-two levels - every animal, fruit and vehicle in the syllabus - teaching
+  with an empty card. **`parse` does not accept it**: the model can never name a
+  thing. The only producer is `visuals.for_card`, out of the answer a person
+  wrote in the syllabus, and `visuals.from_concept` out of a level's own title -
+  never out of a model's prose, which is what the `things` flag on `_read`
+  gates. The client is the second gate: a token it has no strokes for draws
+  nothing. `tests/test_playground_teacher.py` reads the TypeScript and fails if
+  a name in `THINGS` has no drawing behind it.
+  A thing is **not** lesson furniture: `examples._is_lesson_furniture` asks
+  whether the concept is a *glyph* kind, because an apple is exactly what an
+  example is for.
 - **A stage is one item of today's frozen plan - one subject - and the day is
   all of them.** The schedule is not something the teacher consults - it *is* the
   shape of the sitting. `service.open_session` snapshots `plan_service.todays_plan` into
@@ -459,26 +518,81 @@
   status and never a door - nothing on this board starts a lesson or a check-in,
   and no `/learning` - because a second way in could open a level the schedule
   had not reached.
-- **A level's page hands its notes back, and says them out loud.**
-  `GET /curriculum/topics/{id}/notes` is `app/playground/notes.py`: the level's
-  objective and the author's own teaching lines, the everyday pictures beside
-  them, and one `speech` string for Edge TTS. It is how a child goes back over
-  something so it does not fade, and it is the only thing besides a status the
-  map may hand them. Four rules keep it from being a second classroom. **No
-  model** - every line was typed by the syllabus author, nothing is retrieved by
-  similarity, and the same level reads the same on every afternoon, which is
-  what revising needs. **No asking** - the prompt of a card that has an answer
-  is the question and is dropped; only its hint survives, and a hint that does
-  not name its own subject is given it ("Round, with no corners." ->
-  "Circle: round, with no corners.") by `stage.contains_answer`, the same test
-  that decides which options may be shown. **Nothing is marked** - no attempt,
-  no probe, no episode, no star, no plan movement. **Not for a locked level** -
-  a level the child has not been given yet keeps its notes, the same reason the
-  map does not link to it. A level whose author wrote nothing says so rather
-  than inventing something to fill the space.
+- **A level's page deals one of its games and starts it.** The child never
+  chooses which: opening a level picks one of the three at random and plays it,
+  because three cards to choose between is a menu and a menu is a reading task
+  in front of a three-year-old. Any of the three is about the same level and any
+  is a fine way to go back over it. Two controls remain and neither is a choice
+  about *what* to play - 🎲 deals another one, ← puts the level page back - and
+  the deal happens in the load handler rather than in a render body, because
+  `Math.random()` during render gives the server one answer and the browser
+  another and React rebuilds the page on hydration.
+- **A level's page hands the level back as three games.**
+  `GET /curriculum/topics/{id}/games` is `app/playground/games.py`: **Find it!**
+  (the author's question, tapped), **Find the pairs** (the level's own pictures,
+  face down) and **Pop it!** (three of the right one in a field of bubbles). It
+  is how a child goes back over something so it does not fade, and it is the
+  only thing besides a status the map may hand them. This replaced the level's
+  *notes* - the author's teaching lines, printed and read out - because revising
+  by re-reading is a grown-up's skill and this page is for a three-year-old, who
+  goes back over a thing by playing with it again. `notes.py` and its endpoint
+  are still there and nothing on the web calls them.
+  Five rules keep the games from being a second classroom. **No model** - every
+  question, choice and picture came out of the authored syllabus through
+  `questions.for_topic`, so the same level offers the same three games on every
+  afternoon. **The answer shown is the answer marked** - `stage.contains_answer`
+  picks which option is right, the same rule the class marks a tap with, and a
+  round it cannot resolve to exactly one option is dropped rather than shown.
+  **Nothing is marked** - no attempt, no probe, no episode, no star, no plan
+  movement, and after the one GET nothing goes back to the server at all.
+  **Not for a locked level** - the same reason the map does not link to it.
+  **A level that authored too little gets fewer than three**, never an invented
+  one, and a token the client has no drawing for is dropped rather than dealt as
+  a neutral mark. The games are `frontend/components/games/`, and they are built
+  for a two-year-old's hands: every target is at least 5.5rem, a wrong tap is a
+  wobble and nothing else, the bubbles bob where they stand rather than crossing
+  the screen (nothing has to be *caught*), and the question is spoken because
+  nobody playing it can read.
 - **The site opens on the class.** `/` and `/home` send a signed-in child
   straight to `/ai-teacher`; a guest still gets the sign-up hub. The day's plan
   rides above every screen as `components/shared/ScheduleStrip.tsx`.
+- **The panda's face is a channel, and it is read across a room.** The class is
+  the one screen where the child cannot read a word, so the verdict has to be
+  legible on the avatar: **right** is `celebrating` (grin, cheeks, bounce,
+  sparkles), **wrong** is `encouraging`, and `thinking` is worn while the
+  teacher works and through every hint. `avatarStateForTeacher` takes a
+  `reacting` flag beside `speaking` and the class holds it open for
+  `REACTION_MS` after a marked answer, because "Well done!" is under a second
+  of audio and the delight used to be over before a three-year-old had looked
+  up. Only a *marked* turn starts it - a panda that celebrated its own
+  explanations would be congratulating the child for listening. **A wrong
+  answer still never makes it sad**: `sad` stays reserved for the app's own
+  failures, the microphone that heard nothing and the server that did not
+  answer, because a child who learns that missing a letter upsets the panda
+  learns to stop answering.
+- **On a phone and a tablet the class and a game fit one screen.** The child
+  holding the device is two or three and does not scroll to find the rest of
+  the question: a screen that is cut off simply looks finished, so an answer or
+  a microphone below the fold is, to them, not there at all. `AppShell`'s `fit`
+  prop and the "One screen" section at the end of `globals.css` are the whole
+  mechanism - below `xl:` the shell is exactly `100dvh` (the cutoff is 1280px,
+  because a tablet held sideways is 1024 wide) and the page is a flex
+  column in which **one** child stretches (the chalk drawing on a teaching
+  card, the board inside a game) while everything else keeps its natural
+  height. Playing a game takes the whole screen
+  (`.level-games[data-playing="true"]`), because the level page is a page and
+  playing a game is not. Two things the room may **not** come out of: the touch
+  floors (96px early, 64px child - it comes out of padding, chrome and the
+  picture instead) and the schedule strip, which is on every screen by rule and
+  is compacted rather than dropped. What did give way on the small screens is
+  everything written for the grown-up reading along: the step and strategy
+  lines, the words on the control pills, the typing box (folded behind ⌨️,
+  which is `chrome` because typing is not a child's control) and the level
+  page's syllabus list (a `<details>` below `xl:`), and the line naming the
+  turn's strategy, source and retrieval, which is gone from every size - it was
+  written for whoever was building this, and `playground_turns` still records
+  all three. Nothing else is dropped - it is all one tap away, and from `xl:` up
+  not one of these rules applies.
 
 ## Child-facing copy
 

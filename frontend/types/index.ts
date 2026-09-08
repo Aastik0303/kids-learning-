@@ -214,6 +214,54 @@ export type TopicNotes = {
   has_notes: boolean;
 };
 
+/** One thing a child can tap in a level's game.
+ *
+ * `token` is the asset name the author wrote — the client turns it into a
+ * picture and draws nothing at all for one it has no artwork for. `label` is
+ * what the button says, in the author's own words with their own emoji on it. */
+export type GameOption = {
+  token: string;
+  label: string;
+};
+
+/** One asking in a game.
+ *
+ * `answer` is an index into `options` and never a word: the server chose it with
+ * the same rule the class marks a tap with, so a child cannot tap the answer put
+ * in front of them and be told they are wrong. */
+export type GameRound = {
+  ask: string;
+  say: string;
+  options: GameOption[];
+  answer: number;
+};
+
+export type LevelGame = {
+  topic_id: string;
+  game_id: string;
+  kind: "find" | "pairs" | "pop" | string;
+  title: string;
+  blurb: string;
+  icon: string;
+  rounds: GameRound[];
+  /** The matching game's pack: one token per pair, dealt twice by the client. */
+  tokens: string[];
+};
+
+/**
+ * The games one level can offer — at most three, sometimes fewer.
+ *
+ * What the Adventure map hands a child instead of a page of notes they cannot
+ * read. Everything in it came out of the authored syllabus, so the same level
+ * offers the same games on every afternoon. Playing marks nothing, scores
+ * nothing, unlocks nothing and starts no lesson.
+ */
+export type TopicGames = {
+  topic_id: string;
+  title: string;
+  games: LevelGame[];
+};
+
 /** How an activity is answered. Decided by the server's evaluator registry. */
 export type AnswerKind = "choice" | "spoken" | "presentational";
 

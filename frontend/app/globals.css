@@ -2352,12 +2352,15 @@ select:focus-visible {
 
 .panda-brow-set,
 .panda-eyes-joy,
+.panda-eyes-shut,
+.panda-tears,
 .panda-mouth {
   opacity: 0;
   transition: opacity 220ms ease-out;
 }
 
-.panda-eyes-joy path {
+.panda-eyes-joy path,
+.panda-eyes-shut path {
   stroke: #fffdfb;
   stroke-width: 5.4;
   stroke-linecap: round;
@@ -2399,7 +2402,6 @@ select:focus-visible {
  * disappointment - concerned eyebrows and a small steady smile. */
 .avatar-encouraging .panda-brows-soft,
 .avatar-encouraging .panda-mouth-soft,
-.avatar-sad .panda-brows-soft,
 .avatar-error_fallback .panda-brows-soft,
 .avatar-sleeping .panda-mouth-soft {
   opacity: 1;
@@ -2409,10 +2411,58 @@ select:focus-visible {
   opacity: 0.55;
 }
 
-/* Sorry - the microphone heard nothing, the class could not answer. */
+/* ---------------------------------------------------------------------------
+ * Sorry, in two strengths.
+ *
+ * Both are the *app* apologising and neither is ever a verdict on the child:
+ * `sad` is the microphone that heard nothing, `crying` is the class that could
+ * not carry on at all. A child who makes the panda cry by getting a letter
+ * wrong learns to stop answering, which is why a wrong answer gets
+ * `encouraging` above and never either of these.
+ * ------------------------------------------------------------------------ */
+.avatar-sad .panda-brows-sad,
+.avatar-crying .panda-brows-sad {
+  opacity: 1;
+}
+
 .avatar-sad .panda-mouth-frown,
 .avatar-error_fallback .panda-mouth-frown {
   opacity: 1;
+}
+
+/* The eyes go soft and heavy rather than staying wide open and cheerful. */
+.avatar-sad .panda-eyes {
+  animation: none;
+  transform: translateY(2px) scaleY(0.82);
+}
+
+/* Weeping: eyes squeezed shut, the wailing mouth, and tears that actually
+ * fall. The cheeks come up because a crying face is a flushed one. */
+.avatar-crying .panda-eyes {
+  opacity: 0;
+}
+
+.avatar-crying .panda-eyes-shut,
+.avatar-crying .panda-tears,
+.avatar-crying .panda-mouth-cry {
+  opacity: 1;
+}
+
+.avatar-crying .panda-cheek {
+  opacity: 0.6;
+}
+
+.panda-tear {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.avatar-crying .panda-tear {
+  animation: panda-tear 1.5s ease-in infinite;
+}
+
+.avatar-crying .panda-tear-right {
+  animation-delay: -0.72s;
 }
 
 /* Working something out. */
@@ -2438,6 +2488,7 @@ select:focus-visible {
 .avatar-waving .panda-mouth-closed,
 .avatar-encouraging .panda-mouth-closed,
 .avatar-sad .panda-mouth-closed,
+.avatar-crying .panda-mouth-closed,
 .avatar-error_fallback .panda-mouth-closed,
 .avatar-thinking .panda-mouth-closed,
 .avatar-curious .panda-mouth-closed,
@@ -2560,10 +2611,14 @@ select:focus-visible {
 }
 
 /* A sorry panda sinks a little rather than bobbing along as though nothing
- * happened. */
+ * happened, and a crying one shakes with it. */
 .avatar-sad {
   animation: none;
   transform: translateY(0.15rem);
+}
+
+.avatar-crying {
+  animation: avatar-sob 0.85s ease-in-out infinite;
 }
 
 .avatar-error_fallback {
@@ -2611,6 +2666,36 @@ select:focus-visible {
 
   50% {
     transform: translateY(-0.42rem) scale(1.035);
+  }
+}
+
+/* A tear wells up, hangs for a moment and runs down the fur. It fades before
+ * it reaches the chin rather than piling up on it. */
+@keyframes panda-tear {
+  0% {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.5);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(34px) scale(0.92);
+  }
+}
+
+@keyframes avatar-sob {
+  0%,
+  100% {
+    transform: translateY(0.2rem) rotate(-0.8deg);
+  }
+
+  50% {
+    transform: translateY(0.34rem) rotate(0.8deg);
   }
 }
 
@@ -3165,3 +3250,598 @@ select:focus-visible {
   }
 }
 
+
+/* --- the level games -------------------------------------------------------
+ *
+ * Three small movements, and each of them is about a child's hands rather than
+ * decoration.
+ *
+ * `.game-bubble` bobs where it stands. A bubble that crosses the screen has to
+ * be *caught*, and a two-year-old cannot catch — so these drift a few pixels on
+ * their own rhythm (the duration and delay come from the component, so a field
+ * of them does not pulse in unison) and wait to be tapped. The
+ * `prefers-reduced-motion` block at the top of this file already stops all of
+ * it: the bubbles simply hold still, and the game plays exactly the same.
+ *
+ * `.game-wobble` is the whole of what a wrong tap costs. Nothing is marked,
+ * nothing is counted and nothing is said — the thing shakes its head and is
+ * still there to be tapped again.
+ */
+.game-bubble {
+  animation-name: game-bob;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+  will-change: transform;
+}
+
+@keyframes game-bob {
+  from {
+    transform: translateY(-0.35rem);
+  }
+
+  to {
+    transform: translateY(0.35rem);
+  }
+}
+
+.game-wobble {
+  animation: game-wobble 420ms ease-in-out;
+}
+
+@keyframes game-wobble {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-0.45rem) rotate(-3deg);
+  }
+
+  75% {
+    transform: translateX(0.45rem) rotate(3deg);
+  }
+}
+
+.game-popped {
+  animation: game-popped 420ms ease-out;
+}
+
+@keyframes game-popped {
+  from {
+    opacity: 0.2;
+    transform: scale(0.4);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+/* =====================================================================
+ * The teacher, holding the thing it is teaching
+ *
+ * Three layers over one square: the panda in its holding pose, the lesson's
+ * drawing laid on the board's face, and the paws closing over both. The two
+ * SVGs share a viewBox and the middle layer is placed by percentages taken from
+ * the same coordinates, so they line up at any size.
+ *
+ * The percentages are the screen's lit face out of the 200x200 viewBox -
+ * x 30..170 is 15%..85%, y 100..184 is 50%..92% - and they move with the screen
+ * rect in `AvatarFallback`, never on their own.
+ * ===================================================================== */
+
+.teacher-stage {
+  position: relative;
+  width: min(100%, 22rem);
+  aspect-ratio: 1 / 1;
+  margin-inline: auto;
+}
+
+.teacher-panda,
+.panda-paws {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The paws are painted last, over the drawing. Nothing about them is tappable,
+ * and a child aiming at the board must not hit them instead. */
+.panda-paws {
+  pointer-events: none;
+}
+
+.teacher-display {
+  position: absolute;
+  left: 15%;
+  top: 50%;
+  width: 70%;
+  height: 42%;
+  /* The last word on the screen's edges. Whatever is handed to this - a letter
+   * drawn at a size chosen for a card, an SVG that paints outside its own box -
+   * stops at the glass. The capital A used to hang a third of its height below
+   * the screen and across the question underneath it. */
+  overflow: hidden;
+}
+
+/* The drawing is positioned rather than laid out, and that is the fix, not a
+ * flourish: `height: 100%` on the SVG resolved against a parent of automatic
+ * height, which is no height at all, so it silently fell back to the `h-40`
+ * the drawing carries for the rest of the app. Pinning the wrapper to all four
+ * edges of the screen gives the percentage something real to measure. */
+.teacher-display > * {
+  position: absolute;
+  inset: 4%;
+  display: grid;
+  place-items: center;
+}
+
+.teacher-display svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* The concept, and the example that steps in front of it while its word is
+ * being said. Both are pinned to the same box, so the swap is a cross-fade in
+ * one place rather than the screen's contents changing size. The concept is
+ * never unmounted for it: unmounting restarts the chalk, and a letter drawn
+ * from nothing three times inside one explanation is a flicker, not a lesson. */
+.screen-main > * {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.screen-main,
+.screen-example {
+  transition: opacity 260ms ease-out;
+}
+
+.screen-main[data-away="true"] {
+  opacity: 0;
+}
+
+.screen-example {
+  gap: 2%;
+  align-content: center;
+  animation: screen-example-in 260ms ease-out;
+}
+
+.screen-example-icon {
+  font-size: min(9vw, 3.6rem);
+  line-height: 1;
+}
+
+.screen-example-word {
+  font-size: min(3.4vw, 0.95rem);
+  font-weight: 900;
+  text-transform: capitalize;
+  color: rgba(37, 49, 63, 0.55);
+  line-height: 1;
+}
+
+@keyframes screen-example-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* The screen is on. It breathes rather than blinks - a blinking light on a
+ * child's screen reads as something being wrong. */
+.panda-screen-light {
+  animation: panda-screen-light 2.6s ease-in-out infinite;
+}
+
+@keyframes panda-screen-light {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* The sparkles are placed for a panda that fills its box. Holding a board it
+ * does not: the head is up in the top third, and stars pinned to the corners of
+ * the stage would be celebrating somewhere off to the side of it. They are
+ * bigger too: 1rem was sized for the 4.4rem dock and is a speck beside a panda
+ * this size. (A percentage would be wrong here - font-size percentages are of
+ * the inherited font, not of the box.) */
+.panda-holds .avatar-sparkle {
+  font-size: 1.5rem;
+}
+
+.panda-holds .avatar-sparkle-one {
+  right: 24%;
+  top: 2%;
+}
+
+.panda-holds .avatar-sparkle-two {
+  left: 24%;
+  top: 8%;
+}
+
+/* =====================================================================
+ * One screen - the class and the games on a phone and a tablet
+ *
+ * The child this app is for is two or three. They do not scroll to find the
+ * rest of the question, and nothing teaches them that the answer they want is
+ * below the fold - a screen that is cut off simply looks finished. So the two
+ * screens a child actually uses, the class and a game, are laid out to fit the
+ * viewport exactly on a phone and a tablet.
+ *
+ * How it works, and why it is CSS rather than a second set of components:
+ *
+ *   * `AppShell fit` puts `data-fit="true"` on <main> and wraps the page in
+ *     `.fit-body`. Below `xl:` the shell becomes exactly `100dvh` tall -
+ *     `dvh`, so the phone's disappearing URL bar cannot push the last row
+ *     out - and `.fit-body` is the column that fills whatever the header, the
+ *     schedule strip and the bottom furniture leave behind.
+ *   * Everything in that column keeps its natural height except **one**
+ *     flexible child: the drawing on a teaching card, the board in a game.
+ *     That is what absorbs the difference between a small phone and a big
+ *     tablet, and it is the right thing to give the room to.
+ *   * From `xl:` up not one of these rules applies. A laptop has the height
+ *     already and the pages flow as they always did.
+ *
+ * The touch floors are NOT touched. A control on a learning surface is still
+ * 96px for Play Group and Nursery and 64px for LKG and UKG (see "Touch
+ * targets" above): the room comes out of padding, chrome and the picture,
+ * never out of the thing a small finger has to hit. Where the sum of those
+ * floors genuinely cannot fit - the smallest phone, four large options, the
+ * 96px floor - the card scrolls inside itself rather than clipping, so an
+ * answer is always reachable even on a screen that cannot show it all at once.
+ * ===================================================================== */
+
+@media (max-width: 1279.98px) {
+  .app-shell-main[data-fit="true"] {
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    padding-top: 0.5rem;
+    /* The dock is a 64px FAB down in the corner on a phone; the page still
+     * reserves it, or the guide sits on top of the last row of the lesson. */
+    padding-bottom: calc(var(--dock-height) + var(--mobile-nav) + var(--safe-bottom) + 0.25rem);
+  }
+
+  /* The sticky header and the schedule strip are both chrome on a screen with
+   * none to spare. They stay - the strip is on every screen by rule - and they
+   * give up their padding instead. */
+  .app-shell-main[data-fit="true"] > header {
+    top: 0;
+    margin-bottom: 0.4rem;
+    padding: 0.3rem 0.7rem;
+  }
+
+  .app-shell-main[data-fit="true"] [data-testid="schedule-strip"] {
+    margin-bottom: 0.4rem;
+    padding: 0.3rem 0.6rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .app-shell-main[data-fit="true"] [data-testid="schedule-strip"] ol {
+    flex-wrap: nowrap;
+  }
+
+  .app-shell-main[data-fit="true"] [data-testid="schedule-strip"] li {
+    padding: 0.1rem 0.5rem;
+    font-size: 0.7rem;
+  }
+
+  .app-shell-main[data-fit="true"] [data-testid="schedule-strip"] > span {
+    font-size: 0.65rem;
+  }
+
+  .fit-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .fit-body > * {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * The class, on one screen
+ * --------------------------------------------------------------------- */
+
+@media (max-width: 1279.98px) {
+  .class-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .class-topbar {
+    flex: 0 0 auto;
+    gap: 0.5rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 1.25rem;
+  }
+
+  .class-topbar h1 {
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+
+  /* Where the child is in the day, and in the five questions. Both are worth
+   * keeping and neither is worth a line of its own: they are read once, by the
+   * grown-up, and the question underneath them is what the screen is for. */
+  .class-topbar span {
+    font-size: 0.72rem;
+    padding: 0.25rem 0.6rem;
+  }
+
+  .class-topbar [data-testid="question-dots"] span {
+    height: 0.6rem;
+    width: 0.6rem;
+    padding: 0;
+  }
+
+  /* Which of the five steps this is, and which of the nine strategies wrote
+   * the words. Both are for a grown-up reading over the child's shoulder, and
+   * on a phone they cost a line the question needs. */
+  .class-eyebrow,
+  .class-aside {
+    display: none;
+  }
+
+  .class-card {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 0.6rem 0.5rem;
+    border-radius: 1.5rem;
+    position: relative;
+    /* The safety valve. Everything above is sized so this never engages; when
+     * it does - the smallest phone, the 96px floor, four long options - the
+     * card scrolls rather than hiding an answer off the bottom. */
+    overflow-y: auto;
+  }
+
+  .class-card > * {
+    flex: 0 0 auto;
+  }
+
+  .class-chip {
+    max-width: 100%;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  /* The one flexible thing on the card. The panda and the board it is holding
+   * are a single square picture now, so the teacher gets whatever is left once
+   * the question and the answers have had the room their touch floors need -
+   * where before, a corner avatar and a separate drawing were each taking their
+   * own slice of it. */
+  .class-stage {
+    display: grid;
+    flex: 1 1 auto;
+    min-height: 7rem;
+    place-items: center;
+    width: 100%;
+  }
+
+  .class-stage .teacher-stage {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+  }
+
+  /* The question is one of the two things this screen is for, so it takes the
+   * room the strategy line and the top chrome gave up rather than settling
+   * back to a comfortable size. */
+  .class-question {
+    font-size: clamp(1.6rem, 7.5vw, 2.4rem);
+    line-height: 1.1;
+  }
+
+  /* Two columns, always. As a wrapping row, two long labels took a row each
+   * and four options became four rows - the exact thing that pushed the
+   * microphone off the bottom of the screen. */
+  .class-options {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  /* The answers and the microphone, back down to the floor.
+   *
+   * They were grown to make them the obvious thing on the screen and they
+   * overshot: a microphone the size of a fist and a row of answers to match
+   * left the teacher a strip. These are now *at* the touch floor rather than
+   * well above it - 96px for Play Group and Nursery, 64px for LKG and UKG,
+   * enforced by the "Touch targets" rules and not by the numbers here, which
+   * is why the mic is written as 5rem and will still come out at 6rem on an
+   * early class. The floor is the one thing that does not give. */
+  .class-options > button {
+    width: 100%;
+    min-height: 5rem;
+    padding: 0.3rem;
+  }
+
+  .class-options .answer-picture {
+    font-size: 2.3rem;
+  }
+
+  .class-options .answer-word {
+    font-size: 0.82rem;
+  }
+
+  .class-mic {
+    height: 5rem;
+    width: 5rem;
+    font-size: 2.2rem;
+  }
+
+  .class-controls {
+    gap: 0.4rem;
+    width: 100%;
+  }
+
+  /* The three helpers beside it - say it again, ask me anything, the keyboard -
+   * are for reaching *for*, not for aiming at, and they were as wide as the
+   * answers. */
+  .class-controls > button,
+  .class-controls > span > button {
+    padding-inline: 0.7rem;
+    font-size: 0.85rem;
+  }
+
+  .class-status {
+    font-size: 0.9rem;
+    line-height: 1.1;
+  }
+
+  .class-typing input {
+    min-height: 3rem;
+  }
+}
+
+/* ---------------------------------------------------------------------
+ * A game, on one screen
+ *
+ * The level page is a page; playing a game is not. A game being played takes the
+ * whole screen on a phone and a tablet - the level's title, its standing and
+ * the link to the class are all still there, one tap away behind "All games",
+ * and not one of them is anything a child needs mid-game.
+ * --------------------------------------------------------------------- */
+
+@media (max-width: 1279.98px) {
+  .level-games[data-playing="true"] {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    border-radius: 0;
+    padding: calc(0.5rem + var(--safe-top)) 0.6rem calc(0.6rem + var(--safe-bottom));
+    background: #fbfcf6;
+  }
+
+  .level-games[data-playing="true"] .game-head {
+    flex: 0 0 auto;
+  }
+
+  .level-games[data-playing="true"] .game-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .level-games[data-playing="true"] .game-ask {
+    font-size: clamp(1.05rem, 4.6vw, 1.5rem);
+    line-height: 1.15;
+  }
+
+  /* The board is the flexible part, and every tile is a square cut out of the
+   * room its row has. `width: auto` against a 1:1 ratio makes a tile as wide
+   * as the row is tall; `max-width: 100%` catches the other way round, on a
+   * tall narrow column, so a tile can never spill out of its cell. */
+  .level-games[data-playing="true"] .game-grid {
+    flex: 1 1 auto;
+    min-height: 0;
+    grid-auto-rows: minmax(0, 1fr);
+    align-content: stretch;
+  }
+
+  .level-games[data-playing="true"] .game-grid > li {
+    display: grid;
+    min-height: 0;
+    place-items: center;
+  }
+
+  .level-games[data-playing="true"] .game-grid > li > * {
+    height: 100%;
+    width: auto;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Find it! is words as much as pictures, so its tiles are allowed to be
+   * wider than they are tall - a squashed square would shrink the label. */
+  .level-games[data-playing="true"] .game-grid[data-shape="wide"] > li > * {
+    width: 100%;
+    aspect-ratio: auto;
+  }
+
+  .level-games[data-playing="true"] .game-cheer {
+    flex: 0 0 auto;
+    min-height: 1.5rem;
+    font-size: 1rem;
+  }
+}
+
+/* The level page behind the games: on a phone it is the level, where it stands
+ * and what there is to play. The syllabus lines a grown-up might read fold into
+ * a summary rather than pushing the games under the fold. */
+@media (max-width: 1279.98px) {
+  .level-page {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    /* Shut, the page fits exactly and there is nothing to scroll. It scrolls
+     * only once a grown-up opens "What this level teaches", which is a
+     * deliberate act by somebody who can read. */
+    overflow-y: auto;
+  }
+
+  .level-page > * {
+    flex: 0 0 auto;
+  }
+
+  .level-head {
+    padding: 0.6rem 0.8rem;
+    gap: 0.4rem;
+    border-radius: 1.25rem;
+  }
+
+  .level-head h1 {
+    font-size: 1.2rem;
+    line-height: 1.15;
+  }
+
+  .level-icon {
+    font-size: 2rem;
+  }
+
+  .level-standing {
+    padding: 0.5rem 0.8rem;
+    border-radius: 1.25rem;
+    gap: 0.4rem;
+  }
+
+  .level-page .level-games {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+}

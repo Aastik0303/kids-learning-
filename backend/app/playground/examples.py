@@ -141,9 +141,15 @@ def _is_lesson_furniture(token: str) -> bool:
     A card on the letter A must not offer B as its example, and a card on
     circles must not offer the square: those are other cards of the same lesson,
     and they are not something a child has "seen for themselves" the way they
-    have seen an apple or a ball. `visuals.from_concept` already knows the closed
-    vocabulary the app *draws* - letters, numbers, shapes, colours - so whatever
-    it recognises is the lesson's own furniture and is left out of the examples.
+    have seen an apple or a ball. `visuals.from_concept` knows the vocabulary
+    the app draws, and the *glyph* half of it - letters, numbers, shapes,
+    colours - is the furniture.
+
+    Its other half is not. Since the app learned to draw a cow and an apple,
+    `from_concept` recognises those too, and reading "is it recognised?" as "is
+    it furniture?" made every everyday thing in the syllabus furniture and left
+    every level with no examples at all. An apple is the example; that is the
+    whole point of it.
     """
     words = _clean(token)
     if not words:
@@ -156,7 +162,7 @@ def _is_lesson_furniture(token: str) -> bool:
     # are no more an everyday example than the letter A is.
     if parts[-1] in _MARK_WORDS:
         return True
-    return visuals.from_concept(words).is_shown
+    return visuals.from_concept(words).kind in _KIND_PREFIXES
 
 
 def _names_another_concept(group: tuple[str, ...], concept: visuals.Visual) -> bool:

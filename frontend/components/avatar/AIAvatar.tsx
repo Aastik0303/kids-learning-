@@ -13,7 +13,23 @@ import type { AvatarEffect, AvatarState } from "./avatar.types";
  */
 const RiveAvatar = dynamic(() => import("./RiveAvatar"), { ssr: false });
 
-export function AIAvatar({ state, effect, isSpeaking }: { state: AvatarState; effect: AvatarEffect | null; isSpeaking: boolean }) {
+export function AIAvatar({
+  state,
+  effect,
+  isSpeaking,
+  holding = false
+}: {
+  state: AvatarState;
+  effect: AvatarEffect | null;
+  isSpeaking: boolean;
+  /**
+   * Stand the panda up behind a board and let it hold the board rather than its
+   * own paws. The class uses this pose: the teacher and the thing being taught
+   * are one picture, so a child looks at one place on the screen instead of
+   * two. Rive artwork has no such pose, so this only reaches the drawn panda.
+   */
+  holding?: boolean;
+}) {
   const [canUseRive, setCanUseRive] = useState(false);
   const riveSrc = AVATAR_CONFIG.rive.src;
 
@@ -36,7 +52,7 @@ export function AIAvatar({ state, effect, isSpeaking }: { state: AvatarState; ef
   }, [riveSrc]);
 
   if (!canUseRive) {
-    return <AvatarFallback state={state} isSpeaking={isSpeaking} />;
+    return <AvatarFallback state={state} isSpeaking={isSpeaking} holding={holding} />;
   }
 
   return <RiveAvatar state={state} effect={effect} isSpeaking={isSpeaking} />;

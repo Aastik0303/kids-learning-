@@ -1,17 +1,17 @@
 "use client";
 
-import { use, useCallback, useEffect, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import { ComingSoon } from "@/components/curriculum/ComingSoon";
-import { ExampleStrip } from "@/components/curriculum/ExampleStrip";
+import { LevelGames } from "@/components/games/LevelGames";
 import { AppShell } from "@/components/shared/AppShell";
 import { FALLBACK_MODE, showsText } from "@/lib/experience";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { useTodayPlan } from "@/lib/useTodayPlan";
-import { getExperienceMode, getTopic, getTopicNotes } from "@/services/curriculum";
-import { canSpeak, speakText, stopSpeech } from "@/services/speech";
-import type { ExperienceMode, Topic, TopicNotes } from "@/types";
+import { getExperienceMode, getTopic } from "@/services/curriculum";
+import { stopSpeech } from "@/services/speech";
+import type { ExperienceMode, Topic } from "@/types";
 
 /**
  * A level on the Adventure map, and what it is.
@@ -30,17 +30,22 @@ import type { ExperienceMode, Topic, TopicNotes } from "@/types";
  * class, and the schedule decides when.
  *
  * It does one more thing, and it is the reason a child would come here at all:
- * it gives back **the notes for this level** — what it teaches, in the words
- * the syllabus author wrote, with the everyday pictures beside them — and reads
- * them out loud, because a three-year-old cannot read a line of it. Going back
- * over something is how it stops fading, and there was nowhere in the app to do
- * that.
+ * it hands the level back as **a game about the thing it teaches** — one of
+ * find it, match the pairs or pop it, dealt at random and started straight
+ * away. Going back over something is how it stops fading, and there was nowhere
+ * in the app to do that. The child is not asked which game they want: three
+ * cards to choose between is a menu, and a menu is a reading task.
  *
- * The notes are deterministic all the way down (`app/playground/notes.py`): no
- * model writes them, so the same level says the same thing on every afternoon.
- * Opening them marks nothing, scores nothing, unlocks nothing and does not move
- * the day's plan — which is what keeps this a progress board rather than a
- * second classroom.
+ * This used to be the level's *notes*: the author's teaching lines, printed and
+ * read aloud. Revising by re-reading is a grown-up's skill, and the child this
+ * page is for is three. They go back over something by playing with it again,
+ * so the same authored content is dealt out as games instead
+ * (`app/playground/games.py`).
+ *
+ * The games are deterministic all the way down: no model writes them, so the
+ * same level offers the same three on every afternoon. Playing marks nothing,
+ * scores nothing, unlocks nothing and does not move the day's plan — which is
+ * what keeps this a progress board rather than a second classroom.
  */
 export default function TopicLevelPage({
   params
@@ -52,8 +57,6 @@ export default function TopicLevelPage({
   const { plannedTopicIds, loaded } = useTodayPlan(child);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [mode, setMode] = useState<ExperienceMode>(FALLBACK_MODE);
-  const [notes, setNotes] = useState<TopicNotes | null>(null);
-  const [reading, setReading] = useState(false);
 
   useEffect(() => {
     getTopic(topicId)
@@ -61,32 +64,11 @@ export default function TopicLevelPage({
       .catch(() => setTopic(null));
   }, [topicId]);
 
-  useEffect(() => {
-    getTopicNotes(topicId)
-      // Notes are the nice-to-have on this page: a level whose notes cannot be
-      // fetched still shows what it is and where it stands.
-      .then(setNotes)
-      .catch(() => setNotes(null));
-  }, [topicId]);
-
   // Leaving the page mid-sentence must not leave the voice talking over the
-  // next screen — the class narrates too, and two of them at once is chaos.
+  // next screen — the games speak, the class speaks, and two of them at once is
+  // chaos. The games stop their own voice as well; this is the backstop for
+  // walking off the page while one is mid-sentence.
   useEffect(() => () => stopSpeech(), []);
-
-  const readAloud = useCallback(() => {
-    if (!notes?.speech) return;
-    if (reading) {
-      stopSpeech();
-      setReading(false);
-      return;
-    }
-    setReading(true);
-    // The same voice the class uses: Edge through this app's own backend, with
-    // the device's own voice only as a fallback. `speakText` owns that choice;
-    // nothing here picks a voice or a language.
-    const started = speakText(notes.speech, () => setReading(false));
-    if (!started) setReading(false);
-  }, [notes, reading]);
 
   useEffect(() => {
     if (!child) return;
@@ -148,14 +130,36 @@ export default function TopicLevelPage({
 
   const withText = showsText(mode);
 
+  /** The level's own teaching points, drawn once and placed twice below. */
+  const teaches = (
+    <ul className="grid gap-2">
+      {(topic?.subtopics ?? []).map((subtopic, position) => (
+        <li key={subtopic} className="flex items-start gap-2 font-bold text-ink/70">
+          <span aria-hidden>{topic?.subtopic_icons?.[position] ?? "⭐"}</span>
+          <span>
+            {subtopic}
+            {topic?.subtopic_easy?.[position] ? (
+              <span className="block font-bold text-ink/50">{topic.subtopic_easy[position]}</span>
+            ) : null}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
-    <AppShell>
-      <div className="grid gap-5">
+    // `fit` keeps the level on one screen on a phone and a tablet: what this
+    // level is, where it stands, and the game - with nothing below the fold,
+    // because a child who has come here to play should not have to scroll past
+    // a paragraph to find it. See "One screen" in
+    // globals.css; from xl: up the page flows as it always did.
+    <AppShell fit>
+      <div className="level-page grid gap-5">
         {backToLevels}
 
-        <header className="surface-panel grid gap-3 rounded-[2rem] p-5">
+        <header className="level-head surface-panel grid gap-3 rounded-[2rem] p-5">
           <div className="flex flex-wrap items-center gap-3">
-            <span aria-hidden className="text-5xl">
+            <span aria-hidden className="level-icon text-5xl">
               {topic?.icon ?? "🎈"}
             </span>
             <div className="grid gap-1">
@@ -184,8 +188,8 @@ export default function TopicLevelPage({
 
         {/* Why there is no "start" button here, said plainly rather than left
             as an absence for a grown-up to puzzle over. */}
-        <section className="lift-card grid gap-3 rounded-[2rem] p-5">
-          <p className="text-lg font-bold text-ink/70">{standing.detail}</p>
+        <section className="level-standing lift-card grid gap-3 rounded-[2rem] p-5">
+          <p className="text-base font-bold text-ink/70 sm:text-lg">{standing.detail}</p>
           <Link
             href="/ai-teacher"
             data-testid="go-to-class"
@@ -196,86 +200,48 @@ export default function TopicLevelPage({
         </section>
 
         {/*
-          The notes: what this level teaches, in the author's own words, said
-          out loud.
+          Three games about this level, where its notes used to be.
 
           Shown for every level except a locked one. A locked level is one the
-          child has not been given yet, and handing over its notes would be
+          child has not been given yet, and handing over its games would be
           teaching it early through the back door — the same reason the map does
-          not link to it.
+          not link to it, and the same rule the notes kept.
 
-          The 🔊 button is the point of the page for a pre-reader: the lines are
-          printed for the grown-up sitting alongside and *spoken* for the child,
-          which is the same split the class makes. It is a button and not an
-          autoplay, because a page a child navigated to should not start talking
-          at them.
+          Nothing in here is marked. No attempt, no probe, no episode, no star,
+          no unlock and no movement of the day's plan: once the games have been
+          fetched, everything a child taps stays in the browser. A game that
+          paid stars would be a second classroom, and the class is the AI
+          Teacher.
         */}
-        {standing.label !== "Locked" && notes ? (
-          <section
-            data-testid="topic-notes"
-            className="surface-panel grid gap-4 rounded-[2rem] p-5"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-lg font-black text-ink">📖 Let us remember this one</h2>
-              {notes.has_notes && canSpeak() ? (
-                <button
-                  type="button"
-                  onClick={readAloud}
-                  data-testid="read-notes"
-                  aria-label={reading ? "Stop reading" : "Read these notes to me"}
-                  className="pressable rounded-3xl bg-sky px-6 py-4 text-lg font-black text-white shadow-soft"
-                >
-                  {reading ? "⏹️ Stop" : "🔊 Read it to me"}
-                </button>
-              ) : null}
-            </div>
+        {standing.label !== "Locked" ? <LevelGames topicId={topicId} /> : null}
 
-            {notes.has_notes ? (
-              <>
-                {/* The pictures first: they are what a child who cannot read
-                    actually takes in, and the words below are for the ear and
-                    for the grown-up. */}
-                <ExampleStrip items={notes.example_items} />
-                <ul className="grid gap-2">
-                  {notes.lines.map((line) => (
-                    <li key={line} className="flex items-start gap-2 text-lg font-bold text-ink/75">
-                      <span aria-hidden>•</span>
-                      <span>{line}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            ) : (
-              // An honest empty state. A level whose author has not written the
-              // teaching lines yet has nothing to revise from, and inventing
-              // some would be the one thing this page must never do.
-              <p className="font-bold text-ink/60">
-                Your class will teach this one out loud. There is nothing written down for it yet.
-              </p>
-            )}
-          </section>
-        ) : null}
+        {/* What this level covers, each point in its own words.
 
-        {/* What this level covers, each point in its own words. */}
+            The same list twice, and it is worth saying why rather than reaching
+            for a hook: it is a summary a grown-up opens on a phone or a tablet and a
+            plain section on a laptop, and `<details open>` is an HTML attribute that
+            cannot be set per breakpoint in CSS. Deciding it in JavaScript means
+            reading the viewport during render, which is the one thing that
+            makes the server and the browser disagree. So the markup says both
+            and the breakpoint picks one.
+
+            It is folded on the small screens because it is the only thing on
+            this page written to be read: left open it was several inches of
+            prose between a child and the games they came for. It is still here
+            either way — one tap, not dropped. */}
         {withText && topic?.subtopics.length ? (
-          <section className="surface-panel grid gap-3 rounded-[2rem] p-5">
-            <h2 className="text-lg font-black text-ink">🔎 What this level teaches</h2>
-            <ul className="grid gap-2">
-              {topic.subtopics.map((subtopic, position) => (
-                <li key={subtopic} className="flex items-start gap-2 font-bold text-ink/70">
-                  <span aria-hidden>{topic.subtopic_icons?.[position] ?? "⭐"}</span>
-                  <span>
-                    {subtopic}
-                    {topic.subtopic_easy?.[position] ? (
-                      <span className="block font-bold text-ink/50">
-                        {topic.subtopic_easy[position]}
-                      </span>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </section>
+          <>
+            <details className="surface-panel rounded-[2rem] p-5 xl:hidden">
+              <summary className="cursor-pointer text-lg font-black text-ink">
+                🔎 What this level teaches
+              </summary>
+              <div className="mt-3">{teaches}</div>
+            </details>
+            <section className="surface-panel hidden gap-3 rounded-[2rem] p-5 xl:grid">
+              <h2 className="text-lg font-black text-ink">🔎 What this level teaches</h2>
+              {teaches}
+            </section>
+          </>
         ) : null}
       </div>
     </AppShell>

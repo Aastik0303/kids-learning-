@@ -158,13 +158,20 @@ export function AnswerChoice({ option, offered }: AnswerChoiceProps) {
 
   // The picture carries the button and the word sits under it, small - the way
   // round a child who cannot read needs them.
+  //
+  // `answer-picture` and `answer-word` are hooks for the surface around it, not
+  // styling of their own: the class grows both on a phone, where the answers
+  // are one of the two things the screen is for. Nothing here decides a size.
   return (
     <span className="grid justify-items-center gap-1">
-      <span aria-hidden className={isGlyph ? "text-4xl font-black leading-none" : "text-5xl leading-none"}>
+      <span
+        aria-hidden
+        className={`answer-picture ${isGlyph ? "text-4xl font-black leading-none" : "text-5xl leading-none"}`}
+      >
         {picture}
       </span>
       {words && !isGlyph ? (
-        <span className="text-base font-black capitalize text-ink/70">{words}</span>
+        <span className="answer-word text-base font-black capitalize text-ink/70">{words}</span>
       ) : (
         <span className="sr-only">{words || option}</span>
       )}

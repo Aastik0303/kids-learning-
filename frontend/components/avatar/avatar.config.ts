@@ -34,7 +34,8 @@ export const AVATAR_STATE_INDEX: Record<AvatarState, number> = {
   error_fallback: 10,
   proud: 11,
   curious: 12,
-  sad: 13
+  sad: 13,
+  crying: 14
 };
 
 export const AVATAR_EFFECT_INDEX: Record<AvatarEffect, number> = {
@@ -114,27 +115,52 @@ export function avatarForLearningResult(result: {
  * What the panda's face is doing during a turn of the AI Teacher.
  *
  * The class is the one screen where a child cannot read anything, so the
- * avatar's face is a channel of its own: it reacts *while the feedback is being
- * said*, and settles into waiting once the talking stops. Splitting it that way
+ * avatar's face is a channel of its own: it reacts to what just happened, and
+ * settles into waiting once the moment has passed. Splitting it that way
  * matters - a panda that stayed delighted for the whole of the next question
  * would be grinning at a child who is stuck on it.
+ *
+ * The reaction lasts as long as `speaking` **or** `reacting`, and the second one
+ * is why it is worth seeing at all. "Well done!" is under a second of audio, so
+ * tying the face to the narration alone meant the delight arrived and left
+ * inside one breath - the child was still looking at their own finger. The page
+ * holds `reacting` open for a couple of seconds after a marked answer, which is
+ * about how long a three-year-old takes to look up.
  *
  * `speaking` is not a feeling and is not returned here. The mouth is driven
  * separately by `isSpeaking`, so the panda can be pleased *and* talking, which
  * is what it is doing most of the time.
  *
- * **A wrong answer never makes it sad.** It makes it kind: concerned eyebrows
- * and a small steady smile. `sad` is reserved for the app's own failures - the
- * microphone that heard nothing, the server that did not answer - because a
- * child who learns that missing a letter upsets the panda learns to stop
- * answering.
+ * The three feelings the user asked to be able to tell apart across a room:
+ * **right** is `celebrating` - eyes shut in a grin, cheeks up, the whole panda
+ * bouncing, sparkles on; **thinking** is the tilt-and-rock with one brow up,
+ * worn while the teacher is working out the next turn and through every hint;
+ * and **wrong** is `encouraging`.
+ *
+ * **A wrong answer never makes it sad or cry**, and that is deliberate rather
+ * than an oversight in the range. It makes it kind: concerned eyebrows, a small
+ * steady smile, a warm glow. The two sorry faces are reserved for the app's own
+ * failures, in two strengths - `sad` when the microphone heard nothing and the
+ * child can simply try again, `crying` when the class itself could not carry on
+ * - because a child who learns that missing a letter makes the panda cry learns
+ * to stop answering.
  */
 export function avatarStateForTeacher(now: {
   speaking: boolean;
   listening: boolean;
   waiting: boolean;
+  /**
+   * The verdict is still fresh, whether or not anything is being said. Without
+   * it a right answer's face is over before it is seen.
+   */
+  reacting?: boolean;
   /** The app let the child down - not the other way round. */
   sorry: boolean;
+  /**
+   * And let it down badly: the class could not answer at all. The strongest
+   * face the panda has, and it is still about the app rather than the child.
+   */
+  failed?: boolean;
   turn: {
     is_correct?: boolean | null;
     is_hint?: boolean;
@@ -145,16 +171,22 @@ export function avatarStateForTeacher(now: {
     expects?: string;
   } | null;
 }): AvatarState {
+  if (now.failed) return "crying";
   if (now.sorry) return "sad";
   if (now.listening) return "listening";
   const turn = now.turn;
   if (!turn) return now.waiting ? "thinking" : "idle";
   if (turn.day_complete) return "proud";
-  if (now.waiting) return "thinking";
 
-  if (now.speaking) {
-    if (turn.topic_completed) return "celebrating";
-    if (turn.is_correct === true) return "happy";
+  // A fresh verdict outranks "thinking". The two used to be the other way
+  // round, so the moment a right answer was sent the panda went straight to its
+  // working face and the child never saw it pleased.
+  const fresh = now.speaking || Boolean(now.reacting);
+  if (now.waiting && !fresh) return "thinking";
+
+  if (fresh) {
+    if (turn.topic_completed) return "proud";
+    if (turn.is_correct === true) return "celebrating";
     if (turn.is_correct === false) return "encouraging";
     if (turn.is_reveal) return "encouraging";
     if (turn.is_hint) return "thinking";

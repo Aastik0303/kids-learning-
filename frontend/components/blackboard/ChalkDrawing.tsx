@@ -29,6 +29,12 @@ import type { ChalkArt } from "./chalkArt";
 
 export type ChalkDrawingProps = {
   strokes: ChalkArt;
+  /**
+   * What it is drawn with. `ink` is a dark line on a light card - the class
+   * shows its drawings straight on the page now, with no board behind them -
+   * and `chalk` is the white line a dark slate needs.
+   */
+  tone?: "ink" | "chalk";
   /** Changing this wipes the board and draws again from nothing. */
   playKey: string;
   /** How long the whole drawing takes, once it starts. */
@@ -41,6 +47,10 @@ export type ChalkDrawingProps = {
 };
 
 const CHALK = "#f6f8f3";
+const INK = "#25313f";
+
+/** How strongly a colour reads. Pastel washes vanish on white. */
+const WASH = { ink: 0.72, chalk: 0.42 } as const;
 
 /** Where a `dot` stroke sits - the first coordinate pair in its `d`. */
 function dotAt(d: string): { cx: number; cy: number } {
@@ -51,11 +61,13 @@ function dotAt(d: string): { cx: number; cy: number } {
 export function ChalkDrawing({
   strokes,
   playKey,
+  tone = "ink",
   durationMs = 2200,
   delayMs = 0,
   label,
   className
 }: ChalkDrawingProps) {
+  const line = tone === "chalk" ? CHALK : INK;
   const lines = useRef<(SVGPathElement | null)[]>([]);
   const washes = useRef<(SVGPathElement | null)[]>([]);
   const dots = useRef<(SVGCircleElement | null)[]>([]);
@@ -195,7 +207,7 @@ export function ChalkDrawing({
             }}
             d={stroke.d}
             fill={stroke.fill}
-            fillOpacity={stroke.fillOpacity ?? 0.42}
+            fillOpacity={stroke.fillOpacity ?? WASH[tone]}
             stroke="none"
             style={{ opacity: 0, transition: "opacity 320ms ease-out" }}
           />
@@ -210,7 +222,7 @@ export function ChalkDrawing({
             }}
             {...dotAt(stroke.d)}
             r={3.2}
-            fill={stroke.stroke ?? CHALK}
+            fill={stroke.stroke ?? line}
             style={{ opacity: 0, transition: "opacity 180ms ease-out" }}
           />
         ) : (
@@ -221,7 +233,7 @@ export function ChalkDrawing({
             }}
             d={stroke.d}
             fill="none"
-            stroke={stroke.stroke ?? CHALK}
+            stroke={stroke.stroke ?? line}
             strokeWidth={stroke.width ?? 3.4}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -241,7 +253,7 @@ export function ChalkDrawing({
         cx={50}
         cy={50}
         r={2.6}
-        fill={CHALK}
+        fill={line}
         opacity={0}
         style={{ opacity: 0 }}
       />

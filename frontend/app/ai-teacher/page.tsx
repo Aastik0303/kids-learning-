@@ -3,13 +3,14 @@
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
-import { AIAvatar } from "@/components/avatar/AIAvatar";
 import { avatarStateForTeacher } from "@/components/avatar/avatar.config";
+import { TeacherStage } from "@/components/avatar/TeacherStage";
 import { AnswerChoice } from "@/components/curriculum/AnswerChoice";
 import { AppShell } from "@/components/shared/AppShell";
-import { Blackboard } from "@/components/blackboard/Blackboard";
+import { TeachingDrawing } from "@/components/blackboard/TeachingDrawing";
 import { TraceCanvas } from "@/components/learning/TraceCanvas";
 import { NoChildNotice } from "@/components/shared/NoChildNotice";
+import { EXAMPLE_HOLD_MS, findSpokenExamples, MS_PER_WORD, type SpokenExample } from "@/lib/spokenExamples";
 import { announcePlanChanged } from "@/lib/useTodayPlan";
 import { useActiveChild } from "@/lib/useActiveChild";
 import { getProgress } from "@/services/child";
@@ -78,6 +79,15 @@ const AUTO_NEXT_MS = 10_000;
 const SPEAK_NOW = "Say it out loud!";
 
 /**
+ * How long the panda wears the verdict on its face.
+ *
+ * Long enough for a small child to look up and see it, short enough that it is
+ * not still celebrating over the question after it. It runs from the moment the
+ * marked turn arrives, alongside the narration rather than after it.
+ */
+const REACTION_MS = 2600;
+
+/**
  * How long the line just shown *should* have taken to say.
  *
  * The countdown to the next step may only begin once the child has actually
@@ -142,6 +152,40 @@ export default function AiTeacherPage() {
   const [speaking, setSpeaking] = useState(false);
   const [listening, setListening] = useState(false);
   const [typed, setTyped] = useState("");
+  /**
+   * Whether the typing box is out, on a phone or a tablet.
+   *
+   * Typing is for the grown-up sitting alongside and for a browser with no
+   * microphone; the child answers by tapping or out loud. On a laptop it costs
+   * nothing to leave it there and it always is. On a screen that has to hold a
+   * question, a picture, the answers and a microphone inside one viewport, a
+   * permanent 48px box and its button is a row the answers need — so it folds
+   * behind the ⌨️ button in the controls row and comes straight back out.
+   */
+  const [typingOpen, setTypingOpen] = useState(false);
+  /**
+   * Whether the last answer's verdict is still fresh on the panda's face.
+   *
+   * The face is the one thing on this screen a child who cannot read can take
+   * a verdict from, so it has to last long enough to be looked at. It is not
+   * tied to the narration any more: "Well done!" is well under a second of
+   * audio, and the delight was arriving and leaving before a three-year-old
+   * had lifted their eyes off their own finger.
+   */
+  const [reacting, setReacting] = useState(false);
+  /**
+   * The example the teacher is saying *right now*, on the screen in place of
+   * the thing being taught.
+   *
+   * The explanation always reaches for something the child has seen - "A is for
+   * apple", "round like a ball" - and a child who cannot read hears that word
+   * with nothing to look at, because the screen is holding the letter. So the
+   * letter steps aside for three seconds while the example is on the screen,
+   * and then comes back. `findSpokenExamples` decides which words those are and
+   * when; this only holds the one that is up.
+   */
+  const [example, setExample] = useState<SpokenExample | null>(null);
+  const exampleTimers = useRef<number[]>([]);
   const [error, setError] = useState("");
   // Whether this browser can listen at all. Read after mount, never during
   // render: `canUseSpeechRecognition()` looks at `window`, which the server does
@@ -217,6 +261,49 @@ export default function AiTeacherPage() {
     if (mounted.current) setMicLevel(bucket / 10);
   }, []);
 
+  /**
+   * Take every example off the screen and cancel the ones still queued.
+   *
+   * Called wherever the narration stops early - the microphone opening, a
+   * question being asked, a new turn arriving, the page going away - because a
+   * schedule built for a sentence that is no longer being said would put a
+   * picture up over the next thing the child is looking at.
+   */
+  const clearExamples = useCallback(() => {
+    exampleTimers.current.forEach((id) => window.clearTimeout(id));
+    exampleTimers.current = [];
+    setExample(null);
+  }, []);
+
+  /**
+   * Put each example on the screen as its word comes round, and take it off
+   * three seconds later.
+   *
+   * The hold timer is per example rather than one shared "hide" timer, which is
+   * safe because `findSpokenExamples` refuses to place two inside one hold -
+   * otherwise the first one's exit would take the second one down with it.
+   */
+  const playExamples = useCallback(
+    (cues: SpokenExample[]) => {
+      clearExamples();
+      cues.forEach((cue) => {
+        exampleTimers.current.push(
+          window.setTimeout(() => {
+            if (mounted.current) setExample(cue);
+          }, cue.atMs)
+        );
+        exampleTimers.current.push(
+          window.setTimeout(() => {
+            // Only clears itself. A later example that has already taken the
+            // screen must not be wiped by an earlier one's timer.
+            if (mounted.current) setExample((shown) => (shown === cue ? null : shown));
+          }, cue.atMs + EXAMPLE_HOLD_MS)
+        );
+      });
+    },
+    [clearExamples]
+  );
+
   const say = useCallback(async (text: string) => {
     if (!text.trim()) return;
     setSpeaking(true);
@@ -248,6 +335,22 @@ export default function AiTeacherPage() {
       // A new turn is never immediately skippable: the clock is cleared here and
       // only set again once the line has been said.
       setNarrationEndsAt(null);
+
+      // The examples ride along with the narration. Only the *explanation* is
+      // searched - not the feedback before it and not the question after it -
+      // because an example is a thing the teacher reaches for while explaining,
+      // and the question is the moment the concept itself has to be on screen.
+      // The options are handed over as words never to illustrate: on a match or
+      // a quiz the teacher says the answer's name on the way into the question,
+      // and a picture of it would be the answer given away.
+      playExamples(
+        findSpokenExamples(next.speech ?? "", {
+          wordsBefore: (next.feedback ?? "").split(/\s+/).filter(Boolean).length,
+          skip: [next.visual_value, ...(next.options ?? [])],
+          msPerWord: MS_PER_WORD
+        })
+      );
+
       const startedAt = Date.now();
       await say(line);
       if (!mounted.current || mine !== beat.current) return;
@@ -261,9 +364,11 @@ export default function AiTeacherPage() {
       const elapsed = Date.now() - startedAt;
       const floor = readingMs(line);
       setNarrationEndsAt(elapsed >= floor / 2 ? Date.now() : startedAt + floor);
+      // Whatever is left queued belongs to a sentence that has finished.
+      clearExamples();
       if (wantsVoice) await listenRef.current?.();
     },
-    [say]
+    [say, playExamples, clearExamples]
   );
 
   useEffect(() => {
@@ -345,6 +450,8 @@ export default function AiTeacherPage() {
     // interrupt the explanation rather than queue behind it.
     stopSpeech();
     setSpeaking(false);
+    // The examples were timed to a sentence that is no longer being said.
+    clearExamples();
 
     setMicNote("");
     setListening(true);
@@ -385,6 +492,8 @@ export default function AiTeacherPage() {
     // so it stops the talking rather than refusing while it is going on.
     stopSpeech();
     setSpeaking(false);
+    // The examples were timed to a sentence that is no longer being said.
+    clearExamples();
     setMicNote("");
     setListening(true);
     const heard = await captureClassSpeech({
@@ -469,6 +578,24 @@ export default function AiTeacherPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turn, busy, speaking, listening, narrationEndsAt]);
 
+  /**
+   * Put the verdict on the panda's face, and leave it there for a moment.
+   *
+   * Only a *marked* turn starts it: an explanation, a hint or a reveal has no
+   * verdict in it, and a panda that celebrated its own explanations would be
+   * congratulating the child for having listened. A turn that carries no
+   * `is_correct` clears the reaction rather than leaving the last one on.
+   */
+  useEffect(() => {
+    if (turn?.is_correct !== true && turn?.is_correct !== false) {
+      setReacting(false);
+      return;
+    }
+    setReacting(true);
+    const timer = window.setTimeout(() => setReacting(false), REACTION_MS);
+    return () => window.clearTimeout(timer);
+  }, [turn]);
+
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     void send(typed);
@@ -504,17 +631,26 @@ export default function AiTeacherPage() {
   /**
    * What the panda's face is doing.
    *
-   * It reacts while the feedback is being said and settles into waiting once
-   * the talking stops - a face that stayed delighted through the next question
-   * would be grinning at a child who is stuck on it. A wrong answer makes it
-   * *kind*, never sad; sad is only for the app's own failures, which here means
-   * the microphone that heard nothing and the server that did not answer.
+   * It reacts to what just happened and settles into waiting once the moment
+   * has passed - a face that stayed delighted through the next question would
+   * be grinning at a child who is stuck on it. A wrong answer makes it *kind*,
+   * never sad; sad is only for the app's own failures, which here means the
+   * microphone that heard nothing and the server that did not answer.
+   *
+   * `reacting` is what makes the feeling visible at all. It used to be tied to
+   * the narration, and "Well done!" is under a second of audio - the delight
+   * arrived and was gone while the child was still looking at their own finger.
    */
   const mood = avatarStateForTeacher({
     speaking,
     listening,
     waiting: busy,
-    sorry: Boolean(error) || micNote === MIC_TROUBLE.silence,
+    reacting,
+    // Two strengths of the app being sorry, and neither is ever about the
+    // child: a microphone that heard nothing is something to try again, and a
+    // class that could not answer at all is the panda in tears.
+    sorry: micNote === MIC_TROUBLE.silence,
+    failed: Boolean(error),
     turn
   });
 
@@ -530,11 +666,15 @@ export default function AiTeacherPage() {
   ].join("|");
 
   return (
-    <AppShell>
-      <section className="grid gap-5">
-        <div className="surface-panel flex flex-wrap items-center justify-between gap-3 rounded-[2rem] p-5">
+    // `fit` is what pins the class to one screen on a phone and a tablet: no
+    // scrolling to find the answers, because a two-year-old does not scroll.
+    // The rules are in globals.css under "One screen"; from lg: up the page
+    // flows exactly as it always did.
+    <AppShell fit>
+      <section className="class-page grid gap-5">
+        <div className="class-topbar surface-panel flex flex-wrap items-center justify-between gap-3 rounded-[2rem] p-5">
           <div>
-            <p className="text-sm font-black uppercase tracking-wide text-sky">
+            <p className="class-eyebrow text-sm font-black uppercase tracking-wide text-sky">
               🧑‍🏫 Today&apos;s class
             </p>
             <h1 className="text-3xl font-black text-ink sm:text-4xl">
@@ -571,7 +711,7 @@ export default function AiTeacherPage() {
 
         {/* Where the lesson is inside this one concept. */}
         {turn?.step && !dayDone ? (
-          <p className="text-center text-sm font-black uppercase tracking-wide text-ink/40">
+          <p className="class-aside text-center text-sm font-black uppercase tracking-wide text-ink/40">
             {STEP_LABELS[turn.step] ?? turn.step} · step {(turn.step_index ?? 0) + 1} of{" "}
             {turn.steps_total ?? 5}
           </p>
@@ -580,26 +720,14 @@ export default function AiTeacherPage() {
         {error ? <p className="rounded-2xl bg-berry/10 p-4 font-bold text-berry">{error}</p> : null}
 
         {/* The teacher, centre stage. */}
-        <div className="surface-panel grid justify-items-center gap-5 rounded-[2rem] p-6 text-center">
-          <div
-            className={`h-56 w-56 transition-transform ${
-              mood === "celebrating" || mood === "proud"
-                ? "scale-110"
-                : speaking
-                  ? "scale-105"
-                  : "scale-100"
-            }`}
-            aria-hidden
-          >
-            <AIAvatar state={mood} effect={null} isSpeaking={speaking} />
-          </div>
+        <div className="class-card surface-panel grid justify-items-center gap-5 rounded-[2rem] p-6 text-center">
 
           {/* A level finished. This is the only place the Adventure map ever
               moves from, so it is worth the child seeing it happen. */}
           {turn?.topic_completed ? (
             <p
               data-testid="level-complete"
-              className="rounded-full bg-leaf/15 px-5 py-2 text-lg font-black text-leaf"
+              className="class-chip rounded-full bg-leaf/15 px-5 py-2 text-lg font-black text-leaf"
             >
               🎉 Level finished
               {turn.stars_earned ? ` · ⭐ ${turn.stars_earned}` : ""}
@@ -611,7 +739,7 @@ export default function AiTeacherPage() {
               with no number after it — there is nothing to add up. */}
           {turn?.feedback ? (
             <p
-              className={`rounded-full px-5 py-2 text-lg font-black ${
+              className={`class-chip rounded-full px-5 py-2 text-lg font-black ${
                 turn.is_correct ? "bg-leaf/15 text-leaf" : "bg-sunshine/40 text-ink"
               }`}
             >
@@ -625,7 +753,7 @@ export default function AiTeacherPage() {
           {turn?.is_hint || revealing ? (
             <p
               data-testid={revealing ? "reveal" : "hint"}
-              className={`rounded-full px-5 py-2 text-lg font-black ${
+              className={`class-chip rounded-full px-5 py-2 text-lg font-black ${
                 revealing ? "bg-sky/15 text-sky" : "bg-sunshine/40 text-ink"
               }`}
             >
@@ -633,23 +761,53 @@ export default function AiTeacherPage() {
             </p>
           ) : null}
 
-          {/* The board, and the whole reason the child looks up.
+          {/* The one thing this card is teaching, drawn rather than delivered:
+              it appears while it is being said, so a child watches it arrive.
 
-              On it is the one thing this card is teaching, drawn rather than
-              delivered: the letter is written while it is being said. The
-              explanation is still not printed here — a paragraph of English on
-              a blackboard is no more readable to a two-year-old than one
-              anywhere else — and the everyday examples that used to be drawn
-              under it are gone at the user's request, after a ball kept turning
-              up beside a square and then beside a triangle. */}
-          {!dayDone ? (
-            <Blackboard
-              title={turn?.topic_title}
-              visualKind={turn?.visual_kind}
-              visualValue={turn?.visual_value}
-              playKey={boardKey}
-            />
-          ) : null}
+              There used to be a blackboard around it - a frame, a slate, white
+              chalk. The frame was never the point and the user asked for it
+              off; the drawing is the point, and it is ink on the card now. The
+              explanation is still not printed, and there are no everyday
+              examples: one drawing, of the one thing being taught. */}
+          {/* The teacher, holding what it is teaching.
+
+              This was two pictures until now - a panda, and separately a
+              drawing under it - and two pictures is one too many for a
+              three-year-old, who looks at whichever moved last. The drawing is
+              on the panda's own board now, so the face doing the reacting is
+              directly above the thing it is reacting to.
+
+              On a phone and a tablet this is the one part of the card that
+              stretches: the question, the answers and the microphone take the
+              room their touch floors need, and the teacher takes the rest. */}
+          <div className="class-stage">
+            <TeacherStage state={mood} isSpeaking={speaking}>
+              {/* The concept stays mounted underneath the example rather than
+                  being swapped out for it. Unmounting would restart the chalk
+                  animation every time an example came and went, so a letter
+                  would be drawn from nothing three times in one explanation. */}
+              <div className="screen-main" data-away={example ? "true" : undefined}>
+                {dayDone ? null : (
+                  <TeachingDrawing
+                    visualKind={turn?.visual_kind}
+                    visualValue={turn?.visual_value}
+                    playKey={boardKey}
+                  />
+                )}
+              </div>
+              {example ? (
+                <div className="screen-example" data-testid="spoken-example">
+                  <span aria-hidden className="screen-example-icon">
+                    {example.icon}
+                  </span>
+                  {/* For the grown-up alongside. The child is listening to the
+                      word at this exact moment, which is the whole point of the
+                      timing. */}
+                  <span className="screen-example-word">{example.word}</span>
+                </div>
+              ) : null}
+            </TeacherStage>
+          </div>
 
           <div aria-live="polite" className="grid gap-3">
             {/* Said, not shown. A screen reader still gets the whole
@@ -662,7 +820,7 @@ export default function AiTeacherPage() {
               </p>
             ) : null}
             {turn?.question ? (
-              <p className="max-w-2xl text-3xl font-black leading-snug text-ink sm:text-4xl">
+              <p className="class-question max-w-2xl text-3xl font-black leading-snug text-ink sm:text-4xl">
                 {turn.question}
               </p>
             ) : null}
@@ -727,7 +885,11 @@ export default function AiTeacherPage() {
               string sent back is the option exactly as it arrived - only how it
               is drawn changes here. */}
           {turn?.options?.length ? (
-            <div className="flex flex-wrap items-center justify-center gap-3">
+            // Below xl: this is a two-column grid rather than a wrapping row —
+            // see `.class-options`. Two long labels used to take a row each,
+            // so four options became four rows and pushed the microphone off
+            // the bottom of a phone.
+            <div className="class-options flex flex-wrap items-center justify-center gap-3">
               {turn.options.map((option) => (
                 <button
                   key={option}
@@ -742,14 +904,21 @@ export default function AiTeacherPage() {
             </div>
           ) : null}
 
-          <div className={`flex flex-wrap items-center justify-center gap-3 ${dayDone ? "hidden" : ""}`}>
+          {/* The controls, on one row. Below sm: they are their pictures alone —
+              the child cannot read the words anyway, and four labelled pills
+              wrapped to two rows on a phone, which is a whole row of the
+              screen spent saying what a loudspeaker and a microphone already
+              say. The words come back from sm: up, and the aria-labels carry
+              them at every size. */}
+          <div className={`class-controls flex flex-wrap items-center justify-center gap-3 ${dayDone ? "hidden" : ""}`}>
             <button
               type="button"
               onClick={() => void say([turn?.speech, turn?.question].filter(Boolean).join(" "))}
               disabled={!turn || speaking}
+              aria-label="Say it again"
               className="pressable rounded-full bg-white px-5 py-3 text-base font-black text-ink shadow-soft disabled:opacity-50"
             >
-              🔊 Say it again
+              🔊 <span className="hidden sm:inline">Say it again</span>
             </button>
             {canListen ? (
               <button
@@ -760,11 +929,12 @@ export default function AiTeacherPage() {
                 // speech itself. Waiting for a long explanation to finish is
                 // indistinguishable from a button that does not work.
                 disabled={!turn || busy || listening}
+                aria-label="Ask me anything"
                 className={`pressable rounded-full px-5 py-3 text-base font-black shadow-soft disabled:opacity-50 ${
                   listening ? "animate-pulse bg-leaf text-white" : "bg-white text-ink"
                 }`}
               >
-                🙋 Ask me anything
+                🙋 <span className="hidden sm:inline">Ask me anything</span>
               </button>
             ) : null}
             {canListen && turn?.expects !== "ready" && turn?.expects !== "trace" ? (
@@ -776,7 +946,7 @@ export default function AiTeacherPage() {
                 // plays the whole clip, so this window is seconds long — quite
                 // long enough to look like a dead microphone.
                 disabled={!turn || busy || listening}
-                className={`pressable grid h-20 w-20 place-items-center rounded-full text-3xl shadow-soft disabled:opacity-60 ${
+                className={`class-mic pressable grid h-20 w-20 place-items-center rounded-full text-3xl shadow-soft disabled:opacity-60 ${
                   listening ? "animate-pulse bg-leaf text-white" : "bg-sunshine text-ink"
                 }`}
                 aria-label={listening ? "Listening" : "Answer out loud"}
@@ -784,6 +954,27 @@ export default function AiTeacherPage() {
                 🎤
               </button>
             ) : null}
+
+            {/* The way back to the typing box on a phone or a tablet, where it
+                is folded away. The wrapper marks it `chrome` on purpose —
+                the surface has to be an ancestor for the floor rules to see it
+                — because typing is the grown-up's affordance and the touch
+                floors are for the things a child taps to learn (see "Touch
+                targets" in globals.css). A fourth 96px pill would not have
+                fitted the row, and the room belongs to the answers. */}
+            {turn?.expects === "ready" || turn?.expects === "trace" || dayDone ? null : (
+              <span data-surface="chrome" className="xl:hidden">
+                <button
+                  type="button"
+                  onClick={() => setTypingOpen((open) => !open)}
+                  aria-expanded={typingOpen}
+                  aria-label={typingOpen ? "Hide the typing box" : "Type the answer instead"}
+                  className="pressable rounded-full bg-white px-4 py-3 text-lg font-black text-ink/70 shadow-soft"
+                >
+                  ⌨️
+                </button>
+              </span>
+            )}
           </div>
 
           {/* What the microphone is doing, in words, because a four-year-old
@@ -791,7 +982,7 @@ export default function AiTeacherPage() {
           {turn?.question && turn.expects !== "ready" && turn.expects !== "trace" && !dayDone ? (
             <p
               aria-live="polite"
-              className={`text-lg font-black ${listening ? "text-leaf" : "text-ink/50"}`}
+              className={`class-status text-lg font-black ${listening ? "text-leaf" : "text-ink/50"}`}
             >
               {listening
                 ? micLevel >= HEARD_LEVEL
@@ -836,9 +1027,20 @@ export default function AiTeacherPage() {
           ) : null}
 
           {/* Typing is here for the grown-up sitting alongside, and for a
-              browser with no microphone. */}
+              browser with no microphone.
+
+              On a laptop it is always out. Below xl: it folds behind the ⌨️
+              button above, because a permanent input and its button is a row
+              the answers need on a screen that must hold everything at once —
+              and it is the one control here no child uses. Nothing about it
+              changes when it opens: the same form, the same submit. */}
           {turn?.expects === "ready" || turn?.expects === "trace" || dayDone ? null : (
-          <form onSubmit={onSubmit} className="flex w-full max-w-md flex-wrap justify-center gap-3">
+          <form
+            onSubmit={onSubmit}
+            className={`class-typing w-full max-w-md flex-wrap justify-center gap-3 ${
+              typingOpen ? "flex" : "hidden xl:flex"
+            }`}
+          >
             <input
               value={typed}
               onChange={(event) => setTyped(event.target.value)}
@@ -858,16 +1060,21 @@ export default function AiTeacherPage() {
           )}
         </div>
 
-        {/* What the bot actually did this turn, for the grown-up reading along:
-            which of the nine strategies it taught with and where the words came
-            from. The verdict is not in this list because the model has nothing
-            to do with it — `stage.judge` marks the answer in plain Python. */}
-        {turn && !dayDone ? (
-          <p className="text-center text-sm font-bold text-ink/40">
-            strategy {turn.strategy} · words from {turn.source === "llm" ? "the model" : "the notes"} ·
-            retrieval {turn.retrieval} · answers are marked by the server, never by the model
-          </p>
-        ) : null}
+        {/*
+          There was a line here saying which of the nine strategies taught this
+          turn, whether the words came from the model or the notes, which
+          retrieval found them, and that the server marks the answers. The user
+          asked for it off, and it was right to go: it was written for whoever
+          was building this, not for the child in front of it or the grown-up
+          beside them, and it was three lines of small grey text on the screen a
+          two-year-old is meant to be looking at.
+
+          None of what it said has changed - `stage.judge` still marks every
+          answer in plain Python from the authored key, and no model is upstream
+          of a star. The turn still carries `strategy`, `source` and `retrieval`
+          down the wire, and `playground_turns` still records all three, so the
+          same facts are one query away for anybody who needs them.
+        */}
       </section>
     </AppShell>
   );

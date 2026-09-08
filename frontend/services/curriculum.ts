@@ -7,6 +7,7 @@ import type {
   ExperienceMode,
   Subject,
   Topic,
+  TopicGames,
   TopicNotes
 } from "@/types";
 
@@ -39,6 +40,23 @@ export function getTopicNotes(topicId: string) {
   return shared(
     `curriculum:notes:${topicId}`,
     () => api<TopicNotes>(`/curriculum/topics/${topicId}/notes`),
+    STATIC_MS
+  );
+}
+
+/**
+ * The three games a level can offer, built from its own authored questions and
+ * pictures.
+ *
+ * Cached exactly as hard as the notes were, and for the same reason: no model
+ * writes them, nothing about them depends on the child or the day, and the
+ * syllabus is a file. Playing them sends nothing back — no attempt, no star, no
+ * plan movement — so this one GET is the whole of the conversation.
+ */
+export function getTopicGames(topicId: string) {
+  return shared(
+    `curriculum:games:${topicId}`,
+    () => api<TopicGames>(`/curriculum/topics/${topicId}/games`),
     STATIC_MS
   );
 }

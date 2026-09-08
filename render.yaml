@@ -1,0 +1,47 @@
+# Render blueprint for the API. The database is Neon (free tier, always on) and
+# the web app is Vercel, so this file describes one service only - paste the
+# Neon connection string into DATABASE_URL and the Vercel domain into
+# CORS_ORIGINS when the blueprint asks.
+#
+# Full walkthrough: docs/DEPLOYMENT.md
+services:
+  - type: web
+    name: saksham-iq-api
+    runtime: docker
+    plan: free # free spins the instance down after 15 idle minutes; `starter` does not
+    region: singapore
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+      # Neon: postgresql://user:pass@ep-xxx.ap-southeast-1.aws.neon.tech/neondb?sslmode=require
+      # `app/db/session.py` rewrites the driver, so paste it exactly as Neon gives it.
+      - key: DATABASE_URL
+        sync: false
+      # No default anywhere: outside development an unset secret closes sign-in
+      # rather than signing with something guessable.
+      - key: JWT_SECRET
+        generateValue: true
+      # The AI Teacher's model. Without a key the teacher falls back to its
+      # deterministic words - it still teaches, it just explains less well.
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+      # The Vercel domain(s), comma separated. A wrong value here is the classic
+      # "works in curl, fails in the browser" CORS failure.
+      - key: CORS_ORIGINS
+        sync: false
+      # The hand-written ladder teaches; the learned policy is recorded beside
+      # it. Do not ship `on` until app/policy/evaluate.py says it is better.
+      - key: POLICY_MODE
+        value: shadow
+      - key: POLICY_ADMIN_TOKEN
+        generateValue: true
+      # The Planner Agent's own sweep: today's plan is frozen before the child
+      # opens the app rather than built by their first request.
+      - key: PLANNER_AUTO_RUN
+        value: "1"

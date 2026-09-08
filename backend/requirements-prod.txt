@@ -1,0 +1,31 @@
+# What the deployed API installs. `requirements.txt` is the developer's list -
+# it carries pytest, httpx-as-a-test-client and sentence-transformers, and that
+# last one drags torch (~2GB) in with it.
+#
+# `app/playground/rag.py` imports sentence-transformers *inside* the function
+# that builds the embedding index and falls back to keyword search when the
+# import or the model load fails, so leaving it out here is a supported way to
+# run: retrieval is keyword-only, the AI Teacher still teaches, and the image
+# fits a small instance. Add `sentence-transformers>=3.0,<6` back to this file
+# on an instance with 2GB of RAM to spare and the index builds itself at boot.
+
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+python-dotenv
+
+psycopg[binary]>=3.2,<4
+sqlalchemy>=2.0,<3
+alembic>=1.13,<2
+
+# The Planner Agent's state graph.
+langgraph>=1.0.8,<2
+langchain-core>=1.6,<2
+
+# The guide's voice (Edge's free neural voices) and the model client.
+edge-tts>=6.1.9
+httpx
+
+# Signed parent session tokens.
+PyJWT>=2.8,<3

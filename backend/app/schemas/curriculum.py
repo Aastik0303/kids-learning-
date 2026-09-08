@@ -174,6 +174,61 @@ class TopicNotes(BaseModel):
     has_notes: bool = False
 
 
+class GameOption(BaseModel):
+    """One thing a child can tap in a level's game.
+
+    `token` is the asset name the author wrote - the client turns it into a
+    picture and draws nothing at all for one it has no artwork for. `label` is
+    what the button says, the author's own words with their own emoji on it.
+    """
+
+    token: str
+    label: str
+
+
+class GameRound(BaseModel):
+    """One asking, and which of its options is right.
+
+    `answer` is an index, never a word: the server decided it with
+    `stage.contains_answer`, the same rule the class uses to choose which
+    options may be shown and to mark a tap. A game that shows the answer and
+    then marks it wrong is worse than no game.
+    """
+
+    ask: str
+    say: str
+    options: list[GameOption] = []
+    answer: int = 0
+
+
+class LevelGame(BaseModel):
+    """One playable game about one level, built from the authored syllabus."""
+
+    topic_id: str
+    game_id: str
+    kind: str
+    title: str
+    blurb: str
+    icon: str
+    rounds: list[GameRound] = []
+    # The matching game's pack: one token per pair, dealt twice by the client.
+    tokens: list[str] = []
+
+
+class TopicGames(BaseModel):
+    """The games a level can offer, which is at most three and sometimes fewer.
+
+    Nothing here is a lesson. Playing marks nothing, scores nothing, unlocks
+    nothing and does not move the day's plan - the class is still the AI Teacher
+    and the schedule still decides when a level is taught. A level whose author
+    wrote too little comes back with fewer games rather than an invented one.
+    """
+
+    topic_id: str
+    title: str
+    games: list[LevelGame] = []
+
+
 class ClassOverrideRequest(BaseModel):
     session_token: str
     class_id: str

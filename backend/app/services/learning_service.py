@@ -363,6 +363,26 @@ def mark_weak(child: dict, topic: Topic) -> None:
         child["weak_skills"].append(skill)
 
 
+def clear_weak(child: dict, topic: Topic) -> None:
+    """A level that has just passed is not shaky ground any more.
+
+    The weak list is what `plan_service._candidates` reads to decide which level
+    of a subject the child meets today, and it puts a weak one before new
+    ground. Nothing used to take a skill back off that list, so the first level
+    a child ever struggled with became that subject's permanent answer to "what
+    is today?": letter A was failed once, taught again, passed - the star paid,
+    letter B unlocked on the map - and the schedule went on serving A every
+    morning, in every subject at once, with B unreachable behind it.
+
+    Passing is the evidence that the struggle is over, and it is the same
+    evidence the star and the unlock are paid on, so it is what clears the flag.
+    A level that goes shaky again is marked again on its next failed sitting.
+    """
+    skill = skill_slug(topic)
+    if skill in child["weak_skills"]:
+        child["weak_skills"].remove(skill)
+
+
 def _complete_topic(
     session: dict,
     child: dict,
@@ -418,6 +438,9 @@ def award_topic_completion(child: dict, topic: Topic, *, score: int) -> dict:
     if passed:
         if topic.topic_id not in progress["completed_topics"]:
             progress["completed_topics"].append(topic.topic_id)
+        # It passed, so it is no longer the subject's weak level. Without this
+        # the plan hands the child the same level for ever; see `clear_weak`.
+        clear_weak(child, topic)
         topic_reward = topic.star_reward
         child["stars"] += topic_reward
 

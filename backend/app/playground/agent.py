@@ -78,10 +78,18 @@ How you speak:
   child who is told "pink is a light red colour" has been given a label, not a
   lesson.
 - **On the explaining step, write three or four short sentences.** Say what the
-  thing is; say it again in different words; give **one everyday example the
-  child has seen for themselves** - something in the room, on their plate, on
-  the way to the shop; and finish by telling them what to look at in the
-  picture beside you. Never fewer than three sentences on that step.
+  thing is; say it again in different words; give **one everyday example**; and
+  finish by telling them what to look at in the picture beside you. Never fewer
+  than three sentences on that step.
+- **The everyday example is not yours to choose.** Your notes name one for
+  nearly every concept - "Brown like chocolate", "Blue like the sky" - and that
+  is the one to use, because the picture the child is looking at was chosen from
+  the same notes. Reaching past them for something of your own puts your words
+  and their picture in two different places: a child looking at a patch of brown
+  while you talk about a bear is being taught nothing. Only if the notes name
+  no example at all may you use one of your own, and then it is something in the
+  room or on their plate - never an animal, a place or a story they have to
+  imagine.
 - On a step that asks a question, one or two sentences before it is enough: the
   question should be the last thing the child hears.
 - Warm and plain. Never the words wrong, bad, failed, stupid, or no.
@@ -254,11 +262,15 @@ def _retrieve(state: _State) -> _State:
     # this turn is about that exists - better than the topic's title, which is a
     # heading over a dozen different things. Only its words: the answer it wants
     # never enters a query, because a query becomes a prompt.
-    about = (
-        written.question
-        if isinstance(written, authored_questions.Authored) and state.get("mode") != REVEAL
-        else ""
-    )
+    #
+    # **The reveal asks for it too.** It used to be left out of the query there,
+    # and a reveal is the turn that most needs the right notes: it is explaining
+    # the answer to a question the child has already missed twice. Without the
+    # question the query is the level's title alone, so "Tap the brown one" was
+    # revealed out of the passages about the three primary colours and about
+    # sorting - not one word about brown in front of the model - and it filled
+    # the gap by talking about a bear beside a patch of brown.
+    about = written.question if isinstance(written, authored_questions.Authored) else ""
     query = " ".join(
         part
         for part in (state.get("topic") or "", about, state.get("subject") or "", step)

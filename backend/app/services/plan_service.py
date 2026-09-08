@@ -96,6 +96,19 @@ def _today() -> date:
     return date.today()
 
 
+def today() -> date:
+    """The one clock, for the modules outside this one that must agree with it.
+
+    `_today` is the private implementation and this is the way in. The class in
+    `app/playground/` read `date.today()` directly, which is the same answer in
+    production and a different one the moment anything moves the day - a test
+    rolling the calendar forward saw the plan become tomorrow's while the class
+    still believed yesterday's `day_complete` row was today's and stayed shut.
+    A per-family timezone would break it the same way, for real children.
+    """
+    return _today()
+
+
 def _child_uuid(child_id: str) -> UUID | None:
     try:
         return UUID(str(child_id))

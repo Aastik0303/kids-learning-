@@ -27,6 +27,7 @@ deterministic teacher reading the notes back - which is exactly the path that ha
 to work when Groq is down.
 """
 
+import pathlib
 import re
 from datetime import date, timedelta
 
@@ -502,6 +503,43 @@ def test_an_example_belongs_to_the_card_and_not_to_the_rest_of_the_level():
     assert "ball" in circle, "the author put the ball beside the circle themselves"
 
 
+def test_every_thing_the_server_may_name_has_a_drawing_behind_it():
+    """`visuals.THINGS` is a promise that the client can draw the token.
+
+    The two lists live in different languages - the names here, the strokes in
+    `chalkArt.ts` - so this reads the TypeScript and fails if a name has no
+    drawing behind it. A name with nothing behind it is a card that says it has
+    a picture and then shows an empty space.
+    """
+    art_file = (
+        pathlib.Path(__file__).resolve().parents[2]
+        / "frontend"
+        / "components"
+        / "blackboard"
+        / "chalkArt.ts"
+    )
+    if not art_file.exists():  # pragma: no cover - backend checked out alone
+        pytest.skip("the frontend is not in this checkout")
+
+    source = art_file.read_text(encoding="utf-8")
+    body = source.split("const ART: Record<string, ChalkArt> = {", 1)[1]
+    drawn = set(re.findall(r"^  ([a-z_0-9]+):", body[: body.index(chr(10) + "};")], re.M))
+    aliases = dict(
+        re.findall(
+            r'^  ([a-z_0-9]+): "([a-z_0-9]+)"',
+            source.split("const ALIASES: Record<string, string> = {", 1)[1].split("};", 1)[0],
+            re.M,
+        )
+    )
+
+    missing = [
+        name
+        for name in visuals.THINGS
+        if name not in drawn and aliases.get(name) not in drawn
+    ]
+    assert not missing, f"named but never drawn: {missing}"
+
+
 def test_a_turn_is_taught_from_the_notes_for_the_question_it_is_asking():
     """The card that asks about the monkey is not taught the bear.
 
@@ -531,6 +569,38 @@ def test_a_turn_is_taught_from_the_notes_for_the_question_it_is_asking():
             if other.skill_id == written.skill_id:
                 continue
             assert other.answer.lower() not in taught, f"{written.question} taught {other.answer}"
+
+
+def test_a_reveal_reads_the_notes_for_the_question_it_is_revealing():
+    """The turn that explains the answer needs the right notes most of all.
+
+    The author's question used to be left out of the query on a reveal, so the
+    query was the level's title alone: "Tap the brown one" was revealed out of
+    the passages about the three primary colours and about sorting, with not one
+    word about brown in front of the model. It filled the gap by talking about a
+    bear, beside a picture of a patch of brown.
+
+    A reveal is already told the answer outright - it has to say it - so there
+    was never anything to protect by hiding the question from the retriever.
+    """
+    written = next(q for q in questions.for_topic("nur_maths_colours") if q.answer == "brown")
+    for mode in (agent.ASK, agent.HINT, agent.REVEAL):
+        state = {
+            "subject": "Basic Mathematics",
+            "topic": "Colours",
+            "topic_id": "nur_maths_colours",
+            "class_id": "nursery",
+            "step": lesson.MATCH,
+            "spent": [],
+            "asked": written,
+            "mode": mode,
+            "answer": written.answer,
+            "question": written.question,
+        }
+        state.update(agent._retrieve(state))
+        taught = " ".join(state["passages"]).lower()
+        assert "brown" in taught, mode
+        assert "magic colours" not in taught, f"{mode} was taught the primary colours instead"
 
 
 def test_narrowing_the_notes_to_one_card_never_leaves_none():
@@ -568,9 +638,13 @@ def test_the_answer_has_the_last_word_on_what_the_board_draws():
     assert visuals.for_card("the triangle 🔺", square).as_token() == "shape:triangle"
     assert visuals.for_card("red", square).as_token() == "colour:red"
     assert visuals.for_card("A", square).as_token() == "letter:A"
-    # And it stands back when the answer is a thing rather than a concept, or
+    # An everyday thing counts too, now that the app can draw one: a card whose
+    # answer is the cow is a card about the cow.
+    assert visuals.for_card("cow", square).as_token() == "thing:cow"
+    assert visuals.for_card("apple", square).as_token() == "thing:apple"
+    # And it stands back when the answer names nothing anybody has drawn, or
     # when there is no question at all - the explaining step has none.
-    assert visuals.for_card("apple", square) == square
+    assert visuals.for_card("thank you", square) == square
     assert visuals.for_card("", square) == square
 
 

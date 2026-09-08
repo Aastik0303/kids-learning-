@@ -15,10 +15,11 @@ from app.schemas.curriculum import (
     ExperienceMode,
     Subject,
     Topic,
+    TopicGames,
     TopicNotes,
 )
 from app.schemas.learning import Activity
-from app.playground import notes as topic_notes
+from app.playground import games as topic_games, notes as topic_notes
 from app.services import child_service, curriculum_service
 
 router = APIRouter(prefix="/curriculum", tags=["curriculum"])
@@ -74,6 +75,27 @@ def get_topic_notes(topic_id: str) -> TopicNotes:
     surface a gap in the syllabus.
     """
     return TopicNotes(**vars(topic_notes.for_topic(topic_id)))
+
+
+@router.get("/topics/{topic_id}/games", response_model=TopicGames)
+def get_topic_games(topic_id: str) -> TopicGames:
+    """Three games about this level, out of the syllabus the class teaches from.
+
+    What a child gets from the Adventure map instead of a page of notes they
+    cannot read. Every question, choice and picture in it was typed by the
+    person who wrote the level - no model is anywhere upstream - and which
+    option is right was decided by `stage.contains_answer`, the same rule the
+    class marks a tap with.
+
+    Playing writes nothing. No attempt, no probe, no episode, no star, no plan
+    movement, and no lesson starts from here: the class is still the AI Teacher
+    and the schedule still decides when a level is taught.
+
+    A level whose author wrote too little to build three comes back with fewer -
+    or with none - rather than an invented game.
+    """
+    built = topic_games.for_topic(topic_id)
+    return TopicGames.model_validate(built, from_attributes=True)
 
 
 @router.get("/children/{child_id}/class", response_model=ClassDetail)

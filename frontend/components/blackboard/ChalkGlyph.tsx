@@ -31,6 +31,7 @@ export type ChalkGlyphProps = {
 };
 
 const CHALK = "#f6f8f3";
+const INK = "#25313f";
 const GLYPH_FONT = "'Segoe Print', 'Bradley Hand', system-ui, 'Nirmala UI', sans-serif";
 
 function sizeFor(text: string): number {
@@ -48,7 +49,7 @@ export function ChalkGlyph({
   playKey,
   durationMs = 1500,
   delayMs = 0,
-  colour = CHALK,
+  colour = INK,
   className,
   label
 }: ChalkGlyphProps) {

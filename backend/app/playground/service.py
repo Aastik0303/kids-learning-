@@ -55,7 +55,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import select
@@ -924,7 +924,9 @@ def open_session(child_id: str) -> TeacherTurn:
     profile = child_service.get_child(child_id)
     subject_id, topics = _plan_topics(child_id)
     child_uuid = UUID(profile.child_id)
-    today = date.today()
+    # The schedule's clock, not this module's: the two must never disagree
+    # about which day it is, or the class shuts on a plan that has moved on.
+    today = plan_service.today()
 
     with session_scope() as session:
         row = session.scalar(

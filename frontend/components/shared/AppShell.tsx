@@ -154,7 +154,30 @@ function ParentDrawer({
   );
 }
 
-export function AppShell({ children, title = "Saksham IQ" }: { children: React.ReactNode; title?: string }) {
+export function AppShell({
+  children,
+  title = "Saksham IQ",
+  fit = false
+}: {
+  children: React.ReactNode;
+  title?: string;
+  /**
+   * This page has to fit one screen on a phone and a tablet.
+   *
+   * A child of two or three does not scroll to find the rest of the question,
+   * and a grown-up holding the phone for them should not have to either. A
+   * `fit` page is pinned to the viewport (`100dvh`, nothing below the fold)
+   * and lays itself out as a column whose flexible part - the drawing in the
+   * class, the board in a game - absorbs whatever room is left over. From
+   * `xl:` up nothing changes: a laptop has the height, and the page flows as
+   * it always did. The cutoff is 1280px rather than 1024 because a tablet held
+   * sideways is 1024px wide and is exactly the case this is for.
+   *
+   * The one-screen rules live in `globals.css` under "One screen"; this flag
+   * is only what turns them on, so a page cannot half-opt-in.
+   */
+  fit?: boolean;
+}) {
   const pathname = usePathname();
   // The shell shares one source of truth with the pages inside it, so the
   // header, the drawer and the page can never disagree about who is signed in.
@@ -230,7 +253,12 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
     // Bottom padding is NOT a fixed pb-36 any more. The dock measures itself
     // and publishes --dock-height, so the reserved space always matches the
     // real dock instead of a guess that goes stale the moment it reflows.
-    <main data-surface={surface} data-experience-mode={detail?.experience.mode_id ?? "standard"} className="app-shell-main mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pt-4 sm:px-6">
+    <main
+      data-surface={surface}
+      data-experience-mode={detail?.experience.mode_id ?? "standard"}
+      data-fit={fit ? "true" : undefined}
+      className="app-shell-main mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 pt-4 sm:px-6"
+    >
       <header data-surface="chrome" className="nav-shell no-print sticky top-3 z-40 mb-5 rounded-[2rem] px-4 py-3 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-3 text-xl font-black text-ink">
@@ -276,7 +304,10 @@ export function AppShell({ children, title = "Saksham IQ" }: { children: React.R
           class is built stage-for-item out of it, so it is the rule the child
           is living inside rather than a page's decoration. */}
       <ScheduleStrip />
-      {children}
+      {/* `display: contents` when the page is not a fit page, so this wrapper
+          is invisible to layout and every existing screen is untouched. On a
+          fit page it is the flexing column the one-screen rules hang off. */}
+      <div className={fit ? "fit-body" : "contents"}>{children}</div>
       <AvatarDock />
 
       {/* Phone navigation. The header row is desktop-only, which left a phone

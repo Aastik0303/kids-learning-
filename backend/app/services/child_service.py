@@ -192,7 +192,9 @@ def sync_class_progress(child: dict) -> dict:
     if not child.get("class_id"):
         return child
     for subject in curriculum_service.get_class(child["class_id"]).subjects:
-        _forget_departed_topics(subject_progress(child, subject.subject_id), subject)
+        progress = subject_progress(child, subject.subject_id)
+        _forget_departed_topics(progress, subject)
+        _open_what_completions_earned(progress, subject)
     return child
 
 
@@ -218,6 +220,42 @@ def _forget_departed_topics(progress: dict, subject) -> None:
         unfinished = [t for t in progress["unlocked_topics"] if t not in progress["completed_topics"]]
         candidates = unfinished or progress["unlocked_topics"]
         progress["current_topic_id"] = candidates[0] if candidates else None
+
+
+def _open_what_completions_earned(progress: dict, subject) -> None:
+    """Every finished topic opens the one after it. Say so again on read.
+
+    Finishing a level unlocks the next one, and `award_topic_completion` writes
+    both facts in the same breath. They can still come apart: a record written
+    before this rule existed, an id that was renamed and pruned out of
+    `unlocked_topics` by `_forget_departed_topics` above while the completion
+    survived, a subject whose last topic was completed and which then grew
+    another one in the manifest.
+
+    When they do, the subject is not merely untidy - it is finished as far as
+    the schedule can tell. `plan_service._candidates` looks for the first
+    *unlocked* topic this child has not completed, and there is none, so the
+    subject drops out of the day altogether and can never come back on its own:
+    a child with one completed EVS level and nothing unlocked behind it simply
+    stops being taught EVS. Restating the rule here is deterministic - it is the
+    manifest's own sort order, the same one `learning_service._next_topic` uses -
+    and it grants nothing that was not already earned.
+    """
+    ordered = subject.topics
+    unlocked = list(progress.get("unlocked_topics", []))
+    completed = set(progress.get("completed_topics", []))
+    for index, topic in enumerate(ordered[:-1]):
+        following = ordered[index + 1].topic_id
+        if topic.topic_id in completed and following not in unlocked:
+            unlocked.append(following)
+    progress["unlocked_topics"] = unlocked
+
+    # "Where am I" follows the board: a pointer left on a finished level while
+    # an unfinished one is now open is the same drift one step further on.
+    if progress.get("current_topic_id") in completed:
+        unfinished = [topic_id for topic_id in unlocked if topic_id not in completed]
+        if unfinished:
+            progress["current_topic_id"] = unfinished[0]
 
 
 def refresh_certificate_eligibility(child: dict) -> bool:

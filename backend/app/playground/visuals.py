@@ -20,6 +20,45 @@ from dataclasses import dataclass
 
 
 SHAPES = ("circle", "square", "triangle", "rectangle", "star")
+
+# The everyday things the client has real artwork for.
+#
+# A shapes-and-letters vocabulary left every animal, fruit and vehicle in the
+# syllabus with an empty card: forty-two levels taught a cow, a bus or an apple
+# with nothing at all on the screen beside the question. These are the tokens
+# `frontend/components/blackboard/chalkArt.ts` holds hand-written strokes for,
+# so naming one here means a drawing really exists for it.
+#
+# **A model never names one of these.** `parse` - which is what reads a token
+# the model chose - does not accept `thing:` at all. The only thing that
+# produces one is `for_card`, out of the answer a *person* wrote in the
+# syllabus, so an animal on the screen is as deterministic as the question it
+# belongs to. The client is the second gate: a token it has no strokes for
+# draws nothing rather than something else.
+#
+# Kept in step with the art by `tests/test_playground_teacher.py`, which reads
+# the TypeScript and fails if a name here has no drawing behind it.
+THINGS = (
+    "aam", "apple", "apples", "bag", "ball", "balloon",
+    "balloons", "banana", "bear", "bird", "boat", "book",
+    "books", "bottle", "box", "bread", "buffalo", "bull",
+    "bunny", "bus", "calf", "camel", "candle", "car",
+    "cat", "chick", "clock", "cloud", "cloudy", "cockerel",
+    "cone", "cow", "cricketball", "crow", "cub", "cup",
+    "day", "dholak", "diya", "dog", "donkey", "door",
+    "drum", "duck", "egg", "elephant", "fish", "flower",
+    "football", "frog", "giraffe", "glass", "goat", "hen",
+    "home", "horse", "house", "hut", "ice_cream", "icecream",
+    "jeep", "kamal", "kite", "kitten", "lamp", "leaf",
+    "leaves", "lion", "lotus", "mango", "mangoes", "monkey",
+    "moon", "mouse", "mug", "night", "notebook", "owl",
+    "ox", "parrot", "patang", "peacock", "pig", "plant",
+    "pony", "puppy", "rabbit", "rain", "raincoat", "rainy",
+    "rat", "rooster", "school", "schoolbag", "seb", "serpent",
+    "sheep", "ship", "snake", "sun", "sunny", "tabla",
+    "taxi", "tiger", "tortoise", "tree", "turtle", "ullu",
+    "umbrella", "van", "watch", "yak", "zebra",
+)
 COLOURS = ("red", "blue", "yellow", "green", "orange", "purple", "pink", "brown", "black", "white")
 
 # How many things a counting picture may show. Ten is the top of the notes and
@@ -84,8 +123,36 @@ def parse(token: str | None) -> Visual:
     return Visual()
 
 
-def _read(haystack: str, *, letters_from: str = "") -> Visual:
-    """The one thing a piece of text is about, or nothing."""
+def _clean_words(text: str) -> list[str]:
+    """The words of a piece of text, lowercase, punctuation gone."""
+    return [word for word in re.split(r"[^a-z0-9]+", (text or "").lower()) if word]
+
+
+def _thing_in(text: str) -> Visual:
+    """The first everyday thing named in this text, if the app can draw it.
+
+    Whole words only, longest run first, so "ice cream" beats "cream" and a
+    "football" is not found inside "footballer". Nothing is guessed: a word that
+    is not in `THINGS` is not a thing.
+    """
+    words = _clean_words(text)
+    for size in (3, 2, 1):
+        for start in range(0, max(0, len(words) - size + 1)):
+            run = words[start : start + size]
+            for candidate in ("_".join(run), "".join(run)):
+                if candidate in THINGS:
+                    return Visual(kind="thing", value=candidate)
+    return Visual()
+
+
+def _read(haystack: str, *, letters_from: str = "", things: bool = False) -> Visual:
+    """The one thing a piece of text is about, or nothing.
+
+    `things` is off by default and stays off for anything read out of a model's
+    prose: the first noun in a long explanation that happens to be drawable is
+    not what the card is about. It is on for a level's own title and for an
+    authored answer, both of which a person wrote.
+    """
     shape = next((name for name in SHAPES if re.search(rf"\b{name}s?\b", haystack, re.I)), "")
     if shape:
         return Visual(kind="shape", value=shape)
@@ -120,6 +187,12 @@ def _read(haystack: str, *, letters_from: str = "") -> Visual:
     if devanagari:
         return Visual(kind="letter", value=devanagari.group(1))
 
+    # Last, and only where a person wrote the words: the cow, the bus, the
+    # apple. Last because a level on the letter A whose picture word is an
+    # apple is about the letter, not about the apple.
+    if things:
+        return _thing_in(haystack)
+
     return Visual()
 
 
@@ -139,10 +212,10 @@ def from_concept(topic_title: str, explanation: str = "") -> Visual:
     # comes after it is the thing itself.
     named = topic_title.split(":", 1)[1] if ":" in topic_title else topic_title
 
-    titled = _read(named, letters_from=named)
+    titled = _read(named, letters_from=named, things=True)
     if titled.is_shown:
         return titled
-    titled = _read(topic_title, letters_from=topic_title)
+    titled = _read(topic_title, letters_from=topic_title, things=True)
     if titled.is_shown:
         return titled
     return _read(f"{topic_title} {explanation}", letters_from=topic_title)
@@ -177,6 +250,7 @@ __all__ = [
     "COLOURS",
     "MAX_COUNT",
     "SHAPES",
+    "THINGS",
     "Visual",
     "for_card",
     "from_concept",
