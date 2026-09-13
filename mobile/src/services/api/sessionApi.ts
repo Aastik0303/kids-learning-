@@ -1,19 +1,13 @@
-import { apiClient, checkHealth } from "@/services/api/client";
-import type { ChildProfile } from "@/types/domain";
+import { checkHealth } from "@/services/api/client";
 
 /**
- * Cross-cutting session concerns that don't belong to a single feature:
- * connectivity probing and the dev-only seed route.
+ * Cross-cutting session concerns that do not belong to a single feature.
+ *
+ * The dev-only seed route that used to live here is gone. It unlocked and
+ * completed a child's whole class in one call so the certificate could be
+ * demonstrated, and a shipped app has no business being able to ask for that -
+ * the server does not mount the route outside development either.
  */
 export const sessionApi = {
   health: checkHealth,
-
-  /**
-   * Dev-only: unlocks the mixed final path so the certificate flow can be
-   * demoed without playing every stage. Guarded server-side in
-   * `backend/app/api/dev.py`.
-   */
-  seedChild(childId: string) {
-    return apiClient.post<ChildProfile>(`/dev/seed/${childId}`);
-  },
 };

@@ -44,7 +44,7 @@ export function GuestHomeScreen() {
 
       // Remember the destination before the auth detour.
       setPendingIntent({
-        screen: "Classes",
+        screen: "Adventure",
         params: { featureId },
         label: title,
       });
@@ -55,7 +55,7 @@ export function GuestHomeScreen() {
   );
 
   const startLearning = useCallback(() => {
-    setPendingIntent({ screen: "ChildHome", label: "Start learning" });
+    setPendingIntent({ screen: "Class", label: "Start learning" });
     navigation.navigate("Auth", { screen: "SignUp" });
   }, [navigation, setPendingIntent]);
 
@@ -86,16 +86,15 @@ export function GuestHomeScreen() {
           <View style={{ gap: theme.space[3] }}>
             <Button label="Start learning" icon="🚀" tone="primary" onPress={startLearning} />
             <Button
-              label="Explore features"
-              icon="✨"
+              label="I already have an account"
               tone="quiet"
-              onPress={() => navigation.navigate("FeatureDemo", { featureId: "alphabets" })}
+              onPress={() => navigation.navigate("Auth", { screen: "Login" })}
             />
           </View>
         </Card>
 
         {/* ── Featured classes ───────────────────────────────────────── */}
-        <Section title="What your child will learn" subtitle="Tap any card to see it in action.">
+        <Section title="What your child will learn" subtitle="Tap any card to get started.">
           <ResponsiveGrid columns={{ smallPhone: 1, phone: 2, tablet: 3, largeTablet: 4 }}>
             {FEATURES.map((feature) => (
               <FeatureCard

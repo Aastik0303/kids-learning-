@@ -3,6 +3,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { View } from "react-native";
 
 import { Text } from "@/components/common/Text";
+import { AdventureScreen } from "@/screens/child/AdventureScreen";
+import { AdventureSubjectScreen } from "@/screens/child/AdventureSubjectScreen";
+import { AdventureLevelScreen } from "@/screens/child/AdventureLevelScreen";
+import { AiTeacherScreen } from "@/screens/child/AiTeacherScreen";
 import { ChildHomeScreen } from "@/screens/child/ChildHomeScreen";
 import { ClassesScreen } from "@/screens/child/ClassesScreen";
 import { ClassDetailScreen } from "@/screens/child/ClassDetailScreen";
@@ -22,9 +26,16 @@ const Stack = createNativeStackNavigator<ChildStackParamList>();
 const Tabs = createBottomTabNavigator<ChildTabParamList>();
 
 /**
- * Child tabs. In toddler mode the bar is hidden entirely — a 2-year-old
- * gets one activity at a time and no navigation to get lost in
- * (spec section 4).
+ * Child tabs: the class, the board, the shelf.
+ *
+ * The app opens on **Class** - the AI Teacher - because the child does not pick
+ * a lesson. The sitting is already happening, built out of today's frozen plan,
+ * one stage per planned level. **Adventure** shows where every level stands and
+ * hands back a game about any the child has already been given; it starts
+ * nothing. **Rewards** is the shelf.
+ *
+ * In toddler mode the bar is hidden entirely - a two-year-old gets one thing at
+ * a time and no navigation to get lost in.
  */
 function ChildTabs() {
   const theme = useTheme();
@@ -52,24 +63,28 @@ function ChildTabs() {
       }}
     >
       <Tabs.Screen
-        name="ChildHome"
-        component={ChildHomeScreen}
-        options={{ title: "Home", tabBarIcon: ({ focused }) => <TabIcon icon="🏠" focused={focused} /> }}
+        name="Class"
+        component={AiTeacherScreen}
+        options={{
+          title: "Class",
+          tabBarIcon: ({ focused }) => <TabIcon icon="🧑‍🏫" focused={focused} />,
+        }}
       />
       <Tabs.Screen
-        name="Classes"
-        component={ClassesScreen}
-        options={{ title: "Classes", tabBarIcon: ({ focused }) => <TabIcon icon="📚" focused={focused} /> }}
-      />
-      <Tabs.Screen
-        name="Practice"
-        component={PracticeScreen}
-        options={{ title: "Practice", tabBarIcon: ({ focused }) => <TabIcon icon="🎯" focused={focused} /> }}
+        name="Adventure"
+        component={AdventureScreen}
+        options={{
+          title: "Adventure",
+          tabBarIcon: ({ focused }) => <TabIcon icon="🗺️" focused={focused} />,
+        }}
       />
       <Tabs.Screen
         name="Rewards"
         component={RewardsScreen}
-        options={{ title: "Rewards", tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} /> }}
+        options={{
+          title: "Rewards",
+          tabBarIcon: ({ focused }) => <TabIcon icon="🏆" focused={focused} />,
+        }}
       />
     </Tabs.Navigator>
   );
@@ -87,11 +102,19 @@ export function ChildNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false, animation: "slide_from_right" }}>
       <Stack.Screen name="ChildTabs" component={ChildTabs} />
+
+      {/* The board's two deeper pages. Status and play, never a lesson. */}
+      <Stack.Screen name="AdventureSubject" component={AdventureSubjectScreen} />
+      <Stack.Screen name="AdventureLevel" component={AdventureLevelScreen} />
+
+      {/* The older surfaces. Off the tab bar - nothing a child taps reaches
+          them - and kept registered so a grown-up's route in still resolves. */}
+      <Stack.Screen name="ChildHome" component={ChildHomeScreen} />
+      <Stack.Screen name="Classes" component={ClassesScreen} />
+      <Stack.Screen name="Practice" component={PracticeScreen} />
       <Stack.Screen name="ClassDetail" component={ClassDetailScreen} />
-      {/* Lessons animate up and own the full screen — no tab bar, no exit
-          affordance beyond an explicit, deliberate control. */}
       <Stack.Screen
-        name="Class"
+        name="ConductedClass"
         component={ClassScreen}
         options={{ animation: "slide_from_bottom", gestureEnabled: false }}
       />

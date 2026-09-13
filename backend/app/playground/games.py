@@ -39,7 +39,7 @@ import re
 from dataclasses import dataclass, field
 
 from app.playground import questions, stage as stage_rules
-from app.services import curriculum_service
+from app.services import cache, curriculum_service
 
 
 logger = logging.getLogger(__name__)
@@ -266,12 +266,24 @@ def _pop_game(topic_id: str, rounds: tuple[GameRound, ...]) -> LevelGame | None:
     )
 
 
+_games_cache = cache.content_cache("playground.games", maxsize=512)
+
+
 def for_topic(topic_id: str) -> TopicGames:
     """The three games this level can offer, and only the ones it really can.
 
     Read-only in every sense: nothing here writes a row, and playing what it
     returns writes nothing either.
+
+    Cached, and cacheable precisely *because* of that: the same level offers the
+    same three games on every afternoon, which is the rule this module already
+    kept for its own reasons. A child who opens a level page waits on the
+    syllabus being walked otherwise, and they open it over and over.
     """
+    return _games_cache.get_or_compute(topic_id, lambda: _build_games(topic_id))
+
+
+def _build_games(topic_id: str) -> TopicGames:
     try:
         topic = curriculum_service.get_topic(topic_id)
         title = topic.title

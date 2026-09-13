@@ -7,10 +7,9 @@ export type User = {
 /**
  * A signed-in parent, and the bearer token that says so.
  *
- * `session_token` and `access_token` are the same signed JWT. The first name is
- * what every client already stores and sends back as `X-Demo-Session`; the
- * second, with `token_type` and `expires_in`, is the ordinary bearer shape the
- * API also accepts as `Authorization: Bearer <token>`.
+ * `session_token` and `access_token` are the same signed JWT. This client sends
+ * it as `Authorization: Bearer <token>`; the older `session_token` name is kept
+ * on the response because a shipped mobile build still reads it.
  */
 export type AuthResponse = {
   session_token: string;
@@ -19,6 +18,41 @@ export type AuthResponse = {
   /** Seconds, matching the server-side session the token names. */
   expires_in: number;
   user: User;
+  /**
+   * Whether that call created the account. Google has one button for signing in
+   * and signing up, so this is what tells the two apart: a brand-new parent is
+   * sent to set their child up, a returning one straight to the class.
+   */
+  is_new_account: boolean;
+};
+
+/**
+ * What `POST /auth/login` answers when the password was right and a code has
+ * been emailed. Deliberately not an `AuthResponse` with empty fields - there is
+ * no session in it and nothing here can be turned into one.
+ */
+export type SignInChallenge = {
+  otp_required: true;
+  challenge_id: string;
+  /** Enough of the address to recognise, never the whole of it. */
+  email_hint: string;
+  expires_in: number;
+  resend_after: number;
+  /** Development machines with no mailer only. Null everywhere that matters. */
+  dev_code: string | null;
+};
+
+/** The two things signing in with a password can produce. */
+export type LoginResult = AuthResponse | SignInChallenge;
+
+export function isSignInChallenge(result: LoginResult): result is SignInChallenge {
+  return (result as SignInChallenge).otp_required === true;
+}
+
+/** Whether the server can verify a Google sign-in, and the client id to ask with. */
+export type GoogleAuthConfig = {
+  enabled: boolean;
+  client_id: string;
 };
 
 /** Presentation rules for an age band. Served from the manifest, never hardcoded. */

@@ -1,5 +1,5 @@
 import { apiClient } from "@/services/api/client";
-import type { AuthResponse, SessionResponse } from "@/types/domain";
+import type { AuthResponse, LoginResult, SessionResponse } from "@/types/domain";
 
 /** POST /auth/* — see `backend/app/api/auth.py`. */
 export const authApi = {
@@ -7,8 +7,32 @@ export const authApi = {
     return apiClient.post<AuthResponse>("/auth/register", { name, email, password });
   },
 
+  /**
+   * Check the password. This does **not** necessarily sign anybody in.
+   *
+   * Where the emailed code is switched on, what comes back is a challenge with
+   * no token in it and `verifyCode` finishes the sign-in. Callers must read
+   * which of the two arrived - `isSignInChallenge` - rather than reaching for
+   * `session_token` and getting undefined.
+   */
   login(email: string, password: string) {
-    return apiClient.post<AuthResponse>("/auth/login", { email, password });
+    return apiClient.post<LoginResult>("/auth/login", { email, password });
+  },
+
+  /** Spend the emailed code. The only thing that mints a session on this path. */
+  verifyCode(challengeId: string, code: string) {
+    return apiClient.post<AuthResponse>("/auth/otp/verify", {
+      challenge_id: challengeId,
+      code,
+    });
+  },
+
+  /** Another code on the same challenge. Behind a cooldown on the server. */
+  resendCode(challengeId: string) {
+    return apiClient.post<{ ok: boolean; message: string; resend_after: number; dev_code: string | null }>(
+      "/auth/otp/resend",
+      { challenge_id: challengeId },
+    );
   },
 
   logout(sessionToken: string) {

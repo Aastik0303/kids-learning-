@@ -25,10 +25,17 @@ export function LoginScreen() {
 
   const submit = useCallback(
     async ({ email, password }: { email: string; password: string }) => {
-      const ok = await login(email.trim(), password);
+      const result = await login(email.trim(), password);
+      // A right password is not necessarily a session any more: where the
+      // emailed code is on, the server answers with a challenge and the code
+      // screen is what finishes the sign-in.
+      if (result === "code-sent") {
+        navigation.navigate("VerifyCode");
+        return;
+      }
       // On success RootNavigator swaps stacks once a child is selected;
       // AuthNavigator's computed initial route handles the middle step.
-      if (ok) navigation.navigate("ChildSelect");
+      if (result === "signed-in") navigation.navigate("ChildSelect");
     },
     [login, navigation],
   );

@@ -45,11 +45,26 @@ def get_engine() -> Engine:
         engine = create_engine(url, future=True, connect_args={"check_same_thread": False})
         _enable_sqlite_foreign_keys(engine)
         return engine
+    settings = get_settings()
     return create_engine(
         url,
         future=True,
+        # A managed Postgres closes an idle connection on its own side without
+        # telling the pool, and the first query on a dead one fails. `pre_ping`
+        # is the safety net - one cheap round trip per checkout - and
+        # `pool_recycle` is what keeps it from being needed, by retiring a
+        # connection before the server gets round to it.
         pool_pre_ping=True,
-        connect_args={"connect_timeout": get_settings().database_connect_timeout},
+        pool_recycle=settings.database_pool_recycle_seconds,
+        # Sized rather than left at the default. The default pool is five with
+        # ten overflow, which on a managed instance with a low connection cap is
+        # two workers away from "too many clients already" - and a request that
+        # cannot get a connection should find that out in `pool_timeout` seconds
+        # rather than holding a worker until something else gives up.
+        pool_size=settings.database_pool_size,
+        max_overflow=settings.database_max_overflow,
+        pool_timeout=settings.database_pool_timeout,
+        connect_args={"connect_timeout": settings.database_connect_timeout},
     )
 
 

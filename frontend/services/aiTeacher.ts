@@ -81,6 +81,21 @@ export type TeacherTurn = {
    * Never the answer to what is being asked: the server drops those.
    */
   example_items?: string[];
+  /**
+   * The everyday words this card may never illustrate: the examples belonging
+   * to the concept's *siblings*. A teacher explaining the triangle reaches for
+   * a contrast - "three corners, not round like a ball" - and the class shows
+   * the example it is saying as it says it, so a ball appeared beside "Tap the
+   * triangle!". Which concept a word is a picture of is the server's to know;
+   * this client only has a table of pictures.
+   */
+  not_examples?: string[];
+  /**
+   * This stage is a poem rather than a level. Every fifth day one subject's
+   * level steps aside for one: there is no question, nothing is marked, and the
+   * only thing to do is listen and carry on.
+   */
+  is_poem?: boolean;
   feedback?: string;
   /** Null when the turn was not an answer — the reveal included. */
   is_correct?: boolean | null;

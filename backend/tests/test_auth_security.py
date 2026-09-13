@@ -13,6 +13,7 @@ from datetime import timedelta
 import pytest
 from fastapi.testclient import TestClient
 
+from app.config import get_settings
 from app.db.models import AuthSession, AuthThrottle, PasswordReset
 from app.db.repositories import security
 from app.db.session import session_scope
@@ -182,16 +183,21 @@ def test_an_unknown_address_gets_the_same_answer(client: TestClient, registered)
 
 
 def test_production_never_returns_the_token(client: TestClient, registered, monkeypatch):
-    """The token comes back only because there is no mailer yet, and that
-    exception has to stop at the production boundary."""
+    """The token comes back only where there is no mailer to send it with, and
+    that exception has to stop at the production boundary.
 
-    class _Production:
-        env = "production"
-        password_hash_rounds = 1000
-
-    monkeypatch.setattr(auth_service, "get_settings", lambda: _Production())
-
-    body = client.post("/auth/password/forgot", json={"email": EMAIL}).json()
+    Driven through the real settings rather than a stub object: what decides
+    this is `ENV` *and* whether SMTP is configured, and a hand-rolled stub with
+    two attributes on it stops exercising the second one the moment a mailer
+    exists.
+    """
+    monkeypatch.setenv("ENV", "production")
+    monkeypatch.setenv("SMTP_HOST", "")
+    get_settings.cache_clear()
+    try:
+        body = client.post("/auth/password/forgot", json={"email": EMAIL}).json()
+    finally:
+        get_settings.cache_clear()
 
     assert body["ok"] is True
     assert body["reset_token"] is None

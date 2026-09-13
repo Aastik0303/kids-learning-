@@ -37,11 +37,19 @@ const GLYPH_FONT = "'Segoe Print', 'Bradley Hand', system-ui, 'Nirmala UI', sans
 function sizeFor(text: string): number {
   // Counted in code points, not UTF-16 units: अं is one letter written with two
   // of them, and sizing it as two would shrink a single Hindi letter by a fifth.
+  //
+  // A letter is written as large as the box will take. The sizes below used to
+  // leave a third of the box empty round a single character, which was only
+  // visible once the drawings beside it started filling theirs: on the board
+  // the teacher holds, the letter of a letters lesson came out smaller than the
+  // circle of a shapes one. A capital at 88 is about 62 units of ink inside a
+  // 100-unit box, which is the most that fits with the widest letters - W, M,
+  // and the Devanagari that carries a matra above and below - still inside it.
   const length = Array.from(text.trim()).length;
-  if (length <= 1) return 68;
-  if (length === 2) return 54;
-  if (length === 3) return 42;
-  return Math.max(18, Math.round(130 / length));
+  if (length <= 1) return 88;
+  if (length === 2) return 66;
+  if (length === 3) return 50;
+  return Math.max(18, Math.round(155 / length));
 }
 
 export function ChalkGlyph({

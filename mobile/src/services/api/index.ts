@@ -2,10 +2,13 @@ export { ApiError, apiClient, checkHealth, request } from "@/services/api/client
 export type { ApiErrorKind, RequestOptions } from "@/services/api/client";
 export { authApi } from "@/services/api/authApi";
 export { childApi } from "@/services/api/childApi";
+export { curriculumApi } from "@/services/api/curriculumApi";
 export { guideApi } from "@/services/api/guideApi";
 export { learningApi } from "@/services/api/learningApi";
+export { planApi } from "@/services/api/planApi";
 export { practiceApi } from "@/services/api/practiceApi";
 export { progressApi } from "@/services/api/progressApi";
 export { sessionApi } from "@/services/api/sessionApi";
 export { speechApi } from "@/services/api/speechApi";
+export { teacherApi } from "@/services/api/teacherApi";
 export { toddlerApi } from "@/services/api/toddlerApi";

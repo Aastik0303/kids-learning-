@@ -57,7 +57,7 @@ export function ClassDetailScreen() {
             label="Go to practice"
             icon="🎯"
             tone="primary"
-            onPress={() => navigation.navigate("ChildTabs", { screen: "Practice" })}
+            onPress={() => navigation.navigate("Practice")}
           />
         </View>
       </Screen>

@@ -37,7 +37,10 @@ export function listChildren(session_token: string) {
   // read; anything that changes the child - finishing a lesson, editing the
   // profile - calls `forgetChildren`.
   return shared(`children:${session_token}`, () =>
-    api<ChildProfile[]>("/children", { headers: { "X-Demo-Session": session_token } })
+    // The standard bearer shape. This used to be a bespoke `X-Demo-Session`
+    // header from the prototype; the server accepts both, so the rename here
+    // signs nobody out.
+    api<ChildProfile[]>("/children", { headers: { Authorization: `Bearer ${session_token}` } })
   );
 }
 

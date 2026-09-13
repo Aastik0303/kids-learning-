@@ -3334,9 +3334,41 @@ select:focus-visible {
  * rect in `AvatarFallback`, never on their own.
  * ===================================================================== */
 
+/* The teacher's place on the card, at every width.
+ *
+ * The card centres what is on it rather than stretching it, so this box is as
+ * wide as what it holds - and what it holds asks for `min(100%, 22rem)` of a
+ * width that is waiting on it. A browser answers a question like that with the
+ * content's own width, which for a picture built out of absolutely positioned
+ * layers is nothing at all: from `xl:` up, where the one-screen rules below do
+ * not run, the class showed no teacher and no drawing whatsoever. A width of
+ * its own is what the percentage needs to measure against. */
+.class-stage {
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+/* The teacher is the biggest thing on the card, and it is bounded by the
+ * *height* of the window rather than only by its width.
+ *
+ * 22rem was a width and nothing else, so on a laptop the panda sat small in the
+ * middle of a wide card while the card itself ran off the bottom of a short
+ * window. The three terms are the three things that may decide the size: the
+ * card's own width, a ceiling so it does not become silly on a large monitor,
+ * and a share of the viewport's height so a taller teacher can never be the
+ * reason the answers fall off the screen. The last one is what makes "bigger"
+ * and "it all fits" the same rule instead of opposite ones.
+ *
+ * Where the class is laid out as one screen - which is now every width, on a
+ * phone below xl: and on a laptop in the block further down - this width is
+ * overridden and the stage simply takes the height the column has left. So
+ * these three terms are the fallback, and they are the whole answer in a
+ * browser without `:has()`: bigger than the 22rem this used to be, and still
+ * unable to be the reason the answers fall off a short window. */
 .teacher-stage {
   position: relative;
-  width: min(100%, 22rem);
+  width: min(100%, 34rem, 62vh);
   aspect-ratio: 1 / 1;
   margin-inline: auto;
 }
@@ -3380,9 +3412,17 @@ select:focus-visible {
   place-items: center;
 }
 
+/* Whatever is on the board is *contained* by it. The screen is a wide box and
+ * every drawing is a square one, so the height is what decides the size, and
+ * `meet` centres the rest. Without the two maxima a drawing that has worked out
+ * its own size - a glyph, an SVG carrying `h-40` for the rest of the app -
+ * paints past the board's edge and the board cuts it off: a circle came out
+ * taller than the screen and a child saw an archway. */
 .teacher-display svg {
   width: 100%;
   height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 }
 
 /* The concept, and the example that steps in front of it while its word is
@@ -3391,10 +3431,16 @@ select:focus-visible {
  * never unmounted for it: unmounting restarts the chalk, and a letter drawn
  * from nothing three times inside one explanation is a flicker, not a lesson. */
 .screen-main > * {
+  /* Pinned, not laid out. `height: 100%` on a grid item whose own child is
+   * also `height: 100%` is a circular question, and the browser answers it
+   * with the child's natural height - which for a square drawing is its own
+   * width, so the drawing came out as tall as the board is wide and the board
+   * clipped the bottom off it. Four edges of a box that is already positioned
+   * is a height that cannot be argued with. */
+  position: absolute;
+  inset: 0;
   display: grid;
   place-items: center;
-  width: 100%;
-  height: 100%;
 }
 
 .screen-main,
@@ -3472,6 +3518,37 @@ select:focus-visible {
 .panda-holds .avatar-sparkle-two {
   left: 24%;
   top: 8%;
+}
+
+/* The answers, at every width.
+ *
+ * `answer-picture` and `answer-word` are the class's hooks into `AnswerChoice`,
+ * which sets no size of its own. They were tuned for a phone inside the
+ * one-screen rules and left at their component defaults everywhere else, so on
+ * a laptop each answer was a 48px emoji over a 16px word inside 32px of
+ * padding - a row of tiles as tall as the teacher's head, for a thing that is
+ * tapped once. Smaller here is room for the teacher, and the 64px (or 96px)
+ * touch floor still decides the button, so nothing a finger aims at shrinks.
+ *
+ * The row itself is capped and centred rather than run to the card's full
+ * width, for the same reason: an answer is tapped once and the teacher is
+ * looked at for the whole turn, so the width belongs to the teacher and the
+ * answers take only what a finger needs. */
+.class-options {
+  max-width: 32rem;
+  margin-inline: auto;
+}
+
+.class-options > button {
+  padding: 0.35rem 0.6rem;
+}
+
+.class-options .answer-picture {
+  font-size: 1.9rem;
+}
+
+.class-options .answer-word {
+  font-size: 0.72rem;
 }
 
 /* =====================================================================
@@ -3612,8 +3689,8 @@ select:focus-visible {
     min-height: 0;
     flex-direction: column;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 0.6rem 0.5rem;
+    gap: 0.3rem;
+    padding: 0.5rem 0.45rem 0.4rem;
     border-radius: 1.5rem;
     position: relative;
     /* The safety valve. Everything above is sized so this never engages; when
@@ -3639,16 +3716,37 @@ select:focus-visible {
    * own slice of it. */
   .class-stage {
     display: grid;
+    /* Measured, so the teacher inside can fit itself to both sides of it. */
+    container-type: size;
     flex: 1 1 auto;
-    min-height: 7rem;
+    /* Raised with the answers coming down: this is the floor the teacher is
+     * guaranteed, and the flex above is what hands it everything else. The
+     * teacher is the one thing on this screen a child who cannot read can use,
+     * so it is the last thing that gives room back. */
+    min-height: 11rem;
     place-items: center;
     width: 100%;
   }
 
+  /* The same square, and the same reason it must be written as a width.
+   *
+   * The panda and the board it holds are one picture only while this box is
+   * square: the panda is an SVG that centres itself inside whatever box it is
+   * given, and `.teacher-display` - the board's lit face - is placed by
+   * percentages of *the box*. Ask for `height: 100%` with an automatic width
+   * and the height wins, the ratio decides a width, and `max-width` cuts that
+   * width down without returning any height, so on a tall narrow card the box
+   * came out portrait: the panda letterboxed itself in the middle of it and
+   * the drawing drifted off the paws that are supposed to be holding it. */
   .class-stage .teacher-stage {
-    height: 100%;
-    width: auto;
+    /* The first width is the answer for a browser with no container units,
+     * which is the same browser that has no `:has()` and so is not laying this
+     * page out as one screen anyway: the square the rest of the app uses. The
+     * second overrides it wherever the units exist. */
+    width: min(100%, 34rem, 62vh);
+    height: auto;
     max-width: 100%;
+    width: min(100cqw, 100cqh);
   }
 
   /* The question is one of the two things this screen is for, so it takes the
@@ -3659,14 +3757,20 @@ select:focus-visible {
     line-height: 1.1;
   }
 
-  /* Two columns, always. As a wrapping row, two long labels took a row each
-   * and four options became four rows - the exact thing that pushed the
-   * microphone off the bottom of the screen. */
+  /* As many answers to a row as genuinely fit, never fewer. This was two
+   * columns flat, and that is what turned three options into two rows with one
+   * answer sitting alone on the second - a whole row of the screen, taken from
+   * the teacher, to show one tile. `auto-fit` with a 6rem track is the early
+   * touch floor written as a column: a row of three is laid out when the card
+   * is wide enough for three 96px targets and falls back to two when it is
+   * not, so the floor decides the layout instead of being fought by it. */
   .class-options {
     display: grid;
     width: 100%;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
+    max-width: 26rem;
+    margin-inline: auto;
+    grid-template-columns: repeat(auto-fit, minmax(6rem, 1fr));
+    gap: 0.4rem;
   }
 
   /* The answers and the microphone, back down to the floor.
@@ -3680,16 +3784,20 @@ select:focus-visible {
    * early class. The floor is the one thing that does not give. */
   .class-options > button {
     width: 100%;
-    min-height: 5rem;
-    padding: 0.3rem;
+    /* 4rem is the child floor exactly, so the button is now *the floor* rather
+     * than a rem above it and the "Touch targets" rules are the only thing
+     * deciding its height - 64px here, 96px on an early class. That is the
+     * whole of what came off: the spare rem went to the teacher above. */
+    min-height: 4rem;
+    padding: 0.2rem;
   }
 
   .class-options .answer-picture {
-    font-size: 2.3rem;
+    font-size: 1.5rem;
   }
 
   .class-options .answer-word {
-    font-size: 0.82rem;
+    font-size: 0.68rem;
   }
 
   .class-mic {
@@ -3723,12 +3831,105 @@ select:focus-visible {
 }
 
 /* ---------------------------------------------------------------------
+ * The class, on one screen - on a laptop too
+ *
+ * The rules above stop at 1280px on purpose: a laptop has the height already
+ * and every other page is happier flowing. The **class** is the exception, and
+ * the user asked for it directly - a bigger teacher, smaller answers, and all
+ * of it on the screen at once. Those are one requirement, not three: the way a
+ * picture gets bigger without pushing the answers off the bottom is for the
+ * column to be exactly one screen tall and for the picture to be the part that
+ * stretches. That is the same mechanism as the phone's, with none of the
+ * squeezing - the header, the schedule strip and the padding keep their sizes,
+ * because on a laptop there is room for them.
+ *
+ * `:has(.class-page)` is what keeps this off the level page, which is the only
+ * other `fit` page and which has no one-screen rules of its own up here.
+ * --------------------------------------------------------------------- */
+
+@media (min-width: 1280px) {
+  .app-shell-main[data-fit="true"]:has(.class-page) {
+    height: 100dvh;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+  }
+
+  .app-shell-main[data-fit="true"]:has(.class-page) .fit-body {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .app-shell-main[data-fit="true"]:has(.class-page) .fit-body > * {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .class-page {
+    display: flex;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .class-topbar {
+    flex: 0 0 auto;
+  }
+
+  .class-card {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+    align-items: center;
+    /* The same safety valve as on a phone: a window shorter than the sum of
+     * the floors scrolls inside the card rather than hiding an answer. */
+    overflow-y: auto;
+  }
+
+  .class-card > * {
+    flex: 0 0 auto;
+  }
+
+  /* The one thing that stretches. On a 900px window this is a far bigger
+   * teacher than the old flat 22rem, and on a short one it gives the room back
+   * instead of pushing the microphone off the bottom. */
+  .class-stage {
+    container-type: size;
+    flex: 1 1 auto;
+    min-height: 16rem;
+  }
+
+  /* The same square, and the same reason it must be written as a width.
+   *
+   * The panda and the board it holds are one picture only while this box is
+   * square: the panda is an SVG that centres itself inside whatever box it is
+   * given, and `.teacher-display` - the board's lit face - is placed by
+   * percentages of *the box*. Ask for `height: 100%` with an automatic width
+   * and the height wins, the ratio decides a width, and `max-width` cuts that
+   * width down without returning any height, so on a tall narrow card the box
+   * came out portrait: the panda letterboxed itself in the middle of it and
+   * the drawing drifted off the paws that are supposed to be holding it. */
+  .class-stage .teacher-stage {
+    /* The first width is the answer for a browser with no container units,
+     * which is the same browser that has no `:has()` and so is not laying this
+     * page out as one screen anyway: the square the rest of the app uses. The
+     * second overrides it wherever the units exist. */
+    width: min(100%, 34rem, 62vh);
+    height: auto;
+    max-width: 100%;
+    width: min(100cqw, 100cqh);
+  }
+}
+
+/* ---------------------------------------------------------------------
  * A game, on one screen
  *
  * The level page is a page; playing a game is not. A game being played takes the
  * whole screen on a phone and a tablet - the level's title, its standing and
- * the link to the class are all still there, one tap away behind "All games",
- * and not one of them is anything a child needs mid-game.
+ * the link to the class are all still there, one tap away behind the game's
+ * back button, and not one of them is anything a child needs mid-game.
  * --------------------------------------------------------------------- */
 
 @media (max-width: 1279.98px) {
@@ -3762,10 +3963,9 @@ select:focus-visible {
     line-height: 1.15;
   }
 
-  /* The board is the flexible part, and every tile is a square cut out of the
-   * room its row has. `width: auto` against a 1:1 ratio makes a tile as wide
-   * as the row is tall; `max-width: 100%` catches the other way round, on a
-   * tall narrow column, so a tile can never spill out of its cell. */
+  /* The board is the flexible part, and every tile is the largest square that
+   * fits the cell it is in - see the tile rule below for why that has to be
+   * said as a width and not as a height. */
   .level-games[data-playing="true"] .game-grid {
     flex: 1 1 auto;
     min-height: 0;
@@ -3777,11 +3977,23 @@ select:focus-visible {
     display: grid;
     min-height: 0;
     place-items: center;
+    /* The cell measures itself, so the tile inside it can ask for the smaller
+     * of the two sides rather than guessing at one of them. */
+    container-type: size;
   }
 
+  /* The largest square that fits the cell, and it has to be written as a width.
+   *
+   * `height: 100%` with a width left to a 1:1 ratio is not a square: an
+   * explicit height is definite, so the ratio only ever decides the width, and
+   * `max-width` then squashes that width without handing any of the height
+   * back. A row half a phone tall beside a column a quarter of one wide is how
+   * eight memory cards came out as eight tall blue pills with the board
+   * scrolling sideways underneath them. `min()` asks the question the right way
+   * round and needs no clamping afterwards. */
   .level-games[data-playing="true"] .game-grid > li > * {
-    height: 100%;
-    width: auto;
+    width: min(100cqw, 100cqh);
+    height: auto;
     max-width: 100%;
     aspect-ratio: 1 / 1;
   }
@@ -3790,6 +4002,7 @@ select:focus-visible {
    * wider than they are tall - a squashed square would shrink the label. */
   .level-games[data-playing="true"] .game-grid[data-shape="wide"] > li > * {
     width: 100%;
+    height: 100%;
     aspect-ratio: auto;
   }
 

@@ -1,9 +1,47 @@
+# What must not go into the image.
+#
+# Two kinds of entry: things that would make the build slower or the image
+# bigger, and things that must never be in a shipped artefact at all. The
+# second kind is the point - `.env` holds the database password, the JWT
+# signing key, the SMTP password and the Groq key, and an image is pushed to a
+# registry and pulled by anyone with access to it. Configuration reaches the
+# container through the environment at run time, never through a layer.
+.env
+.env.*
+!.env.example
+
+# Version control and editor state.
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+
+# Python build and cache artefacts.
 __pycache__/
-*.pyc
+*.py[cod]
+*.egg-info/
+.mypy_cache/
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtualenvs: built for the developer's OS and useless here, and large.
 .venv/
 venv/
-.env
-*.log
-saksham.db
+env/
+
+# The tests do not run in the production image, and they carry the largest
+# fixtures in the repository.
 tests/
+
+# A developer's local SQLite file. Shipping one would be shipping somebody's
+# real children into a container image.
+*.db
+saksham.db
+*.sqlite
+*.sqlite3
+
+# Logs and scratch output.
+*.log

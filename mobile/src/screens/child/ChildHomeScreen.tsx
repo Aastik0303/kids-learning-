@@ -72,7 +72,9 @@ export function ChildHomeScreen() {
    * coming - but what actually opens is the conductor's own answer.
    */
   const startClass = useCallback(() => {
-    navigation.navigate("Class");
+    // The conducted class, which is no longer the child's own way in - this
+    // screen is off the tab bar and only a grown-up reaches it.
+    navigation.navigate("ConductedClass");
   }, [navigation]);
 
   if (!child) return null;
@@ -189,7 +191,7 @@ export function ChildHomeScreen() {
               label="Practice"
               icon="🎯"
               tone="secondary"
-              onPress={() => navigation.navigate("ChildTabs", { screen: "Practice" })}
+              onPress={() => navigation.navigate("Practice")}
             />
           </View>
           <View style={{ flex: 1 }}>

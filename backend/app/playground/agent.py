@@ -302,7 +302,12 @@ def _retrieve(state: _State) -> _State:
     # the passage kept is the one the author wrote for this very question.
     hits = _about_this_card(hits, state.get("asked"))
 
-    passages = [hit.passage.content for hit in hits]
+    # ...and a second time by the concept the card is actually about. The notes
+    # have no skill id to narrow by, so a level's whole family of shapes or
+    # colours arrives in one passage and the turn teaches whichever of them the
+    # author happened to write first.
+    card = _card_concept(state)
+    passages = [_notes_about(hit.passage.content, card) for hit in hits]
     return {"context": chr(10).join(passages), "passages": passages}
 
 
@@ -338,8 +343,11 @@ LINES_WHEN_ASKING = 2
 # The hint comes after a turn that did not land, so it says *more* than the first
 # telling did rather than the same amount again in different words.
 LINES_WHEN_HINTING = 4
-# The reveal opens with the answer itself, so what follows is only the why - two
-# sentences and an example, and then the class moves on.
+# How much of the notes a reveal reads, on the path with no model behind it and
+# for a concept nobody wrote a scene for. A reveal that *has* a scene does not
+# read the notes at all - the author's sentences are definitions, and a
+# definition names the answer, which is the one thing the story's first beat may
+# not do.
 LINES_WHEN_REVEALING = 2
 
 # The `[teach]`, `[match, teach]` marker `rag` puts in front of a syllabus
@@ -352,6 +360,9 @@ _KIND_MARKER = re.compile(r"^\s*\[[a-z,\s]+\]\s*", re.I)
 # turn is measured in sentences rather than in lines, which would cut "a tent
 # with a belt / across the middle" in half and put a full stop in the wound.
 _SENTENCE_END = re.compile(r"(?<=[.!?।])\s+")
+
+# A paragraph break in the notes. The single line breaks inside one are wrapping.
+_BLANK_LINE = re.compile(r"\n[ \t]*\n")
 
 # Trailing decoration: spaces and the emoji the notes' author writes at the end
 # of a cheerful line. Whether a sentence is finished is decided behind them.
@@ -381,11 +392,17 @@ def _fallback_lesson(state: _State) -> Lesson:
     explaining = step == lesson_steps.EXPLAIN and mode == ASK
 
     heading = first.splitlines()[0].strip() if first else topic
-    # No model to choose a picture, so it is read out of the words instead - and
-    # it is also what says which sentences belong to this concept and which
-    # everyday example fits. The title is asked before the notes, so a lesson on
-    # pink is about pink even when the notes it retrieved explain red.
-    visual = visuals.from_concept(topic or heading)
+    # What this card is about, and it is decided *here* - before a sentence of
+    # the turn has been picked. It is what says which of the notes' lines belong
+    # to this concept (`_on_topic`) and which everyday example fits, as well as
+    # what is drawn. The author's answer decides it; the title is asked next, so
+    # a lesson on pink is about pink even when the notes it retrieved explain
+    # red, and the notes last of all.
+    #
+    # Reading it off the title alone and correcting it to the answer further
+    # down is what put the circle's sentences under "Tap the triangle!": by the
+    # time the answer had a say, the words had already been chosen.
+    visual = _card_concept(state, visuals.from_concept(topic or heading))
 
     # The notes, in sentences. A single passage is often one line, so a second
     # one is read from the next passage rather than leaving the turn thin.
@@ -403,27 +420,30 @@ def _fallback_lesson(state: _State) -> Lesson:
 
     answer = (state.get("answer") or "").strip()
 
-    # A hint and a reveal are about a question that already has an answer, and
-    # that answer is what the card is about - on all three of a question's turns,
-    # not only on the asking. Without this the reveal said "here is the answer",
-    # drew whichever shape the notes led with, and put that shape's everyday
-    # example under it: a triangle on the board and a ball beneath it while the
-    # answer being given was the circle.
-    if mode in (HINT, REVEAL):
-        visual = visuals.for_card(answer, visual)
-
-    if explaining or mode in (HINT, REVEAL):
+    # The everyday example rounds off an explanation and a hint. It is **not**
+    # added to a reveal any more: a reveal opens on a scene of its own now
+    # (`REAL_LIFE_SCENES`), and `EVERYDAY_EXAMPLES` is allowed to name the thing
+    # - "A samosa is a triangle" - which is exactly what the story's first beat
+    # may not do.
+    if explaining or mode == HINT:
         example = _everyday_example(visual)
         if example:
             explanation = f"{explanation} {example}"
 
     if mode == REVEAL:
-        # The answer first, because it is the thing the child has been waiting
-        # for, and the explaining after it rather than in front of it.
+        # The same three beats as the model's, hand-written: somewhere the child
+        # has been, then the picture beside them, then the name for it.
+        #
+        # The scene replaces the notes rather than joining them, because the
+        # author's sentences are *definitions* - "A triangle has three straight
+        # sides" - and a definition names the answer, which is the one thing the
+        # first beat may not do. A concept nobody wrote a scene for keeps the
+        # notes, in the order it always had them, with the answer moved to the
+        # end where it now belongs.
+        scene = _real_life_scene(visual)
+        beats = (scene or explanation, _look_at_the_board(visual), _answer_sentence(answer))
         return Lesson(
-            explanation=" ".join(
-                part for part in (_answer_sentence(answer), explanation, MOVING_ON) if part
-            ),
+            explanation=" ".join(part for part in (*beats, MOVING_ON) if part),
             question="",
             expected_answer="",
             accept=(),
@@ -515,11 +535,143 @@ def _lines_wanted(*, mode: str, explaining: bool) -> int:
 
 
 def _answer_sentence(answer: str) -> str:
-    """How the reveal opens. Warm, and never about the child getting it wrong."""
+    """How the reveal **ends**. Warm, and never about the child getting it wrong.
+
+    It used to be how the reveal opened - "The answer is triangle. Let me show
+    you why." - and a child handed the answer in the first second has no reason
+    left to listen to the why. It is the last beat of the story now, so it is
+    written as an arrival rather than an announcement.
+    """
     text = (answer or "").strip()
     if not text:
-        return "Let me show you this one."
-    return f"The answer is {text}. Let me show you why."
+        return "That is the one."
+    return f"So this one is called {text}."
+
+
+# The real moment a reveal opens on, per concept, and it names no answer.
+#
+# Hand-written, closed, and only the things the app can draw - the same rule
+# `EVERYDAY_EXAMPLES` and `examples._CONCEPT_PICTURES` keep, for the same reason:
+# a scene invented on the spot for a concept nobody wrote one for is worse than
+# no scene, and a concept missing from here simply falls back to the author's
+# own notes. The difference from `EVERYDAY_EXAMPLES` is what it may *say*: that
+# one is allowed to name the thing ("A samosa is a triangle"), and this one is
+# not, because it comes before the answer rather than after it.
+REAL_LIFE_SCENES = {
+    "shape:circle": (
+        "Think of the wheel on your toy car, going round and round. Or a hot "
+        "chapati on your plate at dinner. If you put your finger on the edge and "
+        "walk it all the way round, you never once have to stop and turn."
+    ),
+    "shape:square": (
+        "Think of a slice of bread just before Mummy puts it in the toaster. Or "
+        "the window in your kitchen. Walk your finger along one edge and stop - "
+        "then along the next edge, and it is exactly as long as the first one."
+    ),
+    "shape:triangle": (
+        "Think of a samosa on your plate, or a slice of pizza. Now think of the "
+        "roof on top of a little house you have drawn. Each one is wide at the "
+        "bottom and comes up to one point at the very top."
+    ),
+    "shape:rectangle": (
+        "Think of the door you walked through this morning. Or a book lying on "
+        "the table. Two of its sides are long and two of them are short, so it is "
+        "taller than it is wide - or wider than it is tall."
+    ),
+    "shape:star": (
+        "Think of the sky at night, right up above your house, with the little "
+        "lights that twinkle in it. Or the sticker your teacher puts on your book "
+        "when you have done something well."
+    ),
+    "colour:red": (
+        "Think of a tomato in the kitchen, and a fire engine going past with its "
+        "bell ringing, and an apple that is ready to eat. They are all wearing "
+        "the same coat."
+    ),
+    "colour:blue": (
+        "Think of the sky on a day with no clouds in it at all. And think of the "
+        "deep sea, far out where the big fish live. Both of them are wearing the "
+        "same coat."
+    ),
+    "colour:yellow": (
+        "Think of a banana you have peeled, and the sun you draw in the corner of "
+        "your picture, and a lemon in the kitchen. All three are wearing the same "
+        "bright coat."
+    ),
+    "colour:green": (
+        "Think of the leaves on a tree outside, and the grass you run on, and the "
+        "peas on your plate that you push around with your spoon."
+    ),
+    "colour:orange": (
+        "Think of a carrot, and the fruit that has the very same name as its own "
+        "colour, and a marigold at a puja. They are all wearing one coat."
+    ),
+    "colour:purple": (
+        "Think of a bunch of grapes, and a brinjal in the vegetable basket. They "
+        "are darker than pink and they are not quite blue."
+    ),
+    "colour:pink": (
+        "Think of a rose in somebody's garden, and a piece of bubblegum, and the "
+        "middle of a watermelon when it is cut open."
+    ),
+    "colour:brown": (
+        "Think of a chapati that has been on the fire a little while, and the "
+        "trunk of a big tree, and a bar of chocolate."
+    ),
+    "colour:black": (
+        "Think of the sky very late at night, and a crow sitting on a wall, and "
+        "the tyre of a car."
+    ),
+    "colour:white": (
+        "Think of a glass of milk, and a piece of cotton wool, and a cloud on a "
+        "nice day."
+    ),
+}
+
+
+def _real_life_scene(visual: visuals.Visual) -> str:
+    """The scene a reveal opens on, or nothing.
+
+    Nothing is a real answer, the same way it is for an everyday example: the
+    turn falls back to the author's own notes rather than to something made up.
+    """
+    return REAL_LIFE_SCENES.get(visual.as_token(), "")
+
+
+# What the middle beat says, by what is on the board. Short - its whole job is
+# to move the child's eyes from the story to the picture that is being drawn
+# beside them while it is being drawn.
+_BOARD_BEATS = {
+    "shape": "Now look at the picture beside me while I draw it, and trace it with your finger.",
+    "colour": "Now look at the picture beside me. That is the colour, all the way through.",
+    "letter": "Now look at the picture beside me. That is it, written big.",
+    "number": "Now look at the picture beside me. That is the one I mean.",
+    "count": "Now look at the picture beside me and count them with me, one at a time.",
+    "thing": "Now look at the picture beside me while I draw it.",
+}
+
+
+def _look_at_the_board(visual: visuals.Visual) -> str:
+    """The beat between the story and the answer: what to look at, and nothing else."""
+    if not visual.is_shown:
+        return ""
+    return _BOARD_BEATS.get(visual.kind, "")
+
+
+def _closed_with_the_answer(explanation: str, answer: str) -> bool:
+    """Whether the last sentence of this reveal already names the answer.
+
+    The model is told to finish on it, and when it has there is nothing to add:
+    saying it twice at the end of a story is the one place repetition sounds
+    like a mistake. When it has not - and it does not, once in five - the closing
+    sentence is appended, because a reveal that never says the answer is the one
+    failure this turn exists to prevent.
+    """
+    text = (explanation or "").strip()
+    if not text or not (answer or "").strip():
+        return False
+    tail = [part for part in _SENTENCE_END.split(text) if part.strip()][-2:]
+    return any(stage_contains(part, answer) for part in tail)
 
 
 # Said at the end of a reveal, so the child hears that the question is finished
@@ -759,6 +911,87 @@ def _sentences(passage: str) -> list[str]:
             text = f"{text}."
         out.append(text)
     return out
+
+
+def _card_answer(state: _State) -> str:
+    """The answer this card is about, whichever of its turns this is.
+
+    A hint and a reveal are handed the answer already in play. An asking turn
+    has the author's own question in `asked` - and so does the explaining step,
+    which does not ask it but is written to lead into it (`_leading_question`),
+    so the explaining turn is about the same thing the question after it is.
+    """
+    if (state.get("mode") or ASK) in (HINT, REVEAL):
+        return (state.get("answer") or "").strip()
+    written = state.get("asked")
+    if isinstance(written, authored_questions.Authored):
+        return (written.answer or "").strip()
+    return ""
+
+
+def _card_concept(state: _State, drawn: visuals.Visual | None = None) -> visuals.Visual:
+    """What this card is about, worked out before a word of it is chosen.
+
+    The answer a person wrote is what says so; the title, the notes and the
+    model's own token only get a say when that answer names nothing the app can
+    draw. It is `visuals.for_card`'s rule, asked early enough to decide which
+    sentences the turn is built out of rather than only which picture sits
+    beside them.
+    """
+    return visuals.for_card(_card_answer(state), drawn)
+
+
+def _notes_about(content: str, visual: visuals.Visual) -> str:
+    """One retrieved passage with the paragraphs about a *different* shape or colour gone.
+
+    `_about_this_card` narrows by the author's skill id, and the teaching notes
+    carry none: "## Shapes" is one passage explaining the circle, the square,
+    the triangle and the rectangle, and the circle is the paragraph it opens
+    with. A hint on the triangle may not name its own answer, so the circle was
+    the most available concrete thing on the page and the turn taught that
+    instead - the child got a lesson on the circle under "Tap the triangle!".
+
+    A **paragraph** is the unit, not a line and not a sentence. The notes are
+    wrapped markdown, so dropping lines cuts "A square has four sides... A
+    window," off "a biscuit, a slice of bread." and leaves the crumbs; and a
+    paragraph's examples - "A wheel, a plate, the sun" - name no shape at all,
+    so dropping single sentences leaves the circle's examples sitting under the
+    triangle. What a paragraph names is what it is about, and the whole of it
+    goes or the whole of it stays.
+
+    Two things this may not do. It only ever *removes* words - nothing new
+    reaches the model, and the answer still never enters a query. And a passage
+    with no paragraph about this concept is left **whole**: the notes simply do
+    not cover it, and teaching from a neighbour beats teaching from nothing,
+    which is the rule `_about_this_card` already keeps.
+    """
+    if visual.kind not in {"colour", "shape"}:
+        return content
+    heading, newline, body = content.partition(chr(10))
+    if not newline:
+        return content
+
+    family = visuals.COLOURS if visual.kind == "colour" else visuals.SHAPES
+    others = [name for name in family if name != visual.value]
+
+    kept: list[str] = []
+    mine = False
+    dropped = False
+    for block in _BLANK_LINE.split(body):
+        prose = " ".join(block.split())
+        if not prose:
+            continue
+        if re.search(rf"\b{visual.value}s?\b", prose, re.I):
+            kept.append(prose)
+            mine = True
+        elif any(re.search(rf"\b{name}s?\b", prose, re.I) for name in others):
+            dropped = True
+        else:
+            kept.append(prose)
+
+    if not mine or not dropped:
+        return content
+    return f"{heading}{newline}" + (chr(10) * 2).join(kept)
 
 
 def _on_topic(lines: list[str], visual: visuals.Visual) -> list[str]:
@@ -1021,8 +1254,12 @@ def _teach(state: _State) -> _State:
         source = "llm"
 
     # Same again: a turn that asks for something draws the thing it is asking
-    # about. On the explaining step there is no answer and the notes decide.
-    visual = visuals.for_card(expected, visual)
+    # about. The explaining step has no answer of its own, and it is not about
+    # nothing - it is the turn that leads into the author's next question, and
+    # its notes have just been narrowed to that question's concept - so the card
+    # falls back to *that* before it falls back to the notes. Otherwise the
+    # explanation taught the triangle and the board drew the circle.
+    visual = visuals.for_card(expected, _card_concept(state, visual))
 
     if expected and lesson_steps.EXPECTS.get(step) == "tap":
         options = ensure_options(
@@ -1184,9 +1421,16 @@ def _help_lesson(
     # explaining.
     visual = visuals.for_card(answer, visual)
     if (state.get("mode") or ASK) == REVEAL:
+        # The story's three beats are the model's to write (`REVEAL_BRIEF`), and
+        # the answer is the end of it rather than the start. All this does is
+        # make sure the child actually hears it: a reveal that talks around the
+        # answer and never says it is the one failure this turn exists to
+        # prevent, and one that says it twice at the end is the one place
+        # repeating yourself sounds like a mistake.
+        closing = "" if _closed_with_the_answer(explanation, answer) else _answer_sentence(answer)
         return Lesson(
             explanation=" ".join(
-                part for part in (_answer_sentence(answer), explanation, MOVING_ON) if part
+                part for part in (explanation, closing, MOVING_ON) if part
             ),
             question="",
             expected_answer="",

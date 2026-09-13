@@ -603,6 +603,206 @@ def test_a_reveal_reads_the_notes_for_the_question_it_is_revealing():
         assert "magic colours" not in taught, f"{mode} was taught the primary colours instead"
 
 
+def test_a_helping_turn_teaches_its_own_shape_and_not_the_one_beside_it():
+    """A wrong answer on the triangle must not bring a lesson on the circle.
+
+    The user reported the class breaking its own flow: they got "Tap the
+    triangle!" wrong and the turn that came back explained the circle. Two
+    things caused it and both are here.
+
+    The teaching notes carry no skill id, so `_about_this_card` cannot narrow
+    them: "## Shapes" is one passage explaining the circle, the square, the
+    triangle and the rectangle, and the circle is the paragraph it opens with.
+    A hint may not say its own answer, so the circle was the most available
+    concrete thing on the page.
+
+    And the turn with no model behind it read its concept off the level's title
+    - "Shapes", which names none of them - picked its sentences for whatever the
+    notes led with, and only afterwards corrected the *picture* to the answer.
+    The board said triangle while the words said circle.
+    """
+    written = next(
+        q for q in questions.for_topic("lkg_maths_shapes") if q.answer == "triangle"
+    )
+    for mode in (agent.ASK, agent.HINT, agent.REVEAL):
+        state = {
+            "subject": "Basic Mathematics",
+            "topic": "Shapes",
+            "topic_id": "lkg_maths_shapes",
+            "class_id": "lkg",
+            "step": lesson.MATCH,
+            "spent": [],
+            "asked": written,
+            "mode": mode,
+            "answer": written.answer,
+            "question": written.question,
+        }
+        state.update(agent._retrieve(state))
+        notes = " ".join(state["passages"]).lower()
+        assert "triangle" in notes, mode
+        # The circle's own paragraph - and the examples inside it, which name no
+        # shape at all and so used to survive a sentence-by-sentence filter.
+        assert "round all the way" not in notes, f"{mode} was handed the circle's lesson"
+        assert "a wheel, a plate" not in notes, f"{mode} was handed the circle's examples"
+
+        taught = agent._fallback_lesson(state)
+        assert taught.visual.as_token() == "shape:triangle", mode
+        assert "round all the way" not in taught.explanation.lower(), mode
+
+
+def test_the_explaining_turn_is_about_the_question_it_leads_into():
+    """A level called "Shapes" names no shape, and the explaining card must.
+
+    The explaining step holds no answer of its own, so it took whichever concept
+    the notes led with - the circle - and then the question straight after it
+    asked for the triangle. The step is written to lead into the author's next
+    question (`_leading_question`), so that question's answer is what it is
+    about.
+    """
+    written = next(
+        q for q in questions.for_topic("lkg_maths_shapes") if q.answer == "triangle"
+    )
+    state = {
+        "subject": "Basic Mathematics",
+        "topic": "Shapes",
+        "topic_id": "lkg_maths_shapes",
+        "class_id": "lkg",
+        "step": lesson.EXPLAIN,
+        "spent": [],
+        "asked": written,
+        "mode": agent.ASK,
+    }
+    state.update(agent._retrieve(state))
+    taught = agent._fallback_lesson(state)
+    assert taught.visual.as_token() == "shape:triangle"
+    assert "round all the way" not in taught.explanation.lower()
+
+
+def test_a_level_whose_notes_never_name_the_concept_keeps_them_whole():
+    """Pink is in no line of the teaching notes, and a thin turn is worse.
+
+    The narrowing only ever removes, and only when there is something to narrow
+    *to* - the same rule `_about_this_card` keeps. A concept the notes do not
+    cover is taught from its neighbours rather than from one stray line of
+    advice.
+    """
+    passage = (chr(10) * 2).join(
+        (
+            "Colours" + chr(10) + "Red is the colour of a tomato, a fire engine, and a ripe apple.",
+            "Blue is the colour of the sky on a clear day.",
+            "To help a child find a colour, name two things in the room first.",
+        )
+    )
+    assert agent._notes_about(passage, visuals.Visual("colour", "pink")) == passage
+    # A letter or a number has no family to be confused with, and is untouched.
+    assert agent._notes_about(passage, visuals.Visual("letter", "A")) == passage
+
+
+def test_the_class_never_illustrates_another_shapes_example():
+    """A ball must not appear on the screen while the teacher says "triangle".
+
+    The user reported it a third time, and this is the last place it lives. The
+    explanation reaches for a contrast - "three corners, not round like a ball"
+    - and `frontend/lib/spokenExamples.ts` shows the example it is saying at the
+    moment it says it. It knows a table of pictures and nothing about whose
+    picture each one is, so the ball went up beside "Tap the triangle!".
+
+    `examples.not_examples` is what the server sends it: the everyday things
+    belonging to this concept's *siblings*, hand-written and closed. The
+    concept's own examples are untouched, and a card with no family - a letter,
+    a number - bans nothing.
+    """
+    banned = examples.not_examples(visuals.Visual("shape", "triangle"))
+    assert "ball" in banned, "the circle's ball is the whole bug"
+    assert "plate" in banned and "door" in banned
+    assert "ice cream" not in banned, "the triangle's own example must still show"
+
+    # Only ever within one family: a ball on a letters card is simply a ball.
+    assert examples.not_examples(visuals.Visual("letter", "A")) == []
+    assert "ball" not in examples.not_examples(visuals.Visual("colour", "red"))
+
+
+def test_a_levels_box_of_exemplars_is_not_handed_to_every_card():
+    """Each picture in a shapes level's picture box belongs to a different shape.
+
+    `nur_maths_shapes` names a ball, a book and a hat in one activity and no
+    shape beside them, so the activity reads as the level's own picture box and
+    every card of the level was offered all three - the circle's ball included,
+    on the triangle's card. A box of exemplars is not a box of neutral pictures.
+    """
+    for topic_id in ("nur_maths_shapes", "lkg_maths_shapes"):
+        written = next(
+            q for q in questions.for_topic(topic_id) if q.answer == "triangle"
+        )
+        shown = examples.for_turn(
+            topic_id,
+            visual=visuals.for_card(written.answer),
+            answer=written.answer,
+            options=list(written.options),
+        )
+        assert "ball" not in shown, topic_id
+        assert "plate" not in shown, topic_id
+
+
+def test_the_reveal_is_a_story_and_the_answer_is_the_end_of_it():
+    """The third turn does not hand the answer over in its first sentence.
+
+    The user asked for it: a child who has got a question wrong twice should be
+    taken somewhere real first - the samosa on the plate, the wheel on the toy
+    car - then sent to the picture beside them, and only then told what the
+    thing is called. A child handed the answer in the first second has no reason
+    left to listen to the why, which is what the rest of the turn is.
+
+    This pins the path with no model behind it, which is the one that can be
+    asserted word for word. The model is told the same three beats in
+    `lesson.REVEAL_BRIEF`, and `agent._closed_with_the_answer` is what makes
+    sure the child hears the answer even on a turn that wandered.
+    """
+    written = next(
+        q for q in questions.for_topic("lkg_maths_shapes") if q.answer == "triangle"
+    )
+    state = {
+        "subject": "Basic Mathematics",
+        "topic": "Shapes",
+        "topic_id": "lkg_maths_shapes",
+        "class_id": "lkg",
+        "step": lesson.MATCH,
+        "spent": [],
+        "asked": written,
+        "mode": agent.REVEAL,
+        "answer": written.answer,
+        "question": written.question,
+    }
+    state.update(agent._retrieve(state))
+    said = agent._fallback_lesson(state).explanation
+    sentences = [part.strip() for part in said.split(". ") if part.strip()]
+
+    # Beat one is a scene, and it does not name the answer.
+    assert "triangle" not in sentences[0].lower(), said
+    assert "samosa" in said.lower() or "pizza" in said.lower(), said
+
+    # Beat two sends them to the picture that is being drawn beside them.
+    assert "look at the picture" in said.lower(), said
+
+    # Beat three is the answer, and it comes after both of them.
+    assert said.lower().index("called triangle") > said.lower().index("look at the picture")
+
+
+def test_the_reveal_always_says_the_answer_even_when_the_story_did_not():
+    """A story that talks around the answer and never lands it is the one
+    failure this turn exists to prevent, so the closing sentence is appended
+    unless the telling already finished on it - and it is never said twice."""
+    wandered = agent._closed_with_the_answer(
+        "Think of a samosa. Now look at the picture beside me.", "triangle"
+    )
+    assert wandered is False, "nothing here names the answer, so it must be added"
+
+    landed = agent._closed_with_the_answer(
+        "Think of a samosa. That pointy shape is called a triangle.", "triangle"
+    )
+    assert landed is True, "the model finished on it; saying it again is the mistake"
+
+
 def test_narrowing_the_notes_to_one_card_never_leaves_none():
     """A question whose skill has no passage of its own keeps the whole level.
 
@@ -779,13 +979,20 @@ def test_the_stages_are_the_days_plan_and_nothing_else(client: TestClient):
     assert turn["topic_id"] == plan["items"][0]["topic_id"]
 
 
-def test_finishing_a_stage_completes_the_level_and_unlocks_the_next(client: TestClient):
+def test_finishing_a_stage_completes_the_level_and_unlocks_the_next(
+    client: TestClient, next_day
+):
     """The join to the Adventure map, and the only thing that moves it now.
 
     Adventure teaches nothing of its own any more - it draws what this class has
     done. So the stars, the finished level and the next unlock all have to come
     out of a sitting here, through `award_topic_completion` and no other path.
+
+    On an ordinary morning, because this asks that every planned item end up in
+    `completed_topics` and a poem is deliberately not a level: it pays no star,
+    unlocks nothing and is never written there.
     """
+    next_day.ordinary()
     child_id = make_child(client, "teacher-unlocks@example.com")
     before = client.get(f"/progress/{child_id}").json()["child"]
     planned = [item["topic_id"] for item in client.get(f"/plans/{child_id}/today").json()["items"]]

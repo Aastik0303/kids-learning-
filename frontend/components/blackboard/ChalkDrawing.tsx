@@ -77,6 +77,58 @@ export function ChalkDrawing({
   // one inline would otherwise restart the animation on every render.
   const art = useMemo(() => strokes, [strokes]);
 
+  /**
+   * The drawing fills the space it is given.
+   *
+   * Every artwork is written inside the same 0..100 square, and each one leaves
+   * its own margin there - a circle of radius 34 uses two thirds of it and a
+   * square less than that. Shown at the artwork's own coordinates, the picture
+   * arrives a third smaller than the box it was given, which on the board the
+   * teacher holds is a small ring in the middle of a wide white screen. So the
+   * view is closed in on what was actually drawn: the union of the strokes,
+   * squared off so nothing is stretched, with room left round it for the line's
+   * own thickness.
+   *
+   * It is measured, never assumed - anything without a layout engine behind it
+   * keeps the plain 0..100 view - and it will not close in past `MIN_VIEW`,
+   * because a single dot zoomed to fill a screen is a blot rather than a
+   * drawing.
+   */
+  const bounds = useRef<SVGGElement | null>(null);
+  const view = useRef<SVGSVGElement | null>(null);
+
+  useEffect(() => {
+    const group = bounds.current;
+    const svg = view.current;
+    if (!group || !svg || typeof group.getBBox !== "function") return;
+
+    const MIN_VIEW = 66;
+    let box: DOMRect | { x: number; y: number; width: number; height: number };
+    try {
+      box = group.getBBox();
+    } catch {
+      return;
+    }
+    if (!box || box.width <= 0 || box.height <= 0) return;
+
+    const thickest = art.reduce((most, stroke) => Math.max(most, stroke.width ?? 3.4), 3.4);
+    // Half the line's own width, so a stroke on the edge is not shaved, plus a
+    // margin that grows with the picture - a drawing that runs into the edge of
+    // the board it is on looks like a drawing that did not fit.
+    const pad = thickest / 2 + 2 + Math.max(box.width, box.height) * 0.03;
+    // The view keeps the drawing's own shape rather than being squared off, so
+    // a wide picture - four counters in a row - takes the width of a wide
+    // board instead of being fitted to its height and left as a thin strip in
+    // the middle. Nothing is stretched by it: the SVG still scales the two
+    // directions together and centres what is left over.
+    const grow = Math.max(1, MIN_VIEW / Math.max(box.width, box.height));
+    const width = (box.width + pad * 2) * grow;
+    const height = (box.height + pad * 2) * grow;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    svg.setAttribute("viewBox", `${cx - width / 2} ${cy - height / 2} ${width} ${height}`);
+  }, [art]);
+
   useEffect(() => {
     const finish = () => {
       art.forEach((_stroke, index) => {
@@ -190,12 +242,18 @@ export function ChalkDrawing({
 
   return (
     <svg
+      ref={view}
       viewBox="0 0 100 100"
       role="img"
       aria-label={label}
       className={className}
       data-chalk-drawing
     >
+      {/* Everything that was drawn, in one group, so the view above can be
+          closed in on exactly what is inside it. The chalk tip is left out of
+          it: it rides wherever the line has got to, and a moving thing has no
+          business deciding how big the picture is. */}
+      <g ref={bounds}>
       {/* The colour goes down first and underneath, so the outline stays the
           thing the eye follows. */}
       {art.map((stroke, index) =>
@@ -247,6 +305,7 @@ export function ChalkDrawing({
           />
         )
       )}
+      </g>
       {/* The chalk itself. */}
       <circle
         ref={tip}

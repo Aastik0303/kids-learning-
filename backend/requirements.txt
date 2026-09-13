@@ -27,4 +27,9 @@ edge-tts>=6.1.9
 # Signed session tokens. `app/services/jwt_service.py` mints one at sign-in and
 # verifies it on every request; the `auth_sessions` row it names is still what
 # makes a sign-out actually sign somebody out.
-PyJWT>=2.8,<3
+#
+# `[crypto]` pulls in `cryptography`, which is what verifies the RS256
+# signature on a Google ID token (`app/services/google_auth_service.py`).
+# Without it PyJWT can still sign this app's own HS256 tokens and cannot check
+# Google's, so Google sign-in would refuse every token it was handed.
+PyJWT[crypto]>=2.8,<3

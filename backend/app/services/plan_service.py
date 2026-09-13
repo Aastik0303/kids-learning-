@@ -33,8 +33,9 @@ from app.ai.planner import plan_today
 from app.db.repositories import plans, truth
 from app.db.repositories.plans import PlannedItem
 from app.db.session import session_scope
+from app.playground import poem as poems
 from app.schemas.child import ChildProfile
-from app.services import curriculum_service, retention_test_service
+from app.services import cache, curriculum_service, retention_test_service
 
 
 logger = logging.getLogger(__name__)
@@ -186,7 +187,45 @@ def _candidates(child: ChildProfile, today: date | None = None) -> list[PlannedI
         if chosen is not None:
             per_subject.append(chosen)
 
-    return per_subject[:PLAN_LENGTH]
+    return _with_todays_poem(per_subject[:PLAN_LENGTH], today or _today())
+
+
+def _with_todays_poem(items: list[PlannedItem], plan_date: date) -> list[PlannedItem]:
+    """Every fifth day, one subject's level steps aside and a poem takes its place.
+
+    **The day does not change length.** A Nursery child's six stages are still
+    six and one of them is a poem; a Play Group child's three are still three.
+    That was the whole of what the user asked for - "agr schedule me 5 sub hai to
+    poem ke baad 5 rhe" - and it is also the only version that is safe: the class
+    teaches one stage per planned item, so an item added rather than swapped
+    makes a longer sitting for a three-year-old, and an item removed makes a
+    subject vanish from the day with nothing in its place.
+
+    The level that steps aside is not lost. It was chosen as that subject's first
+    weak or unfinished topic, and it still is tomorrow, so it comes back on its
+    own in tomorrow's plan without anything having to remember it.
+
+    Which one steps aside walks by the day (`poem.replaced_index`), because a
+    fixed slot would mean the same subject is the one missed every single time.
+    A day with only one item keeps it: swapping there would be a day with no
+    lesson in it at all.
+    """
+    chosen = poems.for_day(plan_date)
+    if chosen is None or len(items) < 2:
+        return items
+    index = poems.replaced_index(plan_date, len(items))
+    if not 0 <= index < len(items):  # pragma: no cover - guarded by the helper
+        return items
+    kept = list(items)
+    kept[index] = PlannedItem(
+        topic_id=chosen.topic_id,
+        # A poem teaches no skill, and this is the one field that says so. It is
+        # never a `subject:topic` pair, so nothing that splits a skill id to find
+        # a subject can mistake a poem for one of them.
+        skill_id=chosen.topic_id,
+        reason="poem",
+    )
+    return kept
 
 
 def _candidate_menu(child: ChildProfile, items: list[PlannedItem]) -> list[dict]:
@@ -384,8 +423,32 @@ def may_open(child: ChildProfile, topic_id: str, *, today: date | None = None) -
     )
 
 
+# Registered with the content caches, so a re-read manifest drops these titles
+# with everything else built out of it.
+_title_cache = cache.content_cache("plan.topic_title", maxsize=1024)
+
+
 def topic_title(topic_id: str) -> str:
-    """A plan can outlive a topic: the manifest is a file that changes."""
+    """The level's title, for the schedule strip and the plan history.
+
+    Cached because a day's plan asks for one of these per item, on every read of
+    today's plan, and every screen in the app reads today's plan. The answer is
+    a lookup in the manifest, which does not change under a running server.
+
+    A plan can outlive a topic: the manifest is a file that changes.
+
+    A poem is asked first, because a poem's id is deliberately *not* in the
+    manifest - that is what keeps every rule which reads the manifest from
+    paying it a star - so the lookup below would always fail for one and the
+    schedule strip would show `poem_apple` to a parent.
+    """
+    return _title_cache.get_or_compute(topic_id, lambda: _read_topic_title(topic_id))
+
+
+def _read_topic_title(topic_id: str) -> str:
+    titled = poems.title_of(topic_id)
+    if titled:
+        return titled
     try:
         return curriculum_service.get_topic(topic_id).title
     except Exception:
@@ -406,4 +469,31 @@ def todays_topic(child: ChildProfile, *, today: date | None = None) -> tuple[str
         if item["topic_id"] == plan.current_topic_id:
             skill_id = item["skill_id"]
             return (skill_id.split(":")[0] if ":" in skill_id else None), item["topic_id"]
+    return None, None
+
+
+def todays_level(child: ChildProfile, *, today: date | None = None) -> tuple[str | None, str | None]:
+    """The first item of today's plan that is a **level**, skipping the poem.
+
+    `todays_topic` answers "what is the day pointing at", and every fifth day
+    the answer can be a poem, whose `topic_id` is deliberately not in the
+    manifest. A caller that can only teach a level has no way to say one, and
+    looking it up is the one thing that cannot work: the manifest is precisely
+    where a poem is not. Handing it over anyway is what made the conductor
+    answer `MISSING_CURRICULUM` for the whole of every fifth day - and, because
+    the plan cursor sits on that poem until something finishes it, the day could
+    not end either.
+
+    So this is the same cursor with the poems taken out. Nothing is marked and
+    nothing is skipped *past*: the poem stays where it is in the day, still
+    unfinished, and the class that can say one still says it.
+    """
+    plan = todays_plan(child, today=today)
+    if plan is None:
+        return None, None
+    for item in plan.items:
+        if item["done"] or poems.is_poem(item["topic_id"]):
+            continue
+        skill_id = item["skill_id"]
+        return (skill_id.split(":")[0] if ":" in skill_id else None), item["topic_id"]
     return None, None

@@ -153,7 +153,12 @@ def test_a_failed_level_comes_back_tomorrow_as_a_revisit(client: TestClient, nex
 
 def test_a_passed_day_still_unlocks_the_next_levels(client: TestClient, next_day):
     """The fix must not have made passing meaningless: a level that passes still
-    completes, still pays, and still opens the next one - which is tomorrow's."""
+    completes, still pays, and still opens the next one - which is tomorrow's.
+
+    An ordinary morning: every item of a day is a level to be completed, which
+    is exactly what a poem day's one poem is not (`test_poem_day.py`).
+    """
+    next_day.ordinary()
     child_id = make_child(client, "day-moves-pass@example.com")
 
     today = client.get(f"/plans/{child_id}/today").json()

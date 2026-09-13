@@ -71,6 +71,16 @@ class TeacherTurnResponse(BaseModel):
     # spoken and not shown, so this is what the child actually looks at, and it
     # is never the answer to the question on the screen.
     example_items: list[str] = []
+    # The everyday words the class may never illustrate while it speaks: the
+    # examples belonging to this concept's *siblings*. A teacher explaining the
+    # triangle says "not round like a ball" and the class was drawing the ball -
+    # the circle's picture on the triangle's card. Whose picture a word is is
+    # the server's to know; the client only has a table of pictures.
+    not_examples: list[str] = []
+    # This stage is a poem, not a level. Every fifth day one subject's level
+    # steps aside for one: `step` is "poem", `expects` is always "ready", and
+    # nothing about it is asked, marked, scored, unlocked or paid.
+    is_poem: bool = False
     # --- the answer just given, when there was one -----------------------
     feedback: str = ""
     # Whether the answer just given was right. `None` on a turn that was not an

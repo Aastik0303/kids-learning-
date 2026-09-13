@@ -7,7 +7,7 @@ export default function SignupPage() {
       <div className="grid w-full gap-4">
         <AuthForm mode="register" />
         <Link className="text-center font-bold text-leaf" href="/login">
-          I already have a demo account
+          I already have an account
         </Link>
       </div>
     </main>

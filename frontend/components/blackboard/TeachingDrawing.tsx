@@ -52,7 +52,15 @@ export type TeachingDrawingProps = {
 const MAIN_DELAY = 250;
 const MAIN_MS = 2400;
 
-/** A counting picture: as many rings as there are things, drawn one by one. */
+/**
+ * A counting picture: as many rings as there are things, drawn one by one.
+ *
+ * Each ring gets a column of its own and is drawn inside it, which is the whole
+ * of the arithmetic here and the thing that was wrong: the rings used to be
+ * spaced by the gaps between them and then given a fixed radius, so four of
+ * them at radius 11 sat 17 apart and overlapped into a chain. A child counting
+ * a chain does not count four.
+ */
 function counters(value: string): ChalkArt {
   const total = Math.max(1, Math.min(Number(value) || 1, 10));
   const perRow = total > 5 ? 5 : total;
@@ -61,13 +69,12 @@ function counters(value: string): ChalkArt {
     const row = Math.floor(index / perRow);
     const column = index % perRow;
     const inThisRow = Math.min(perRow, total - row * perRow);
-    const gap = 84 / (inThisRow + 1);
+    const cell = 84 / inThisRow;
+    // Four tenths of the column, so there is always a clear tenth of a column
+    // of board between one ring and the next, whatever the count.
+    const radius = Math.min(cell * 0.4, rows === 1 ? 14 : 11);
     return {
-      d: chalkRing(
-        8 + gap * (column + 1),
-        rows === 1 ? 50 : 34 + row * 32,
-        rows === 1 ? 11 : 8
-      ),
+      d: chalkRing(8 + cell * (column + 0.5), rows === 1 ? 50 : 34 + row * 32, radius),
       fill: CHALK_COLOURS.yellow
     };
   });

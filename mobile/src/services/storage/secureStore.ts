@@ -5,7 +5,7 @@ import { Platform } from "react-native";
  * Credential-grade storage. The session token lives here rather than in
  * AsyncStorage so it sits in the Keychain / Android Keystore.
  *
- * Note: these are prototype demo tokens today, but treating them as secrets
+ * These are real session bearers, and they are treated as secrets
  * now means the production auth swap does not have to move storage too.
  */
 

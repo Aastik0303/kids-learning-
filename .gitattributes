@@ -1,0 +1,39 @@
+# Line endings, and one of them is load-bearing.
+#
+# This repository is developed on Windows with `core.autocrlf=true`, which
+# rewrites text files to CRLF on checkout. That is harmless for Python and
+# TypeScript and fatal for a shell script that runs as a container's
+# entrypoint: a CR at the end of the shebang makes the kernel look for an
+# interpreter literally called "/usr/bin/env sh\r", and the container exits
+# with "no such file or directory" naming a file that is obviously there.
+#
+# So scripts and the container's own files are pinned to LF regardless of who
+# checks them out. `backend/Dockerfile` strips CRs from `start.sh` at build
+# time as well - belt and braces, because a build can start from a tarball that
+# never went through git at all.
+
+# Let git decide for ordinary source, and normalise it in the repository.
+* text=auto
+
+# Anything a Linux kernel or shell has to read. Never CRLF.
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.dockerfile text eol=lf
+.dockerignore text eol=lf
+docker-compose*.yml text eol=lf
+
+# Windows-only helpers, the other way round.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary: never touched, never diffed as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.mp3 binary
+*.mp4 binary
+*.riv binary

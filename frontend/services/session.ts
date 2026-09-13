@@ -2,12 +2,28 @@
 
 import type { AuthResponse, ChildProfile, User } from "@/types";
 
-const TOKEN_KEY = "demo_session_token";
-const USER_KEY = "demo_user";
-const CHILD_KEY = "demo_child";
-const GUEST_KEY = "demo_guest_active";
+const TOKEN_KEY = "saksham.session_token";
+const USER_KEY = "saksham.user";
+const CHILD_KEY = "saksham.child";
+const GUEST_KEY = "saksham.guest";
 
 const KEYS = [TOKEN_KEY, USER_KEY, CHILD_KEY, GUEST_KEY];
+
+/**
+ * What each key used to be called.
+ *
+ * These were `demo_*` from when this was a prototype, and the names outlived
+ * that. Renaming them on its own would sign out every parent who is signed in
+ * right now, so a value found under the old name is moved across on the first
+ * read and the old key is dropped. Nothing has to be done by anyone, and after
+ * a visit each browser holds only the new names.
+ */
+const LEGACY_KEYS: Record<string, string> = {
+  [TOKEN_KEY]: "demo_session_token",
+  [USER_KEY]: "demo_user",
+  [CHILD_KEY]: "demo_child",
+  [GUEST_KEY]: "demo_guest_active"
+};
 
 /**
  * Where the signed-in parent is remembered.
@@ -75,24 +91,41 @@ function perTab(): Storage | null {
   return usable("session", () => window.sessionStorage);
 }
 
-function read(key: string): string | null {
-  const store = durable();
-  const stored = store ? store.getItem(key) : null;
-  if (stored !== null) return stored;
-
+/** Every place a value for this key may still be sitting, newest first. */
+function candidates(key: string): [Storage | null, string][] {
+  const legacy = LEGACY_KEYS[key];
+  const stores: [Storage | null, string][] = [
+    [durable(), key],
+    [perTab(), key]
+  ];
   // Whoever was signed in when this shipped had their token in the per-tab
-  // store. Move it across rather than signing them out to fix a bug about
-  // being signed out.
-  const legacy = perTab()?.getItem(key) ?? null;
-  if (legacy !== null) {
-    if (store) {
+  // store, under the old name. Move it across rather than signing them out to
+  // fix a bug about being signed out.
+  if (legacy) stores.push([durable(), legacy], [perTab(), legacy]);
+  return stores;
+}
+
+function read(key: string): string | null {
+  for (const [store, name] of candidates(key)) {
+    let found: string | null = null;
+    try {
+      found = store?.getItem(name) ?? null;
+    } catch {
+      continue;
+    }
+    if (found === null) continue;
+
+    // Found somewhere other than where it belongs: put it where it belongs and
+    // clear the old copy, so this migration happens once per browser.
+    if (store !== durable() || name !== key) {
       try {
-        store.setItem(key, legacy);
+        durable()?.setItem(key, found);
+        if (name !== key) store?.removeItem(name);
       } catch {
         /* full or blocked: the value is still returned below */
       }
     }
-    return legacy;
+    return found;
   }
 
   return memory.get(key) ?? null;
@@ -185,4 +218,7 @@ export function forgetChild() {
 
 export function clearSession() {
   KEYS.forEach(remove);
+  // Including anything left under the old names, so signing out on a browser
+  // that has not yet been migrated actually signs it out.
+  Object.values(LEGACY_KEYS).forEach(remove);
 }

@@ -113,11 +113,14 @@ export function PairsGame({ game, onFinished }: PairsGameProps) {
   if (!tokens.length) return null;
   if (done) return <GameFinish onAgain={start} />;
 
-  // Four across once there are more than four cards, at every size. Two across
-  // meant eight cards were four rows deep, which is a board a phone has to
-  // scroll — and a memory game you cannot see all of at once is one you cannot
-  // hold in your head.
-  const columns = cards.length <= 4 ? "grid-cols-2" : "grid-cols-4";
+  // Two across on a phone, four from `sm:` up. Four across at every size was
+  // what made a phone's cards narrow: eight of them share the width, and a
+  // square card can only be as big as the narrow side of its cell, so four
+  // columns on a 390px screen is a 4.5rem card — under the touch floor and far
+  // smaller than the room the board actually has. Being played, the board
+  // fills the screen and its rows stretch, so four rows of two costs nothing
+  // and neither of them ever scrolls.
+  const columns = cards.length <= 4 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4";
 
   return (
     <div className="game-body grid gap-4" data-testid="game-pairs">
@@ -138,6 +141,12 @@ export function PairsGame({ game, onFinished }: PairsGameProps) {
                 aria-pressed={isUp}
                 data-testid="pairs-card"
                 className={[
+                  // A square card with soft corners, at the user's asking — a
+                  // card is what it is meant to look like, and a square one
+                  // holds a bigger picture than a circle cut out of the same
+                  // cell does. It only reads as a square because the tile is a
+                  // true square now: the one it replaced was being stretched
+                  // into a tall pill by the board it sits on.
                   "grid aspect-square min-h-[6rem] w-full touch-manipulation select-none place-items-center rounded-[1.75rem] border-4 p-3 shadow-soft transition-colors",
                   isMatched ? "border-leaf bg-leaf/10" : "",
                   isUp && !isMatched ? "border-sunshine bg-white" : "",

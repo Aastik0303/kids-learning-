@@ -12,6 +12,7 @@ import { navigationRef } from "@/navigation/navigationRef";
 import { useTheme } from "@/app/providers/ThemeProvider";
 import { useAuthStore } from "@/store/authStore";
 import { useChildStore } from "@/store/childStore";
+import { useUiStore } from "@/store/uiStore";
 import type { RootStackParamList } from "@/navigation/routes";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -33,6 +34,11 @@ export function RootNavigator() {
   const activeChild = useChildStore((state) => state.activeChild);
   const sessionToken = useAuthStore((state) => state.sessionToken);
   const loadChildren = useChildStore((state) => state.loadChildren);
+  // The class stands the same panda in the middle of its own screen and
+  // holds the lesson on a board in its paws, so the corner dock steps aside
+  // while it is up: two of the same character is one too many for a
+  // three-year-old, who looks at whichever moved last.
+  const dockHidden = useUiStore((state) => state.isDockHidden);
 
   // Pull the parent's children as soon as we have a validated session.
   useEffect(() => {
@@ -82,7 +88,7 @@ export function RootNavigator() {
       </Stack.Navigator>
 
       {/* Global AI layer — deliberately outside the navigator. */}
-      <AvatarDock visible={isInChildExperience} />
+      <AvatarDock visible={isInChildExperience && !dockHidden} />
       <DoubtOverlay />
     </NavigationContainer>
   );

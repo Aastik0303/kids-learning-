@@ -10,6 +10,7 @@ import { Card } from "@/components/common/Card";
 import { EmptyState, LoadingState, Pill } from "@/components/common/StateViews";
 import { ResponsiveGrid } from "@/components/responsive/ResponsiveGrid";
 import { Screen } from "@/components/common/Screen";
+import { ScheduleStrip } from "@/components/shared/ScheduleStrip";
 import { StarRow } from "@/components/common/StarRow";
 import { Text } from "@/components/common/Text";
 import { useTheme } from "@/app/providers/ThemeProvider";
@@ -62,6 +63,11 @@ export function RewardsScreen() {
   return (
     <Screen reserveDockSpace>
       <View style={{ gap: theme.space[6] }}>
+        {/* The day's plan rides above every screen: the schedule shapes the
+            whole sitting, and a rule like that cannot live behind a chip a
+            child has to know to tap. */}
+        <ScheduleStrip />
+
         <Text variant="title">Your rewards</Text>
 
         {/* Star total */}

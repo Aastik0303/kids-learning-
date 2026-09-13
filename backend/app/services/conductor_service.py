@@ -432,13 +432,22 @@ def open_class(child_id: str, topic_id: str | None = None) -> ConductorDirective
             raise app_error("NOT_TODAYS_PLAN", gate.message, 403)
         return _conduct_topic(child, topic_id, subject_id=None)
 
-    subject_id, topic_id = plan_service.todays_topic(profile)
+    # The day's first unfinished **level**. Every fifth day one of the day's
+    # stages is a poem instead, and this loop cannot say one: a poem has no
+    # manifest entry, no phases and no question, and asking `get_topic` for it
+    # is a 404 - which is exactly what a child on a poem morning used to get,
+    # for the rest of the day, because the cursor stays on the poem until
+    # something finishes it. The web class says the poem; this one steps over it
+    # rather than breaking on it, and leaves it unfinished for that class.
+    subject_id, topic_id = plan_service.todays_level(profile)
     if not topic_id:
         # A finished plan is not the same as no plan. Today's work being done is
-        # the day closing warmly; only a child with no plan at all - a class with
-        # nothing authored, or a database that is not answering - falls back to
-        # the next unlocked topic, so infrastructure never costs a child a lesson.
-        if plan_service.is_day_complete(profile):
+        # the day closing warmly - and so is a day whose only remaining stage is
+        # a poem, because everything this loop can teach is behind it. Only a
+        # child with no plan at all - a class with nothing authored, or a
+        # database that is not answering - falls back to the next unlocked
+        # topic, so infrastructure never costs a child a lesson.
+        if plan_service.todays_plan(profile) is not None:
             return _day_complete(child)
         subject_id, topic_id = daily_recommendation_service.next_topic(profile)
     if not topic_id:

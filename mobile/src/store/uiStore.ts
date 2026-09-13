@@ -28,6 +28,15 @@ type UiState = {
   isParentUnlocked: boolean;
   /** Blocks child taps during a scripted guide moment. */
   isInputLocked: boolean;
+  /**
+   * The corner avatar is off.
+   *
+   * Set by the class, which stands the same panda in the middle of the screen
+   * and holds the lesson on a board in its paws. Two of the same character on
+   * one screen is one too many for a three-year-old, who looks at whichever
+   * moved last.
+   */
+  isDockHidden: boolean;
   toast: string | null;
 
   setOnline: (value: boolean) => void;
@@ -37,6 +46,7 @@ type UiState = {
   unlockParent: () => void;
   lockParent: () => void;
   setInputLocked: (value: boolean) => void;
+  setDockHidden: (value: boolean) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
 };
@@ -47,6 +57,7 @@ export const useUiStore = create<UiState>((set) => ({
   celebration: null,
   isParentUnlocked: false,
   isInputLocked: false,
+  isDockHidden: false,
   toast: null,
 
   setOnline(isOnline) {
@@ -76,6 +87,10 @@ export const useUiStore = create<UiState>((set) => ({
 
   setInputLocked(isInputLocked) {
     set({ isInputLocked });
+  },
+
+  setDockHidden(isDockHidden) {
+    set({ isDockHidden });
   },
 
   showToast(toast) {

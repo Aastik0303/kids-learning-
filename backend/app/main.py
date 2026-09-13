@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api import (
@@ -23,11 +24,16 @@ from app.api import (
     progress,
     speech,
 )
+from app.api.middleware import (
+    ContentCacheMiddleware,
+    RateLimitMiddleware,
+    ServerTimingMiddleware,
+)
 from app.config import get_settings
 from app.playground import rag
 from app.conductor.skill_graph import load_skill_graph
 from app.db.bootstrap import ensure_schema, pending_migrations, schema_ready
-from app.services import planner_runner
+from app.services import cache, planner_runner
 from app.services.curriculum_service import load_curriculum
 from app.services.learning_memory_service import initialize_learning_memory_store
 
@@ -83,12 +89,39 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(title="AI Nursery Learning Platform", version="0.1.0", lifespan=lifespan)
 
+# Middleware runs outermost-first in the order it is *last* added, so this
+# block reads bottom-to-top: CORS sees the request first, then the rate limiter,
+# then compression, then the content cache, then timing closest to the route.
+#
+# The order is not cosmetic. The rate limiter has to sit inside CORS or a
+# refused cross-origin request arrives at the browser without the headers that
+# let it read the refusal, and a 429 then shows up in the console as a CORS
+# error - which is a bug report about the wrong thing entirely. And
+# `ContentCacheMiddleware` has to sit *inside* GZip so it hashes the real body
+# rather than whichever compression the caller happened to accept, or two
+# browsers get two ETags for one answer.
+app.add_middleware(ServerTimingMiddleware)
+app.add_middleware(ContentCacheMiddleware)
+# 500 bytes: below that a compressed body is not reliably smaller, and the CPU
+# is real. The curriculum, a plan and a class detail are all far above it.
+app.add_middleware(GZipMiddleware, minimum_size=500)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # So a browser can read how much of its allowance is left, and how long a
+    # 429 wants it to wait, instead of only seeing that something failed.
+    expose_headers=[
+        "ETag",
+        "Retry-After",
+        "Server-Timing",
+        "X-RateLimit-Limit",
+        "X-RateLimit-Remaining",
+        "X-RateLimit-Bucket",
+    ],
 )
 
 
@@ -121,6 +154,11 @@ async def health() -> dict:
         "schema_ready": schema_ready(),
         "pending_migrations": behind,
         "schema_current": not behind,
+        # Hit rates for the in-process content caches. Counts only - there is
+        # nothing here about any child, and it is what makes "is the cache
+        # actually being used" answerable without attaching a profiler to a
+        # running server.
+        "caches": cache.stats(),
     }
 
 
@@ -138,4 +176,9 @@ app.include_router(guide.router)
 app.include_router(history.router)
 app.include_router(playground.router)
 app.include_router(policy.router)
-app.include_router(dev.router)
+# Development only, and not merely refused there: a route that answers 403 in
+# production is still a route, still in the schema and still one misread setting
+# away from unlocking a child's whole curriculum. Outside development it is not
+# mounted at all.
+if settings.env.lower() == "development":
+    app.include_router(dev.router)

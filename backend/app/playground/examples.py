@@ -51,6 +51,7 @@ from functools import lru_cache
 from app.playground import stage as stage_rules
 from app.playground import visuals
 from app.services import curriculum_service
+from app.services import cache
 
 
 logger = logging.getLogger(__name__)
@@ -92,11 +93,19 @@ _MARK_WORDS = {"line", "lines", "slant", "stroke", "strokes", "curve", "curves",
 # concept whose everyday things the app cannot draw is absent, and absent means
 # no picture: black has a crow in the spoken line and nothing here, because a
 # crow drawn in the app's own colours is not black.
+# It is read **both ways**. Forwards it is this concept's own examples, and
+# backwards - `_picture_of` - it is whose example a picture is, which is what
+# keeps a shapes level's box of exemplars from handing the circle's ball to the
+# triangle, and what `not_examples` sends the client so the class never
+# illustrates a contrast it only mentioned in passing. That second reading is
+# why a concept lists everything the app can draw *of* it and not only the one
+# thing the spoken line names: a plate and the moon are the circle's whether or
+# not this turn's sentence reached for them.
 _CONCEPT_PICTURES: dict[str, tuple[str, ...]] = {
-    "shape:circle": ("ball", "clock"),
-    "shape:square": ("bread", "box"),
+    "shape:circle": ("ball", "clock", "plate", "moon", "wheel"),
+    "shape:square": ("bread", "box", "window"),
     "shape:triangle": ("ice_cream",),
-    "shape:rectangle": ("door", "book"),
+    "shape:rectangle": ("door", "book", "notebook"),
     "colour:red": ("tomato", "fireengine", "apple"),
     "colour:blue": ("sky", "water"),
     "colour:yellow": ("banana", "sun"),
@@ -108,6 +117,76 @@ _CONCEPT_PICTURES: dict[str, tuple[str, ...]] = {
     "colour:black": ("crow",),
     "colour:white": ("milk", "cloud"),
 }
+
+
+def _picture_of(token: str) -> str:
+    """Which concept `_CONCEPT_PICTURES` says this everyday thing is a picture of.
+
+    The table is written the other way round - concept to pictures - and this
+    reads it back: `ball` is the circle's, `door` is the rectangle's, `tomato`
+    is red's. A word it does not hold belongs to nobody in particular, which is
+    the honest answer for `hat` or `samosa`.
+    """
+    words = _clean(token).replace(" ", "_")
+    for concept, pictures in _CONCEPT_PICTURES.items():
+        if words in pictures:
+            return concept
+    return ""
+
+
+def _belongs_elsewhere(token: str, concept: visuals.Visual) -> bool:
+    """Whether this picture is an example of a *different* card of this lesson.
+
+    The ball-on-the-square-card bug again, one level further in. An author who
+    writes an activity of shape *exemplars* - a ball, a book, a hat, all in one
+    `visual_items` list - has named no concept in that list, so it reads as the
+    level's own picture box and every card of the level was offered the lot.
+    A shapes level's picture box is not a box of neutral pictures, though: each
+    one of them is a picture of one of its other shapes, and a ball beside "Tap
+    the triangle!" is the circle's example on the triangle's card.
+
+    `_CONCEPT_PICTURES` is the hand-written answer to which is whose, and it is
+    only ever consulted *within one family* - a ball is not the circle's on a
+    letters card, where it is simply a ball.
+    """
+    if not concept.is_shown:
+        return False
+    owner = _picture_of(token)
+    if not owner:
+        return False
+    kind, _, _value = owner.partition(":")
+    return kind == concept.kind and owner != concept.as_token()
+
+
+def not_examples(concept: visuals.Visual | None) -> list[str]:
+    """The everyday words that may never be illustrated beside this card.
+
+    The teacher reaches for a contrast while it explains - "a triangle has three
+    corners, a circle has none, round like a ball" - and the class shows the
+    example it is saying at the moment it says it
+    (`frontend/lib/spokenExamples.ts`). That is right for the card's own
+    examples and wrong for the ones it borrowed: a **ball** on the screen while
+    the question says "Tap the triangle!" is the circle's picture on the
+    triangle's card, which is the fault the user has reported three times now in
+    three different places.
+
+    The client cannot know whose picture a word is - it has a table of pictures,
+    not of concepts - so the server says. Hand-written, closed, and no model:
+    the other members of this concept's own family, out of `_CONCEPT_PICTURES`.
+    """
+    if concept is None or not concept.is_shown:
+        return []
+    mine = concept.as_token()
+    banned: list[str] = []
+    for token, pictures in _CONCEPT_PICTURES.items():
+        kind, _, _value = token.partition(":")
+        if kind != concept.kind or token == mine:
+            continue
+        for picture in pictures:
+            words = picture.replace("_", " ")
+            if words not in banned:
+                banned.append(words)
+    return banned
 
 
 def _clean(token: str) -> str:
@@ -258,6 +337,12 @@ def for_turn(
     def usable(token: str) -> bool:
         if _names_the_concept(token, concept) or _is_lesson_furniture(token):
             return False
+        # A picture of one of this level's *other* concepts. An activity of bare
+        # exemplars names no concept, so it reads as the level's picture box -
+        # and on a shapes level that box is a ball for the circle, a book for
+        # the rectangle and a hat for the triangle, handed whole to every card.
+        if _belongs_elsewhere(token, concept):
+            return False
         # Never an example of the thing the child is about to be asked for.
         if any(stage_rules.contains_answer(token, key) for key in keys):
             return False
@@ -310,4 +395,7 @@ def reset() -> None:
     _authored_items.cache_clear()
 
 
-__all__ = ["MAX_ITEMS", "for_turn", "reset"]
+cache.register("playground.examples", _authored_items.cache_clear)
+
+
+__all__ = ["MAX_ITEMS", "for_turn", "not_examples", "reset"]

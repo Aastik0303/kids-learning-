@@ -92,7 +92,7 @@ export function SessionRecapScreen() {
             label="Back home"
             icon="🏠"
             tone="quiet"
-            onPress={() => navigation.navigate("ChildTabs", { screen: "ChildHome" })}
+            onPress={() => navigation.navigate("ChildTabs", { screen: "Class" })}
           />
         </View>
       </View>

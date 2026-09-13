@@ -34,13 +34,18 @@ from app.schemas.auth import (
     AuthResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
+    GoogleAuthRequest,
     LoginRequest,
+    OtpResendRequest,
+    OtpResendResponse,
+    OtpVerifyRequest,
     RegisterRequest,
     ResetPasswordRequest,
     SessionResponse,
+    SignInChallengeResponse,
     UserPublic,
 )
-from app.services import jwt_service
+from app.services import google_auth_service, jwt_service, mailer, otp_service
 from app.services.errors import app_error
 
 
@@ -72,7 +77,15 @@ def hash_password(password: str, *, salt: bytes | None = None, rounds: int | Non
     return f"{PBKDF2_ALGORITHM}${rounds}${salt.hex()}${digest.hex()}"
 
 
-def verify_password(password: str, stored: str) -> bool:
+def verify_password(password: str, stored: str | None) -> bool:
+    """Whether this password matches the stored hash.
+
+    `stored` may be empty: an account created through Google has no password
+    until its owner sets one. There is nothing to match against, so nothing
+    matches - a blank password must never be a way into such an account.
+    """
+    if not stored:
+        return False
     try:
         algorithm, rounds, salt_hex, digest_hex = stored.split("$")
     except ValueError:
@@ -94,14 +107,13 @@ def _public(parent) -> UserPublic:
     return UserPublic(id=str(parent.id), name=parent.name, email=parent.email)
 
 
-def _authorised(parent, auth) -> AuthResponse:
+def _authorised(parent, auth, *, is_new_account: bool = False) -> AuthResponse:
     """The answer to a successful sign-in or registration.
 
-    `session_token` and `access_token` are the same signed string. The older
-    field keeps its name because the web and mobile clients both send it back
-    as `X-Demo-Session` and a rename would sign every one of them out; the new
-    pair says what it actually is, so a client can send `Authorization: Bearer`
-    instead.
+    `session_token` and `access_token` are the same signed string. Clients send
+    it back as `Authorization: Bearer`; the older field name is kept on the
+    response because a shipped mobile build still reads it, and renaming it
+    would sign those installs out.
     """
     token = jwt_service.issue(
         session_token=auth.token, parent_id=str(parent.id), email=parent.email
@@ -112,6 +124,7 @@ def _authorised(parent, auth) -> AuthResponse:
         token_type=jwt_service.TOKEN_TYPE,
         expires_in=int(jwt_service.ttl().total_seconds()),
         user=_public(parent),
+        is_new_account=is_new_account,
     )
 
 
@@ -127,16 +140,26 @@ def register(payload: RegisterRequest) -> AuthResponse:
             password_hash=hash_password(payload.password),
         )
         auth = learners.open_session(session, parent)
-        return _authorised(parent, auth)
+        return _authorised(parent, auth, is_new_account=True)
 
 
-def login(payload: LoginRequest) -> AuthResponse:
-    """Sign in, behind a failure counter.
+def login(payload: LoginRequest) -> AuthResponse | SignInChallengeResponse:
+    """Sign in, behind a failure counter, and then behind an emailed code.
 
     The password hash is deliberately expensive, which makes each guess slow but
     does not make guessing pointless. The counter does: eight wrong passwords in
     fifteen minutes and the account stops answering for fifteen, whatever the
     guess is.
+
+    A right password is no longer a session. It opens a **challenge**, and the
+    code that finishes it goes to the account's own address - so a password that
+    has leaked, been reused from another site or been read off a note by the
+    router is not on its own a way into a child's record. What comes back says
+    which of the two happened, and only `sign_in_with_code` mints a token here.
+
+    The throttle is cleared by the *code*, not by the password. Clearing it on a
+    correct password would let whoever holds that password reset the counter at
+    will and grind the second factor for as long as they liked.
     """
     now = _now()
     key = _throttle_key("login", payload.email)
@@ -153,9 +176,20 @@ def login(payload: LoginRequest) -> AuthResponse:
 
         parent = learners.parent_by_email(session, payload.email)
         if parent is not None and verify_password(payload.password, parent.password_hash):
-            security.clear(session, key=key)
-            auth = learners.open_session(session, parent)
-            return _authorised(parent, auth)
+            if not otp_service.enabled():
+                security.clear(session, key=key)
+                auth = learners.open_session(session, parent)
+                return _authorised(parent, auth)
+
+            challenge_id, dev_code = otp_service.issue(session, parent=parent, now=now)
+            settings = get_settings()
+            return SignInChallengeResponse(
+                challenge_id=challenge_id,
+                email_hint=otp_service.masked(parent.email),
+                expires_in=int(otp_service.ttl().total_seconds()),
+                resend_after=settings.auth_otp_resend_cooldown_seconds,
+                dev_code=dev_code,
+            )
 
     # The failure is written in a transaction of its own, and only then is the
     # refusal raised. Counting it inside the transaction above would have been
@@ -169,14 +203,153 @@ def login(payload: LoginRequest) -> AuthResponse:
     raise app_error("INVALID_LOGIN", "Those login details did not match.", 401)
 
 
+def sign_in_with_code(payload: OtpVerifyRequest) -> AuthResponse:
+    """Spend a sign-in code and issue the session.
+
+    An unknown, expired, already-spent or out-of-guesses challenge all answer
+    the same way. Telling them apart would say which handles are real and how
+    many guesses are left, and neither is any of the caller's business.
+
+    A wrong code is counted twice over: against the challenge, which dies after
+    a handful of guesses, and against the account's own throttle - the same
+    counter password guesses land on - so somebody holding the password cannot
+    open a fresh challenge per guess and grind the code that way.
+    """
+    now = _now()
+    code = _clean_code(payload.code)
+    max_attempts = max(1, get_settings().auth_otp_max_attempts)
+
+    with session_scope() as session:
+        challenge = security.challenge_for(session, challenge_id=payload.challenge_id, now=now)
+        if challenge is None:
+            raise app_error("INVALID_CODE", "That code has expired. Please sign in again.", 401)
+
+        parent = session.get(learners.Parent, challenge.parent_id)
+        if parent is None:  # pragma: no cover - cascade-deleted with the parent
+            raise app_error("INVALID_CODE", "That code has expired. Please sign in again.", 401)
+
+        key = _throttle_key("login", parent.email)
+        locked = security.locked_until(session, key=key, now=now)
+        if locked is not None:
+            minutes = max(1, round((locked - now).total_seconds() / 60))
+            raise app_error(
+                "TOO_MANY_ATTEMPTS",
+                f"Too many sign-in attempts. Please try again in about {minutes} minutes.",
+                429,
+            )
+
+        if security.verify_challenge(
+            session, challenge=challenge, code=code, now=now, max_attempts=max_attempts
+        ):
+            # The sign-in as a whole succeeded, so the counter behind it is
+            # cleared here rather than when the password was accepted.
+            security.clear(session, key=key)
+            auth = learners.open_session(session, parent)
+            return _authorised(parent, auth)
+
+        email = parent.email
+
+    with session_scope() as session:
+        # Its own transaction, for the same reason the password counter is: the
+        # refusal below would roll back the very failure it exists to count.
+        security.record_failure(session, key=_throttle_key("login", email), now=now)
+
+    raise app_error("INVALID_CODE", "That code did not match. Please check and try again.", 401)
+
+
+def resend_code(payload: OtpResendRequest) -> OtpResendResponse:
+    """Another code on the same challenge, behind a cooldown and a ceiling."""
+    now = _now()
+    with session_scope() as session:
+        challenge = security.challenge_for(session, challenge_id=payload.challenge_id, now=now)
+        if challenge is None:
+            raise app_error("INVALID_CODE", "That sign-in has expired. Please sign in again.", 401)
+
+        parent = session.get(learners.Parent, challenge.parent_id)
+        if parent is None:  # pragma: no cover - cascade-deleted with the parent
+            raise app_error("INVALID_CODE", "That sign-in has expired. Please sign in again.", 401)
+
+        dev_code = otp_service.resend(session, challenge=challenge, email=parent.email, now=now)
+        return OtpResendResponse(
+            resend_after=get_settings().auth_otp_resend_cooldown_seconds, dev_code=dev_code
+        )
+
+
+def _clean_code(code: str) -> str:
+    """What a parent actually types or pastes.
+
+    Mail clients and phone keyboards put spaces and dashes through the middle of
+    a six-digit number, and a code refused over a space the parent cannot see is
+    the app blaming them for its own strictness.
+    """
+    return "".join(character for character in code if character.isdigit())
+
+
+def sign_in_with_google(payload: GoogleAuthRequest) -> AuthResponse:
+    """Sign in - or sign up - with a verified Google account.
+
+    One endpoint for both, because from the parent's side there is one action:
+    they tap the Google button and end up signed in. Which of the two happened
+    is answered in `is_new_account`, so the client knows whether to send them
+    through setting a child up.
+
+    Three cases, in this order:
+
+    * **already linked** - matched on Google's `sub`, which does not change when
+      the parent changes the address on their Google account.
+    * **same verified email, not yet linked** - the parent registered with a
+      password and is now using the Google button on the same address. It is
+      the same account and it is linked here rather than duplicated. This is
+      only safe because `google_auth_service` refuses a token whose email is
+      not verified: an unverified address would be a way into somebody else's
+      account.
+    * **neither** - a new account with no password. It can be signed into with
+      Google, and with a password only once its owner sets one through the
+      reset flow.
+
+    There is no throttle here and none is needed: the expensive thing this
+    guards is a password guess, and no password is checked on this path. What
+    is checked is a signature Google holds the key to.
+    """
+    identity = google_auth_service.verify(payload.credential)
+
+    with session_scope() as session:
+        parent = learners.parent_by_google_subject(session, identity.subject)
+        if parent is not None:
+            auth = learners.open_session(session, parent)
+            return _authorised(parent, auth)
+
+        parent = learners.parent_by_email(session, identity.email)
+        if parent is not None:
+            learners.link_google_subject(session, parent, identity.subject)
+            # The email is proven, so a lockout from guessing at this account's
+            # password should not outlive a successful sign-in to it.
+            security.clear(session, key=_throttle_key("login", parent.email))
+            auth = learners.open_session(session, parent)
+            return _authorised(parent, auth)
+
+        parent = learners.create_parent(
+            session,
+            email=identity.email,
+            name=identity.name,
+            google_subject=identity.subject,
+        )
+        auth = learners.open_session(session, parent)
+        return _authorised(parent, auth, is_new_account=True)
+
+
 def forgot_password(payload: ForgotPasswordRequest) -> ForgotPasswordResponse:
     """Start a password reset. The answer never says whether the account exists.
 
-    There is no mailer in this system yet, so outside production the token comes
-    back in the response and is also logged. That is the honest shape of an
-    unfinished feature: the flow works end to end and is testable, and the one
-    place it must not do this - production - is checked here rather than
-    remembered later.
+    The link is emailed now that there is a mailer. Two things stay as they
+    were, and both are about not turning this into a way to find out who has an
+    account here: the answer is identical whether or not the address is
+    registered, and a failure to send is swallowed rather than reported - "we
+    could not send that" would say the address exists.
+
+    Outside production, a machine with no SMTP configured still hands the token
+    back in the response so the flow can be finished without a mail account.
+    That door is checked against `ENV` here rather than remembered later.
     """
     now = _now()
     key = _throttle_key("forgot", payload.email)
@@ -197,7 +370,27 @@ def forgot_password(payload: ForgotPasswordRequest) -> ForgotPasswordResponse:
         security.create_reset(session, parent_id=parent.id, token=token, now=now)
 
     logger.info("Password reset requested for %s", payload.email.strip().lower())
-    if get_settings().env.lower() != "production":
+    settings = get_settings()
+
+    if mailer.configured(settings):
+        try:
+            mailer.send(
+                mailer.password_reset(
+                    to=payload.email.strip().lower(),
+                    link=f"{settings.password_reset_url.rstrip('/')}?token={token}",
+                    minutes=int(security.RESET_TTL.total_seconds() // 60),
+                )
+            )
+        except mailer.MailNotSent:
+            # Logged inside the mailer. Not reported: an answer that differed
+            # when the send failed would differ only for addresses that exist.
+            pass
+        return response
+
+    if settings.env.lower() != "production":
+        # No mailer on this machine. The token comes back so the flow can still
+        # be completed and tested; `mailer.configured` is false in production
+        # only if somebody deployed without SMTP, and then this is not reached.
         return response.model_copy(update={"reset_token": token})
     return response
 

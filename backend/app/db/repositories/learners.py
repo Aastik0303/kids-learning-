@@ -22,8 +22,26 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def create_parent(session: Session, *, email: str, name: str, password_hash: str) -> Parent:
-    parent = Parent(email=email.strip().lower(), name=name, password_hash=password_hash)
+def create_parent(
+    session: Session,
+    *,
+    email: str,
+    name: str,
+    password_hash: str | None = None,
+    google_subject: str | None = None,
+) -> Parent:
+    """A new parent account.
+
+    `password_hash` is optional because an account created through Google has
+    no password: it is signed into by Google and by nothing else until the
+    parent sets one through the reset flow.
+    """
+    parent = Parent(
+        email=email.strip().lower(),
+        name=name,
+        password_hash=password_hash,
+        google_subject=google_subject,
+    )
     session.add(parent)
     session.flush()
     return parent
@@ -31,6 +49,32 @@ def create_parent(session: Session, *, email: str, name: str, password_hash: str
 
 def parent_by_email(session: Session, email: str) -> Parent | None:
     return session.scalar(select(Parent).where(Parent.email == email.strip().lower()))
+
+
+def parent_by_google_subject(session: Session, subject: str) -> Parent | None:
+    """Matched on before the email address is.
+
+    A Google account's email can be changed; `sub` cannot. Looking the parent
+    up by it means a parent who changes their Gmail address comes back to the
+    same account and their child's history rather than to a new empty one.
+    """
+    subject = subject.strip()
+    if not subject:
+        return None
+    return session.scalar(select(Parent).where(Parent.google_subject == subject))
+
+
+def link_google_subject(session: Session, parent: Parent, subject: str) -> Parent:
+    """Remember that this account signs in with this Google account.
+
+    Only ever written for an account whose verified Google email already
+    matches, and never overwritten: an account already linked to one Google
+    subject is not re-pointed at another.
+    """
+    if not parent.google_subject:
+        parent.google_subject = subject.strip()
+        session.flush()
+    return parent
 
 
 def grant_consent(session: Session, parent: Parent, *, now: datetime | None = None) -> Parent:

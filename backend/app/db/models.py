@@ -62,7 +62,15 @@ class Parent(Base):
 
     id: Mapped[UUID] = _pk()
     email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True)
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    # Nullable, because an account created through Google has no password at
+    # all. A column holding a placeholder hash would be a password that cannot
+    # be used and cannot be told apart from one that can; an empty column says
+    # the true thing, and `verify_password` refuses it.
+    password_hash: Mapped[str | None] = mapped_column(String(255))
+    # Google's own stable id for the account, when this parent signs in with
+    # Google. Matched on before the email address is, because an email can be
+    # changed on the Google side and this cannot.
+    google_subject: Mapped[str | None] = mapped_column(String(64), unique=True)
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     # Consent is deliberately not automated - DPDP and COPPA both require an
     # explicit act by a person, so this column is written by a parent tapping a
@@ -124,6 +132,44 @@ class PasswordReset(Base):
     created_at: Mapped[datetime] = _now_column()
 
     __table_args__ = (Index("ix_password_resets_parent", "parent_id", "created_at"),)
+
+
+class SignInChallenge(Base):
+    """A sign-in waiting on the code emailed to the account's address.
+
+    This is what `POST /auth/login` returns instead of a session once the
+    password has been accepted. The session does not exist yet and cannot be
+    reached from here: verifying the code is what creates one.
+
+    Neither secret is stored as itself. The `challenge_id` a client carries and
+    the code a parent types are both kept as keyed hashes, so a database dump is
+    not a drawer full of sign-ins in progress - the same reason `password_resets`
+    stores only a digest. The key is the server's, so the dump alone is not
+    enough to grind a six-digit code either.
+
+    `attempts` is what keeps a six-digit code worth having: a million
+    possibilities means nothing if a caller may try them all, so the row dies
+    after a handful.
+    """
+
+    __tablename__ = "sign_in_challenges"
+
+    id: Mapped[UUID] = _pk()
+    parent_id: Mapped[UUID] = mapped_column(ForeignKey("parents.id", ondelete="CASCADE"), nullable=False)
+    # The handle the client sends back, hashed. Unique so a lookup is one row.
+    challenge_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(UTCDateTime(), nullable=False)
+    attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # How many codes have been sent for this one challenge, and when the last
+    # one went. Together they are the resend cooldown.
+    sends: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    last_sent_at: Mapped[datetime] = _now_column()
+    # Set the moment the code is accepted. A challenge is spent once.
+    consumed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    created_at: Mapped[datetime] = _now_column()
+
+    __table_args__ = (Index("ix_sign_in_challenges_parent", "parent_id", "created_at"),)
 
 
 class Child(Base):

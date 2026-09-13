@@ -919,10 +919,15 @@ def test_a_lesson_never_drops_a_teaching_card(client: TestClient):
         assert set(teaching) <= set(played), "a lesson skipped a teaching card"
 
 
-def test_a_lesson_is_a_short_varying_sample_of_its_topic(client: TestClient):
+def test_a_lesson_is_a_short_varying_sample_of_its_topic(client: TestClient, next_day):
     """The first colours level holds nine examples. A two-year-old plays six of
     them, opening on the level's watch-and-listen card, and meets a different
-    handful next time."""
+    handful next time.
+
+    An ordinary morning, because the level has to be in today's plan to open at
+    all and every fifth morning one subject's level steps aside for a poem.
+    """
+    next_day.ordinary()
     _, child_id = make_play_group_child(client, "pglesson@example.com")
     topic = "pg_ga_colors_1"
     authored = [a["activity_id"] for a in client.get(f"/curriculum/topics/{topic}/activities").json()]

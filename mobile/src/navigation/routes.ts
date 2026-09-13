@@ -9,11 +9,17 @@ import type { ToddlerModule } from "@/types/domain";
 
 export type GuestStackParamList = {
   GuestHome: undefined;
-  FeatureDemo: { featureId: string };
 };
 
 export type AuthStackParamList = {
   Login: undefined;
+  /**
+   * The emailed sign-in code. Reached only when `/auth/login` answered with a
+   * challenge rather than a session; the challenge itself lives in `authStore`
+   * rather than in the route params, because it is a credential in flight and
+   * navigation params are held in state that gets serialised and logged.
+   */
+  VerifyCode: undefined;
   SignUp: undefined;
   ChildSelect: undefined;
   ChildSetup: { childId?: string } | undefined;
@@ -22,11 +28,25 @@ export type AuthStackParamList = {
 export type ChildStackParamList = {
   ChildTabs: NavigatorScreenParams<ChildTabParamList> | undefined;
   /**
-   * Today's class, run by the conductor. Takes no parameters on purpose:
-   * which topic is played is the server's decision, read from the frozen
-   * daily plan, and passing one in from the app would be the client choosing.
+   * One subject's levels, and one level's own page.
+   *
+   * Both are **status and play**, never a way into a lesson: the class is the
+   * AI Teacher and today's frozen plan decides what it teaches, so a level that
+   * could be started from here would open one the schedule had not reached.
    */
-  Class: undefined;
+  AdventureSubject: { subjectId: string; title?: string };
+  AdventureLevel: { subjectId: string; topicId: string };
+  /**
+   * The older conducted class. Still the server-side loop it always was, and
+   * still reachable, but it is no longer the child's way in: the class is the
+   * `Class` tab - the AI Teacher - which is the same loop the web runs, off the
+   * same frozen plan. Nothing a child taps opens this.
+   */
+  ConductedClass: undefined;
+  /** The older picked-lesson surfaces. Off the tab bar; see `ChildTabs`. */
+  ChildHome: undefined;
+  Classes: undefined;
+  Practice: undefined;
   Lesson: {
     pathId: string;
     stageNumber: number;
@@ -55,10 +75,24 @@ export type ChildStackParamList = {
   Certificate: undefined;
 };
 
+/**
+ * What a child sees at the bottom of the screen, and it is deliberately three
+ * things rather than five.
+ *
+ * **Class** is the AI Teacher and it is where the app opens - the sitting is
+ * already happening, with no topic to pick and no level to choose.
+ * **Adventure** is a progress board: what is finished, what today's plan holds,
+ * what is sleeping until its turn, what is still locked, and a game about any
+ * level the child has already been given. **Rewards** is the shelf.
+ *
+ * The older picked-lesson surfaces - a home hub, a list of classes, practice -
+ * are off the bar. Not because they stopped working, but because each was a
+ * second way into a lesson, and a second way in can open a level the schedule
+ * has not reached. They are still in the stack above for a grown-up's route in.
+ */
 export type ChildTabParamList = {
-  ChildHome: undefined;
-  Classes: undefined;
-  Practice: undefined;
+  Class: undefined;
+  Adventure: undefined;
   Rewards: undefined;
 };
 
@@ -91,9 +125,13 @@ declare global {
  * absent by design and cannot be reached by an LLM response.
  */
 export const SAFE_ROUTES = {
-  child_home: { stack: "Child", screen: "ChildTabs", params: { screen: "ChildHome" } },
-  classes: { stack: "Child", screen: "ChildTabs", params: { screen: "Classes" } },
-  practice: { stack: "Child", screen: "ChildTabs", params: { screen: "Practice" } },
+  // The ids are the server's and are unchanged; where each one *lands* moved
+  // when the class became the app's front door. "child_home" is the class,
+  // because that is what a child now opens the app onto, and "classes" is the
+  // Adventure board, which is where the levels are.
+  child_home: { stack: "Child", screen: "ChildTabs", params: { screen: "Class" } },
+  classes: { stack: "Child", screen: "ChildTabs", params: { screen: "Adventure" } },
+  practice: { stack: "Child", screen: "ChildTabs", params: { screen: "Rewards" } },
   rewards: { stack: "Child", screen: "ChildTabs", params: { screen: "Rewards" } },
 } as const;
 

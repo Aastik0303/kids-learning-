@@ -16,6 +16,28 @@ export type User = {
   email: string;
 };
 
+/**
+ * What `POST /auth/login` answers when the password was right and a code has
+ * been emailed. No session in it, and nothing here can be turned into one -
+ * `POST /auth/otp/verify` is what mints the token.
+ */
+export type SignInChallenge = {
+  otp_required: true;
+  challenge_id: string;
+  /** Enough of the address to recognise, never the whole of it. */
+  email_hint: string;
+  expires_in: number;
+  resend_after: number;
+  /** Development machines with no mailer only. */
+  dev_code: string | null;
+};
+
+export type LoginResult = AuthResponse | SignInChallenge;
+
+export function isSignInChallenge(result: LoginResult): result is SignInChallenge {
+  return (result as SignInChallenge).otp_required === true;
+}
+
 export type AuthResponse = {
   session_token: string;
   user: User;
@@ -36,6 +58,28 @@ export type PathProgress = {
   score: number;
 };
 
+/** One subject's standing, as `/progress` and `/children` send it back. */
+export type SubjectProgress = {
+  completed_topics: string[];
+  unlocked_topics: string[];
+  current_topic_id: string | null;
+  scores: Record<string, number>;
+};
+
+/**
+ * A child, as the server sends one.
+ *
+ * The fields are in two groups and it is worth knowing which is which. The
+ * **curriculum** fields below - `class_id`, `subject_progress` and the rest -
+ * are what `app/schemas/child.py` actually returns today, and they are what the
+ * class and the Adventure board read.
+ *
+ * The **path** fields above them (`age_group`, `current_path`, `path_progress`,
+ * `completed_paths`) are from the older paths-and-stages model that the picked-
+ * lesson screens were built on. The server no longer sends several of them, so
+ * they are optional here rather than promised: a type that swears a field is
+ * there when the API stopped sending it is worse than one that admits the gap.
+ */
 export type ChildProfile = {
   child_id: string;
   user_id: string;
@@ -53,10 +97,43 @@ export type ChildProfile = {
   rewards: string[];
   mixed_path_unlocked: boolean;
   certificate_unlocked: boolean;
+
+  // ── The curriculum shape the server sends now ──────────────────────────
+  /** Which class the child is in - what they see, override included. */
+  class_id?: string;
+  default_class_id?: string;
+  class_override?: string | null;
+  experience_mode?: string;
+  birth_year?: number;
+  birth_month?: number;
+  age_years?: number;
+  current_subject_id?: string | null;
+  current_topic_id?: string | null;
+  completed_subjects?: string[];
+  /**
+   * What is finished and what is open, per subject. The Adventure board reads
+   * this and nothing else for three of its four standings; today's frozen plan
+   * supplies the fourth.
+   */
+  subject_progress?: Record<string, SubjectProgress>;
 };
 
 // ─── avatar.py ──────────────────────────────────────────────────────────
 
+/**
+ * What the avatar's face is doing.
+ *
+ * The first eleven are the states `avatar.py` sends. The last four are the
+ * class's own and are decided on the device by `avatarMoodForTeacher`: the AI
+ * Teacher is the one screen where a child cannot read a word, so the panda's
+ * face has to carry the verdict, and eleven feelings were not enough to tell
+ * "well done" from "I am pleased with the whole of that" or a microphone that
+ * heard nothing from a class that could not carry on.
+ *
+ * `sad` and `crying` are **never** shown for a wrong answer. They are for when
+ * the *app* has let the child down; a four-year-old who makes the panda cry by
+ * getting a letter wrong learns to stop answering.
+ */
 export type AvatarState =
   | "idle"
   | "waving"
@@ -68,7 +145,11 @@ export type AvatarState =
   | "encouraging"
   | "storytelling"
   | "sleeping"
-  | "error_fallback";
+  | "error_fallback"
+  | "proud"
+  | "curious"
+  | "sad"
+  | "crying";
 
 export type AvatarEffect =
   | "star_burst"

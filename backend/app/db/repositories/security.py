@@ -1,18 +1,20 @@
-"""Sign-in throttling and password resets.
+"""Sign-in throttling, password resets, and the emailed sign-in code.
 
-Two small tables, both of them about the one endpoint an attacker actually
+Three small tables, all of them about the one endpoint an attacker actually
 reaches: `POST /auth/login`. Everything here is written from the auth service
 and read nowhere else.
 """
 
 import hashlib
+import hmac
 from datetime import datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import AuthSession, AuthThrottle, PasswordReset
+from app.config import get_settings
+from app.db.models import AuthSession, AuthThrottle, PasswordReset, SignInChallenge
 
 
 # Eight wrong passwords inside fifteen minutes locks the account for fifteen.
@@ -29,6 +31,24 @@ def token_hash(token: str) -> str:
     """A reset token is a random secret, not a password: one hash is enough, and
     what matters is that the raw token is never stored."""
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def keyed_hash(value: str) -> str:
+    """For secrets small enough to guess offline - which is the sign-in code.
+
+    A reset token is 32 random bytes and a plain digest of it is unguessable. A
+    six-digit code is one of a million, and a million SHA-256s is under a second
+    on any laptop: a stolen database would hand over every code in flight. So
+    these are HMAC'd with the server's signing key, which is not in the
+    database, and a dump on its own is not enough to grind them.
+
+    Falls back to a plain digest when no key is configured - development, where
+    there may be no `JWT_SECRET` - rather than refusing to store anything.
+    """
+    key = get_settings().jwt_secret.strip()
+    if not key:
+        return token_hash(value)
+    return hmac.new(key.encode("utf-8"), value.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
 # --------------------------------------------------------------------------
@@ -118,6 +138,104 @@ def consume_reset(session: Session, *, token: str, now: datetime) -> PasswordRes
     reset.used_at = now
     session.flush()
     return reset
+
+
+# --------------------------------------------------------------------------
+# The emailed sign-in code
+# --------------------------------------------------------------------------
+
+
+def create_challenge(
+    session: Session,
+    *,
+    parent_id: UUID,
+    challenge_id: str,
+    code: str,
+    now: datetime,
+    ttl: timedelta,
+) -> SignInChallenge:
+    """Open a sign-in that is waiting on a code.
+
+    Any challenge still outstanding for this parent is spent first. Two live
+    challenges means two live codes, and the older one is usually the one an
+    attacker caused to be sent.
+    """
+    for row in open_challenges(session, parent_id=parent_id):
+        row.consumed_at = now
+
+    challenge = SignInChallenge(
+        parent_id=parent_id,
+        challenge_hash=token_hash(challenge_id),
+        code_hash=keyed_hash(code),
+        expires_at=now + ttl,
+        attempts=0,
+        sends=1,
+        last_sent_at=now,
+    )
+    session.add(challenge)
+    session.flush()
+    return challenge
+
+
+def open_challenges(session: Session, *, parent_id: UUID) -> list[SignInChallenge]:
+    return list(
+        session.scalars(
+            select(SignInChallenge).where(
+                SignInChallenge.parent_id == parent_id,
+                SignInChallenge.consumed_at.is_(None),
+            )
+        ).all()
+    )
+
+
+def challenge_for(session: Session, *, challenge_id: str, now: datetime) -> SignInChallenge | None:
+    """The live challenge behind this handle, or None.
+
+    None for unknown, already spent and expired alike - the caller must not be
+    able to tell those apart, or the endpoint says which handles are real.
+    """
+    row = session.scalar(
+        select(SignInChallenge).where(SignInChallenge.challenge_hash == token_hash(challenge_id))
+    )
+    if row is None or row.consumed_at is not None or row.expires_at <= now:
+        return None
+    return row
+
+
+def verify_challenge(
+    session: Session, *, challenge: SignInChallenge, code: str, now: datetime, max_attempts: int
+) -> bool:
+    """Spend one attempt against this challenge. True only if the code matched.
+
+    A wrong guess is counted whether or not it was close, and the challenge dies
+    on the last one: without that, six digits is a million tries rather than a
+    secret.
+    """
+    challenge.attempts += 1
+    matched = hmac.compare_digest(challenge.code_hash, keyed_hash(code))
+    if matched:
+        challenge.consumed_at = now
+    elif challenge.attempts >= max_attempts:
+        # Out of guesses. Spent, so the next attempt finds nothing at all.
+        challenge.consumed_at = now
+    session.flush()
+    return matched
+
+
+def record_resend(
+    session: Session, *, challenge: SignInChallenge, code: str, now: datetime
+) -> SignInChallenge:
+    """Replace the code on a live challenge and count the send.
+
+    The handle stays the same, so a client waiting on one screen does not have
+    to start again; the previous code stops working the moment this is written,
+    which is what "send it again" has to mean.
+    """
+    challenge.code_hash = keyed_hash(code)
+    challenge.sends += 1
+    challenge.last_sent_at = now
+    session.flush()
+    return challenge
 
 
 def revoke_sessions(session: Session, *, parent_id: UUID) -> int:

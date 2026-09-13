@@ -2,12 +2,17 @@
 
 Two headers are read, in this order:
 
-  Authorization: Bearer <jwt>   - the standard shape, and what new clients use
-  X-Demo-Session: <token>       - what the web and mobile clients send today
+  Authorization: Bearer <jwt>   - the standard shape, and what both clients send
+  X-Demo-Session: <token>       - the prototype's own header, kept for builds
+                                  that are already installed
 
-Both carry the same string. The second is kept because renaming the header
-would sign every installed client out at once, and because the mobile app is
-shipped rather than deployed - it cannot be updated in step with the server.
+Both carry the same string. The second is a leftover from when this was a
+prototype and is deprecated: the web app and the mobile source both send
+`Authorization` now. It stays because the mobile app is shipped rather than
+deployed - a build on somebody's phone cannot be updated in step with the
+server - and dropping it would sign those installs out. It can go once the
+older builds have aged out.
+
 Whatever arrives is verified in `jwt_service` and looked up in `auth_sessions`
 before it means anything, so neither header is trusted for being present.
 """
@@ -31,6 +36,7 @@ def optional_token(
     x_demo_session: str | None = Header(default=None),
 ) -> str | None:
     """The bearer, or `None`. For endpoints a signed-out visitor may call."""
+    # `x_demo_session` is the deprecated header above; see the module docstring.
     return _from_authorization(authorization) or (x_demo_session or None)
 
 

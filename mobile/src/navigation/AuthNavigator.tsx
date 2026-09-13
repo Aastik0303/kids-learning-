@@ -1,6 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import { LoginScreen } from "@/screens/auth/LoginScreen";
+import { VerifyCodeScreen } from "@/screens/auth/VerifyCodeScreen";
 import { SignUpScreen } from "@/screens/auth/SignUpScreen";
 import { ChildSelectScreen } from "@/screens/auth/ChildSelectScreen";
 import { ChildSetupScreen } from "@/screens/auth/ChildSetupScreen";
@@ -31,6 +32,7 @@ export function AuthNavigator() {
       screenOptions={{ headerShown: false, animation: "slide_from_right" }}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="VerifyCode" component={VerifyCodeScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
       <Stack.Screen name="ChildSelect" component={ChildSelectScreen} />
       <Stack.Screen name="ChildSetup" component={ChildSetupScreen} />

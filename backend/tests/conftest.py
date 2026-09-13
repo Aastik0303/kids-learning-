@@ -25,6 +25,7 @@ import pytest
 from app.config import get_settings
 from app.db.bootstrap import ensure_schema
 from app.db.session import reset_engine
+from app.playground import poem
 from app.services import child_store, plan_service
 
 
@@ -54,6 +55,15 @@ TEST_ENVIRONMENT = {
     # throwaway per-process key, which works but makes a token minted in one
     # process meaningless in another.
     "JWT_SECRET": "test-only-signing-key-not-for-any-real-environment",
+    # Off by default, so the hundreds of tests that sign a parent in to reach a
+    # lesson are not each a two-step sign-in with a mail server in the middle.
+    # `test_sign_in_code` turns it on for the tests that are about the code.
+    "AUTH_OTP_ENABLED": "0",
+    # Off, because a test file is not a caller: it drives a whole morning of
+    # lessons through one client in a few seconds, from one address, and the
+    # limiter is sized for a child holding a tablet. `test_cache_and_rate_limit`
+    # turns it back on for the tests that are about the limiter itself.
+    "RATE_LIMIT_ENABLED": "0",
     # The planner sweeps in the background of a running app. In the suite it is
     # off, so a test that asserts on today's plan is asserting on what its own
     # code did - `test_planner_agent` calls the sweep directly instead.
@@ -117,5 +127,29 @@ def next_day(monkeypatch):
             _roll()
         raise AssertionError(f"{topic_id} was never planned within {limit} days")
 
+    def _ordinary(days: int = 1) -> date:
+        """Roll to the next morning that is **not** a poem day.
+
+        Every fifth day one subject's level steps aside for a poem
+        (`app/playground/poem.py`), so the day really is a different shape on
+        those mornings - that is the feature, not a wobble. A test whose subject
+        is levels wants an ordinary morning, and this is how it says so; the
+        tests about poems ask for a poem day on purpose.
+        """
+        target = _roll(days)
+        while poem.is_poem_day(target):
+            target = _roll(1)
+        return target
+
+    def _on_a_poem_day(limit: int = 8) -> date:
+        """Roll forward to the next day a poem lands on."""
+        for _ in range(limit):
+            target = _roll(1)
+            if poem.is_poem_day(target):
+                return target
+        raise AssertionError(f"no poem day within {limit} days")
+
     _roll.until_planned = _until_planned
+    _roll.ordinary = _ordinary
+    _roll.on_a_poem_day = _on_a_poem_day
     return _roll

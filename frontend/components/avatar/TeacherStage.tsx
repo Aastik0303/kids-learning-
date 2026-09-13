@@ -27,9 +27,15 @@ import type { AvatarState } from "./avatar.types";
  *
  * Layers 1 and 3 are two SVGs with the same `viewBox`, and layer 2 is placed by
  * percentages taken from the same coordinates, so all three line up at any
- * size. The numbers in `.teacher-display` are the board's inner face - x 24 to
- * 176, y 100 to 180 out of 200 - and they have to be changed together with the
- * board rect in `AvatarFallback`.
+ * size. The numbers in `.teacher-display` are the board's lit face - the
+ * `x 30, y 100, 140 x 84` rect in `AvatarFallback`, out of a 200x200 viewBox,
+ * which is 15% / 50% / 70% / 42% - and the two have to be changed together.
+ *
+ * They line up only while this box is **square**, because the panda centres
+ * itself inside whatever box it is given and the percentages above are of the
+ * box rather than of the panda. Keeping it square is `.class-stage`'s job and
+ * it is the reason that rule asks for `min(100cqw, 100cqh)` rather than for a
+ * height with a ratio: see the comment there.
  */
 export function TeacherStage({
   state,

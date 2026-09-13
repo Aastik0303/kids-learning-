@@ -36,9 +36,19 @@ from the manifest, via the class's experience mode. `lib/experience.ts` applies
 them; its only hardcoded numbers are a strict fallback for the moment before the
 first response arrives.
 
-## Prototype State
+## Session
 
-The frontend stores the demo auth token, user, and selected child in `sessionStorage`. This is deliberate for the prototype and must be replaced with secure session handling before production.
+The parent's bearer token, their account and the selected child are kept in
+`localStorage` (`services/session.ts`), which is why a closed tab does not sign
+anybody out: the lifetime is the server's - the signed JWT and the
+`auth_sessions` row it names, thirty days by default - rather than the tab's.
+The token is sent as `Authorization: Bearer`, it is revocable, and signing out
+ends the row on the server as well as clearing it here.
+
+Sign-in is either Google or an email and password; `components/auth/AuthForm.tsx`
+offers both. Google's button is drawn by Google's own script and appears only
+where the server reports a client id it can verify against
+(`GET /auth/google/config`).
 
 ## Build
 
@@ -46,4 +56,4 @@ The frontend stores the demo auth token, user, and selected child in `sessionSto
 npm run build
 ```
 
-The child UI uses large touch targets, short labels, and simple visual activity items. The parent progress page includes a dev-only seed button for the final demo flow.
+The child UI uses large touch targets, short labels, and simple visual activity items. The parent progress page reads the attempt log, the frozen plans and the curriculum's own subject titles.

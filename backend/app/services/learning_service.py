@@ -536,9 +536,14 @@ def _refresh_certificate(child: dict) -> None:
         )
 
 
-def seed_demo_child(child_id: str) -> dict:
-    """Development helper: unlock and complete every playable topic in the
-    child's class so the later screens can be demonstrated."""
+def complete_every_topic(child_id: str) -> dict:
+    """Development fixture: unlock and complete every playable topic in the
+    child's class, so the certificate and rewards screens can be reached without
+    playing each level by hand.
+
+    Reached only through `/dev/seed`, which is not mounted outside development.
+    Nothing in the product calls this.
+    """
     child = get_child_record(child_id)
     detail = curriculum_service.get_class(child["class_id"])
     for subject in detail.subjects:

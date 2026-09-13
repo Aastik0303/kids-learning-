@@ -5,7 +5,8 @@ import { ApiError } from "@/services/api/client";
 import { kv } from "@/services/storage/kv";
 import { secureStore } from "@/services/storage/secureStore";
 import { track } from "@/services/analytics/analytics";
-import type { User } from "@/types/domain";
+import { isSignInChallenge } from "@/types/domain";
+import type { AuthResponse, SignInChallenge, User } from "@/types/domain";
 
 /**
  * A destination the child tapped before they were allowed in. Held so the
@@ -32,7 +33,16 @@ type AuthState = {
   error: string | null;
 
   restore: () => Promise<void>;
-  login: (email: string, password: string) => Promise<boolean>;
+  /**
+   * Returns what happened rather than a bare boolean: signing in may now stop
+   * at an emailed code, and the caller has to know which.
+   */
+  login: (email: string, password: string) => Promise<"signed-in" | "code-sent" | "failed">;
+  /** The challenge waiting on a code, when `login` answered "code-sent". */
+  pendingChallenge: SignInChallenge | null;
+  verifyCode: (code: string) => Promise<boolean>;
+  resendCode: () => Promise<string | null>;
+  clearChallenge: () => void;
   register: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
   continueAsGuest: () => void;
@@ -40,6 +50,26 @@ type AuthState = {
   consumePendingIntent: () => PendingIntent | null;
   clearError: () => void;
 };
+
+
+/**
+ * Take a session and become signed in. Shared, so the password path and the
+ * code path cannot drift into storing different things.
+ */
+async function adopt(
+  set: (partial: Partial<AuthState>) => void,
+  result: AuthResponse,
+  method: "login" | "register" | "login_otp",
+): Promise<void> {
+  await secureStore.saveSessionToken(result.session_token);
+  set({
+    status: "authenticated",
+    user: result.user,
+    sessionToken: result.session_token,
+    isSubmitting: false,
+  });
+  track("auth_completed", { method });
+}
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   status: "unknown",
@@ -67,7 +97,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ status: "authenticated", user: result.user, sessionToken: token, pendingIntent: intent });
         return;
       }
-      // Token no longer valid server-side (prototype state resets often).
+      // Token no longer valid server-side: signed out elsewhere, expired, or
+      // ended by a password reset.
       await secureStore.clearSessionToken();
       set({ status: "guest", pendingIntent: intent });
     } catch {
@@ -77,19 +108,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  pendingChallenge: null,
+
   async login(email, password) {
     set({ isSubmitting: true, error: null });
     try {
       const result = await authApi.login(email, password);
-      await secureStore.saveSessionToken(result.session_token);
-      set({
-        status: "authenticated",
-        user: result.user,
-        sessionToken: result.session_token,
-        isSubmitting: false,
-      });
-      track("auth_completed", { method: "login" });
-      return true;
+      if (isSignInChallenge(result)) {
+        // The password was right and that is all. There is no session yet and
+        // nothing in `result` is one; the code step is what creates it.
+        set({ isSubmitting: false, pendingChallenge: result });
+        return "code-sent";
+      }
+      await adopt(set, result, "login");
+      return "signed-in";
     } catch (error) {
       set({
         isSubmitting: false,
@@ -98,8 +130,52 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             ? error.message
             : "We could not sign you in. Please try again.",
       });
+      return "failed";
+    }
+  },
+
+  async verifyCode(code) {
+    const challenge = get().pendingChallenge;
+    if (!challenge) return false;
+    set({ isSubmitting: true, error: null });
+    try {
+      const result = await authApi.verifyCode(challenge.challenge_id, code);
+      await adopt(set, result, "login_otp");
+      set({ pendingChallenge: null });
+      return true;
+    } catch (error) {
+      set({
+        isSubmitting: false,
+        error:
+          error instanceof ApiError
+            ? error.message
+            : "That code did not work. Please try again.",
+      });
       return false;
     }
+  },
+
+  async resendCode() {
+    const challenge = get().pendingChallenge;
+    if (!challenge) return null;
+    set({ error: null });
+    try {
+      const again = await authApi.resendCode(challenge.challenge_id);
+      set({
+        pendingChallenge: { ...challenge, resend_after: again.resend_after, dev_code: again.dev_code },
+      });
+      return again.message;
+    } catch (error) {
+      set({
+        error:
+          error instanceof ApiError ? error.message : "We could not send another code.",
+      });
+      return null;
+    }
+  },
+
+  clearChallenge() {
+    set({ pendingChallenge: null, error: null });
   },
 
   async register(name, email, password) {

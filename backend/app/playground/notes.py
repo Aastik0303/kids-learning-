@@ -35,7 +35,7 @@ from dataclasses import dataclass, field
 
 from app.playground import examples, questions, stage as stage_rules, visuals
 from app.playground.agent import EVERYDAY_EXAMPLES
-from app.services import curriculum_service
+from app.services import cache, curriculum_service
 
 
 logger = logging.getLogger(__name__)
@@ -200,6 +200,9 @@ def _everyday(visual: visuals.Visual) -> str:
     return EVERYDAY_EXAMPLES.get(f"{visual.kind}:{visual.value}", "")
 
 
+_notes_cache = cache.content_cache("playground.notes", maxsize=512)
+
+
 def for_topic(topic_id: str) -> RevisionNotes:
     """Everything the map may hand back about one level.
 
@@ -207,6 +210,10 @@ def for_topic(topic_id: str) -> RevisionNotes:
     nothing yet, comes back with `has_notes` false and empty lines, and the
     page says so kindly rather than showing an error to a four-year-old.
     """
+    return _notes_cache.get_or_compute(topic_id, lambda: _build_notes(topic_id))
+
+
+def _build_notes(topic_id: str) -> RevisionNotes:
     try:
         topic = curriculum_service.get_topic(topic_id)
     except Exception:  # pragma: no cover - a topic id the manifest no longer has

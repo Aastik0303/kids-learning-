@@ -51,6 +51,147 @@
   expires, so nothing already signed in was signed out by the change. Do not reintroduce a
   module-level dict as storage; the only ones left are the in-flight lesson and
   practice cursors, which are rebuilt by starting again.
+- **What may be cached is authored content, and nothing else.**
+  `app/services/cache.py` is the one place a cache is built: bounded, optionally
+  expiring, and computing a missing value exactly once so a restart is not a
+  stampede. The manifest, the syllabus's questions, a level's games and notes,
+  a topic's title, the skill graph - files read at boot, the same for every
+  child, changing only on deploy. **A child's truth may not be cached**: stars,
+  mastery, unlocked topics, today's plan and its cursor are written by the
+  request that earned them and read by the next one, and a cache in front of
+  them is a star that appears twice or a level refused after it was finished.
+  **Nor may a session**: whether the `auth_sessions` row is still open is asked
+  on every request on purpose, because a cached "yes" is a sign-out that signed
+  nobody out. `child_store`'s map is an identity map and not a cache - it hands
+  back the same object the writers mutate, so there is nothing in it to go
+  stale. Every content cache **registers how to clear itself**, and
+  `reload_curriculum()` empties all of them together: a cache built from the
+  previous manifest and left behind is a test answered out of a syllabus that no
+  longer exists, and it surfaces as an unrelated failure much later.
+- **The network is most of what "slow" means, so the read-only routes are
+  conditional and everything is compressed.** `app/api/middleware.py` puts an
+  `ETag` on the `/curriculum` family and answers a matching `If-None-Match` with
+  304 and no body at all; `Cache-Control` is a minute plus `must-revalidate`, so
+  a re-authored syllabus is visible within the minute rather than whenever a
+  cache felt like expiring. GZip takes a class detail from 33KB to under 7KB.
+  Only authored content may go in `CACHEABLE_PREFIXES` - one child-scoped path
+  added there is a class showing yesterday's stars. `Server-Timing` carries the
+  server's own milliseconds, so "the class feels slow" is answerable from the
+  browser's network panel. The middleware order in `app/main.py` is load-bearing
+  twice over: the rate limiter sits **inside** CORS, or a 429 reaches the
+  browser without the headers that let it read the refusal and shows up as a
+  CORS error instead; and the ETag sits **inside** GZip, or the body is hashed
+  after compression and two browsers get two ETags for one answer.
+- **Rate limiting is per route class, and it fails open.**
+  `app/services/rate_limit.py` is a token bucket - a burst is exactly what a
+  page load is, and a fixed window would let a caller spend two windows' worth
+  in one second across the boundary. The classes are priced by what they cost
+  this account: `auth` is tight because it is the surface worth attacking,
+  `speech` and `ai` because each call spends CPU or money, `read` is generous
+  because it is cached. **Two buckets are checked**: the caller's own - keyed by
+  their bearer token when signed in, because a great many of these families are
+  behind carrier-grade NAT where thousands of unrelated people share one
+  address and a per-IP limiter would have them taking each other's class
+  offline - and a much higher **per-IP ceiling**, which is what stops somebody
+  inventing a fresh token to get a fresh bucket. `/health` is never limited: it
+  is what the platform polls to decide this instance is alive, and limiting it
+  is how a busy server gets restarted for being busy. Anything that goes wrong
+  inside the limiter is logged and the request is served - a limiter that breaks
+  costs a log line, never a child's lesson. The buckets live in the process, so
+  two workers allow roughly twice these numbers; that is deliberate, and the
+  alternative is needing Redis up to answer a request at all. The suite sets
+  `RATE_LIMIT_ENABLED=0`, because a test file drives a whole morning through one
+  client in seconds and is not a caller.
+- **A password is not a sign-in on its own: a code is emailed, and only that
+  code mints a session.** `POST /auth/login` checks the password and answers
+  with a **challenge** - `otp_required`, a handle, a masked address, and no
+  token anywhere in it - deliberately a different shape from `AuthResponse`
+  rather than one with empty fields, because a response that merely looked like
+  a session is the easiest thing in the world for a client to treat as one.
+  `POST /auth/otp/verify` is the only place a token is minted on this path. The
+  password proves what a parent knows; the code proves they still hold the
+  address the account is on, and this account holds a child's name, birth month
+  and whole learning history. **Google sign-in skips it entirely** - Google has
+  already proved the address with its own second factor, and a code on top is
+  friction that buys nothing.
+  Four things hold it up, and each closes something specific. The **account
+  throttle is cleared by the code, never by the password**, or whoever holds a
+  leaked password could reset the counter at will and grind the second factor
+  for as long as they liked. A challenge **dies after `AUTH_OTP_MAX_ATTEMPTS`
+  guesses**, because six digits is one of a million only while the guesses are
+  few, and a wrong code is counted against the account as well so a fresh
+  challenge per guess is not a way round it. **Opening a challenge spends the
+  previous one** - two live challenges is two live codes, and the older is
+  usually the one an attacker caused to be sent. And "send it again" is behind
+  a **cooldown and a ceiling**, or the button is a way to mail a stranger as
+  fast as it can be pressed. Unknown, expired, spent and out-of-guesses all
+  answer identically; telling them apart would say which handles are real.
+  Neither secret is stored as itself: both are **keyed** hashes
+  (`security.keyed_hash`, HMAC with `JWT_SECRET`) rather than plain digests,
+  because a million SHA-256s is under a second on any laptop and a plain digest
+  of a six-digit code would hand a database thief every code in flight.
+  The one door out is `AUTH_OTP_ENABLED=0`, which signs in on the password
+  alone - for a deployment that cannot send mail. What must never happen is the
+  middle case: **an unconfigured mailer in production refuses the sign-in**
+  rather than letting it through without the code, because "we could not send
+  it so we let them in" is not a fallback, it is the feature being off. Outside
+  development the code is never in the response; on a machine with no SMTP it is
+  logged and returned so the flow stays completable, and `ENV` is what bolts
+  that shut.
+- **There is a mailer now, and two messages leave this app.**
+  `app/services/mailer.py` sends the sign-in code and the password-reset link
+  over SMTP. The port decides the encryption the way every provider documents
+  it - 465 implicit TLS, otherwise STARTTLS - and a failed upgrade is a failure
+  rather than a quiet fall back to cleartext. It sends **synchronously**: a
+  background thread would make sign-in faster and would also make "we could not
+  send your code" unsayable, leaving a parent watching a code box for a mail
+  that was never coming. Neither message says anything about a child - no name,
+  no class, no progress - because mail is the least private thing this system
+  touches. The reset flow's old behaviour of handing its token back in the
+  response survives only where there is no mailer and only outside production,
+  and a send that fails there is swallowed rather than reported: an answer that
+  differed on failure would differ only for addresses that exist, which is the
+  enumeration hole the identical answer exists to close.
+- **A parent signs in with Google or with a password, and both end in the same
+  session.** `POST /auth/google` takes the ID token Google's own script produced
+  and `app/services/google_auth_service.py` verifies it before it means
+  anything: the RS256 signature against Google's published keys, the issuer, a
+  **verified** email address, and - the one that matters most - the `aud` claim
+  against `GOOGLE_CLIENT_ID`. A Google-signed token only says "this person
+  signed into the app named in `aud`", so a verifier that does not pin the
+  audience accepts a token minted for somebody else's app and lets whoever runs
+  that app be any of their users here. An unset client id turns the feature off
+  rather than loosening that check, and `GET /auth/google/config` is what the
+  sign-in screen asks before drawing the button, so it never appears where the
+  server could not verify the answer. Google is never itself a bearer for this
+  API: what comes back is the ordinary `auth_sessions` row and JWT. An account
+  is matched on Google's `sub` first, because an email can be changed on the
+  Google side and that id cannot; failing that, on a verified email that already
+  has an account, which is **linked** rather than duplicated - that is why the
+  `email_verified` check is load-bearing and not a formality. A Google-only
+  account has `password_hash` NULL, and `verify_password` refuses an empty hash,
+  so a blank password is not a way in. The button is Google's own, rendered by
+  their script from accounts.google.com: a hand-drawn lookalike is against their
+  branding rules and is the shape a phishing page takes. One-tap is deliberately
+  off. **Nothing about an identity provider reaches a child's progress** - the
+  answer-key boundary is unchanged, and signing in pays no star and unlocks
+  nothing.
+- **This is production, and nothing on any surface is a demonstration of
+  itself.** There is no seeded demo account, no prefilled credentials on the
+  sign-in form, no "this is a prototype" caption and no scripted preview of a
+  lesson that the real teacher did not produce - the mobile app's
+  `FeatureDemoScreen`, which played a hand-written script with the server down,
+  is deleted for that reason: a page that demonstrates a teacher which is not
+  the teacher is a promise the product then has to keep. `POST /dev/seed` is a
+  development fixture and `app/main.py` does not mount its router outside
+  development, because a route that answers 403 in production is still a route
+  and still one misread setting away from rewriting a child's ledger. Two
+  prototype names survive only for compatibility and are deprecated: the
+  `X-Demo-Session` header, which `app/api/deps.py` still accepts because a
+  mobile build already on a phone sends it (both clients now send
+  `Authorization: Bearer`), and `AuthResponse.session_token`, which those builds
+  still read. The web's `demo_*` storage keys are now `saksham.*` and migrate
+  themselves on first read, so nobody was signed out by the rename.
 - **A question gets three repairs, and then the class moves on.**
   `branch.MAX_ATTEMPTS_ON_ONE_QUESTION` is 3, and each of the three is a
   different turn: the learned policy picks a strategy it has not spent on this
@@ -68,15 +209,30 @@
   `POST /conductor/{child_id}/open` plus `POST /conductor/sessions/{id}/input`
   drive the whole sitting. The client renders a `ConductorDirective` and reports
   what the child did; it decides nothing, including what silence means.
-- The **mobile app** drives the conductor: `mobile/src/features/learning/useConductorClass.ts`
-  and `screens/child/ClassScreen.tsx`. The hook reads five fields - `speech`,
-  `next_input.expects`, `listen`, `auto_advance_in_ms`, `close` - and nothing
-  else, which is what stops it quietly growing a second copy of the teaching loop
-  the way `useLessonSession` did. It never picks a topic, checks an answer, or
-  decides when the microphone opens. Naming a topic says *which* level, never
-  *whether* - `plan_service.may_open` still refuses one that is not today's.
-  `/learning` and `/practice` remain for the older clients and are marked
-  deprecated.
+- **The mobile app is the same class as the web, not a second one.** Its child
+  surface is three tabs - **Class**, **Adventure**, **Rewards** - and the app
+  opens on the Class, which is the AI Teacher off the same
+  `/playground/teacher` endpoints and the same frozen plan
+  (`mobile/src/features/learning/useAiTeacherClass.ts`,
+  `screens/child/AiTeacherScreen.tsx`). The hook reads the turn and reports what
+  the child did; it marks nothing, picks no topic and decides nothing about the
+  day. The panda holds the board here too
+  (`components/avatar/PandaAvatar.tsx`, `TeacherStage.tsx`), the drawing draws
+  itself on it (`components/blackboard/`), the strip shows the day on every
+  screen (`components/shared/ScheduleStrip.tsx`), and Adventure is status plus
+  the three games - it starts nothing, for the same reason the web's does not.
+  Two differences are the platform's rather than the design's: there is no chalk
+  tip riding the moving end, because `react-native-svg` cannot give a point
+  along a path, and the geometry a line is walked by is measured in JavaScript
+  (`blackboard/pathGeometry.ts`) because there is no `getTotalLength` either.
+- **The conductor is still there and is nobody's front door now.**
+  `mobile/src/features/learning/useConductorClass.ts` and
+  `screens/child/ClassScreen.tsx` are unchanged and still registered, as
+  `ConductedClass`; the older picked-lesson screens are registered too. None of
+  them is on the tab bar, because each was a second way into a lesson and a
+  second way in can open a level the schedule has not reached. `/conductor`,
+  `/learning` and `/practice` remain for those clients and are marked
+  deprecated. Do not put a lesson entry point back on a tab.
 - **The web app does not use the conductor any more.** Its class is the AI
   Teacher (see below): `/` opens it, `/class` redirects to it, and Adventure
   teaches nothing. The web's conductor client has been deleted with the rest of
@@ -129,6 +285,39 @@
   Teacher's stage number is derived from the plan cursor (`plan_index + 1`) and
   never read off a counter, so a sitting cannot go on claiming a stage the day
   does not have.
+- **Every fifth day one subject's level steps aside for a poem.**
+  `app/playground/poem.py` holds them, written out in full by a person, and
+  `plan_service._with_todays_poem` swaps one in. **The day does not change
+  length** - a Nursery child's six stages are still six and one of them is a
+  poem - because the class teaches one stage per planned item, so an item added
+  is a longer sitting for a three-year-old and an item removed is a subject with
+  nothing in its place. Which level steps aside walks by the day
+  (`poem.replaced_index`), or the same subject would be the one missed every
+  time; it is not lost, because it is still that subject's first weak or
+  unfinished topic tomorrow. A poem's `topic_id` is deliberately **not in the
+  manifest**, and that single fact is what makes every rule which reads the
+  manifest already correct about it: `_award_level` finds no topic and returns
+  nothing, so no star is paid, nothing unlocks and no certificate is re-checked;
+  no attempt is written; no policy episode is committed and no retention probe
+  scheduled, because a poem teaches no skill that could be tested two days
+  later. It *does* move the plan cursor - a stage of the day that never finishes
+  is a day that never finishes. The planner puts it **last**
+  (`graph._is_poem`): a poem is the one stage where nothing can be got wrong, so
+  it is "finish on a win" more surely than any level, and it has no mastery, so
+  left in the ordinary pool it read as the shakiest thing in the day and was
+  pulled to the front. **The class that cannot say one steps over it.** A poem
+  has no manifest entry, so the conductor - which teaches whatever today's plan
+  points at, by looking it up - answered `MISSING_CURRICULUM` for the whole of a
+  poem morning once the day's levels were done, and the cursor then stayed on
+  the poem for ever because nothing in that loop can finish one.
+  `plan_service.todays_level` is the same cursor with the poems taken out, and
+  the conductor closes the day warmly when that is all that is left. Stepping
+  over is not finishing: the item stays unfinished and the web class still says
+  it. **No model touches a poem** - not to write it, not to
+  choose it, not to say it: a nursery rhyme has to be the same words every time
+  it comes round, or a child cannot say it along with the teacher the second
+  time. Each verse names its own picture by hand out of `visuals.THINGS`, and a
+  verse that names nothing draws nothing rather than a near-miss.
 - **The day's plan is the day's work.** `plan_service.may_open()` is the gate:
   a topic opens if today's frozen plan holds it, or if the child has already
   finished it. Anything else is tomorrow's, including the level the lesson just
@@ -276,7 +465,26 @@
 - **Every question gets three turns and nobody is left stuck.** It is asked; a
   wrong answer brings the **hint** - the thing explained again and more deeply,
   ending in a clue, with two or three choices to pick between; a second wrong
-  answer brings the **answer**, told and explained, and then the class moves on.
+  answer brings the **answer**, and then the class moves on.
+  **That third turn is a story, and the answer is the end of it rather than the
+  beginning.** Three beats in one turn: a real moment out of the child's own day
+  that names no answer (the samosa on the plate, the wheel on the toy car), then
+  the picture beside them - which is being drawn on the board as the words are
+  said - to count or trace, and only then, in the very last sentence, what the
+  thing is called. It used to open with "The answer is triangle. Let me show you
+  why", and a child handed the answer in the first second has no reason left to
+  listen to the why, which is what the rest of the turn is. `lesson.REVEAL_BRIEF`
+  tells the model the three beats; `agent.REAL_LIFE_SCENES` is the hand-written,
+  closed set of scenes for the path with no model, and a concept nobody wrote one
+  for falls back to the author's notes rather than to an invented scene.
+  `agent.EVERYDAY_EXAMPLES` may **not** serve as the first beat - it is allowed
+  to name the thing ("A samosa is a triangle") and the first beat is precisely
+  where that may not happen. `agent._closed_with_the_answer` is the guard at the
+  other end: the closing sentence is appended unless the telling already finished
+  on the answer, because a reveal that talks around it and never says it is the
+  one failure this turn exists to prevent. It stays **one** turn - `expects:
+  "ready"`, unmarked, one narration - because splitting the beats would change
+  how a question settles.
   `lesson.TRIES_PER_QUESTION` is 2 and the third turn is not an asking at all:
   it is `expects: "ready"`, it is never marked, and no attempt is written for it.
   The choices are built in plain Python by `agent.hint_options` - narrowed from
@@ -309,6 +517,22 @@
   outright, because it has to say it. A topic that authored
   no answerable question falls back to its own subtopics, and only then to the
   title.
+  It is fenced a **third** time, on the card's own concept
+  (`agent._notes_about`), because the hand-written teaching notes carry no skill
+  id for `_about_this_card` to narrow by: `teacher_notes.md` explains the
+  circle, the square, the triangle and the rectangle in one "## Shapes" passage,
+  so the whole family reached the model and the circle - the paragraph the
+  author wrote first - was the most available thing on the page. A child who got
+  "Tap the triangle!" wrong was hinted with a lesson on the circle. The unit is
+  a **paragraph**, because a paragraph's examples ("a wheel, a plate, the sun")
+  name no shape at all, so dropping lines or sentences leaves the circle's
+  examples under the triangle. It only ever removes words - the answer still
+  never enters a query - and a passage with no paragraph about this concept is
+  left whole, the same rule `_about_this_card` keeps. The concept is the card's
+  and it is decided **before a word of the turn is chosen**
+  (`agent._card_concept`): reading it off the level's title and correcting the
+  *picture* to the answer further down is what left the board saying triangle
+  while the words said circle, on the explaining turn as well as on the repairs.
 - **A question that wants a tap always has something to tap.** `expects: "tap"`
   with an empty `options` is a typing box in front of a child who cannot type,
   which is the turn failing rather than teaching. `agent.ensure_options` repairs
@@ -552,7 +776,19 @@
   for a two-year-old's hands: every target is at least 5.5rem, a wrong tap is a
   wobble and nothing else, the bubbles bob where they stand rather than crossing
   the screen (nothing has to be *caught*), and the question is spoken because
-  nobody playing it can read.
+  nobody playing it can read. **The memory cards are squares and the bubbles
+  are circles**, and either shape only holds while its tile is a true square -
+  so a playing board's tile is `min(100cqw, 100cqh)` of the cell it sits in
+  (`.game-grid > li` is the container that measures it). Asking for
+  `height: 100%` against `aspect-ratio: 1 / 1` is **not** a square: the height
+  is definite, the ratio then decides only the width, and `max-width` squashes
+  that width without giving the height back - which is how eight memory cards
+  came out as eight tall blue pills on a phone. The same mistake, in the same
+  words, was holding `.class-stage .teacher-stage`, and there it slid the
+  board's drawing off the paws holding it, because the panda centres itself
+  inside its box and `.teacher-display` is placed by percentages *of the box*.
+  Memory cards are two across on a phone for the same reason the targets have a
+  floor: four columns of a 390px screen cannot hold a card that big.
 - **The site opens on the class.** `/` and `/home` send a signed-in child
   straight to `/ai-teacher`; a guest still gets the sign-up hub. The day's plan
   rides above every screen as `components/shared/ScheduleStrip.tsx`.
@@ -591,8 +827,21 @@
   page's syllabus list (a `<details>` below `xl:`), and the line naming the
   turn's strategy, source and retrieval, which is gone from every size - it was
   written for whoever was building this, and `playground_turns` still records
-  all three. Nothing else is dropped - it is all one tap away, and from `xl:` up
-  not one of these rules applies.
+  all three. Nothing else is dropped - it is all one tap away.
+  **From `xl:` up the level page flows as it always did, and the class does
+  not.** A laptop has the height for most pages and it does not have it for
+  this one, so the class is one screen at every width - the same column, with
+  none of the squeezing, because up there the header, the strip and the padding
+  can keep their sizes. `:has(.class-page)` is what holds the desktop rules off
+  the level page, which is the only other `fit` page. The teacher is the child
+  that stretches, and that is the point rather than a detail: a bigger avatar
+  and everything fitting are the *same* requirement, and sizing the avatar with
+  a flat width (`22rem`) is what made them look like opposite ones. The answers
+  gave up the room for it - the emoji and the word under it are smaller, the
+  button sits exactly on its touch floor rather than a rem above it, and the row
+  of them is `repeat(auto-fit, minmax(6rem, 1fr))` rather than two columns flat,
+  because a tile cannot be shorter than its floor but three answers need not
+  take two rows to say so - and the floors themselves still do not give.
 
 ## Child-facing copy
 

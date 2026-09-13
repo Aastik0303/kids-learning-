@@ -63,7 +63,7 @@ from sqlalchemy import select
 from app.conductor import echo as echo_engine
 from app.db.models import PlaygroundSession, PlaygroundTurn
 from app.db.session import session_scope
-from app.playground import agent, examples, lesson, questions, rag, retention, stage, visuals
+from app.playground import agent, examples, lesson, poem, questions, rag, retention, stage, visuals
 from app.policy import leak as policy_leak
 from app.services import (
     child_service,
@@ -129,6 +129,18 @@ class TeacherTurn:
     # the explanation: the words are spoken, the example is looked at. Never the
     # answer to the question on the screen - `examples.for_turn` drops those.
     example_items: list[str] = field(default_factory=list)
+    # The everyday words the class may **never** put on the screen while it
+    # talks. An explanation reaches for a contrast - "three corners, not round
+    # like a ball" - and the client shows the example it is saying at the moment
+    # it says it, so a ball appeared beside "Tap the triangle!": the circle's
+    # picture on the triangle's card. The client has a table of pictures and no
+    # idea whose picture each one is, so the server says. Hand-written and
+    # closed - the other members of this concept's own family.
+    not_examples: list[str] = field(default_factory=list)
+    # This stage is a poem rather than a level: every fifth day one subject's
+    # level steps aside for one. Nothing about it is asked, marked, scored or
+    # paid - the client only needs it to say "next bit" instead of "got it".
+    is_poem: bool = False
     # --- the answer just given, when there was one -------------------------
     feedback: str = ""
     is_correct: bool | None = None
@@ -264,6 +276,13 @@ def _age_band(class_id: str) -> str:
 def _topic_title(topic_id: str) -> str:
     if not topic_id:
         return "today's lesson"
+    # A poem first, because a poem's id is deliberately not in the manifest -
+    # that is what keeps every rule which reads the manifest from paying it a
+    # star - so the lookup below can only ever fail for one, and what a child
+    # would be told they were starting is `poem_moon`.
+    titled = poem.title_of(topic_id)
+    if titled:
+        return titled
     try:
         return curriculum_service.get_topic(topic_id).title
     except Exception:  # pragma: no cover - a topic id the manifest no longer has
@@ -349,6 +368,16 @@ def _recent_turns(session, row: PlaygroundSession) -> list[dict]:
     ]
 
 
+def _answer_of(asked: questions.Authored | None) -> str:
+    """The author's answer to the question a turn is built around, or nothing.
+
+    Only ever used to decide what a card is *about* - never shown, never sent to
+    a model, never marked against. `stage.judge` reads `pending_answer` and
+    nothing here.
+    """
+    return (asked.answer or "").strip() if asked is not None else ""
+
+
 def _teach_step(
     row: PlaygroundSession,
     session=None,
@@ -361,6 +390,14 @@ def _teach_step(
     `session` is passed only so the turn can be given the sitting's own memory;
     a caller without one simply teaches without it.
     """
+    # Every fifth day one of the day's stages is a poem instead of a level, and
+    # a poem is said rather than taught: no retrieval, no strategy, no model, no
+    # question. Branching here rather than at each caller means every path that
+    # reaches for the next turn - opening the class, resuming it, finishing the
+    # stage before - gets the poem without having to know about it.
+    if poem.is_poem(row.topic_id):
+        return _poem_turn(row, feedback=feedback)
+
     steps = _steps_for(row.topic_id, row.subject_id)
     step = lesson.current(steps, row.step_index, row.step_tries)
     title = _topic_title(row.topic_id)
@@ -501,7 +538,13 @@ def _teach_step(
     # What is drawn on the board. The answer the server is holding decides it -
     # the level's title, the retrieved notes and the model's own token all only
     # get a say when the answer names nothing the app can draw.
-    shown = visuals.for_card(row.pending_answer or taught.expected_answer, taught.visual)
+    #
+    # The explaining step holds no answer yet and is still about something: it
+    # is the turn that leads into `asked`, and its notes were narrowed to that
+    # concept, so the author's answer to the question *coming next* decides the
+    # picture there rather than whichever concept the notes led with.
+    about = row.pending_answer or taught.expected_answer or _answer_of(asked)
+    shown = visuals.for_card(about, taught.visual)
 
     # What the child looks at in place of the explanation they cannot read. The
     # answer the server is now holding is passed in so an example can never be
@@ -509,9 +552,12 @@ def _teach_step(
     example_items = examples.for_turn(
         row.topic_id,
         visual=taught.visual,
-        answer=row.pending_answer or taught.expected_answer,
+        answer=about,
         options=list(row.pending_options or taught.options or []),
     )
+    # ...and the everyday words that belong to one of this concept's siblings,
+    # which the class may say in passing and must never illustrate.
+    banned = examples.not_examples(shown)
 
     bits = verdict_bits or {}
     return TeacherTurn(
@@ -547,6 +593,7 @@ def _teach_step(
         visual_kind=shown.kind,
         visual_value=shown.value,
         example_items=example_items,
+        not_examples=banned,
         feedback=feedback,
         is_correct=bits.get("is_correct"),
         advanced=bool(bits.get("advanced")),
@@ -621,6 +668,93 @@ def _current_retention(row: PlaygroundSession, session):
 
 def _retention_remaining(row: PlaygroundSession) -> int:
     return max(0, len(list(row.retention_queue or [])) - row.retention_index - 1)
+
+
+def _poem_turn(row: PlaygroundSession, *, feedback: str = "") -> TeacherTurn:
+    """One verse of today's poem, as the client renders it.
+
+    A poem stage is the plainest turn in the app: a line on the card, a verse
+    said out loud, a picture beside it when the verse names one. Nothing here
+    asks a question, so nothing here can be answered wrongly - `expects` is
+    always "ready" and the class carries on by itself when the narration is
+    done.
+
+    What it deliberately does not touch, and each of these is a rule from
+    somewhere else keeping itself: no strategy is chosen and no episode is
+    committed (`teaching_policy_service`), because a poem is not a teaching turn
+    and there is nothing a retention probe could ask about it two days from now;
+    no attempt is written; and the stage tally stays at zero, which is what
+    makes `_award_level` return nothing even before it notices the manifest has
+    no such topic.
+    """
+    said = poem.get(row.topic_id)
+    parts = said.parts if said is not None else ()
+    index = min(max(row.questions_asked, 0), max(len(parts) - 1, 0))
+    part = parts[index] if parts else None
+    drawn = part.visual if part is not None else visuals.Visual()
+
+    return TeacherTurn(
+        session_id=row.session_id,
+        child_id=str(row.child_id),
+        stage=row.plan_index + 1,
+        stages_total=len(row.plan_topics or []) or 1,
+        # The dots on the card follow the poem's own length rather than the
+        # five a level has, so a child can see how much of it is left.
+        questions_asked=row.questions_asked,
+        questions_per_stage=len(parts) or 1,
+        topic_id=row.topic_id,
+        topic_title=said.title if said is not None else _topic_title(row.topic_id),
+        speech=part.speech if part is not None else "",
+        # The few words printed large. A poem is the one place in this class
+        # where the words on the card are worth having: they are short, they are
+        # the same every time it comes round, and a grown-up reads them along.
+        question=part.line if part is not None else "",
+        # No strategy was spent, so there is none to name - the same honest
+        # empty string a check-in carries, and for the same reason.
+        strategy="",
+        source="poem",
+        retrieval="",
+        step="poem",
+        expects="ready",
+        step_index=index,
+        steps_total=len(parts) or 1,
+        attempt=1,
+        visual_kind=drawn.kind,
+        visual_value=drawn.value,
+        is_poem=True,
+        feedback=feedback,
+    )
+
+
+def _answer_poem(row: PlaygroundSession, session) -> TeacherTurn:
+    """The child has heard this verse. On to the next, or on to the next stage.
+
+    A poem's parts are counted on `questions_asked` - the same field a level's
+    five questions use - so the progress dots, the resume and the plan cursor
+    all work without knowing what a poem is. Nothing is marked on the way
+    through, and `_finish_stage` is what ticks the item off the day: a poem is a
+    stage of the schedule, so a day with one in it has to be able to finish.
+    """
+    said = poem.get(row.topic_id)
+    parts = said.parts if said is not None else ()
+    row.questions_asked += 1
+    row.updated_at = _now()
+
+    if row.questions_asked < len(parts):
+        turn = _poem_turn(row)
+        _log(row, turn, session)
+        return turn
+
+    award, day_over = _finish_stage(row)
+    bits = _stage_bits(award)
+    closing = "That was our poem. Well said!"
+    if day_over:
+        turn = _day_done_turn(row, feedback=closing, bits=bits)
+        _log(row, turn, session)
+        return turn
+    turn = _teach_step(row, session, feedback=closing, verdict_bits={**bits, "advanced": True})
+    _log(row, turn, session)
+    return turn
 
 
 def _retention_turn(
@@ -763,9 +897,18 @@ def _class_intro(row: PlaygroundSession, topic_title: str) -> str:
     """
     stages = len(row.plan_topics or []) or 1
     lessons = "one lesson" if stages == 1 else f"{stages} lessons"
-    return (
+    opening = (
         f"Hello! I am so glad you came to class today. "
         f"We have {lessons} to do together, and we are starting with {topic_title}. "
+    )
+    # The promise the three turns keep - helped, then answered - is about a
+    # question, and a poem has none. Opening on one is rare (the planner puts
+    # the poem last), but a sitting that starts there must not promise five
+    # little questions and then say a rhyme.
+    if poem.is_poem(row.topic_id):
+        return f"{opening}That one is a poem, so there is nothing to answer - we just say it together."
+    return (
+        f"{opening}"
         f"I will show you what it is first, and then I will ask you "
         f"{stage.QUESTIONS_PER_STAGE} little questions - and if one is tricky, "
         f"I will help you with it and then tell you the answer."
@@ -1061,6 +1204,12 @@ def answer(session_id: str, said: str) -> TeacherTurn:
         check_in = _current_retention(row, session)
         if check_in is not None:
             return _answer_retention(row, session, check_in, said)
+
+        # A poem verse. There was nothing to answer - "ready" is the child
+        # having listened to it - so nothing is judged, nothing is written to
+        # `attempts` and no probe is settled. The next verse, or the next stage.
+        if poem.is_poem(row.topic_id):
+            return _answer_poem(row, session)
 
         steps = _steps_for(row.topic_id, row.subject_id)
         step = lesson.current(steps, row.step_index, row.step_tries)

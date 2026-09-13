@@ -31,6 +31,7 @@ from app.schemas.curriculum import (
 )
 from app.schemas.learning import Activity
 from app.services import activity_evaluators
+from app.services import cache
 from app.services.errors import app_error
 
 logger = logging.getLogger(__name__)
@@ -539,6 +540,10 @@ def _load_activity_files(manifest: dict) -> dict[str, dict[str, _AuthoredTopic]]
     return loaded
 
 
+# Registered, so `reload_curriculum` and the test suite empty it with the rest.
+_overview_cache = cache.content_cache("curriculum.overview", maxsize=4)
+
+
 @lru_cache(maxsize=1)
 def _curriculum() -> _Curriculum:
     if not MANIFEST_PATH.exists():
@@ -559,8 +564,18 @@ def load_curriculum() -> _Curriculum:
 
 
 def reload_curriculum() -> _Curriculum:
-    """Drop the cache and re-read from disk. Used by tests."""
+    """Drop the cache and re-read from disk. Used by tests.
+
+    Everything derived from the manifest goes with it. A cache of the authored
+    questions or of a level's games, built out of the *previous* manifest and
+    left in place, is a test that swapped the syllabus on disk and was then
+    answered from the one before - and that failure surfaces as an unrelated
+    assertion somewhere much later. `cache.clear_content_caches()` is the one
+    call that empties all of them.
+    """
     _curriculum.cache_clear()
+    _overview_cache.clear()
+    cache.clear_content_caches()
     return _curriculum()
 
 
@@ -570,6 +585,16 @@ def reload_curriculum() -> _Curriculum:
 
 
 def overview() -> CurriculumOverview:
+    """The class list, built once.
+
+    Cheap on its own and asked for on nearly every page load, directly and
+    through `list_classes`. What it costs is rebuilding a few dozen Pydantic
+    models out of a manifest that cannot change while the process is running.
+    """
+    return _overview_cache.get_or_compute("overview", _build_overview)
+
+
+def _build_overview() -> CurriculumOverview:
     curriculum = _curriculum()
     return CurriculumOverview(
         version=curriculum.version,

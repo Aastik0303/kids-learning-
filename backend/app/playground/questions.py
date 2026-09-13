@@ -32,6 +32,7 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 from app.services import curriculum_service
+from app.services import cache
 
 
 logger = logging.getLogger(__name__)
@@ -280,6 +281,12 @@ def options_for(topic_id: str, answer: str) -> tuple[str, ...]:
 def reset() -> None:
     """Drop the cache. Tests use it; nothing in a request does."""
     for_topic.cache_clear()
+
+
+# Registered so `curriculum_service.reload_curriculum()` empties this too. It
+# was not, and a suite that rewrites the manifest on disk went on being answered
+# with questions parsed out of the manifest before it.
+cache.register("playground.questions", for_topic.cache_clear)
 
 
 __all__ = [

@@ -2,15 +2,16 @@
 
 AI Nursery Learning Platform
 
-Prototype AI-assisted nursery learning app for children ages 2-6, with a light parent layer. The child surface stays tiny: Adventure, Practice, Rewards, and Ask Guide.
+AI-assisted nursery learning app for children ages 2-6, with a light parent layer. The child surface stays tiny: the AI Teacher's class, Adventure, Rewards, and Ask Guide.
 
-## Current Prototype
+## What is running
 
 - Next.js App Router frontend with TypeScript and Tailwind CSS.
 - FastAPI backend with Pydantic models for every request/response.
-- In-memory auth, child profiles, learning sessions, practice sessions, rewards, and certificates.
-- Browser `sessionStorage` for demo session state.
-- Mock-first content generation; no paid API keys are required.
+- PostgreSQL for parents, children, attempts, mastery, plans and the learned policy. Schema in `backend/app/db/models.py`, migrations in `backend/alembic/`.
+- Parent sign-in two ways, both ending in the same session: **Google** (`POST /auth/google`, the ID token verified server-side against Google's keys and pinned to `GOOGLE_CLIENT_ID`) and an email address with a PBKDF2-stretched password. The bearer is an HS256 JWT naming an `auth_sessions` row, so signing out and resetting a password actually end the session. A child never has an account.
+- Browser `localStorage` for the parent's session, with the server's own thirty-day lifetime.
+- No paid API keys are required: the voice is Microsoft Edge's free neural voices and retrieval runs local sentence embeddings.
 - Browser SpeechRecognition is the prototype speech-to-text source; no raw voice recording is stored or uploaded by default.
 - Question-aware transcript normalization at `POST /speech/normalize`, including speech corrections such as `tree -> three -> 3`.
 - Deterministic answer checking, scoring, stars, topic unlocking, and certificate eligibility.
@@ -18,9 +19,30 @@ Prototype AI-assisted nursery learning app for children ages 2-6, with a light p
 - Whitelisted visual explanation actions such as `highlight_sequence` for visible question objects.
 - Keyword safety filter for generated/mock strings.
 - Manifest-driven curriculum at `GET /curriculum`: the CBSE 2026-27 syllabus as four age classes.
-- Dev-only `POST /dev/seed/{child_id}` route to complete a class for demos.
+- `POST /dev/seed/{child_id}` completes a class without playing it. It is a development fixture and is **not mounted at all** outside development.
 
-Prototype shortcuts are intentional: state resets when the server/browser session resets, auth tokens are demo-only, and no real personal data should be entered.
+The only personal data held is a parent's email address and name, and a child's first name and birth month. Consent is written by a parent tapping the control and by nothing else - never by any automation.
+
+## Running the backend
+
+With Docker, which is also what production runs:
+
+```bash
+docker compose up --build      # API on :8008, its own PostgreSQL on :5433
+```
+
+The migrations run on the way up - `backend/start.sh` is the same entrypoint
+the deployed image uses - so a clean checkout becomes a working schema without
+anybody running alembic by hand. The database is a volume of its own and does
+not touch whatever `backend/.env` points at. `GROQ_API_KEY`, the SMTP
+credentials and `GOOGLE_CLIENT_ID` are read from `backend/.env` if it is there.
+
+Without Docker:
+
+```bash
+cd backend && alembic upgrade head && uvicorn app.main:app --port 8008
+cd frontend && npm run dev      # :5000
+```
 
 ## Target Users
 

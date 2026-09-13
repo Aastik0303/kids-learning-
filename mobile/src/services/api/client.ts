@@ -72,7 +72,7 @@ function kindForStatus(status: number): ApiErrorKind {
 export type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
-  /** Demo session token, sent as the X-Demo-Session header. */
+  /** The parent's session token, sent as `Authorization: Bearer`. */
   sessionToken?: string | null;
   timeoutMs?: number;
   /** Attempts beyond the first. Only applied to retryable failures. */
@@ -109,7 +109,10 @@ async function performRequest<T>(path: string, options: RequestOptions): Promise
       signal: controller.signal,
       headers: {
         "Content-Type": "application/json",
-        ...(sessionToken ? { "X-Demo-Session": sessionToken } : {}),
+        // The standard bearer shape. It was a bespoke `X-Demo-Session` header
+        // from the prototype; the server accepts both, so a build already on
+        // somebody's phone goes on working.
+        ...(sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {}),
       },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });

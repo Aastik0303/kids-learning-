@@ -27,5 +27,12 @@ langchain-core>=1.6,<2
 edge-tts>=6.1.9
 httpx
 
-# Signed parent session tokens.
-PyJWT>=2.8,<3
+# Signed parent session tokens, and the Google ID tokens verified at sign-in.
+#
+# `[crypto]` is not optional here even though the app's own tokens are HS256:
+# a Google ID token is signed RS256, and without `cryptography` PyJWT cannot
+# verify one at all. Left off, the image builds, boots, serves every other
+# route, and refuses every single Google sign-in with "we could not confirm
+# that" - which reads like a misconfigured client id rather than a missing
+# wheel. See `app/services/google_auth_service.py`.
+PyJWT[crypto]>=2.8,<3

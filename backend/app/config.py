@@ -57,6 +57,17 @@ class Settings(BaseSettings):
     # parent signs in on the family tablet and is not asked again next week.
     jwt_ttl_minutes: int = 60 * 24 * 30
 
+    # --- Google Sign-In --------------------------------------------------
+    # The OAuth client id from Google Cloud, and the only audience a Google ID
+    # token is ever accepted for. A verifier that does not pin the audience
+    # accepts a token minted for somebody else's app, which is the whole of the
+    # attack; so an unset id turns the feature off rather than loosening it.
+    # The web client needs the same value as NEXT_PUBLIC_GOOGLE_CLIENT_ID.
+    google_client_id: str = ""
+    # Where Google publishes the public keys its ID tokens are signed with.
+    # Fetched over HTTPS and cached by the verifier; Google rotates them.
+    google_jwks_url: str = "https://www.googleapis.com/oauth2/v3/certs"
+
     # PBKDF2 rounds for a parent password. The OWASP floor for
     # PBKDF2-HMAC-SHA256; only the test suite turns it down.
     password_hash_rounds: int = 600_000
@@ -118,7 +129,119 @@ class Settings(BaseSettings):
     # opens the app rather than being built by their first request.
     planner_auto_run: bool = True
     planner_interval_seconds: int = 900
+    # --- email (SMTP) ----------------------------------------------------
+    # The mailer. Two things are sent from this app and both of them are the
+    # difference between an account being reachable and not: the sign-in code,
+    # and the password-reset link. An unconfigured host means neither can be
+    # sent, which `mailer.configured` reports and the callers act on.
+    #
+    # `smtp_port` decides how the connection is secured, because that is how
+    # every mail provider documents it: 465 is implicit TLS (SMTPS) and 587 is
+    # STARTTLS on a plain socket that is then upgraded. Port 25 unencrypted is
+    # not offered - a sign-in code in cleartext across the internet is not a
+    # second factor.
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    # What the parent sees it came from. Gmail and most providers rewrite this
+    # to the authenticated account unless the address is a verified alias.
+    smtp_from_email: str = ""
+    smtp_from_name: str = "Saksham IQ"
+    # Seconds. Sign-in waits on this, so it is short enough that a dead mail
+    # server is an error the parent can read rather than a spinner.
+    smtp_timeout_seconds: int = 10
+
+    # Where the reset link in the email points. The web app's own page, so this
+    # is a frontend origin and not this API's: the parent clicks it, chooses a
+    # password on the site, and the site calls back here.
+    password_reset_url: str = "http://localhost:5000/forgot-password"
+
+    # --- sign-in code (OTP) ----------------------------------------------
+    # A second factor on password sign-in: the password proves what they know,
+    # the emailed code proves they still hold the address the account is on.
+    # Google sign-in is deliberately exempt - Google has already proved the
+    # address, with its own second factor, and a code on top is friction that
+    # buys nothing.
+    auth_otp_enabled: bool = True
+    auth_otp_length: int = 6
+    # Ten minutes. Long enough to find the email on another device, short
+    # enough that a code read over someone's shoulder goes stale.
+    auth_otp_ttl_minutes: int = 10
+    # Wrong guesses before the challenge dies and the parent signs in again.
+    # A six-digit code is a million guesses; five is what keeps it that way.
+    auth_otp_max_attempts: int = 5
+    # Seconds before "send it again" does anything, and how many times. The
+    # cooldown is what stops the button being a way to send someone mail.
+    auth_otp_resend_cooldown_seconds: int = 60
+    auth_otp_max_sends: int = 4
+
+    # --- rate limiting ---------------------------------------------------
+    # Per caller per minute, by route class. A caller is their bearer token when
+    # they are signed in and their IP address when they are not - see
+    # `app/services/rate_limit.py` for why that split exists, and why there is
+    # an IP ceiling over the top of it.
+    #
+    # These are deliberately well above what the app itself does: the point is
+    # to stop a runaway client, a scraper and a bill, not to ration a class.
+    # Every one of them is read per request, so changing one needs a restart and
+    # not a deploy.
+    rate_limit_enabled: bool = True
+    # Signing in and registering. Low because it is the surface worth attacking;
+    # password guessing is counted separately and per account in `auth_service`.
+    rate_limit_auth_per_minute: int = 30
+    # Teaching turns. A child's turn takes seconds, so this is many times what a
+    # real sitting can use, and it still caps what one caller can spend on the
+    # model.
+    rate_limit_ai_per_minute: int = 120
+    # Speech: every one of these synthesises audio, so it is CPU this instance
+    # does not have spare.
+    rate_limit_speech_per_minute: int = 60
+    # Plans, curriculum, progress. Cheap and cached, and asked for in bursts as
+    # a page loads.
+    rate_limit_read_per_minute: int = 300
+    # The ceiling, per IP, whatever the route. Nobody using the app reaches it;
+    # it is what stops a caller minting a new token to get a new bucket.
+    rate_limit_ip_per_minute: int = 600
+    # Whether `X-Forwarded-For` may be believed. True behind Render, Vercel or
+    # any proxy that overwrites it - without this every request in the world
+    # shares the proxy's own address and therefore one bucket. False where
+    # nothing sits in front of this server, because there the header is written
+    # by the client and says whatever they like.
+    rate_limit_trust_forwarded_for: bool = True
+
+    # --- response caching ------------------------------------------------
+    # How long a browser may reuse an authored-content response before asking
+    # again. It always revalidates after this, and is answered with 304 and no
+    # body when nothing changed, so a deploy is visible within the minute.
+    content_cache_max_age_seconds: int = 60
+
+    # --- connection pool -------------------------------------------------
+    # PostgreSQL only; SQLite does not pool. Sized for a small instance: enough
+    # connections to serve concurrent requests, few enough that a managed
+    # Postgres with a low connection cap is not exhausted by two workers.
+    database_pool_size: int = 5
+    database_max_overflow: int = 5
+    # Seconds a request waits for a connection before giving up. Shorter than
+    # the client's own timeout on purpose: a request that will not be answered
+    # in time should fail and say so rather than hold a worker.
+    database_pool_timeout: int = 10
+    # Recycled well inside the idle timeout of a managed Postgres. Neon and
+    # friends close an idle connection on their side without telling anybody,
+    # and the first query on it then fails - `pool_pre_ping` catches that at the
+    # cost of a round trip per checkout, and this avoids most of them.
+    database_pool_recycle_seconds: int = 1800
+
     cors_origins: str = "http://localhost:5000,http://127.0.0.1:5000"
+
+    @property
+    def google_sign_in_enabled(self) -> bool:
+        """Whether the Google button is offered at all.
+
+        No client id means no pinned audience, and a verifier with no audience
+        to pin cannot tell this app's tokens from another app's - so the
+        feature is off rather than open."""
+        return bool(self.google_client_id.strip())
 
     @property
     def cors_origin_list(self) -> list[str]:

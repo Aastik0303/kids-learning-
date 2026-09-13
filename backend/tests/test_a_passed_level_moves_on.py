@@ -30,6 +30,10 @@ def client():
 
 
 def test_a_level_that_passes_stops_being_weak(client: TestClient, next_day):
+    # Both mornings are ordinary ones. This test compares the day's items with
+    # tomorrow's, and every fifth morning one subject's level steps aside for a
+    # poem - a different question, with its own test.
+    next_day.ordinary()
     child_id = make_child(client, "weak-clears@example.com")
 
     # Day one: the whole day goes badly, so every level of it is marked weak.
@@ -39,7 +43,7 @@ def test_a_level_that_passes_stops_being_weak(client: TestClient, next_day):
     struggled = {item["topic_id"] for item in day_one["items"]}
 
     # Day two: the same levels come back as revisits, and this time they pass.
-    next_day()
+    next_day.ordinary()
     day_two = client.get(f"/plans/{child_id}/today").json()
     assert {item["topic_id"] for item in day_two["items"]} == struggled
     assert all(item["reason"] == "revisit" for item in day_two["items"])
@@ -50,7 +54,7 @@ def test_a_level_that_passes_stops_being_weak(client: TestClient, next_day):
     assert not profile["weak_skills"], "a level that passed is not weak any more"
 
     # Day three is the levels day two unlocked, in every subject.
-    next_day()
+    next_day.ordinary()
     day_three = client.get(f"/plans/{child_id}/today").json()
     assert not ({item["topic_id"] for item in day_three["items"]} & struggled)
 

@@ -1,0 +1,67 @@
+# The backend and a database, locally, in one command:
+#
+#   docker compose up --build
+#
+# The API comes up on http://localhost:8008 against a PostgreSQL of its own, so
+# this does not touch whatever database `backend/.env` points at. The migrations
+# run on the way up - that is `start.sh`, the same entrypoint production uses -
+# so a fresh volume becomes a working schema without anybody running alembic by
+# hand.
+#
+# This is for running and checking the container. The frontend is not here: it
+# is deployed to Vercel and run locally with `npm run dev`, and putting a
+# Next.js dev server in a container buys nothing but a slower file watcher.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: saksham
+      POSTGRES_PASSWORD: saksham-local-only
+      POSTGRES_DB: saksham
+    # Published so psql and a local `pytest` can reach it too. 5433 rather than
+    # 5432 deliberately: a developer on this project already has a PostgreSQL
+    # of their own on the usual port, and a silent clash there would mean the
+    # app talking to the wrong database.
+    ports:
+      - "5433:5432"
+    volumes:
+      - saksham-db:/var/lib/postgresql/data
+    healthcheck:
+      # The API waits on this. Without it the first `alembic upgrade` races the
+      # database's own first-boot initialisation and the stack comes up broken
+      # about one time in three.
+      test: ["CMD-SHELL", "pg_isready -U saksham -d saksham"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8008:8008"
+    environment:
+      ENV: development
+      DATABASE_URL: postgresql://saksham:saksham-local-only@db:5432/saksham
+      # Local only, and it is why `ENV` above is development: a throwaway key
+      # is exactly what production refuses to start with.
+      JWT_SECRET: local-compose-key-not-for-any-real-environment
+      # The web dev server, so the browser is allowed to call this.
+      CORS_ORIGINS: http://localhost:5000,http://127.0.0.1:5000
+      # Nothing sits in front of this container here, so `X-Forwarded-For` is
+      # written by whoever is calling and must not be believed. On Render it is
+      # the opposite - see `render.yaml`.
+      RATE_LIMIT_TRUST_FORWARDED_FOR: "0"
+      # Everything else - GROQ_API_KEY, the SMTP credentials, GOOGLE_CLIENT_ID -
+      # comes from backend/.env if it is there. Values above win over it, and
+      # the file is optional so this still comes up on a clean checkout.
+    env_file:
+      - path: ./backend/.env
+        required: false
+
+volumes:
+  saksham-db:

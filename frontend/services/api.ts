@@ -60,7 +60,13 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
   const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
   const controller = options.signal ? null : new AbortController();
   const timeout = controller
-    ? globalThis.setTimeout(() => controller.abort(), path.startsWith("/agent/") ? 8000 : 4500)
+    ? globalThis.setTimeout(
+        () => controller.abort(),
+        // Sign-in waits on an SMTP handshake, which is seconds rather than
+        // milliseconds, and aborting it at 4.5s would leave the parent looking
+        // at a failure while the code was already on its way to them.
+        path.startsWith("/agent/") ? 8000 : path.startsWith("/auth/") ? 15000 : 4500
+      )
     : null;
 
   let response: Response;

@@ -131,10 +131,6 @@ export function AuthForm({ mode, isSubmitting, error, onSubmit }: AuthFormProps)
             if (canSubmit) onSubmit(values);
           }}
         />
-
-        <Text variant="caption" muted align="center">
-          This is a prototype. Please do not enter real personal details.
-        </Text>
       </Card>
     </KeyboardAvoidingView>
   );

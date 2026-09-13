@@ -106,6 +106,16 @@ def _mastery_of(candidate: dict) -> float:
         return 0.0
 
 
+def _is_poem(candidate: dict) -> bool:
+    """Whether this item of the day is a poem rather than a level.
+
+    It is read off the reason the deterministic layer already wrote, so this
+    module still knows nothing about what a poem *is* - only that one is not a
+    level and must not be ordered like one.
+    """
+    return candidate.get("reason") == "poem"
+
+
 def _is_shaky(candidate: dict) -> bool:
     """Whether this level is one the child has already found hard.
 
@@ -140,20 +150,29 @@ def _ordered(candidates: Sequence[dict]) -> list[dict]:
     produce the same day - which is what makes a frozen plan and a re-read of it
     agree.
     """
-    pool = list(candidates)
+    # A poem is not a level and is not ordered like one: it goes last, always.
+    #
+    # Two reasons, and the first is the rule above. A poem is the one stage in
+    # the day where nothing can be got wrong - no question, no options, nothing
+    # marked - so it *is* "finish on a win", more surely than any level. The
+    # second is arithmetic: a poem has no mastery, so left in the pool it read
+    # as the shakiest thing in the day and got pulled to the front, which is the
+    # opposite of where it belongs.
+    pool = [candidate for candidate in candidates if not _is_poem(candidate)]
+    poem = [candidate for candidate in candidates if _is_poem(candidate)]
     if len(pool) < 3:
-        return pool
+        return [*pool, *poem]
 
     shaky = [candidate for candidate in pool if _is_shaky(candidate)]
     steady = [candidate for candidate in pool if not _is_shaky(candidate)]
     if not shaky or not steady:
-        return pool
+        return [*pool, *poem]
 
     steady.sort(key=lambda candidate: (-_mastery_of(candidate), pool.index(candidate)))
     opening = steady.pop(0)
     closing = steady.pop(0) if steady else None
     middle = sorted(shaky + steady, key=pool.index)
-    return [opening, *middle, *([closing] if closing is not None else [])]
+    return [opening, *middle, *([closing] if closing is not None else []), *poem]
 
 
 def _why(ordered: Sequence[dict]) -> str:
@@ -163,11 +182,12 @@ def _why(ordered: Sequence[dict]) -> str:
     opening = ordered[0].get("subject_title") or ordered[0].get("title") or ""
     if not opening:
         return ""
-    if not any(_is_shaky(candidate) for candidate in ordered):
-        return f"One level from each subject, starting with {opening}."
+    ending = " It finishes with a poem." if any(_is_poem(one) for one in ordered) else ""
+    if not any(_is_shaky(candidate) for candidate in ordered if not _is_poem(candidate)):
+        return f"One level from each subject, starting with {opening}.{ending}"
     return (
         f"Starting with {opening}, then the levels that need another go while "
-        "attention is fresh."
+        f"attention is fresh.{ending}"
     )
 
 

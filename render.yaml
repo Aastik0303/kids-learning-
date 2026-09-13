@@ -35,6 +35,13 @@ services:
       # "works in curl, fails in the browser" CORS failure.
       - key: CORS_ORIGINS
         sync: false
+      # The OAuth *Web application* client id from Google Cloud Console, with
+      # the Vercel domain listed under Authorised JavaScript origins. It is the
+      # audience every Google ID token is pinned to, so it is not a secret and
+      # it is not optional: unset, the Google button is not offered at all and
+      # parents sign in with an email and password.
+      - key: GOOGLE_CLIENT_ID
+        sync: false
       # The hand-written ladder teaches; the learned policy is recorded beside
       # it. Do not ship `on` until app/policy/evaluate.py says it is better.
       - key: POLICY_MODE
@@ -45,3 +52,41 @@ services:
       # opens the app rather than built by their first request.
       - key: PLANNER_AUTO_RUN
         value: "1"
+      # Render terminates TLS in front of this container, so the socket's peer is
+      # Render and not the caller. Without this every request in the world would
+      # share one rate-limit bucket.
+      - key: RATE_LIMIT_TRUST_FORWARDED_FOR
+        value: "1"
+      # The rest of the limits have defaults in app/config.py and are set here
+      # only to change them. `RATE_LIMIT_ENABLED=0` switches the whole thing off
+      # without a deploy, which is what to do if a real family is ever refused.
+      - key: RATE_LIMIT_ENABLED
+        value: "1"
+      # Neon closes an idle connection on its own side. Keep pool_size plus
+      # max_overflow, times the worker count, under Neon's connection cap.
+      - key: DATABASE_POOL_SIZE
+        value: "5"
+      - key: DATABASE_MAX_OVERFLOW
+        value: "5"
+      - key: DATABASE_POOL_RECYCLE_SECONDS
+        value: "1800"
+      # --- email, and the sign-in code that depends on it ---
+      # Without a mailer the sign-in code cannot be sent, and in production that
+      # refuses the sign-in rather than skipping the second factor - so these
+      # are not optional unless AUTH_OTP_ENABLED is 0.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USERNAME
+        sync: false
+      # An app password or an API key, never a real mailbox password.
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM_EMAIL
+        sync: false
+      - key: AUTH_OTP_ENABLED
+        value: "1"
+      # The web app's own reset page, on the Vercel domain.
+      - key: PASSWORD_RESET_URL
+        sync: false

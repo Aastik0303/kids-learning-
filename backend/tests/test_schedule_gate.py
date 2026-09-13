@@ -8,6 +8,13 @@ holds one level per subject per day.
 
 That is the rule these tests pin, from both ends: what the schedule opens, and
 what it holds back until tomorrow.
+
+Several of them play a whole day through `/learning`, and those ask for an
+**ordinary morning** (`next_day.ordinary`). Every fifth day one subject's level
+steps aside for a poem (`app/playground/poem.py`), and a poem is not a level:
+it has no manifest entry, so `/learning` cannot start one and the day cannot be
+finished through this path. A poem day is a different shape on purpose, and it
+is pinned in `test_poem_day.py` rather than worked around here.
 """
 
 from datetime import date
@@ -106,7 +113,9 @@ def test_a_finished_level_can_be_played_again_any_day(client: TestClient):
     assert again.status_code == 200
 
 
-def test_the_day_reports_itself_finished(client: TestClient):
+def test_the_day_reports_itself_finished(client: TestClient, next_day):
+    # An ordinary morning: a poem day holds a stage `/learning` cannot play.
+    next_day.ordinary()
     child_id = make_child(client)
     for item in plan_of(client, child_id)["items"]:
         play(client, child_id, item["topic_id"])
@@ -118,9 +127,12 @@ def test_the_day_reports_itself_finished(client: TestClient):
     assert plan["completed"] == plan["total"]
 
 
-def test_a_finished_day_closes_the_class_instead_of_opening_the_next_level(client: TestClient):
+def test_a_finished_day_closes_the_class_instead_of_opening_the_next_level(
+    client: TestClient, next_day
+):
     """The conductor must not fall through to "the next unlocked topic" once the
     day is done - that would walk straight past the schedule it just followed."""
+    next_day.ordinary()
     child_id = make_child(client)
     for item in plan_of(client, child_id)["items"]:
         play(client, child_id, item["topic_id"])
@@ -133,6 +145,7 @@ def test_a_finished_day_closes_the_class_instead_of_opening_the_next_level(clien
 
 
 def test_a_new_day_brings_new_work(client: TestClient, next_day):
+    next_day.ordinary()
     child_id = make_child(client)
     today = plan_of(client, child_id)
     for item in today["items"]:
@@ -195,7 +208,7 @@ def test_two_shaky_levels_in_one_subject_still_cost_the_day_one_slot(client: Tes
     assert subjects.count(subject_id) <= 1
 
 
-def test_every_subject_is_in_every_day(client: TestClient):
+def test_every_subject_is_in_every_day(client: TestClient, next_day):
     """A day is one level from each of the child's subjects, and all of them.
 
     It used to be three, with the subjects rotating by the day number so that
@@ -203,7 +216,11 @@ def test_every_subject_is_in_every_day(client: TestClient):
     Nursery child met Hindi every other day and EVS every third - a subject
     could go most of a week without being taught while its levels sat unlocked
     on the Adventure map. The cap is gone and so is the rotation.
+
+    On an ordinary morning: every fifth day one of those subjects genuinely does
+    step aside for a poem, which `test_poem_day.py` pins.
     """
+    next_day.ordinary()
     child_id = make_child(client)
     subjects = client.get(f"/curriculum/children/{child_id}/class").json()["subjects"]
     teachable = {subject["subject_id"] for subject in subjects if subject.get("topics")}
@@ -217,11 +234,18 @@ def test_every_subject_is_in_every_day(client: TestClient):
 
 
 def test_the_day_is_the_same_shape_tomorrow(client: TestClient, next_day):
-    """No rotation means no surprise: the subjects are the same every morning."""
+    """No rotation means no surprise: the subjects are the same every morning.
+
+    `ordinary` because every fifth morning is a poem morning and genuinely is a
+    different shape - one subject's level steps aside for it. That is pinned by
+    `test_a_poem_takes_one_subjects_place_every_fifth_day` below; this one is
+    about the four mornings in five that are not.
+    """
+    next_day.ordinary()
     child_id = make_child(client)
 
     today = {item["skill_id"].split(":")[0] for item in plan_of(client, child_id)["items"]}
-    next_day()
+    next_day.ordinary()
     tomorrow = {item["skill_id"].split(":")[0] for item in plan_of(client, child_id)["items"]}
 
     assert today == tomorrow
@@ -252,7 +276,8 @@ def test_the_plan_does_not_change_when_it_is_read_twice(client: TestClient):
     assert first["plan_date"] == second["plan_date"]
 
 
-def test_the_gate_speaks_differently_once_the_day_is_done(client: TestClient):
+def test_the_gate_speaks_differently_once_the_day_is_done(client: TestClient, next_day):
+    next_day.ordinary()
     child_id = make_child(client)
     items = plan_of(client, child_id)["items"]
     for item in items:
@@ -303,7 +328,8 @@ def test_an_older_child_still_chooses(client: TestClient):
     assert plan_of(client, child_id)["autopilot"] is False
 
 
-def test_a_finished_day_does_not_open_anything(client: TestClient):
+def test_a_finished_day_does_not_open_anything(client: TestClient, next_day):
+    next_day.ordinary()
     child_id = make_child(client, "donefortoday@example.com", years=2)
     for item in plan_of(client, child_id)["items"]:
         play(client, child_id, item["topic_id"])

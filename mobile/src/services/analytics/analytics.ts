@@ -14,7 +14,10 @@ export type AnalyticsEvent =
   | { name: "app_opened"; props: { cold_start: boolean } }
   | { name: "guest_home_viewed"; props: Record<string, never> }
   | { name: "feature_card_tapped"; props: { feature: string; authenticated: boolean } }
-  | { name: "auth_completed"; props: { method: "login" | "register" } }
+  // "login_otp" is a sign-in finished at the emailed-code step, which is what
+  // an ordinary password sign-in is now: worth counting separately, because the
+  // gap between "login" and "login_otp" is parents who never found the email.
+  | { name: "auth_completed"; props: { method: "login" | "register" | "login_otp" } }
   | { name: "child_profile_created"; props: { age_group: string; mode: string } }
   | { name: "lesson_started"; props: { path_id: string; stage: number; mode: string } }
   | { name: "activity_shown"; props: { activity_kind: string; path_id: string } }
@@ -24,6 +27,10 @@ export type AnalyticsEvent =
   | { name: "guide_action_executed"; props: { action: string; target: string | null } }
   | { name: "guide_action_rejected"; props: { reason: string; action: string } }
   | { name: "voice_capture"; props: { outcome: string; confidence: number } }
+  // The AI Teacher: one sitting, run off today's frozen plan. `stage` is which
+  // item of that plan the sitting is on, so it is the day rather than a
+  // difficulty the child has climbed to.
+  | { name: "teacher_opened"; props: { topic_id: string; stage: number } }
   // The conducted class: one sitting, opened and closed by the server.
   | { name: "class_opened"; props: { topic_id: string; phase: string } }
   | { name: "class_closed"; props: { reason: string; phase: string } }

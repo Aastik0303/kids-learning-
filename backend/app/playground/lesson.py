@@ -15,7 +15,9 @@ just been shown A can say it long before they can pick it out of four letters.
 2. the same question again with a **hint**, and the hint is *options* - two or
    three things to choose between, one of which is the answer - said after a
    longer, deeper explanation of the thing itself;
-3. the **answer**, told to the child and explained, and then the class moves on.
+3. the **answer**, reached as a little story - somewhere the child has been,
+   then the picture in front of them, and the name for it last of all - and
+   then the class moves on.
 
 Nobody is asked a third time and nobody is left stuck. A child who has missed
 something twice has told you that asking again is not what they need; what they
@@ -106,21 +108,39 @@ BRIEFS = {
 # answer that are already in play, so neither invents a new one.
 HINT_BRIEF = (
     "The child did not get this one. Do not ask anything new and do not repeat "
-    "the question - it is still on the screen. Teach the thing again properly "
-    "and more deeply than you did the first time: four or five short sentences "
-    "saying what it is, how it is different from the things it is confused with, "
-    "and two everyday examples the child has seen for themselves. Then finish "
-    "with one clue that points at the answer - what it looks like, what it "
-    "starts with, where they have seen it - without ever saying the answer "
-    "itself. The choices on the screen are the rest of the hint."
+    "the question - it is still on the screen. Teach **the same thing** again "
+    "properly and more deeply than you did the first time: four or five short "
+    "sentences saying what it is, what makes it different from the other "
+    "choices, and two everyday examples the child has seen for themselves. "
+    "Then finish with one clue that points at the answer - what it looks like, "
+    "what it starts with, where they have seen it - without ever saying the "
+    "answer itself. The choices on the screen are the rest of the hint. "
+    "Say what tells the answer apart - 'this one has three corners, not none' - "
+    "and never turn the turn into a lesson about one of the other choices: a "
+    "child who got the triangle wrong needs the triangle again, not the circle."
 )
 
+# The third turn: the one that settles a question nobody got. It is a **story**,
+# and the answer is the end of it rather than the beginning.
+#
+# It used to open with "The answer is triangle" and explain afterwards, and a
+# child who has just been handed the answer has no reason left to listen to the
+# why. Told the other way round the same words become a small thing to follow:
+# somewhere they have been, then the picture in front of them, and only then the
+# name for it - which is the shape a person uses when they explain something to
+# a small child, and the reason the child is still there at the end of it.
 REVEAL_BRIEF = (
     "The child has tried this twice and it has not come. Do not ask anything and "
-    "do not hint. Tell them the answer warmly, in the first sentence, and then "
-    "explain in two or three more sentences why it is the answer and how they "
-    "will recognise it next time, with one everyday example. Finish by telling "
-    "them you are moving on to the next thing, kindly."
+    "do not hint. This turn is a little story in three beats, and the answer is "
+    "the last thing in it - never the first. "
+    "1. A real moment out of the child's own day where this thing turns up. Two "
+    "or three short sentences, told as a scene they can picture - the samosa on "
+    "the plate, the wheel on the toy car, the window in the kitchen. Do not name "
+    "the answer here. "
+    "2. Send them to the picture beside you and say what to look at in it - one "
+    "or two sentences. Have them count it, or trace it with a finger. "
+    "3. Only now, in the very last sentence, tell them warmly what it is called. "
+    "Nothing comes after that except moving on to the next thing, kindly."
 )
 
 

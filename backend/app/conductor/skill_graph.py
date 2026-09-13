@@ -22,6 +22,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from app.services.errors import app_error
+from app.services import cache
 
 
 GRAPH_PATH = Path(__file__).resolve().parents[1] / "data" / "curriculum" / "skill_graph.json"
@@ -97,6 +98,9 @@ def load_skill_graph() -> dict[str, list[str]]:
 def reload_skill_graph() -> dict[str, list[str]]:
     _graph.cache_clear()
     return _graph()
+
+
+cache.register("conductor.skill_graph", _graph.cache_clear)
 
 
 def prerequisites_of(skill_id: str) -> list[str]:

@@ -7,7 +7,7 @@ export default function LoginPage() {
       <div className="grid w-full gap-4">
         <AuthForm mode="login" />
         <Link className="text-center font-bold text-leaf" href="/signup">
-          Create demo account
+          Create an account
         </Link>
         <Link className="text-center font-bold text-ink/60" href="/forgot-password">
           Forgot your password?

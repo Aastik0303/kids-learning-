@@ -121,7 +121,13 @@ const STEP_LABELS: Record<string, string> = {
    * nothing about answering it is marked, counted or allowed near a star — so
    * it is named for what it is rather than as a step of the level.
    */
-  retention: "🧩 Remember"
+  retention: "🧩 Remember",
+  /**
+   * Every fifth day one subject's level steps aside for a poem. It is said
+   * rather than taught: nothing is asked, nothing is marked, and the dots
+   * count the poem's own verses rather than a level's five questions.
+   */
+  poem: "🎵 Poem"
 };
 
 /**
@@ -143,7 +149,11 @@ const LEVEL_SCALE = 4;
 const HEARD_LEVEL = SPEECH_LEVEL * LEVEL_SCALE;
 
 const HINT_LABEL = "💡 Here is a hint";
-const REVEAL_LABEL = "🔑 Here is the answer";
+// The third turn is a story now - a real moment, the picture beside it, and
+// the name for it last - so the label announces the telling rather than the
+// answer. "Here is the answer" over the top of a story whose whole point is
+// that the answer comes at the end was the label giving away the ending.
+const REVEAL_LABEL = "🔑 Let me show you";
 
 export default function AiTeacherPage() {
   const { child, status, error: childError } = useActiveChild();
@@ -342,11 +352,15 @@ export default function AiTeacherPage() {
       // and the question is the moment the concept itself has to be on screen.
       // The options are handed over as words never to illustrate: on a match or
       // a quiz the teacher says the answer's name on the way into the question,
-      // and a picture of it would be the answer given away.
+      // and a picture of it would be the answer given away. So are
+      // `not_examples` - the everyday things belonging to this concept's
+      // siblings, which an explanation reaches for as a contrast ("three
+      // corners, not round like a ball") and which this page was drawing: the
+      // circle's ball on the triangle's card.
       playExamples(
         findSpokenExamples(next.speech ?? "", {
           wordsBefore: (next.feedback ?? "").split(/\s+/).filter(Boolean).length,
-          skip: [next.visual_value, ...(next.options ?? [])],
+          skip: [next.visual_value, ...(next.options ?? []), ...(next.not_examples ?? [])],
           msPerWord: MS_PER_WORD
         })
       );
@@ -617,6 +631,9 @@ export default function AiTeacherPage() {
   const done = Math.min(turn?.questions_asked ?? 0, perStage);
   // The whole day is through. The server said so; this screen only obeys it.
   const dayDone = Boolean(turn?.day_complete);
+  // A poem, not a level - every fifth day one subject's stage is one. Nothing
+  // is asked and nothing is marked; the child listens and it carries on.
+  const reciting = Boolean(turn?.is_poem);
   // The turn that gives the answer away. Nothing here is being tested.
   const revealing = Boolean(turn?.is_reveal);
   /**
@@ -853,7 +870,11 @@ export default function AiTeacherPage() {
                 onClick={() => void send("ready")}
                 className="pressable rounded-3xl bg-leaf px-8 py-4 text-xl font-black text-white shadow-soft disabled:opacity-50"
               >
-                {revealing ? "👍 I see - next one" : "👍 Got it - what next?"}
+                {reciting
+                  ? "🎵 Next bit"
+                  : revealing
+                    ? "👍 I see - next one"
+                    : "👍 Got it - what next?"}
                 {secondsLeft !== null ? ` (${secondsLeft})` : ""}
               </button>
               <p className="text-sm font-bold text-ink/50">
@@ -885,10 +906,12 @@ export default function AiTeacherPage() {
               string sent back is the option exactly as it arrived - only how it
               is drawn changes here. */}
           {turn?.options?.length ? (
-            // Below xl: this is a two-column grid rather than a wrapping row —
-            // see `.class-options`. Two long labels used to take a row each,
-            // so four options became four rows and pushed the microphone off
-            // the bottom of a phone.
+            // Below xl: this is a grid rather than a wrapping row — see
+            // `.class-options`. A wrapping row gave two long labels a row
+            // each, so four options became four rows and pushed the
+            // microphone off the bottom of a phone. The grid fits as many
+            // answers to a row as the early touch floor allows, so three
+            // options are one row and not one-and-a-lonely-second.
             <div className="class-options flex flex-wrap items-center justify-center gap-3">
               {turn.options.map((option) => (
                 <button

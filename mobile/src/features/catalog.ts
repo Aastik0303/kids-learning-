@@ -3,9 +3,10 @@ import type { ToddlerModule } from "@/types/domain";
 /**
  * The twelve showcased learning features (spec section 2).
  *
- * `pathId` links a feature to a real backend path where one exists. The
- * six without a backend path are mobile-only for now and open a demo
- * rather than a lesson — flagged here rather than failing at runtime.
+ * `pathId` links a feature to a real backend path where one exists; the rest
+ * are flagged here rather than failing at runtime. Nothing on this screen
+ * starts a lesson either way - what is taught is today's frozen plan's
+ * decision, so every card leads to signing in.
  */
 
 export type FeatureDefinition = {
@@ -20,7 +21,7 @@ export type FeatureDefinition = {
   toddlerModule: ToddlerModule | null;
   /** Youngest age this is appropriate for. */
   minAge: number;
-  /** What the child does — drives the demo preview. */
+  /** What the child does in this kind of lesson. */
   interaction: "voice" | "tap" | "draw" | "listen";
 };
 
