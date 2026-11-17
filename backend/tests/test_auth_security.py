@@ -221,3 +221,11 @@ def test_sessions_survive_a_reset_for_other_parents(client: TestClient, register
     assert client.get("/auth/session", headers={"X-Demo-Session": other}).json()["user"]["email"] == "other@example.com"
     with session_scope() as session:
         assert session.query(AuthSession).count() == 1
+
+
+@pytest.mark.parametrize(
+    "stored",
+    ["pbkdf2_sha256$notanumber$00$00", "pbkdf2_sha256$600$zz$00", "pbkdf2_sha256$0$00$00", "garbage"],
+)
+def test_a_damaged_password_hash_refuses_rather_than_crashing(stored):
+    assert auth_service.verify_password("hunter22", stored) is False

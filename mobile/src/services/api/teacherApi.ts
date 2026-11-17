@@ -18,14 +18,19 @@ import type { TeacherTurn } from "@/types/teacher";
  * model upstream of a star.
  *
  * A turn is written by the big model and can take several seconds, so these
- * carry the guide budget rather than the CRUD one; a lesson that times out at
- * six seconds is a class that will not start on a slow connection.
+ * carry the teacher budget rather than the CRUD one; a lesson that times out at
+ * six seconds is a class that will not start on a slow connection. The budget
+ * outlasts the server's own wait on the model, because an answer the client
+ * gave up on has still been marked.
  */
 export const teacherApi = {
   /** Start or resume today's class, on whatever the frozen plan points at. */
   open(childId: string) {
     return apiClient.post<TeacherTurn>(`/playground/teacher/${childId}/open`, {}, {
-      timeoutMs: env.guideTimeoutMs,
+      timeoutMs: env.teacherTimeoutMs,
+      // Start-or-resume, so asking twice is safe - unlike `answer`, which
+      // would mark the same answer against the next question.
+      retries: 1,
     });
   },
 
@@ -34,7 +39,7 @@ export const teacherApi = {
     return apiClient.post<TeacherTurn>(
       `/playground/teacher/sessions/${sessionId}/answer`,
       { answer },
-      { timeoutMs: env.guideTimeoutMs },
+      { timeoutMs: env.teacherTimeoutMs },
     );
   },
 
@@ -48,7 +53,7 @@ export const teacherApi = {
     return apiClient.post<TeacherTurn>(
       `/playground/teacher/sessions/${sessionId}/ask`,
       { question },
-      { timeoutMs: env.guideTimeoutMs },
+      { timeoutMs: env.teacherTimeoutMs },
     );
   },
 

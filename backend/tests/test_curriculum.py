@@ -342,6 +342,24 @@ def test_clearing_the_override_returns_the_child_to_their_age_class(client: Test
     assert response.json()["class_override"] is None
 
 
+def test_clearing_the_override_takes_the_session_in_the_header(client: TestClient):
+    """A token in a query string is written into every access log on the way."""
+    token, child = make_child(client, "clear-header@example.com", birth_year=date.today().year - 4)
+    client.put(
+        f"/curriculum/children/{child['child_id']}/class",
+        json={"session_token": token, "class_id": "nursery"},
+    )
+    response = client.delete(
+        f"/curriculum/children/{child['child_id']}/class",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert response.status_code == 200
+    assert response.json()["class_override"] is None
+
+    refused = client.delete(f"/curriculum/children/{child['child_id']}/class")
+    assert refused.status_code == 401
+
+
 # --------------------------------------------------------------------------
 # fail fast
 # --------------------------------------------------------------------------

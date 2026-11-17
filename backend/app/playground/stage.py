@@ -52,6 +52,27 @@ _NUMBER_WORDS = {
 }
 
 
+# Signs the syllabus uses as answers or choices, and the word each one reads as.
+_SIGN_WORDS = {
+    "=": "equal",
+    ">": "greater",
+    "<": "less",
+    "+": "plus",
+    "-": "minus",
+    "?": "question",
+}
+_STANDALONE_SIGN = re.compile(r"(?<!\S)([=<>+\-?])(?!\S)")
+
+# What a child says for one of those signs, read as the same word.
+_SIGN_SYNONYMS = {
+    "equals": "equal",
+    "same": "equal",
+    "bigger": "greater",
+    "smaller": "less",
+    "lesser": "less",
+}
+
+
 @dataclass(frozen=True)
 class Verdict:
     """What one answer came to. Never written by a model."""
@@ -82,6 +103,10 @@ def normalise(answer: str) -> str:
     are one answer, and marking them as two was marking a right answer wrong.
     """
     text = (answer or "").strip().lower()
+    # A sign standing on its own is a word: the maths levels ask for "=", ">"
+    # and "<", and stripping punctuation turned each of them into nothing - so
+    # no option could be the answer and tapping the right sign was marked wrong.
+    text = _STANDALONE_SIGN.sub(lambda match: f" {_SIGN_WORDS[match.group(1)]} ", text)
     text = re.sub(r"[^\w\sऀ-ॿ]", " ", text)
     text = text.replace("_", " ")
     text = re.sub(r"\s+", " ", text).strip()
@@ -112,17 +137,36 @@ def contains_answer(option: str, answer: str) -> bool:
     return f" {wanted} " in f" {text} "
 
 
-def _candidates(answer: str) -> set[str]:
-    """Every form of the answer worth comparing: the whole thing and its words."""
-    text = normalise(answer)
-    if not text:
-        return set()
-    forms = {text}
-    for word in text.split():
-        forms.add(word)
-        if word in _NUMBER_WORDS:
-            forms.add(_NUMBER_WORDS[word])
-    return forms
+# Words that carry no meaning of their own in a short answer. "a balloon" and
+# "a kite" share the "a", and a child who said "a kite" has not said the balloon.
+_FILLER_WORDS = frozenset(
+    {"a", "an", "the", "is", "are", "am", "i", "it", "its", "on", "in", "at", "of",
+     "to", "and", "you", "he", "she", "they", "we", "this", "that", "my", "s"}
+)
+
+
+def _words(text: str) -> list[str]:
+    """Normalised words, with the number words a child says turned into digits.
+
+    Both sides go through this, so "three" and "3", "coin one" and `coin_1`, or
+    "equals" and "=", are the same words.
+    """
+    return [_spoken_form(word) for word in normalise(text).split()]
+
+
+def _content_words(text: str) -> set[str]:
+    """The words of an answer that actually say something, filler dropped first."""
+    return {_spoken_form(word) for word in normalise(text).split() if word not in _FILLER_WORDS}
+
+
+def _spoken_form(word: str) -> str:
+    return _NUMBER_WORDS.get(word) or _SIGN_SYNONYMS.get(word) or word
+
+
+def _contains_phrase(spoken: list[str], key: list[str]) -> bool:
+    if not key:
+        return False
+    return f" {' '.join(key)} " in f" {' '.join(spoken)} "
 
 
 def judge(
@@ -157,15 +201,57 @@ def judge(
             normalised=normalise(said),
         )
 
-    spoken = _candidates(said)
-    wanted: set[str] = set()
-    for value in [expected, *(accept or [])]:
-        wanted |= _candidates(value)
-
-    if not spoken or not wanted:
+    keys = [value for value in (expected, *(accept or [])) if normalise(value)]
+    spoken = _words(said)
+    if not spoken or not keys:
         return Verdict(is_correct=False, normalised=normalise(said))
 
-    return Verdict(is_correct=bool(spoken & wanted), normalised=normalise(said))
+    return Verdict(is_correct=_said_the_answer(spoken, keys, offered), normalised=normalise(said))
+
+
+def _said_the_answer(
+    spoken: list[str], keys: list[str], offered: list[str] | tuple[str, ...] | None
+) -> bool:
+    """Whether a spoken or typed answer says one of the keys.
+
+    The whole answer said inside a sentence is right - "i think it is a circle".
+    A *part* of a multi-word answer is right only when that part is what tells
+    it apart: with "big ball" and "small ball" on the screen, "big" is the
+    answer and "ball" is not, because "ball" is just as much the wrong one.
+    Matching any shared word used to mark "small ball", "coin 5" and "a kite"
+    right for "big ball", "coin 1" and "a balloon".
+
+    With no choices on the screen there is nothing to tell the answer apart
+    from, so every word that carries meaning has to be there ("fine" for
+    "i am fine").
+    """
+    heard = set(spoken)
+    wrong_options = [
+        str(option)
+        for option in (offered or [])
+        if not any(contains_answer(str(option), key) for key in keys)
+    ]
+    wrong_words: set[str] = set()
+    for option in wrong_options:
+        wrong_words |= _content_words(option)
+
+    for key in keys:
+        if _contains_phrase(spoken, _words(key)):
+            return True
+
+        content = _content_words(key)
+        if not content:
+            continue
+        if not wrong_options:
+            if content <= heard:
+                return True
+            continue
+
+        telling = content - wrong_words
+        misleading = wrong_words - content
+        if telling and heard & telling and not heard & misleading:
+            return True
+    return False
 
 
 def _tapped(said: str, offered: list[str] | tuple[str, ...] | None) -> str | None:

@@ -11,3 +11,7 @@ frontend/node_modules/
 # Local SQLite development database (PostgreSQL is the real one)
 *.db
 backend/saksham.db
+
+# Local editor / agent settings
+.vscode/
+.claude/

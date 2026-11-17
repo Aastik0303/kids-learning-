@@ -40,6 +40,7 @@ from app.db.models import Attempt, PlaygroundSession, PlaygroundTurn
 from app.db.session import session_scope
 from app.main import app
 from app.playground import agent, examples, lesson, questions, rag, stage, visuals
+from app.services import curriculum_service
 
 
 @pytest.fixture()
@@ -1638,6 +1639,70 @@ def test_a_spoken_answer_is_still_judged_on_its_words():
     )
 
     assert verdict.is_correct
+
+
+@pytest.mark.parametrize(
+    ("said", "expected", "offered"),
+    [
+        ("it is the sleeping line", "standing line", ["standing line ⬇️", "sleeping line ➡️"]),
+        ("small ball", "big ball", ["big ball \U0001f3c0", "small ball ⚾"]),
+        ("coin five", "coin 1", ["coin 1 \U0001fa99", "coin 5 \U0001fa99"]),
+        ("a kite", "a balloon", ["a balloon \U0001f388", "a kite \U0001fa81"]),
+        ("ball the red is", "The ball is red", ["The ball is red ⚽", "Ball the red is ⚽"]),
+    ],
+)
+def test_a_spoken_wrong_answer_that_shares_a_word_with_the_right_one_is_wrong(said, expected, offered):
+    """"line" is in "standing line" and in "sleeping line" alike. Matching any
+    shared word marked a child who said the wrong one right, and paid it
+    towards the star."""
+    assert not stage.judge(said=said, expected=expected, offered=offered).is_correct
+
+
+@pytest.mark.parametrize(
+    ("said", "expected", "offered"),
+    [
+        ("standing", "standing line", ["standing line ⬇️", "sleeping line ➡️"]),
+        ("big", "big ball", ["big ball \U0001f3c0", "small ball ⚾"]),
+        ("coin one", "coin 1", ["coin 1 \U0001fa99", "coin 5 \U0001fa99"]),
+        ("balloon", "a balloon", ["a balloon \U0001f388", "a kite \U0001fa81"]),
+        ("fine", "i am fine", []),
+    ],
+)
+def test_the_word_that_tells_the_answer_apart_is_enough(said, expected, offered):
+    assert stage.judge(said=said, expected=expected, offered=offered).is_correct
+
+
+def test_a_sign_is_an_answer_like_any_other():
+    """The maths levels ask for "=", ">" and "<". Stripping punctuation turned
+    each into nothing, so no option was the answer and tapping the right sign
+    was marked wrong."""
+    signs = ["=", "+", "-"]
+    assert stage.contains_answer("=", "=")
+    assert stage.judge(said="=", expected="=", offered=signs).is_correct
+    assert not stage.judge(said="+", expected="=", offered=signs).is_correct
+    assert stage.judge(said="equals", expected="=", offered=signs).is_correct
+    assert stage.judge(said="greater than", expected=">", offered=[">", "<", "="]).is_correct
+    assert not stage.judge(said="<", expected=">", offered=[">", "<", "="]).is_correct
+
+
+def test_every_authored_choice_marks_its_own_answer_right_and_the_rest_wrong():
+    """The whole syllabus, swept: a tap on the option the server treats as the
+    answer is right, and a tap on any other is wrong."""
+    curriculum_service.load_curriculum()
+    for summary in curriculum_service.list_classes():
+        for subject in curriculum_service.get_class(summary.class_id).subjects:
+            for topic in subject.topics:
+                for asked in questions.for_topic(topic.topic_id):
+                    if not asked.is_choice:
+                        continue
+                    keys = [asked.answer, *asked.accept]
+                    right = [o for o in asked.options if any(stage.contains_answer(o, k) for k in keys)]
+                    assert right, f"{asked.activity_id}: no option is the answer"
+                    for option in asked.options:
+                        verdict = stage.judge(
+                            said=option, expected=asked.answer, accept=list(asked.accept), offered=list(asked.options)
+                        )
+                        assert verdict.is_correct is (option in right), (asked.activity_id, option)
 
 
 def test_the_child_is_marked_against_what_was_on_their_screen(client: TestClient):

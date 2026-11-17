@@ -65,7 +65,18 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
         // Sign-in waits on an SMTP handshake, which is seconds rather than
         // milliseconds, and aborting it at 4.5s would leave the parent looking
         // at a failure while the code was already on its way to them.
-        path.startsWith("/agent/") ? 8000 : path.startsWith("/auth/") ? 15000 : 4500
+        //
+        // The AI Teacher waits up to 20s on the big model server-side. Giving
+        // up first showed "could not reach the server" for an answer that had
+        // been marked, and the child's second tap was then marked against the
+        // next question.
+        path.startsWith("/playground/")
+          ? 30000
+          : path.startsWith("/agent/")
+            ? 8000
+            : path.startsWith("/auth/")
+              ? 15000
+              : 4500
       )
     : null;
 

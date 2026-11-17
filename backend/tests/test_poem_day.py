@@ -186,6 +186,29 @@ def test_the_class_says_the_poem_one_verse_at_a_time(client: TestClient, next_da
     assert heard == [part.speech for part in said.parts], "in order, word for word"
 
 
+def test_asking_something_in_the_middle_of_a_poem_keeps_the_verse(client: TestClient, next_day):
+    """The child's own question is answered and the same verse comes back. It
+    used to come back as an ordinary lesson turn, with the verse gone from the
+    card and `is_poem` false."""
+    child_id = make_child(client, "poem-ask@example.com")
+    next_day.on_a_poem_day()
+
+    turn = _open_on_the_poem(client, child_id)
+    asked = client.post(
+        f"/playground/teacher/sessions/{turn['session_id']}/ask",
+        json={"question": "why is the moon round?"},
+    ).json()
+
+    assert asked["is_poem"] is True
+    assert asked["step"] == "poem"
+    assert asked["question"] == turn["question"], "the same verse is still on the card"
+    assert asked["questions_asked"] == turn["questions_asked"], "asking moves nothing"
+
+    reread = client.get(f"/playground/teacher/sessions/{turn['session_id']}").json()
+    assert reread["is_poem"] is True
+    assert reread["question"] == turn["question"]
+
+
 def test_a_poem_pays_no_star_and_writes_no_attempt(client: TestClient, next_day):
     """A poem is not a level, and its topic id is deliberately not in the
     manifest so that every rule which reads the manifest already does the right

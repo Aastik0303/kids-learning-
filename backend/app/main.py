@@ -132,8 +132,10 @@ async def http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse
 
 
 @app.exception_handler(Exception)
-async def unhandled_exception_handler(_: Request, exc: Exception) -> JSONResponse:
-    print(f"Unhandled error: {exc}")
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    # Through logging and with the traceback: a bare `print` of the message is
+    # all a production 500 used to leave behind, which is not enough to find it.
+    logger.error("Unhandled error on %s %s", request.method, request.url.path, exc_info=exc)
     return JSONResponse(
         status_code=500,
         content={"error": {"code": "SERVER_ERROR", "message": "Something went wrong. Let us try again."}},

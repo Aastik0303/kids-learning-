@@ -89,7 +89,7 @@ def _admin(settings: Settings, token: str) -> None:
     is what it is for locally. Anywhere else `POLICY_ADMIN_TOKEN` must be set and
     must match, and an unset token means the endpoint is closed rather than open.
     """
-    if settings.env == "development":
+    if settings.env.lower() == "development":
         return
     expected = (settings.policy_admin_token or "").strip()
     if not expected:
@@ -124,7 +124,7 @@ def enable_policy(
     Development only. In production the switch expires by itself, and clearing
     it early is a deploy-time decision rather than a request.
     """
-    if settings.env != "development":
+    if settings.env.lower() != "development":
         raise app_error("DEV_ONLY", "Re-enabling the policy is a deployment action.", 403)
     _admin(settings, x_policy_token)
     health.reset()

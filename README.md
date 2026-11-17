@@ -1,8 +1,16 @@
-# learn_kids
-
-AI Nursery Learning Platform
+# Learn Kids — AI Nursery Learning Platform
 
 AI-assisted nursery learning app for children ages 2-6, with a light parent layer. The child surface stays tiny: the AI Teacher's class, Adventure, Rewards, and Ask Guide.
+
+## Repositories in this monorepo
+
+| Folder | What it is | Stack |
+|---|---|---|
+| `backend/` | The API, curriculum, learning engine and the AI Teacher | FastAPI + PostgreSQL |
+| `frontend/` | The web app the child and parent use | Next.js 16 + React 19 + Tailwind |
+| `mobile/` | The Learn Kids app for phones (Expo development build) | React Native, Expo SDK 57 |
+| `voice-agent/` | A standalone talk-back voice demo | FastAPI + Groq + Edge TTS |
+| `docs/` | Architecture notes, prompts, deployment and ops records | Markdown |
 
 ## What is running
 
@@ -79,15 +87,20 @@ and UKG, plus the Play Group curriculum, are authored (339 activities). See `bac
 
 ## Architecture
 
-Backend services are split by concern: auth, children, curriculum, learning, practice, history, certificate, safety, recommendation, speech normalization, and guide context. Deterministic services own correctness, scoring, stars, progress, rewards, unlocking, and certificate eligibility.
+Backend services are split by concern: auth (Google + password/OTP), children, curriculum, learning, practice, history, certificate, safety, recommendation, speech normalization, and guide context. Deterministic services own correctness, scoring, stars, progress, rewards, unlocking, and certificate eligibility. The AI-side pieces are:
 
-The Little Learning Guide Agent is the only AI-shaped workflow. The frontend sends route, screen, feature, semantic event, available actions, allowed targets, allowed visual targets, question context, and compact progress context to `POST /agent/guide`; the response is structured JSON for avatar speech, safe UI guidance, and safe visual actions. Visible question data is passed directly to the guide, so question explanation does not use RAG.
+- **Planner Agent** (`planner_runner`) — freezes today's plan in the background before the child opens the app, not on their first request.
+- **AI Teacher** (`playground`) — the class surface, with a local retrieval index built off the request path.
+- **Conductor / skill graph** (`conductor`) — an authored prerequisite graph that decides what comes next.
+- **Little Learning Guide Agent** (`guide_agent_service`) — the only other AI-shaped workflow.
+
+The frontend sends route, screen, feature, semantic event, available actions, allowed targets, allowed visual targets, question context, and compact progress context to `POST /agent/guide`; the response is structured JSON for avatar speech, safe UI guidance, and safe visual actions. Visible question data is passed directly to the guide, so question explanation does not use RAG.
 
 Normal correct answers use short static praise and deterministic progression. The AI is used only for explanation, guidance, targeted wrong-answer help, and safe UI/visual direction; it never calculates scores, awards stars, unlocks topics, or writes progress.
 
 ## Future Production Version
 
-Replace prototype pieces with real auth, parent consent flows, Postgres or another persistent store, encrypted child data, secure session management, rate limiting, LLM monitoring, audit logs, persistent vector retrieval, and production certificate generation.
+Harden the remaining prototype pieces: LLM monitoring, audit logs, persistent vector retrieval, encrypted child data at rest, and production certificate generation.
 
 ## Run Locally
 
@@ -98,7 +111,7 @@ cd backend
 python -m uvicorn app.main:app --port 8008
 ```
 
-Frontend:
+Frontend (web):
 
 ```bash
 cd frontend
@@ -107,6 +120,24 @@ npm run dev
 ```
 
 Open `http://localhost:5000`.
+
+Mobile (Learn Kids app, Expo development build — speech recognition, secure store and audio are native modules, so Expo Go will not do):
+
+```bash
+cd mobile
+npm install
+npx expo start        # backend must be running on :8008 first
+```
+
+The API URL resolves itself: Android emulator → `10.0.2.2:8008`, iOS simulator → `localhost:8008`, a physical device → the dev machine's LAN IP. Override with `EXPO_PUBLIC_API_BASE_URL`. See `mobile/README.md`.
+
+Voice agent (standalone demo):
+
+```bash
+cd voice-agent
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --port 8000
+```
 
 ## Test
 

@@ -6,7 +6,7 @@ second plan: if one is frozen for today it is returned as it is, and if none is
 the read freezes one.
 """
 
-from datetime import date, timedelta
+from datetime import timedelta
 from uuid import UUID
 
 from fastapi import APIRouter, Query
@@ -33,7 +33,7 @@ def today(child_id: str) -> TodayPlanResponse:
     if plan is None:
         # A class with nothing authored yet, or every unlocked topic finished.
         # An empty plan is an honest answer; the client shows the day as clear.
-        return TodayPlanResponse(child_id=child_id, plan_date=date.today(), source="deterministic")
+        return TodayPlanResponse(child_id=child_id, plan_date=plan_service.today(), source="deterministic")
 
     return TodayPlanResponse(
         child_id=child_id,
@@ -65,7 +65,7 @@ def history(child_id: str, days: int = Query(default=30, ge=1, le=90)) -> PlanHi
 
     with session_scope() as session:
         rows = plans_repo.recent_plans(
-            session, child_id=child_uuid, since=date.today() - timedelta(days=days)
+            session, child_id=child_uuid, since=plan_service.today() - timedelta(days=days)
         )
         return PlanHistoryResponse(
             child_id=child_id,

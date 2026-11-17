@@ -204,11 +204,16 @@ class Settings(BaseSettings):
     # it is what stops a caller minting a new token to get a new bucket.
     rate_limit_ip_per_minute: int = 600
     # Whether `X-Forwarded-For` may be believed. True behind Render, Vercel or
-    # any proxy that overwrites it - without this every request in the world
+    # any proxy that appends to it - without this every request in the world
     # shares the proxy's own address and therefore one bucket. False where
     # nothing sits in front of this server, because there the header is written
     # by the client and says whatever they like.
     rate_limit_trust_forwarded_for: bool = True
+    # How many proxies sit in front of this server and append to
+    # `X-Forwarded-For`. The address believed is that many entries from the
+    # right, because everything to the left of it was written by the client.
+    # One on Render; two with a CDN such as Cloudflare in front of it.
+    rate_limit_proxy_hops: int = 1
 
     # --- response caching ------------------------------------------------
     # How long a browser may reuse an authored-content response before asking

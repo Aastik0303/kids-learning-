@@ -159,7 +159,12 @@ function safeParse(raw: string): unknown {
  * ever seeing a stack trace (spec section 20).
  */
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const attempts = (options.retries ?? 2) + 1;
+  // Only a read is retried unless the caller says otherwise. A timed-out POST
+  // has usually *happened* on the server - an answer marked, a sign-in code
+  // sent - and sending it again marks that answer against the next question,
+  // or opens a new sign-in challenge that kills the code just emailed.
+  const method = options.method ?? "GET";
+  const attempts = (options.retries ?? (method === "GET" ? 2 : 0)) + 1;
   let lastError: ApiError | null = null;
 
   for (let attempt = 0; attempt < attempts; attempt += 1) {

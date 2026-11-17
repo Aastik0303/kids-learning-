@@ -4,8 +4,9 @@ Everything the client renders as curriculum comes from here, so the frontend
 holds no class, subject or topic names of its own.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
+from app.api.deps import optional_token
 from app.schemas.child import ChildProfile
 from app.schemas.curriculum import (
     ClassDetail,
@@ -125,5 +126,15 @@ def set_class_override(child_id: str, payload: ClassOverrideRequest) -> ChildPro
 
 
 @router.delete("/children/{child_id}/class", response_model=ChildProfile)
-def clear_class_override(child_id: str, session_token: str) -> ChildProfile:
-    return child_service.clear_class_override(child_id, session_token)
+def clear_class_override(
+    child_id: str,
+    session_token: str = "",
+    bearer: str | None = Depends(optional_token),
+) -> ChildProfile:
+    """Parent surface only. The session goes in `Authorization: Bearer`.
+
+    `?session_token=` is still read for anything built against it, but a query
+    string is written into every access log and proxy log on the way here, and a
+    session token in a log is a session anybody reading the log can use.
+    """
+    return child_service.clear_class_override(child_id, bearer or session_token)

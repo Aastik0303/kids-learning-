@@ -47,7 +47,9 @@ def sweep(*, today: date | None = None) -> dict:
     topic finished, or a class with no authored content yet - which is a normal
     state, not an error.
     """
-    plan_date = today or date.today()
+    # The schedule's own clock: a sweep that froze `date.today()` while the
+    # class asked `plan_service.today()` would plan a day nobody opens.
+    plan_date = today or plan_service.today()
     summary = {"considered": 0, "planned": 0, "skipped": 0, "failed": 0, "retention_tests": 0}
 
     # Retention tests are part of the schedule, so they are created by the same

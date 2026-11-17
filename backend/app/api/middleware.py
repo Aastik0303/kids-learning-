@@ -96,6 +96,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             request.headers,
             request.client.host if request.client else None,
             trust_forwarded=settings.rate_limit_trust_forwarded_for,
+            proxy_hops=settings.rate_limit_proxy_hops,
         )
 
         # The ceiling first. It is the one a caller cannot get out of by
@@ -161,13 +162,33 @@ class ContentCacheMiddleware(BaseHTTPMiddleware):
             "Cache-Control": f"public, max-age={max_age}, must-revalidate",
         }
 
-        if request.headers.get("if-none-match") == etag:
+        if _etag_matches(request.headers.get("if-none-match"), etag):
             # Same bytes as last time. 304 carries no body by definition, which
             # is the whole point of it.
             return Response(status_code=304, headers=headers)
 
         response.headers.update(headers)
         return response
+
+
+def _etag_matches(header: str | None, etag: str) -> bool:
+    """`If-None-Match` as RFC 9110 has it: a list, `*`, and weak comparison.
+
+    A proxy that re-compresses a response is allowed to weaken its ETag to
+    `W/"..."`, and the browser then sends that back - an exact string compare
+    never matched it, and every revalidation downloaded the syllabus again.
+    """
+    if not header:
+        return False
+    for candidate in header.split(","):
+        candidate = candidate.strip()
+        if candidate == "*":
+            return True
+        if candidate.startswith("W/"):
+            candidate = candidate[2:]
+        if candidate == etag:
+            return True
+    return False
 
 
 class ServerTimingMiddleware(BaseHTTPMiddleware):

@@ -1466,9 +1466,6 @@ def ask(session_id: str, question: str) -> TeacherTurn:
             turn.source = source
             return turn
 
-        steps = _steps_for(row.topic_id, row.subject_id)
-        step = lesson.current(steps, row.step_index, row.step_tries)
-
         session.add(
             PlaygroundTurn(
                 session_id=row.session_id,
@@ -1479,6 +1476,18 @@ def ask(session_id: str, question: str) -> TeacherTurn:
                 question=question,
             )
         )
+
+        # Asked in the middle of a poem: answer it and put the same verse back.
+        # A poem has no lesson steps, so building a lesson turn here took the
+        # verse off the card and told the client this was no longer a poem.
+        if poem.is_poem(row.topic_id):
+            turn = _poem_turn(row)
+            turn.speech = answer_text
+            turn.source = source
+            return turn
+
+        steps = _steps_for(row.topic_id, row.subject_id)
+        step = lesson.current(steps, row.step_index, row.step_tries)
 
         return TeacherTurn(
             session_id=row.session_id,
@@ -1539,6 +1548,9 @@ def read_session(session_id: str) -> TeacherTurn:
         check_in = _current_retention(row, session)
         if check_in is not None:
             return _retention_turn(row, check_in)
+
+        if poem.is_poem(row.topic_id):
+            return _poem_turn(row)
 
         steps = _steps_for(row.topic_id, row.subject_id)
         step = lesson.current(steps, row.step_index, row.step_tries)

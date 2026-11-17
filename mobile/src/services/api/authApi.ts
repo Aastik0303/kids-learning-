@@ -1,6 +1,13 @@
 import { apiClient } from "@/services/api/client";
 import type { AuthResponse, LoginResult, SessionResponse } from "@/types/domain";
 
+/**
+ * Sign-in and "send it again" wait on an SMTP handshake on the server (its own
+ * timeout is ten seconds). The CRUD budget of six gave up on a code that was
+ * already on its way to the parent.
+ */
+const MAIL_TIMEOUT_MS = 15000;
+
 /** POST /auth/* — see `backend/app/api/auth.py`. */
 export const authApi = {
   register(name: string, email: string, password: string) {
@@ -16,7 +23,7 @@ export const authApi = {
    * `session_token` and getting undefined.
    */
   login(email: string, password: string) {
-    return apiClient.post<LoginResult>("/auth/login", { email, password });
+    return apiClient.post<LoginResult>("/auth/login", { email, password }, { timeoutMs: MAIL_TIMEOUT_MS });
   },
 
   /** Spend the emailed code. The only thing that mints a session on this path. */
@@ -32,6 +39,7 @@ export const authApi = {
     return apiClient.post<{ ok: boolean; message: string; resend_after: number; dev_code: string | null }>(
       "/auth/otp/resend",
       { challenge_id: challengeId },
+      { timeoutMs: MAIL_TIMEOUT_MS },
     );
   },
 

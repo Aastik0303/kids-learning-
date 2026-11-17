@@ -231,6 +231,16 @@ def test_curriculum_is_revalidated_rather_than_re_sent(client, no_limit):
     assert not again.content
 
 
+def test_a_weakened_or_listed_etag_still_revalidates(client, no_limit):
+    """A proxy that re-compresses may send the ETag back as `W/"..."`, and a
+    browser may send several. Either way the same bytes are a 304."""
+    etag = client.get("/curriculum").headers["ETag"]
+
+    assert client.get("/curriculum", headers={"If-None-Match": f"W/{etag}"}).status_code == 304
+    assert client.get("/curriculum", headers={"If-None-Match": f'"stale", {etag}'}).status_code == 304
+    assert client.get("/curriculum", headers={"If-None-Match": '"stale"'}).status_code == 200
+
+
 def test_a_changed_answer_gets_a_new_etag(client, no_limit):
     topics = client.get("/curriculum/classes")
     other = client.get("/curriculum")
@@ -301,9 +311,39 @@ def test_a_signed_out_caller_is_counted_by_address():
 
 
 def test_a_forwarded_address_is_believed_only_when_configured():
-    headers = {"x-forwarded-for": "198.51.100.9, 10.0.0.1"}
+    headers = {"x-forwarded-for": "198.51.100.9"}
     assert client_ip(headers, "10.0.0.1", trust_forwarded=True) == "198.51.100.9"
     assert client_ip(headers, "10.0.0.1", trust_forwarded=False) == "10.0.0.1"
+
+
+def test_the_address_believed_is_the_one_the_proxy_appended():
+    """A load balancer appends what it saw to whatever the client sent. The
+    left of the list is the client's own words, and believing it gave every
+    request with a made-up header a bucket of its own."""
+    spoofed = {"x-forwarded-for": "1.2.3.4, 198.51.100.9"}
+    assert client_ip(spoofed, "10.0.0.1", trust_forwarded=True) == "198.51.100.9"
+
+    behind_a_cdn = {"x-forwarded-for": "1.2.3.4, 198.51.100.9, 172.16.0.5"}
+    assert client_ip(behind_a_cdn, "10.0.0.1", trust_forwarded=True, proxy_hops=2) == "198.51.100.9"
+
+
+def test_a_made_up_forwarded_header_does_not_buy_a_fresh_bucket(client, monkeypatch):
+    monkeypatch.setenv("RATE_LIMIT_ENABLED", "1")
+    monkeypatch.setenv("RATE_LIMIT_READ_PER_MINUTE", "3")
+    get_settings.cache_clear()
+    try:
+        codes = [
+            client.get(
+                "/curriculum/classes",
+                headers={"X-Forwarded-For": f"10.9.8.{n}, 198.51.100.9"},
+            ).status_code
+            for n in range(6)
+        ]
+    finally:
+        get_settings.cache_clear()
+
+    assert codes[:3] == [200, 200, 200]
+    assert 429 in codes[3:]
 
 
 def test_the_api_refuses_a_caller_who_asks_too_fast(client, monkeypatch):

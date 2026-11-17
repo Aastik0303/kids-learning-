@@ -173,22 +173,34 @@ class RateLimiter:
             return len(self._buckets)
 
 
-def client_ip(headers, client_host: str | None, *, trust_forwarded: bool) -> str:
+def client_ip(
+    headers, client_host: str | None, *, trust_forwarded: bool, proxy_hops: int = 1
+) -> str:
     """The caller's address, as far as it can be known.
 
     Behind Render, Vercel or any other proxy the socket's peer is the proxy, so
     without `X-Forwarded-For` every request in the world shares one bucket. With
     it, the header is written by the client and can say anything - so it is
     honoured only when `RATE_LIMIT_TRUST_FORWARDED_FOR` says this deployment is
-    actually behind a proxy that overwrites it. Both failure modes are real;
-    which one applies is a property of the deployment and not something that can
-    be guessed from inside a request.
+    actually behind a proxy. Both failure modes are real; which one applies is a
+    property of the deployment and not something that can be guessed from
+    inside a request.
+
+    **The entry believed is the one the proxy wrote, counted from the right.** A
+    load balancer *appends* the address it saw to whatever the client sent, so
+    the left of the list is the client's own words. Taking the first entry let
+    anybody send a different `X-Forwarded-For` on every request and get a fresh
+    bucket each time - the per-IP ceiling and the signed-out `auth` bucket were
+    both one header away from unlimited. `proxy_hops` is how many proxies sit in
+    front of this server (`RATE_LIMIT_PROXY_HOPS`, one on Render).
     """
     if trust_forwarded:
         forwarded = headers.get("x-forwarded-for") or ""
-        first = forwarded.split(",")[0].strip()
-        if first:
-            return first[:64]
+        hops = [part.strip() for part in forwarded.split(",") if part.strip()]
+        if hops:
+            # Fewer entries than proxies means the client sent none and the
+            # chain is short; the left-most is then the nearest real hop.
+            return hops[-min(max(1, proxy_hops), len(hops))][:64]
     return (client_host or "unknown")[:64]
 
 

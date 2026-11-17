@@ -92,7 +92,14 @@ def verify_password(password: str, stored: str | None) -> bool:
         return False
     if algorithm != PBKDF2_ALGORITHM:
         return False
-    candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), bytes.fromhex(salt_hex), int(rounds))
+    try:
+        salt, iterations = bytes.fromhex(salt_hex), int(rounds)
+    except ValueError:
+        # A damaged row is a refused sign-in, not a 500 on the login screen.
+        return False
+    if iterations < 1:
+        return False
+    candidate = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt, iterations)
     # Constant time: a timing signal on a password digest is a slow password
     # oracle, and comparing bytes with == is exactly that.
     return hmac.compare_digest(candidate.hex(), digest_hex)

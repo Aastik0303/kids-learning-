@@ -52,4 +52,10 @@ export const env = {
   /** Guide calls hit an LLM and need a longer budget than plain CRUD. */
   requestTimeoutMs: 6000,
   guideTimeoutMs: 12000,
+  /**
+   * The AI Teacher's turn waits up to 20s on the big model server-side
+   * (`app/playground/agent.py`), plus retrieval. Giving up before the server
+   * does leaves the child looking at an error for a turn that was marked.
+   */
+  teacherTimeoutMs: 30000,
 } as const;

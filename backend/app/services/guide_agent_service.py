@@ -524,7 +524,7 @@ def _base_teaching_message(payload: GuideRequest) -> tuple[str, GuideVisualActio
 
     if "letter" in answer_type or "alphabet" in answer_type:
         return (
-            f"Look at the letter. Listen to its name, then choose it.",
+            "Look at the letter. Listen to its name, then choose it.",
             _visual_action(payload, "pulse", visual_targets[:1]),
             "visual_explanation" if attempt == 0 else "hint",
         )
